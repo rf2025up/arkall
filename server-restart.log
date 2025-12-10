@@ -1,0 +1,39 @@
+切换到项目目录: /home/devbox/project/arkok
+加载环境变量配置...
+═══════════════════════════════════════════════════════
+数据库连接配置:
+  主机: growark-postgresql.ns-bg6fgs6y.svc
+  端口: 5432
+  数据库: postgres
+  用户: postgres
+  密码: ***
+═══════════════════════════════════════════════════════
+检测到开发环境
+正在启动开发环境服务器...
+使用配置: NODE_ENV=development
+[dotenv@17.2.3] injecting env (20) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+
+╔══════════════════════════════════════════════════════╗
+║         Growark Server Started Successfully          ║
+╚══════════════════════════════════════════════════════╝
+
+📍 Server Address: http://0.0.0.0:3000
+
+🔗 Frontend Endpoints:
+   📱 Admin (手机端):   http://localhost:3000/admin
+   📺 Display (大屏端): http://localhost:3000/display
+   👤 Student (学生端): http://localhost:3000/student
+
+🔌 API Endpoints:
+   📊 Students:        http://localhost:3000/api/students
+   🔗 WebSocket:       ws://localhost:3000
+
+📚 Documentation:
+   📖 API Docs:        http://localhost:3000/api-docs
+   ❤️  Health Check:    http://localhost:3000/health
+
+Environment: development
+Timestamp: 2025-11-25T07:39:54.474Z
+
+═══════════════════════════════════════════════════════
+  
