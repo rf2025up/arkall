@@ -1,22 +1,366 @@
-# Node.js Example Project
+# StarJourney + Growark 融合系统
 
-This is a simple Node.js server application example that demonstrates basic HTTP server functionality.
+## 🎯 项目概览
 
-## Project Description
+**StarJourney + Growark 深度融合项目**是一个完整的学生管理和学情分析系统，集成了：
 
-This project creates a basic HTTP server that listens on 0.0.0.0:corresponding port and returns a "Hello World!" message. The project supports both development and production environment modes.
+- 🎓 **学生管理**：积分、经验值、班级管理
+- 📊 **实时大屏**：数据可视化、排行榜、PK展示
+- 🚀 **学情分析**：错题管理、过关统计、学业跟踪
+- 📱 **移动端管理**：完整的教师端和学生端界面
 
-## Environment
+## 🚀 快速启动
 
-This project runs on a Debian 12 system with Node.js, which is pre-configured in the Devbox environment. You don't need to worry about setting up Node.js or system dependencies yourself. The development environment includes all necessary tools for building and running Node.js applications. If you need to make adjustments to match your specific requirements, you can modify the configuration files accordingly.
+### 标准启动方法
 
-## Project Execution
-**Development mode:** For normal development environment, simply enter Devbox and run `bash entrypoint.sh` in the terminal.
-**Production mode:** After release, the project will be automatically packaged into a Docker image and deployed according to the `entrypoint.sh` script and command parameters.
+**统一启动脚本**：`start-integrated-system.sh`
+```bash
+# 从项目根目录启动
+cd /home/devbox/project
+./start-integrated-system.sh
+```
 
-Within Devbox, you only need to focus on development - you can trust that everything is application-ready XD
+### 快速部署
 
+```bash
+# 构建前端
+cd /home/devbox/project/arkok/mobile
+npm run build
 
-DevBox: Code. Build. Deploy. We've Got the Rest.
+# 部署到生产环境
+cp -r dist/* ../public/
 
-With DevBox, you can focus entirely on writing great code while we handle the infrastructure, scaling, and deployment. Seamless development from start to production. 
+# 验证部署
+curl -s -o /dev/null -w "%{http_code}" https://esboimzbkure.sealosbja.site/app
+```
+
+---
+
+## 🔗 访问地址
+
+### 🌐 公网访问
+- **手机端管理**: https://esboimzbkure.sealosbja.site/app
+- **大屏端**: https://esboimzbkure.sealosbja.site/screen
+- **学生端**: https://esboimzbkure.sealosbja.site/student
+
+### 🏠 本地访问
+- **管理端**: http://localhost:3000/admin
+- **手机端**: http://localhost:3000/app
+- **大屏端**: http://localhost:3000/screen
+
+## 📚 核心文档
+
+### 🎯 权威文档（以Star项目为准）
+
+1. **`star-融合进度跟踪文档.md`** - 📋 **核心进度跟踪**
+   - 项目总览和完成状态
+   - 分阶段实施计划
+   - 技术架构决策记录
+
+2. **`star-融合计划文档.md`** - 📋 **详细实施计划**
+   - 8周完整开发计划
+   - 技术方案设计
+   - 测试验证流程
+
+3. **`Growark+StarJourney-最终融合方案v13.0.md`** - 🔧 **技术规范**
+   - 最终技术架构设计
+   - UI设计规范
+   - API接口文档
+
+4. **`Growark+StarJourney-公网部署指南.md`** - 🚀 **部署指南**
+   - 标准启动方法
+   - 公网部署配置
+   - 故障排除方案
+
+### 📖 开发文档
+
+5. **`开发规范-功能验证与文档同步机制.md`** - 📝 **开发规范**
+6. **`开发规范-最佳实践.md`** - 📋 **最佳实践**
+7. **`手机端StarJourney功能部署问题解决方案.md`** - 🔧 **故障排除**
+
+### 📋 归档索引
+
+#### 归档文档（已合并）
+- `docs/archived/启动公网-归档-20251210.md` - 启动公网历史文档
+
+## 🏗️ 技术栈
+- **前端**: React 18 + TypeScript + Tailwind CSS
+- **后端**: Node.js + Express + WebSocket
+- **数据库**: PostgreSQL (部署在Sealos云平台)
+
+## 🔄 双服务器架构
+```
+Growark服务器 (端口3000)
+├── 学生管理API
+├── 积分系统
+├── 实时通信
+└── 静态文件服务
+
+StarJourney服务器 (端口3001)
+├── 错题管理API
+├── 过关记录API
+├── 学情统计API
+└── 数据分析服务
+```
+- **部署**: Sealos云平台 + 单端口3000架构
+
+### 核心功能
+1. **现有Growark功能** (保持不变)
+   - 学生管理和积分系统
+   - 班级管理和团队分组
+   - 任务发布和挑战管理
+   - PK对决和勋章系统
+   - 习惯打卡和大屏展示
+
+2. **新增StarJourney功能** (渐进式集成)
+   - 错题图片上传和AI识别
+   - 过关管理和尝试记录 (体现服务价值)
+   - 学情报告和五维能力雷达图
+   - 教师备课管理
+
+## 项目结构
+
+```
+/home/devbox/project/
+├── arkok/                     # 主项目目录
+│   ├── server.js             # Node.js后端服务
+│   ├── create-schema.js      # 原始数据库结构
+│   ├── mobile/               # React前端源码
+│   │   ├── src/              # 源代码
+│   │   ├── bigscreen/        # 大屏展示功能
+│   │   └── dist/             # 构建输出
+│   ├── public/               # 生产环境静态文件
+│   └── .env                  # 数据库配置
+├── star-融合计划文档.md       # 详细项目计划方案
+├── star-融合进度跟踪文档.md   # 实时进度跟踪
+├── star-融合方案             # 融合策略文档
+├── star-过关管理代码.ini     # 过关管理系统代码
+├── star-错题代码             # 错题管理系统代码
+├── entrypoint.sh             # 启动脚本
+└── README.md                 # 本文档
+```
+
+## 执行原则：测试驱动推进
+
+### ⚠️ **严格测试确认机制**
+**核心要求**：每一步都必须测试通过后才能进行下一步，确保项目稳定性和可靠性。
+
+#### 测试验证流程：
+1. **阶段启动前**：检查前置条件，确保环境就绪
+2. **开发过程中**：每个功能模块完成后立即测试
+3. **阶段完成前**：执行完整的阶段测试检查表
+4. **阶段验收**：所有测试项100%通过才能进入下一阶段
+5. **问题处理**：发现任何问题立即暂停，解决后重新测试
+
+#### 测试失败处理：
+- 立即停止当前阶段工作
+- 识别问题根因并制定解决方案
+- 修复问题后重新执行完整测试
+- 确认无任何遗留问题才继续推进
+- 记录问题和解决方案到文档
+
+## 项目进度
+
+### 当前状态 (2025-12-09)
+```
+准备阶段  ████████████████████████████████ 100% ✓
+阶段1     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   0%  (数据库结构扩展)
+阶段2     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   0%  (后端API接口适配)
+阶段3     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   0%  (前端UI组件开发)
+阶段4     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   0%  (核心功能实现)
+阶段5     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   0%  (集成测试和优化)
+总进度    ██████░░░░░░░░░░░░░░░░░░░░░░░░░░░  20%
+```
+
+### 已完成工作
+- [x] 深度分析Growark项目技术架构
+- [x] 研究Sealos云环境配置
+- [x] 分析StarJourney错题和过关管理系统代码
+- [x] 制定融合技术方案
+- [x] 创建项目计划方案文档
+- [x] 建立进度跟踪机制
+
+### 下一步计划
+**阶段1：数据库结构扩展** (2025-12-09 ~ 2025-12-16)
+- 创建数据库扩展脚本
+- 新增4个表支持StarJourney功能
+- 执行数据库扩展和测试验证
+
+## 环境配置
+
+### ⚠️ Devbox环境特点说明
+本项目运行在Devbox环境中，每次重新启动后AI助手可能会丢失记忆。所有关键配置都已文档化，确保能够快速恢复工作状态。
+
+### 开发环境启动
+```bash
+# 1. 进入工作目录
+cd /home/devbox/project
+
+# 2. 环境恢复检查 (每次重启后执行)
+ls -la star-*.md arkok/server.js
+cat star-融合计划文档.md | head -30
+
+# 3. 启动服务
+./entrypoint.sh
+
+# 4. 验证服务状态
+ps aux | grep "arkok/server.js"
+netstat -tulpn | grep :3000
+
+# 5. API测试
+curl http://localhost:3000/api/students
+curl http://localhost:3000/health
+```
+
+### 公网访问配置
+**重要**：每次新建Devbox实例时，公网地址会改变，需要重新获取。
+
+#### 获取和更新公网地址：
+```bash
+# 1. 启动服务并等待2-5分钟
+./entrypoint.sh
+
+# 2. 从Sealos控制台获取新地址
+# 3. 批量更新文档中的地址
+NEW_IP="新的公网地址.sealosbja.site"
+find . -name "*.md" -exec sed -i "s|https://[^.]*\.sealosbja\.site|https://$NEW_IP|g" {} \;
+find . -name "*.js" -exec sed -i "s|https://[^.]*\.sealosbja\.site|https://$NEW_IP|g" {} \;
+```
+
+#### 访问地址 (需要更新公网IP)：
+- **手机端**: https://公网地址/app
+- **大屏端**: https://公网地址/screen
+- **管理端**: https://公网地址/admin
+- **API接口**: https://公网地址/api/*
+
+### 数据库配置 (固定不变)
+```bash
+# PostgreSQL连接信息 (Sealos内网地址)
+DB_HOST=growark-postgresql.ns-bg6fgs6y.svc
+DB_PORT=5432
+DB_NAME=postgres
+DB_USER=postgres
+DB_PASSWORD=kngwb5cb
+
+# 连接测试
+psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "\dt"
+```
+
+### 环境备份和恢复
+```bash
+# 数据库备份
+pg_dump -h growark-postgresql.ns-bg6fgs6y.svc -U postgres -d postgres > backup-$(date +%Y%m%d).sql
+
+# 项目文件备份
+tar -czf project-backup-$(date +%Y%m%d).tar.gz star-*.md arkok/ entrypoint.sh
+
+# 数据库恢复
+psql -h growark-postgresql.ns-bg6fgs6y.svc -U postgres -d postgres < backup-file.sql
+```
+
+## 数据库架构
+
+### 核心表结构
+```sql
+-- 学生表 (已存在)
+students (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  score INTEGER DEFAULT 0,              -- 积分
+  total_exp INTEGER DEFAULT 0,          -- 总经验值
+  level INTEGER DEFAULT 1,              -- 等级
+  avatar_url VARCHAR(500),
+  team_id INTEGER REFERENCES teams(id),
+  class_name VARCHAR(50)
+)
+
+-- 错题记录表 (新增)
+lms_mistakes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id INTEGER NOT NULL REFERENCES students(id),
+  image_url VARCHAR(500),              -- 错题图片URL
+  ocr_text TEXT,                       -- OCR识别的文本
+  ai_analysis JSONB,                   -- AI分析结果
+  subject VARCHAR(50),                 -- 学科
+  status VARCHAR(20) DEFAULT 'pending',
+  tags TEXT[]                          -- 知识点标签
+)
+
+-- 过关记录表 (新增)
+lms_student_record (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id INTEGER NOT NULL REFERENCES students(id),
+  task_name VARCHAR(200) NOT NULL,     -- 任务名称
+  task_type VARCHAR(20) NOT NULL,      -- QC/TASK
+  status VARCHAR(20) DEFAULT 'pending',
+  exp_value INTEGER DEFAULT 10,        -- 经验值奖励
+  attempt_count INTEGER DEFAULT 0,     -- 尝试次数 (核心！)
+  difficulty_flag BOOLEAN DEFAULT FALSE, -- 是否为"硬骨头"任务
+  is_special BOOLEAN DEFAULT FALSE,    -- 是否为个性化加餐
+  completed_at TIMESTAMP
+)
+```
+
+## API接口
+
+### 现有接口 (保持不变)
+- `GET /api/students` - 获取学生列表
+- `GET /api/tasks` - 获取任务列表
+- `GET /api/challenges` - 获取挑战列表
+- `POST /api/students/:id/adjust-score` - 调整学生积分
+
+### 新增接口 (计划中)
+```javascript
+// 错题管理API
+POST   /api/mistakes/upload           // 上传错题图片
+GET    /api/mistakes                 // 获取错题列表
+PUT    /api/mistakes/:id             // 更新错题状态
+
+// 过关管理API
+GET    /api/student-records          // 获取学生过关记录
+POST   /api/student-records          // 创建过关记录
+PATCH  /api/student-records/:id/attempt  // 记录辅导尝试
+PATCH  /api/student-records/:id/pass     // 标记为通过
+```
+
+## 开发指南
+
+### 代码规范
+- 使用TypeScript进行类型检查
+- 遵循React Hooks最佳实践
+- API接口使用统一的错误处理
+- 数据库操作使用参数化查询防止SQL注入
+
+### 测试要求
+- 每个新功能必须有对应的测试用例
+- 所有API接口必须有完整的测试覆盖
+- 数据库操作必须有事务处理
+- 前端组件必须有单元测试和集成测试
+
+### 部署流程
+1. 本地测试通过
+2. 数据库备份
+3. 执行数据库迁移
+4. 部署代码
+5. 功能验证
+6. 性能监控
+
+## 文档资源
+
+- [详细项目计划方案](star-融合计划文档.md)
+- [实时进度跟踪](star-融合进度跟踪文档.md)
+- [Sealos部署指南](启动公网.md)
+- [教师端技术架构文档](教师端技术架构与交互.md)
+
+## 联系支持
+
+如有问题或需要技术支持，请查阅：
+1. 项目文档 `star-融合计划文档.md`
+2. 进度文档 `star-融合进度跟踪文档.md`
+3. 技术文档 `教师端技术架构与交互.md`
+
+---
+
+**最后更新**：2025-12-09
+**项目状态**：准备阶段已完成，即将开始阶段1
+**注意**：本项目采用严格的测试驱动推进机制，确保每一步都经过充分验证。
