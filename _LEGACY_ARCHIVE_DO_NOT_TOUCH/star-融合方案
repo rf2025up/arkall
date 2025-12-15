@@ -1,0 +1,248 @@
+基于您提供的《教师端APP技术架构与交互逻辑方案》(v2.5) 和之前设计的 StarJourney v10.0，我为您制定了一套**深度融合方案**。
+
+这套方案的核心原则是：**保持现有架构的稳定性，以“组件插件化”和“视图分层”的方式引入新功能**，避免推翻重构，实现平滑升级。
+
+---
+
+# 🚀 Growark + StarJourney 深度融合实施方案 (v3.0)
+
+## 一、 交互架构重构：从“单维度”到“双核驱动”
+
+目前的 Growark 交互核心是“点学生 -> 动作面板(ActionSheet) -> 加分”。
+融合后的新交互逻辑将升级为：**“点学生 -> 学生档案(Profile) -> 行为/学业双Tab”**。
+
+### 1.1 页面导航调整 (Navigation Flow)
+
+**旧流程**：
+`首页列表` -> `点击学生` -> `ActionSheet` -> `加分`
+
+**新流程**：
+`首页列表` -> `点击学生` -> **`学生详情页 (StudentProfile)`**
+   ├── **Tab 1: 成长 (Growth)** [原功能]
+   │    ├── 快捷加分 (保留 ActionSheet 逻辑)
+   │    ├── 勋章墙
+   │    └── PK 记录
+   └── **Tab 2: 学业 (Academic)** [新功能]
+        ├── **待过关任务** (今日必做/过关点)
+        ├── **错题本** (历史错题流)
+        └── **学情报告** (周报/月报入口)
+
+---
+
+## 二、 核心功能融合点设计
+
+### 2.1 融合点一：全局拍摄入口 (The "Magic Button")
+在 `mobile/pages/Home.tsx` (首页) 增加一个全局悬浮按钮 (FAB)，解决“高频录题”需求。
+
+*   **位置**：屏幕右下角，位于原有 UI 上层。
+*   **功能**：点击 **[📷]** 按钮。
+    *   **模式 A (单人)**：先选学生，再拍照。
+    *   **模式 B (批量)**：直接连拍多张试卷，AI 自动识别姓名（高级功能）或稍后手动分配给学生。
+*   **技术实现**：新增组件 `components/MistakeCameraFAB.tsx`。
+
+### 2.2 融合点二：过关管理 (Task & QC)
+在 `StudentProfile` 的 **学业 Tab** 中嵌入任务列表。
+
+*   **展示逻辑**：复用现有的 `tasks` 表，增加 `lms_student_record` 的关联数据的展示。
+*   **交互逻辑**：
+    *   **列表项**：显示 `任务名称` + `🔥 辅导次数`。
+    *   **左滑/点击**：出现操作按钮 `[辅导 (+1)]` 和 `[过关 (Done)]`。
+*   **数据联动**：
+    *   点击 `[过关]` -> 前端同时发起两个请求：
+        1.  调用 Python API 更新过关状态。
+        2.  调用 Node API 给学生加积分（复用现有的 `handleUpdateScore` 函数）。
+
+### 2.3 融合点三：错题与报告 (Mistakes & Report)
+在 **学业 Tab** 的顶部区域展示。
+
+*   **卡片设计**：
+    *   左侧：**[本周错题 5 道]** (点击进入错题篮/列表)。
+    *   右侧：**[学情诊断]** (点击预览 Python 生成的 HTML 报告)。
+*   **Webview 嵌入**：由于报告是 HTML/PDF，建议在 React 中使用 `iframe` 或直接新窗口打开生成的报告链接。
+
+---
+
+## 三、 前端代码改造指南 (React + TypeScript)
+
+基于您现有的项目结构，以下是具体的代码修改建议。
+
+### 3.1 目录结构扩展
+```text
+mobile/
+├── ...
+├── api/                    # 新增：API 请求层
+│   ├── nodeClient.ts       # 原有的后端请求
+│   └── pythonClient.ts     # 新增：连接 FastAPI (AI/错题)
+├── components/
+│   ├── ...
+│   ├── academic/           # 新增：学业相关组件
+│   │   ├── TaskQCList.tsx  # 过关任务列表
+│   │   ├── MistakeCard.tsx # 错题卡片
+│   │   └── ReportView.tsx  # 报告预览
+│   └── StudentProfile/     # 新增：学生详情页容器
+│       ├── GrowthTab.tsx   # 原功能的拆分
+│       └── AcademicTab.tsx # 新功能的拆分
+```
+
+### 3.2 类型定义扩展 (`types.ts`)
+扩展现有类型以支持新字段，保持 TypeScript 的类型安全。
+
+```typescript
+// 扩展 Student 类型
+export interface Student {
+  // ... 原有字段
+  // 新增：学业统计 (由后端聚合返回或前端计算)
+  academicStats?: {
+    pendingTasks: number;
+    weeklyMistakes: number;
+    lastReportUrl?: string;
+  };
+}
+
+// 新增 Mistake 类型
+export interface Mistake {
+  id: string;
+  studentId: number;
+  imageUrl: string;
+  ocrText: string;
+  status: 'pending' | 'solved';
+  aiAnalysis: any; // 存放 DeepSeek 的分析结果
+}
+```
+
+### 3.3 API 客户端配置 (`api/pythonClient.ts`)
+配置连接到新的 Python 微服务。
+
+```typescript
+// mobile/api/pythonClient.ts
+const PYTHON_API_URL = "https://xtrhwhsclsvp.sealosbja.site/api"; // 您的 Python 服务地址
+
+export const uploadMistake = async (file: File, studentId: number) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('student_id', studentId.toString());
+  
+  const response = await fetch(`${PYTHON_API_URL}/mistakes/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+  return response.json();
+};
+
+export const markTaskPassed = async (taskId: string) => {
+  // ...
+};
+```
+
+### 3.4 核心页面改造 (`App.tsx` & `Home.tsx`)
+
+**第一步：改造 `Home.tsx` 的点击事件**
+原逻辑可能是点击直接弹出 ActionSheet，现在改为打开详情页 Modal。
+
+```tsx
+// pages/Home.tsx
+const handleStudentClick = (student: Student) => {
+  // 以前：setShowActionSheet(true);
+  // 现在：
+  setCurrentStudent(student);
+  setShowProfileModal(true); 
+};
+```
+
+**第二步：新增 `StudentProfileModal.tsx`**
+这是一个全屏 Modal，包含 Tab 切换。
+
+```tsx
+// components/StudentProfileModal.tsx
+import { Tab } from '@headlessui/react'; // 或自定义 Tab 组件
+
+export const StudentProfileModal = ({ student, onClose }) => {
+  return (
+    <div className="fixed inset-0 bg-white z-50 flex flex-col">
+      {/* 顶部学生信息头 */}
+      <div className="p-4 border-b flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <img src={student.avatar_url} className="w-12 h-12 rounded-full" />
+          <div>
+            <h2 className="font-bold text-lg">{student.name}</h2>
+            <p className="text-gray-500 text-sm">积分: {student.score}</p>
+          </div>
+        </div>
+        <button onClick={onClose}>✕</button>
+      </div>
+
+      {/* Tab 切换 */}
+      <Tab.Group>
+        <Tab.List className="flex border-b">
+          <Tab className="flex-1 p-3 selected:border-b-2 border-blue-500">
+            成长激励
+          </Tab>
+          <Tab className="flex-1 p-3 selected:border-b-2 border-purple-500">
+            学业攻克
+          </Tab>
+        </Tab.List>
+
+        <Tab.Panels className="flex-1 overflow-y-auto bg-gray-50">
+          
+          {/* Tab 1: 原有的 ActionSheet 逻辑移到这里 */}
+          <Tab.Panel>
+             <GrowthTab student={student} /> 
+          </Tab.Panel>
+
+          {/* Tab 2: 新增的错题和过关 */}
+          <Tab.Panel>
+             <AcademicTab student={student} />
+          </Tab.Panel>
+          
+        </Tab.Panels>
+      </Tab.Group>
+    </div>
+  );
+};
+```
+
+---
+
+## 四、 后端与数据库适配
+
+为了让上述前端跑起来，您需要在现有的 Node.js 后端做少量适配（作为“胶水层”），或者直接让前端请求 Python 后端。
+
+**推荐策略：前端直连 Python 后端**
+为了减少对现有 Node.js 代码的侵入，建议**文件上传、错题分析、PDF生成**等重型操作，由前端直接请求 Python FastAPI 接口。
+
+**唯一需要 Node.js 配合的地方**：
+当 Python 后端处理完“错题过关”后，需要通知 Node.js 更新积分。或者前端在收到 Python 成功的响应后，**手动调用一次 Node.js 的加分接口**。
+
+```javascript
+// 前端逻辑示例：AcademicTab.tsx 中的过关函数
+const handlePassMistake = async (mistakeId) => {
+  // 1. 告诉 Python 端：这题过了
+  await pythonClient.solveMistake(mistakeId);
+  
+  // 2. 告诉 Node 端：给这孩子加分 (复用现有接口)
+  // 这样既利用了现有逻辑，又实现了联动
+  await fetch(`/api/students/${student.id}/adjust-score`, {
+    method: 'POST',
+    body: JSON.stringify({ delta: 10, reason: '攻克错题' })
+  });
+  
+  // 3. 刷新 UI
+  refreshData();
+};
+```
+
+---
+
+## 五、 总结与行动路线
+
+**不需要重写 APP，只需要“装修扩建”。**
+
+1.  **数据库**：在 Sealos 上执行我之前给您的 SQL，增加 `lms_` 表。
+2.  **部署**：在 Sealos 上部署 Python FastAPI 服务（StarJourney）。
+3.  **前端改造**：
+    *   引入 `StudentProfileModal` 组件（双 Tab 设计）。
+    *   将原有的加分逻辑封装进 Tab 1。
+    *   在 Tab 2 中开发新的错题列表和过关按钮。
+    *   在 `api/` 目录下增加 `pythonClient.ts` 用于和新后端通信。
+
+这样，您的 Growark 就无缝升级为了 v10.0，既保留了极其流畅的积分操作体验，又增加了深度的学业管理能力。
