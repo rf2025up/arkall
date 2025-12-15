@@ -1,0 +1,386 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// SaaS Multi-tenancy: Schools Model
+model School {
+  id                   String     @id @default(uuid())
+  name                 String
+  planType             PlanType   @default(FREE)
+  isActive             Boolean    @default(true)
+  settings             Json?      // 学校设置 (JSON格式)
+  educationalPhilosophy String     @db.Text @default("我们致力于培养面向未来的孩子，视自主学习力为核心武器，通过反馈驱动和最近发展区理论，鼓励孩子注重过程，持续自我迭代。")
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+
+  // Relations
+  teachers     Teacher[]
+  students     Student[]
+  lessonPlans  LessonPlan[]
+  taskRecords  TaskRecord[]
+  pkMatches    PKMatch[]
+  mistakes     Mistake[]
+  habits       Habit[]
+  challenges   Challenge[]
+  badges       Badge[]
+  habitLogs    HabitLog[]
+
+  @@map("schools")
+}
+
+// Teachers/Admin Users
+model Teacher {
+  id        String   @id @default(uuid())
+  schoolId  String
+  username  String   @unique
+  password  String   // hashed
+  name      String
+  displayName String? // 显示名，如"姜老师"
+  email     String?  @unique
+  role      Role     @default(TEACHER)
+  primaryClassName String? // 绑定的主班级，如"姜老师班"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  school      School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  students    Student[]    // 🆕 新增：老师名下的学生关系
+  lessonPlans LessonPlan[]
+  createdChallenges Challenge[] @relation("ChallengeCreator")
+
+  @@map("teachers")
+}
+
+// Students Model (migrated from legacy)
+model Student {
+  id        String   @id @default(uuid())
+  schoolId  String
+  name      String
+  className String?  // 班级名改为可选，仅作为显示标签
+  level     Int      @default(1)
+  points    Int      @default(0)  // mapped from legacy 'score'
+  exp       Int      @default(0)  // mapped from legacy 'total_exp'
+  avatarUrl String?
+  teamId    String?  // 用于大屏显示的团队ID
+  teacherId String?  // 🆕 新增：直接归属老师ID (核心变更)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  school      School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teacher     Teacher?      @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  taskRecords TaskRecord[]
+  pkMatchesA  PKMatch[]     @relation("StudentA")
+  pkMatchesB  PKMatch[]     @relation("StudentB")
+  pkWins      PKMatch[]     @relation("Winner")
+  mistakes    Mistake[]
+  habitLogs   HabitLog[]
+  challengeParticipants ChallengeParticipant[]
+  studentBadges StudentBadge[]
+
+  @@unique([schoolId, name]) // Unique name within school
+  @@map("students")
+}
+
+// Lesson Plans / Curriculum
+model LessonPlan {
+  id        String   @id @default(uuid())
+  schoolId  String
+  teacherId String
+  title     String
+  content   Json     // flexible content structure
+  date      DateTime
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  school      School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teacher     Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  taskRecords TaskRecord[]
+
+  @@map("lesson_plans")
+}
+
+// Task Records (homework, assignments, etc)
+model TaskRecord {
+  id           String     @id @default(uuid())
+  schoolId     String
+  studentId    String
+  lessonPlanId String?    // 关联教学计划
+  type         TaskType
+  title        String
+  content      Json?      // flexible task data
+  status       TaskStatus @default(PENDING)
+  expAwarded   Int        @default(0)
+  submittedAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  // Relations
+  school      School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student     Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lessonPlan  LessonPlan? @relation(fields: [lessonPlanId], references: [id], onDelete: SetNull)
+
+  @@map("task_records")
+}
+
+// PK Battles between students
+model PKMatch {
+  id       String      @id @default(uuid())
+  schoolId String
+  studentA String
+  studentB String
+  winnerId String?     // null for draw
+  status   PKStatus    @default(ONGOING)
+  topic    String
+  metadata Json?       // match details, questions, etc.
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Relations
+  school   School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  playerA  Student  @relation("StudentA", fields: [studentA], references: [id], onDelete: Cascade)
+  playerB  Student  @relation("StudentB", fields: [studentB], references: [id], onDelete: Cascade)
+  winner   Student? @relation("Winner", fields: [winnerId], references: [id], onDelete: SetNull)
+
+  @@map("pk_matches")
+}
+
+// Mistake/Error Tracking
+model Mistake {
+  id         String      @id @default(uuid())
+  schoolId   String
+  studentId  String
+  imageUrl   String?
+  ocrText    String?
+  aiAnalysis Json?       // AI分析结果
+  status     MistakeStatus @default(PENDING)
+  category   String?
+  notes      String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  // Relations
+  school  School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("mistakes")
+}
+
+// Enums
+enum Role {
+  ADMIN
+  TEACHER
+}
+
+enum PlanType {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum TaskType {
+  QC       // 质检
+  TASK     // 任务
+  SPECIAL  // 特殊任务
+  HOMEWORK
+  QUIZ
+  PROJECT
+  CHALLENGE
+  DAILY
+}
+
+enum TaskStatus {
+  PENDING
+  SUBMITTED
+  REVIEWED
+  COMPLETED
+}
+
+enum PKStatus {
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum MistakeStatus {
+  PENDING
+  REVIEWING
+  RESOLVED
+  IGNORED
+}
+
+enum ChallengeType {
+  PERSONAL  // 个人挑战
+  GROUP     // 团队挑战
+  CLASS     // 班级挑战
+}
+
+enum ChallengeStatus {
+  DRAFT     // 草稿
+  ACTIVE    // 进行中
+  COMPLETED // 已完成
+  CANCELLED // 已取消
+}
+
+enum ParticipantStatus {
+  JOINED    // 已参与
+  WITHDRAWN // 已退出
+  DISQUALIFIED // 取消资格
+}
+
+enum ParticipantResult {
+  WINNER    // 胜利者
+  COMPLETED // 完成但未获胜
+  FAILED    // 失败
+}
+
+// Task Library for LMS - 预设任务库
+model TaskLibrary {
+  id         String   @id @default(uuid())
+  category   String   // 任务类别：如"基础核心"、"数学巩固"等
+  name       String   // 任务名称
+  description String?  // 任务描述
+  defaultExp Int      @default(0) // 默认经验值
+  type       TaskType @default(TASK) // 任务类型
+  difficulty Int?     // 难度等级 1-5
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([category, name])
+  @@map("task_library")
+}
+
+// Habits - 习惯定义
+model Habit {
+  id        String   @id @default(uuid())
+  schoolId  String
+  name      String   // 习惯名称，如"早起"、"阅读"、"运动"等
+  description String?  // 习惯描述
+  icon      String?  // 习惯图标
+  expReward Int     @default(5) // 打卡奖励经验值
+  pointsReward Int?  // 打卡奖励积分（可选）
+  isActive  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  // Relations
+  school    School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  habitLogs HabitLog[]
+
+  @@unique([schoolId, name])
+  @@map("habits")
+}
+
+// Habit Logs - 习惯打卡记录
+model HabitLog {
+  id         String   @id @default(uuid())
+  schoolId   String
+  habitId    String
+  studentId  String
+  checkedAt  DateTime @default(now()) // 打卡时间
+  streakDays Int      @default(1)     // 连续打卡天数
+  notes      String?             // 备注
+
+  // Relations
+  school     School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  habit      Habit      @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  student    Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("habit_logs")
+}
+
+// Challenges - 挑战任务
+model Challenge {
+  id          String   @id @default(uuid())
+  schoolId    String
+  title       String   // 挑战标题
+  description String?  // 挑战描述
+  type        ChallengeType @default(PERSONAL) // 挑战类型
+  status      ChallengeStatus @default(DRAFT) // 挑战状态
+  creatorId   String   // 创建者ID（teacherId）
+  startDate   DateTime @default(now()) // 开始时间
+  endDate     DateTime? // 结束时间
+  rewardPoints Int      @default(0) // 完成奖励积分
+  rewardExp   Int      @default(0) // 完成奖励经验
+  maxParticipants Int      @default(2) // 最大参与人数
+  metadata    Json?     // 挑战元数据（规则、题目等）
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  school          School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  creator         Teacher         @relation("ChallengeCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  participants     ChallengeParticipant[]
+
+  @@map("challenges")
+}
+
+// Challenge Participants - 挑战参与者
+model ChallengeParticipant {
+  id           String   @id @default(uuid())
+  challengeId  String
+  studentId    String
+  joinedAt      DateTime @default(now()) // 参与时间
+  status       ParticipantStatus @default(JOINED) // 参与状态
+  result       ParticipantResult? // 参与结果
+  score        Int?      // 得分
+  notes        String?    // 备注
+  completedAt   DateTime? // 完成时间
+
+  // Relations
+  challenge    Challenge    @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, studentId])
+  @@map("challenge_participants")
+}
+
+// Badges - 勋章定义
+model Badge {
+  id          String   @id @default(uuid())
+  schoolId    String
+  name        String   // 勋章名称
+  description String?  // 勋章描述
+  icon        String?  // 勋章图标
+  category    String   // 勋章类别
+  requirement  Json?    // 获得条件
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  school        School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  studentBadges StudentBadge[]
+
+  @@unique([schoolId, name])
+  @@map("badges")
+}
+
+// Student Badges - 学生获得勋章记录
+model StudentBadge {
+  id           String   @id @default(uuid())
+  studentId    String
+  badgeId      String
+  awardedBy    String?   // 授予者ID（teacherId）
+  awardedAt    DateTime @default(now())
+  reason       String?  // 授予原因
+
+  // Relations
+  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  badge        Badge        @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@map("student_badges")
+}

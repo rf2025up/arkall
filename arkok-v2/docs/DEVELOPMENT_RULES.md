@@ -1,0 +1,483 @@
+# 🛡️ ArkOK V2 开发行为准则与约束
+
+> **核心原则**: 文档即真理，代码质量优先，架构规范至上，用户体验为本
+
+## ⚠️ 最高铁律 - Rule #0 (零号法则) - CRITICAL
+
+### 0. 📝 文档即真理 (Documentation is Truth) - CRITICAL
+- **实时同步**: 每当修复一个 Bug 或完成一个功能，**必须立刻** 更新 `docs/CURRENT_STATUS.md` 和 `docs/TASK_PROGRESS.md`。
+- **下班仪式**: 在结束当前会话或被告知"重启"前，**必须** 执行一次"状态同步"，确保文档反映了代码的最新状态。
+- **禁止隐瞒**: 如果某个功能没修好，在文档里必须标记为 `[ ]` (未完成)，严禁标记为 `[x]`。
+
+**具体执行流程**:
+```bash
+# 1. 完成任何功能或修复后，立即执行
+echo "$(date): 完成了XXX功能修复" >> docs/TASK_PROGRESS.md
+echo "$(date): 更新了XXX组件的状态为已完成" >> docs/CURRENT_STATUS.md
+
+# 2. 会话结束前的强制检查
+echo "=== 会话结束状态同步 ==="
+echo "当前已完成: [列出已完成项目]"
+echo "未完成项目: [列出未完成项目]"
+echo "下次续接点: [明确指出下次应从哪里开始]"
+```
+
+**零号法则执行检查清单**:
+- [ ] 今天的所有功能修改都已记录在文档中？
+- [ ] 未完成的功能是否明确标记为 `[ ]` 状态？
+- [ ] 下次开发者能否根据文档快速理解当前状态？
+- [ ] 是否执行了会话结束状态同步？
+
+**违反零号法则的后果**:
+- **第一次**: 直接回滚代码，重新执行文档同步
+- **第二次**: 暂停开发权限，强制接受文档管理培训
+- **严重违规**: 从项目中移除，确保项目文档完整性
+
+## ⚠️ 五大铁律 (严禁违反)
+
+### 1. 🚫 拒绝"创可贴"式修复
+**规则**: 禁止使用 `window.location.reload()` 来刷新数据
+**正确做法**: 使用 React 状态更新机制
+
+```typescript
+// ❌ 错误示范 - 创可贴式修复
+const handleScoreUpdate = async () => {
+  await updateStudentScore(studentId, points);
+  window.location.reload(); // 🚫 严禁使用！
+};
+
+// ✅ 正确示范 - React 状态更新
+const [students, setStudents] = useState<Student[]>([]);
+
+const handleScoreUpdate = async (studentId: string, points: number) => {
+  await updateStudentScore(studentId, points);
+
+  // 通过状态更新触发重新渲染
+  setStudents(prev => prev.map(student =>
+    student.id === studentId
+      ? { ...student, points: student.points + points }
+      : student
+  ));
+
+  // 或者通过 Socket.io 实时同步
+  socket.emit('requestStudentRefresh');
+};
+```
+
+**为什么重要**:
+- 保持单页应用的用户体验
+- 避免页面状态丢失
+- 符合 React 响应式设计原则
+
+### 2. 🛡️ 类型安全第一
+**规则**: 尽可能避免使用 `as any`，必须定义 Interface
+
+```typescript
+// ❌ 错误示范 - 类型不安全
+const data = response.data as any;
+const user = data.user; // 运行时错误风险
+
+// ✅ 正确示范 - 完整类型定义
+interface User {
+  id: string;
+  name: string;
+  points: number;
+  exp: number;
+  schoolId: string;
+  isActive: boolean;
+}
+
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  error?: string;
+}
+
+const response = await fetch('/api/students');
+const apiResponse: ApiResponse<User[]> = await response.json();
+
+if (apiResponse.success && apiResponse.data) {
+  const users = apiResponse.data; // 类型安全，智能提示
+}
+```
+
+**类型定义规范**:
+```typescript
+// 业务实体类型
+interface Student {
+  id: string;
+  name: string;
+  avatar?: string;
+  points: number;
+  exp: number;
+  schoolId: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// API 请求类型
+interface CreateStudentRequest {
+  name: string;
+  avatar?: string;
+  schoolId: string;
+}
+
+// API 响应类型
+interface StudentResponse {
+  success: boolean;
+  data?: Student;
+  message?: string;
+  error?: string;
+}
+
+// 组件 Props 类型
+interface StudentCardProps {
+  student: Student;
+  onScoreUpdate: (studentId: string, points: number) => void;
+  readonly?: boolean;
+}
+```
+
+### 3. 📚 以旧为师原则
+**规则**: 修复 UI 时，**必须**先阅读 `_LEGACY_ARCHIVE_DO_NOT_TOUCH` 中的旧文件作为参考
+
+```typescript
+// 修复 UI 前的强制流程：
+// 1. 先查看旧代码实现
+// 2. 理解原始设计意图
+// 3. 在新架构中复现功能
+
+// 示例：修复学生列表页面
+// 步骤1: 查看旧代码
+// 查看 _LEGACY_ARCHIVE_DO_NOT_TOUCH/student-list.html
+// 理解: 橙色主题、网格布局、长按交互
+
+// 步骤2: 理解设计意图
+const legacyDesign = {
+  theme: '#FF6B35',           // 橙色主题
+  layout: 'grid',             // 网格布局
+  columns: '3-4',            // 3-4列
+  interaction: 'longPress'   // 长按交互
+};
+
+// 步骤3: 在新架构中复现
+const StudentGrid: React.FC<StudentGridProps> = ({ students }) => {
+  return (
+    <div className="grid grid-cols-3 md:grid-cols-4 gap-4 p-4">
+      {students.map(student => (
+        <StudentCard
+          key={student.id}
+          student={student}
+          themeColor="#FF6B35"           // 保持橙色主题
+          onLongPress={handleLongPress}   // 实现长按交互
+        />
+      ))}
+    </div>
+  );
+};
+```
+
+**参考目录结构**:
+```
+_LEGACY_ARCHIVE_DO_NOT_TOUCH/
+├── student-list.html          # 学生列表原始实现
+├── habit-checkin.html         # 习惯打卡原始交互
+├── pk-battle.html            # PK对决原始界面
+└── ui-components/            # UI组件原始样式
+    ├── orange-theme.css
+    ├── grid-layout.css
+    └── animations.css
+```
+
+### 4. 🔨 构建优先原则
+**规则**: 任何前端修改后，必须运行 `cd client && npm run build` 才能进行测试
+
+```bash
+# 开发流程规范
+# 1. 修改代码
+vim client/src/components/StudentCard.tsx
+
+# 2. 构建前端 (必须执行)
+cd client && npm run build
+
+# 3. 启动测试
+cd .. && ./dev.sh
+
+# 4. 验证功能
+curl http://localhost:3000
+```
+
+**为什么重要**:
+- 确保生产环境构建无错误
+- 及时发现 TypeScript 类型问题
+- 验证资源打包是否正确
+- 避免"本地正常，生产异常"问题
+
+**构建检查清单**:
+```bash
+# 构建前检查
+npm run lint          # ESLint 检查
+npm run type-check    # TypeScript 检查
+npm run build         # 生产构建
+npm run test         # 单元测试 (如果存在)
+```
+
+### 5. 📝 日志规范原则
+**规则**: 在最终清理前，保留 `[FIX]` 前缀的调试日志
+
+```typescript
+// ✅ 正确的调试日志格式
+const handleStudentAction = async (studentId: string, action: string) => {
+  console.log('[FIX] handleStudentAction called', { studentId, action });
+
+  try {
+    console.log('[FIX] Calling API...');
+    const result = await updateStudentAction(studentId, action);
+    console.log('[FIX] API response:', result);
+
+    if (result.success) {
+      console.log('[FIX] Updating local state...');
+      setStudents(prev => /* 更新逻辑 */);
+      console.log('[FIX] State updated successfully');
+    }
+  } catch (error) {
+    console.log('[FIX] Error occurred:', error);
+  }
+};
+
+// 调试完成后，可以选择性清理
+// 但在问题确认解决前，保留关键调试信息
+```
+
+**日志分类规范**:
+```typescript
+// 1. 功能调试日志
+console.log('[FIX] Function entry - details');
+console.log('[FIX] API call - endpoint and params');
+console.log('[FIX] State change - before/after values');
+
+// 2. 错误调试日志
+console.log('[FIX] Error caught - full error object');
+console.log('[FIX] Fallback triggered - alternative path');
+
+// 3. 性能调试日志
+console.log('[FIX] Performance - operation duration');
+```
+
+## 🔧 代码质量标准
+
+### TypeScript 严格模式
+```typescript
+// tsconfig.json 严格配置
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  }
+}
+```
+
+### ESLint 规范
+```typescript
+// 禁止模式
+'no-any': 'error',
+'no-console': 'warn',        // 调试日志允许，但要有前缀
+'prefer-const': 'error',
+'no-var': 'error'
+```
+
+### React Hooks 规范
+```typescript
+// ✅ 正确的 Hooks 使用
+const [students, setStudents] = useState<Student[]>([]);
+const [loading, setLoading] = useState<boolean>(false);
+const socket = useSocket(); // 自定义 Hook
+
+// ✅ 自定义 Hook 命名规范
+const useStudentData = (schoolId: string) => {
+  // Hook 逻辑
+};
+
+const useSocketConnection = (url: string) => {
+  // Socket 连接逻辑
+};
+```
+
+## 🎯 开发流程检查清单
+
+### 修改前检查
+- [ ] 是否已查看 `_LEGACY_ARCHIVE_DO_NOT_TOUCH` 中的参考实现？
+- [ ] 是否已定义必要的 TypeScript 接口？
+- [ ] 是否理解相关业务逻辑？
+
+### 编码中检查
+- [ ] 是否避免了 `window.location.reload()`？
+- [ ] 是否使用了类型安全的代码？
+- [ ] 是否添加了 `[FIX]` 前缀的调试日志？
+
+### 修改后检查
+- [ ] 是否运行了 `cd client && npm run build`？
+- [ ] 构建是否无错误？
+- [ ] 是否进行了功能测试？
+
+## 🚨 违规后果
+
+### 第一次违规
+- **警告通知**: 明确指出违规点
+- **代码审查**: 强制进行代码审查
+- **重新学习**: 重新阅读相关规范文档
+
+### 第二次违规
+- **代码回滚**: 强制回滚违规代码
+- **指导培训**: 一对一开发规范培训
+- **监控期**: 设置代码提交监控期
+
+### 严重违规
+- **暂停权限**: 暂停代码提交权限
+- **重新考核**: 重新进行开发规范考核
+- **团队通报**: 团队内通报批评
+
+## 📚 相关文档参考
+
+- **[架构规范](./ARCHITECTURE_V2.md)** - 了解整体架构设计
+- **[项目记忆库](./PROJECT_MEMORY.md)** - 理解技术决策背景
+- **[当前状态](./CURRENT_STATUS.md)** - 查看项目健康状况
+- **[技术白皮书](../ArkOK_V2_Technical_Whitepaper.md)** - 了解完整技术体系
+
+## 6. 会话安全与进度追踪 (Session Safety)
+- **原子化存档**: 在执行多步骤的大型任务（如批量修复多个页面）时，每完成一个子任务，必须立即更新 `docs/TASK_PROGRESS.md`。
+- **关机前检查**: 在被告知"即将重启"或任务中断前，必须输出当前的进度状态。
+- **启动后自检**: 每次新会话开始，必须首先读取 `docs/TASK_PROGRESS.md`，确认上一次是在哪里停下的。
+
+```typescript
+// ✅ 正确的任务执行模式
+const complexTaskFlow = async () => {
+  // 任务前：读取进度
+  const progress = readTaskProgress();
+  console.log('[FIX] 上次任务停在:', progress.lastCompletedTask);
+
+  // 任务中：每完成一个子任务就更新
+  await completeSubTask1();
+  updateTaskProgress({
+    lastCompletedTask: 'subtask1',
+    nextTask: 'subtask2',
+    timestamp: new Date()
+  });
+
+  // 任务中断前：输出状态
+  if (isInterruptionDetected()) {
+    console.log('[FIX] 当前进度状态:', {
+      completed: ['subtask1'],
+      inProgress: 'subtask2',
+      remaining: ['subtask3', 'subtask4']
+    });
+  }
+};
+```
+
+**中断恢复流程**:
+```bash
+# 新会话开始时的强制检查流程
+# 1. 读取任务进度
+cat docs/TASK_PROGRESS.md
+
+# 2. 确认上次中断点
+# 3. 准备从断点继续
+# 4. 更新任务状态为"继续中"
+```
+
+## 7. 重启前强制存档 (Pre-Restart Snapshot) - CRITICAL
+- **触发条件**: 在执行 `npm run build`、`./dev.sh` 或任何涉及 `restart` 的命令**之前**。
+- **强制动作**:
+  1. 必须先更新 `docs/CURRENT_STATUS.md`，记录当前已完成的代码修改。
+  2. 必须更新 `docs/TASK_PROGRESS.md`，勾选刚完成的步骤。
+  3. **只有在文档更新完毕后**，才允许执行构建或重启命令。
+- **目的**: 即使构建导致内存溢出(OOM)或会话断开，下一次启动时也能通过读取文档无缝恢复。
+
+**强制执行流程**:
+```bash
+# 🛑 在执行以下任何命令前，必须先完成存档：
+# - npm run build
+# - ./dev.sh
+# - docker-compose restart
+# - 任何包含 "restart" 的命令
+
+# 1. 立即停止当前操作
+echo "🛡️ 检测到重启操作，执行强制存档流程..."
+
+# 2. 更新当前状态文档
+echo "$(date '+%Y-%m-%d %H:%M:%S') - 重启前存档: 正在执行构建/重启操作" >> docs/CURRENT_STATUS.md
+echo "最近完成的修改: [简述刚才完成的工作]" >> docs/CURRENT_STATUS.md
+echo "当前文件状态: [如有需要，列出修改的文件]" >> docs/CURRENT_STATUS.md
+
+# 3. 更新任务进度文档
+# 在 TASK_PROGRESS.md 中找到当前任务，标记为 [x] 或更新进度状态
+# 添加备注: "$(date '+%Y-%m-%d %H:%M:%S') - 重启前存档确认"
+
+# 4. 验证文档已更新
+echo "✅ 文档存档完成，可以安全执行重启操作"
+```
+
+**存档内容检查清单**:
+```bash
+# 确保以下信息已记录：
+
+# CURRENT_STATUS.md 中应包含：
+- [ ] 最近的代码修改描述
+- [ ] 修改的文件列表
+- [ ] 遇到的问题和解决方案
+- [ ] 下次续接时需要注意的事项
+
+# TASK_PROGRESS.md 中应包含：
+- [ ] 刚完成的任务已标记 [x]
+- [ ] 进行中的任务已标记 [-]
+- [ ] 明确的下一步行动指示
+- [ ] 时间戳和状态说明
+```
+
+**安全检查验证**:
+```bash
+# 执行重启前的最后验证脚本
+echo "🔍 执行重启前安全检查..."
+
+# 检查文档是否存在最新更新
+if [[ -z "$(find docs/ -name "*.md" -mmin -5)" ]]; then
+  echo "❌ 错误: 检测到文档超过5分钟未更新!"
+  echo "请先更新 docs/CURRENT_STATUS.md 和 docs/TASK_PROGRESS.md"
+  exit 1
+fi
+
+echo "✅ 文档更新检查通过，可以安全执行重启"
+```
+
+**违规处理**:
+- **第一次违规**: 强制回滚到上一个工作状态，重新执行存档流程
+- **第二次违规**: 暂停构建权限，需要项目负责人授权才能继续
+- **严重后果**: 如果因未存档导致的工作丢失，违规者承担恢复责任
+
+**为什么这条规则至关重要**:
+1. **防止工作丢失**: 构建过程可能导致OOM或会话断开
+2. **保证连续性**: 确保下次启动时能快速恢复工作状态
+3. **团队协作**: 让其他团队成员能了解当前进度
+4. **风险控制**: 降低因技术问题导致的进度延误
+
+**紧急情况处理**:
+```bash
+# 如果系统即将崩溃，执行最小化存档
+echo "🚨 紧急存档 - $(date)" >> docs/SESSION_STATUS_LOG.md
+echo "当前任务: [简述]" >> docs/SESSION_STATUS_LOG.md
+echo "进度: [百分比或状态]" >> docs/SESSION_STATUS_LOG.md
+echo "下次续接: [关键点]" >> docs/SESSION_STATUS_LOG.md
+```
+
+---
+
+**⚠️ 重要提醒**: 这些开发行为准则是保证 ArkOK V2 代码质量和系统稳定性的基石，请所有开发人员严格遵守！**
+
+**最后更新**: 2025-12-13
+**执行负责人**: 技术负责人 & 架构师
