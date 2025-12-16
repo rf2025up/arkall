@@ -80,6 +80,74 @@ const QCView: React.FC = () => {
   const [isTasksLoading, setIsTasksLoading] = useState(false);
   const [tasksError, setTasksError] = useState<string | null>(null);
 
+  // 🚀 课程进度状态管理 - 集成备课页数据
+  const [studentProgress, setStudentProgress] = useState<{
+    chinese?: { unit: string; lesson?: string; title: string };
+    math?: { unit: string; lesson?: string; title: string };
+    english?: { unit: string; title: string };
+    source: 'lesson_plan' | 'default';
+    updatedAt: string;
+  } | null>(null);
+
+  // 课程进度编辑状态
+  const [progressEditMode, setProgressEditMode] = useState(false);
+  const [editedProgress, setEditedProgress] = useState<{
+    chinese?: { unit: string; lesson?: string; title: string };
+    math?: { unit: string; lesson?: string; title: string };
+    english?: { unit: string; title: string };
+  }>({});
+
+  // 🚀 获取学生课程进度 - 集成备课页数据
+  const fetchStudentProgress = async (studentId: number) => {
+    if (!token) {
+      console.warn('[QCView] 没有token，无法查询学生课程进度');
+      return null;
+    }
+
+    try {
+      const response = await apiService.get(`/lms/student-progress?studentId=${studentId}`);
+
+      if (response.success && response.data) {
+        setStudentProgress(response.data);
+        setEditedProgress(response.data); // 初始化编辑状态
+        return response.data;
+      } else {
+        console.warn('[QCView] 获取课程进度失败:', response.message);
+      }
+    } catch (error) {
+      console.error('[QCView] 获取学生课程进度异常:', error);
+    }
+
+    return null;
+  };
+
+  // 🚀 更新学生课程进度 - 权限高于备课页
+  const updateStudentProgress = async (studentId: number) => {
+    if (!token) {
+      alert('无法更新课程进度，请重新登录');
+      return;
+    }
+
+    try {
+      const response = await apiService.patch(`/lms/student-progress/${studentId}`, editedProgress);
+
+      if (response.success && response.data) {
+        setStudentProgress(response.data.progress);
+        setProgressEditMode(false);
+        alert('课程进度更新成功！');
+
+        // 震动反馈
+        if (navigator.vibrate) navigator.vibrate(50);
+      } else {
+        console.error('[QCView] 更新课程进度失败:', response.message);
+        alert(`更新失败: ${response.message}`);
+      }
+    } catch (error) {
+      console.error('[QCView] 更新学生课程进度异常:', error);
+      alert('更新课程进度失败，请重试');
+    }
+  };
+
   // 获取学生任务记录
   const fetchStudentRecords = async (studentId: string, date: string) => {
     if (!token) {
@@ -287,11 +355,16 @@ const QCView: React.FC = () => {
   // --- 交互逻辑 ---
 
   // 1. 质检台操作
-  const openQCDrawer = (sid: number) => {
+  const openQCDrawer = async (sid: number) => {
     const student = qcStudents.find(s => s.id === sid);
 
     setSelectedStudentId(sid);
     setIsQCDrawerOpen(true);
+
+    // 🚀 获取该学生的课程进度数据
+    if (student) {
+      await fetchStudentProgress(student.id);
+    }
   };
 
   const recordAttempt = async (e: React.MouseEvent, studentId: number, taskId: number) => {
@@ -837,20 +910,194 @@ const QCView: React.FC = () => {
               </div>
 
               <div className="p-4 flex-1 overflow-y-auto">
-                {/* 课程进度 (可编辑模拟) */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4 flex justify-between items-center">
-                  <div>
-                    <div className="text-[10px] text-slate-400 font-bold mb-1">当前进度</div>
-                    <div className="text-sm font-bold text-slate-800">
-                      {getSelectedStudent() && getLessonStr(getSelectedStudent()!.lesson)}
+                {/* 🚀 课程进度 (集成备课页数据，权限高于备课页) */}
+                <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl p-4 mb-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center">
+                        <BookOpen size={14} className="text-white" />
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-indigo-600 font-bold">当前进度</div>
+                        <div className="text-xs text-indigo-500">
+                          {studentProgress?.source === 'lesson_plan' ? '来自备课计划' : '默认进度'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      {!progressEditMode && (
+                        <button
+                          onClick={() => {
+                            setEditedProgress({
+                              chinese: studentProgress?.chinese || { unit: "1", lesson: "1", title: "默认" },
+                              math: studentProgress?.math || { unit: "1", lesson: "1", title: "默认" },
+                              english: studentProgress?.english || { unit: "1", title: "Default" }
+                            });
+                            setProgressEditMode(true);
+                          }}
+                          className="text-[11px] font-bold text-indigo-600 border border-indigo-200 px-2 py-1 rounded bg-white hover:bg-indigo-50"
+                        >
+                          ✎ 编辑
+                        </button>
+                      )}
+                      {progressEditMode && (
+                        <>
+                          <button
+                            onClick={() => updateStudentProgress(selectedStudentId!)}
+                            className="text-[11px] font-bold text-green-600 border border-green-200 px-2 py-1 rounded bg-white hover:bg-green-50"
+                          >
+                            ✓ 保存
+                          </button>
+                          <button
+                            onClick={() => {
+                            setProgressEditMode(false);
+                            setEditedProgress({});
+                          }}
+                            className="text-[11px] font-bold text-gray-600 border border-gray-200 px-2 py-1 rounded bg-white hover:bg-gray-50"
+                          >
+                            ✕ 取消
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <button
-                    onClick={() => setLessonEditMode(true)}
-                    className="text-[11px] font-bold text-indigo-600 border border-indigo-200 px-2 py-1 rounded bg-white"
-                  >
-                    ✎ 修改
-                  </button>
+
+                  {!progressEditMode && studentProgress && (
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      <div className="bg-white rounded-lg p-2">
+                        <div className="text-[8px] text-orange-600 font-bold mb-1">语文</div>
+                        <div className="text-xs font-bold text-gray-800">
+                          {studentProgress.chinese?.unit}单元 {studentProgress.chinese?.lesson ? `${studentProgress.chinese.lesson}课` : ''}
+                        </div>
+                        <div className="text-[9px] text-gray-500 truncate">
+                          {studentProgress.chinese?.title}
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-2">
+                        <div className="text-[8px] text-blue-600 font-bold mb-1">数学</div>
+                        <div className="text-xs font-bold text-gray-800">
+                          {studentProgress.math?.unit}单元 {studentProgress.math?.lesson ? `${studentProgress.math?.lesson}课` : ''}
+                        </div>
+                        <div className="text-[9px] text-gray-500 truncate">
+                          {studentProgress.math?.title}
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-2">
+                        <div className="text-[8px] text-purple-600 font-bold mb-1">英语</div>
+                        <div className="text-xs font-bold text-gray-800">
+                          {studentProgress.english?.unit}单元
+                        </div>
+                        <div className="text-[9px] text-gray-500 truncate">
+                          {studentProgress.english?.title}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {progressEditMode && (
+                    <div className="space-y-3">
+                      {/* 语文编辑 */}
+                      <div className="bg-white rounded-lg p-3">
+                        <div className="text-[10px] text-orange-600 font-bold mb-2">语文进度</div>
+                        <div className="grid grid-cols-3 gap-2 mb-2">
+                          <input
+                            type="text"
+                            placeholder="单元"
+                            value={editedProgress.chinese?.unit || ''}
+                            onChange={(e) => setEditedProgress(prev => ({
+                              ...prev,
+                              chinese: { ...prev.chinese, unit: e.target.value }
+                            }))}
+                            className="px-2 py-1 text-xs border border-gray-200 rounded"
+                          />
+                          <input
+                            type="text"
+                            placeholder="课时"
+                            value={editedProgress.chinese?.lesson || ''}
+                            onChange={(e) => setEditedProgress(prev => ({
+                              ...prev,
+                              chinese: { ...prev.chinese, lesson: e.target.value }
+                            }))}
+                            className="px-2 py-1 text-xs border border-gray-200 rounded"
+                          />
+                          <input
+                            type="text"
+                            placeholder="课程标题"
+                            value={editedProgress.chinese?.title || ''}
+                            onChange={(e) => setEditedProgress(prev => ({
+                              ...prev,
+                              chinese: { ...prev.chinese, title: e.target.value }
+                            }))}
+                            className="px-2 py-1 text-xs border border-gray-200 rounded col-span-3"
+                          />
+                        </div>
+                      </div>
+
+                      {/* 数学编辑 */}
+                      <div className="bg-white rounded-lg p-3">
+                        <div className="text-[10px] text-blue-600 font-bold mb-2">数学进度</div>
+                        <div className="grid grid-cols-3 gap-2 mb-2">
+                          <input
+                            type="text"
+                            placeholder="单元"
+                            value={editedProgress.math?.unit || ''}
+                            onChange={(e) => setEditedProgress(prev => ({
+                              ...prev,
+                              math: { ...prev.math, unit: e.target.value }
+                            }))}
+                            className="px-2 py-1 text-xs border border-gray-200 rounded"
+                          />
+                          <input
+                            type="text"
+                            placeholder="课时"
+                            value={editedProgress.math?.lesson || ''}
+                            onChange={(e) => setEditedProgress(prev => ({
+                              ...prev,
+                              math: { ...prev.math, lesson: e.target.value }
+                            }))}
+                            className="px-2 py-1 text-xs border border-gray-200 rounded"
+                          />
+                          <input
+                            type="text"
+                            placeholder="课程标题"
+                            value={editedProgress.math?.title || ''}
+                            onChange={(e) => setEditedProgress(prev => ({
+                              ...prev,
+                              math: { ...prev.math, title: e.target.value }
+                            }))}
+                            className="px-2 py-1 text-xs border border-gray-200 rounded col-span-3"
+                          />
+                        </div>
+                      </div>
+
+                      {/* 英语编辑 */}
+                      <div className="bg-white rounded-lg p-3">
+                        <div className="text-[10px] text-purple-600 font-bold mb-2">英语进度</div>
+                        <div className="grid grid-cols-2 gap-2 mb-2">
+                          <input
+                            type="text"
+                            placeholder="单元"
+                            value={editedProgress.english?.unit || ''}
+                            onChange={(e) => setEditedProgress(prev => ({
+                              ...prev,
+                              english: { ...prev.english, unit: e.target.value }
+                            }))}
+                            className="px-2 py-1 text-xs border border-gray-200 rounded"
+                          />
+                          <input
+                            type="text"
+                            placeholder="课程标题"
+                            value={editedProgress.english?.title || ''}
+                            onChange={(e) => setEditedProgress(prev => ({
+                              ...prev,
+                              english: { ...prev.english, title: e.target.value }
+                            }))}
+                            className="px-2 py-1 text-xs border border-gray-200 rounded"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 临时：显示所有任务类型以便调试 */}

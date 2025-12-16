@@ -203,6 +203,27 @@ const StudentDetail: React.FC = () => {
   const student = studentProfile?.student;
   const studentName = student?.name || '未知学生';
 
+  // --- 获取学生课程进度 ---
+  const fetchStudentProgressData = async (studentId: string) => {
+    try {
+      const response = await apiService.get(`/lms/student-progress?studentId=${studentId}`);
+
+      if (response.success && response.data) {
+        // 将课程进度数据存储到studentProfile中，供学期地图使用
+        setStudentProfile(prev => prev ? {
+          ...prev,
+          student: {
+            ...prev.student,
+            // 添加课程进度信息
+            progress: response.data
+          }
+        } : null);
+      }
+    } catch (error) {
+      console.error('[StudentDetail] 获取学生课程进度失败:', error);
+    }
+  };
+
   // --- 获取学生任务记录 ---
   const fetchStudentTaskRecords = async (studentId: string) => {
     try {
@@ -266,8 +287,11 @@ const StudentDetail: React.FC = () => {
               setStudentPKRecords(pkRecords);
             }
 
-            // 🚀 获取实时任务记录数据
-            await fetchStudentTaskRecords(studentId);
+            // 🚀 获取实时任务记录数据和课程进度数据
+            await Promise.all([
+              fetchStudentTaskRecords(studentId),
+              fetchStudentProgressData(studentId)
+            ]);
           } else {
             setError(response.message || '获取学生数据失败');
           }
@@ -547,11 +571,66 @@ const StudentDetail: React.FC = () => {
         title: record.title,
         attempts: (record.content as any)?.attempts || 0
       })),
-    timeline: {
-      chinese: [] as TimelineLesson[],
-      math: [] as TimelineLesson[],
-      english: [] as TimelineLesson[]
-    }
+    // 🚀 基于真实课程进度数据生成学期地图
+    timeline: (() => {
+      // 使用从API获取的真实课程进度数据
+      const currentProgress = (studentProfile?.student as any)?.progress || {
+        chinese: { unit: "1", lesson: "1", title: "默认课程" },
+        math: { unit: "1", lesson: "1", title: "默认课程" },
+        english: { unit: "1", title: "Default Course" }
+      };
+
+      // 基于当前进度生成学期课程数据
+      const generateTimeline = (subject: 'chinese' | 'math' | 'english', current: any): TimelineLesson[] => {
+        const lessons: TimelineLesson[] = [];
+        const currentUnit = parseInt(current?.unit || '1');
+        const currentLesson = parseInt(current?.lesson || '1');
+        const totalUnits = 8; // 假设8个单元
+        const lessonsPerUnit = subject === 'english' ? 2 : 4; // 英语每单元2课，语文数学每单元4课
+
+        for (let unit = 1; unit <= totalUnits; unit++) {
+          for (let lesson = 1; lesson <= lessonsPerUnit; lesson++) {
+            const lessonId = unit * 100 + lesson;
+            const isCurrentUnit = unit === currentUnit;
+            const isCurrentLesson = isCurrentUnit && lesson === currentLesson;
+            const isCompleted = unit < currentUnit || (unit === currentUnit && lesson <= currentLesson);
+
+            lessons.push({
+              id: lessonId,
+              unit: unit,
+              lesson: subject === 'english' ? undefined : lesson,
+              title: `${subject === 'chinese' ? '语文' : subject === 'math' ? '数学' : '英语'} - 第${unit}单元第${lesson}课`,
+              status: isCompleted ? 'done' : isCurrentLesson ? 'pending' : 'locked',
+              tasks: taskRecords
+                .filter(record => {
+                  // 根据任务类型和学科匹配到对应课程
+                  const subjectCategory = record.type.toUpperCase() === 'QC' ?
+                    (record.title.includes('语文') ? 'chinese' :
+                     record.title.includes('数学') ? 'math' : 'english') : '';
+
+                  return subjectCategory === subject && isCompleted;
+                })
+                .slice(0, 3) // 每课最多显示3个任务
+                .map((record, index) => ({
+                  id: parseInt(record.id) + index,
+                  name: record.title,
+                  status: record.status === 'COMPLETED' ? 'passed' : 'pending',
+                  attempts: (record.content as any)?.attempts || 0,
+                  date: new Date(record.createdAt).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+                }))
+            });
+          }
+        }
+
+        return lessons;
+      };
+
+      return {
+        chinese: generateTimeline('chinese', currentProgress?.chinese),
+        math: generateTimeline('math', currentProgress?.math),
+        english: generateTimeline('english', currentProgress?.english)
+      };
+    })()
   };
 
   // 🚀 基于任务记录的过程任务数据

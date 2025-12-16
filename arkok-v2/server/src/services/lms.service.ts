@@ -748,4 +748,166 @@ export class LMSService {
 
     return results;
   }
+
+  /**
+   * 获取学生课程进度 - 集成备课页数据
+   */
+  async getStudentProgress(schoolId: string, studentId: string): Promise<{
+    chinese?: { unit: string; lesson?: string; title: string };
+    math?: { unit: string; lesson?: string; title: string };
+    english?: { unit: string; title: string };
+    source: 'lesson_plan' | 'default';
+    updatedAt: string;
+  }> {
+    try {
+      console.log(`[LMS_SERVICE] Getting student progress for ${studentId}`);
+
+      // 1. 首先查找最新的教学计划（按日期降序）
+      const latestLessonPlan = await this.prisma.lessonPlan.findFirst({
+        where: {
+          schoolId: schoolId,
+          isActive: true
+        },
+        include: {
+          taskRecords: {
+            where: {
+              studentId: studentId
+            },
+            orderBy: {
+              createdAt: 'desc'
+            },
+            take: 1 // 只需要最新的任务记录来确认关联
+          }
+        },
+        orderBy: {
+          date: 'desc'
+        }
+      });
+
+      // 2. 如果有教学计划，提取课程进度信息
+      if (latestLessonPlan) {
+        const content = latestLessonPlan.content as any;
+
+        // 检查content中是否包含courseInfo
+        if (content?.courseInfo?.chinese || content?.courseInfo?.math || content?.courseInfo?.english) {
+          console.log(`[LMS_SERVICE] Found progress in lesson plan ${latestLessonPlan.id}`);
+
+          return {
+            chinese: content.courseInfo?.chinese,
+            math: content.courseInfo?.math,
+            english: content.courseInfo?.english,
+            source: 'lesson_plan',
+            updatedAt: latestLessonPlan.updatedAt.toISOString()
+          };
+        }
+      }
+
+      // 3. 如果没有找到教学计划或进度信息，返回默认数据
+      console.log(`[LMS_SERVICE] No lesson plan progress found, returning default`);
+      return {
+        chinese: { unit: "1", lesson: "1", title: "默认课程" },
+        math: { unit: "1", lesson: "1", title: "默认课程" },
+        english: { unit: "1", title: "Default Course" },
+        source: 'default',
+        updatedAt: new Date().toISOString()
+      };
+
+    } catch (error) {
+      console.error('[LMS_SERVICE] Get student progress error:', error);
+
+      // 降级处理：返回默认数据
+      return {
+        chinese: { unit: "1", lesson: "1", title: "默认课程" },
+        math: { unit: "1", lesson: "1", title: "默认课程" },
+        english: { unit: "1", title: "Default Course" },
+        source: 'default',
+        updatedAt: new Date().toISOString()
+      };
+    }
+  }
+
+  /**
+   * 更新学生课程进度 - 权限高于备课页
+   * 这里我们将进度信息直接存储在学生的最新任务记录中
+   */
+  async updateStudentProgress(
+    schoolId: string,
+    studentId: string,
+    teacherId: string,
+    progress: {
+      chinese?: { unit: string; lesson?: string; title: string };
+      math?: { unit: string; lesson?: string; title: string };
+      english?: { unit: string; title: string };
+    }
+  ): Promise<{
+    success: boolean;
+    progress: any;
+    message: string;
+  }> {
+    try {
+      console.log(`[LMS_SERVICE] Updating student progress for ${studentId} by teacher ${teacherId}`);
+
+      // 1. 查找最新的教学计划
+      const latestLessonPlan = await this.prisma.lessonPlan.findFirst({
+        where: {
+          schoolId: schoolId,
+          teacherId: teacherId,
+          isActive: true
+        },
+        orderBy: {
+          date: 'desc'
+        }
+      });
+
+      if (!latestLessonPlan) {
+        throw new Error('未找到教学计划，请先发布备课计划');
+      }
+
+      // 2. 更新教学计划中的课程进度信息
+      const updatedContent = {
+        ...(latestLessonPlan.content as any),
+        courseInfo: {
+          ...(latestLessonPlan.content as any)?.courseInfo || {},
+          ...progress
+        },
+        // 记录手动更新历史
+        manualProgressUpdate: {
+          updatedAt: new Date().toISOString(),
+          updatedBy: teacherId,
+          studentId: studentId,
+          progress: progress
+        }
+      };
+
+      const updatedLessonPlan = await this.prisma.lessonPlan.update({
+        where: { id: latestLessonPlan.id },
+        data: {
+          content: updatedContent
+        }
+      });
+
+      console.log(`[LMS_SERVICE] Successfully updated student progress in lesson plan ${latestLessonPlan.id}`);
+
+      return {
+        success: true,
+        progress: {
+          chinese: progress.chinese,
+          math: progress.math,
+          english: progress.english,
+          source: 'lesson_plan',
+          updatedAt: updatedLessonPlan.updatedAt.toISOString()
+        },
+        message: '课程进度更新成功'
+      };
+
+    } catch (error) {
+      console.error('[LMS_SERVICE] Update student progress error:', error);
+
+      return {
+        success: false,
+        progress: null,
+        message: `更新失败: ${(error as Error).message}`
+      };
+    }
+  }
 }
