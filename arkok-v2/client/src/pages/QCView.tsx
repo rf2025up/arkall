@@ -80,45 +80,83 @@ const QCView: React.FC = () => {
   const [isTasksLoading, setIsTasksLoading] = useState(false);
   const [tasksError, setTasksError] = useState<string | null>(null);
 
-  // 🚀 课程进度状态管理 - 集成备课页数据
-  const [studentProgress, setStudentProgress] = useState<{
-    chinese?: { unit: string; lesson?: string; title: string };
-    math?: { unit: string; lesson?: string; title: string };
-    english?: { unit: string; title: string };
-    source: 'lesson_plan' | 'default';
-    updatedAt: string;
-  } | null>(null);
+  // 🚀 课程进度状态管理 - 直接使用备课页的数据结构
+  const [courseInfo, setCourseInfo] = useState<{
+    chinese: { unit: string; lesson?: string; title: string };
+    math: { unit: string; lesson?: string; title: string };
+    english: { unit: string; title: string };
+  }>({
+    chinese: { unit: "1", lesson: "1", title: "默认课程" },
+    math: { unit: "1", lesson: "1", title: "默认课程" },
+    english: { unit: "1", title: "Default Course" }
+  });
 
   // 课程进度编辑状态
   const [progressEditMode, setProgressEditMode] = useState(false);
-  const [editedProgress, setEditedProgress] = useState<{
-    chinese?: { unit: string; lesson?: string; title: string };
-    math?: { unit: string; lesson?: string; title: string };
-    english?: { unit: string; title: string };
-  }>({});
+
+  // 🚀 学科配置 - 直接复制备课页的配置
+  const SUBJECT_CONFIG = {
+    chinese: {
+      label: "语文",
+      dotColor: "bg-orange-400",
+      activeClass: "bg-orange-500 text-white shadow-md shadow-orange-200 border-transparent",
+      bgClass: "bg-orange-50/50 focus-within:bg-orange-50",
+      textClass: "text-orange-600",
+      focusBorder: "focus-within:border-orange-200"
+    },
+    math: {
+      label: "数学",
+      dotColor: "bg-blue-400",
+      activeClass: "bg-blue-500 text-white shadow-md shadow-blue-200 border-transparent",
+      bgClass: "bg-blue-50/50 focus-within:bg-blue-50",
+      textClass: "text-blue-600",
+      focusBorder: "focus-within:border-blue-200"
+    },
+    english: {
+      label: "英语",
+      dotColor: "bg-purple-400",
+      activeClass: "bg-purple-500 text-white shadow-md shadow-purple-200 border-transparent",
+      bgClass: "bg-purple-50/50 focus-within:bg-purple-50",
+      textClass: "text-purple-600",
+      focusBorder: "focus-within:border-purple-200"
+    }
+  };
 
   // 🚀 获取学生课程进度 - 集成备课页数据
   const fetchStudentProgress = async (studentId: number) => {
     if (!token) {
       console.warn('[QCView] 没有token，无法查询学生课程进度');
-      return null;
+      return;
     }
 
     try {
       const response = await apiService.get(`/lms/student-progress?studentId=${studentId}`);
 
       if (response.success && response.data) {
-        setStudentProgress(response.data);
-        setEditedProgress(response.data); // 初始化编辑状态
-        return response.data;
+        // 将API数据转换为courseInfo格式
+        const progressData = response.data;
+        setCourseInfo({
+          chinese: progressData.chinese || { unit: "1", lesson: "1", title: "默认课程" },
+          math: progressData.math || { unit: "1", lesson: "1", title: "默认课程" },
+          english: progressData.english || { unit: "1", title: "Default Course" }
+        });
       } else {
         console.warn('[QCView] 获取课程进度失败:', response.message);
       }
     } catch (error) {
       console.error('[QCView] 获取学生课程进度异常:', error);
     }
+  };
 
-    return null;
+  // 🚀 课程进度变更处理 - 复用备课页的逻辑
+  const handleCourseChange = (sub: keyof typeof courseInfo, field: string, val: string) => {
+    setCourseInfo(prev => ({
+      ...prev,
+      [sub]: {
+        ...prev[sub],
+        [field]: val
+      }
+    }));
   };
 
   // 🚀 更新学生课程进度 - 权限高于备课页
@@ -129,10 +167,9 @@ const QCView: React.FC = () => {
     }
 
     try {
-      const response = await apiService.patch(`/lms/student-progress/${studentId}`, editedProgress);
+      const response = await apiService.patch(`/lms/student-progress/${studentId}`, courseInfo);
 
       if (response.success && response.data) {
-        setStudentProgress(response.data.progress);
         setProgressEditMode(false);
         alert('课程进度更新成功！');
 
@@ -910,31 +947,16 @@ const QCView: React.FC = () => {
               </div>
 
               <div className="p-4 flex-1 overflow-y-auto">
-                {/* 🚀 课程进度 (集成备课页数据，权限高于备课页) */}
-                <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl p-4 mb-4">
-                  <div className="flex justify-between items-center mb-3">
+                {/* 🚀 课程进度 - 直接使用备课页的三行布局 */}
+                <div className="bg-white rounded-[24px] p-4 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-slate-100 mb-4">
+                  <div className="text-[11px] font-extrabold text-slate-400 mb-4 tracking-widest uppercase flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center">
-                        <BookOpen size={14} className="text-white" />
-                      </div>
-                      <div>
-                        <div className="text-[10px] text-indigo-600 font-bold">当前进度</div>
-                        <div className="text-xs text-indigo-500">
-                          {studentProgress?.source === 'lesson_plan' ? '来自备课计划' : '默认进度'}
-                        </div>
-                      </div>
+                      <BookOpen size={14} /> 当前进度
                     </div>
                     <div className="flex gap-2">
                       {!progressEditMode && (
                         <button
-                          onClick={() => {
-                            setEditedProgress({
-                              chinese: studentProgress?.chinese || { unit: "1", lesson: "1", title: "默认" },
-                              math: studentProgress?.math || { unit: "1", lesson: "1", title: "默认" },
-                              english: studentProgress?.english || { unit: "1", title: "Default" }
-                            });
-                            setProgressEditMode(true);
-                          }}
+                          onClick={() => setProgressEditMode(true)}
                           className="text-[11px] font-bold text-indigo-600 border border-indigo-200 px-2 py-1 rounded bg-white hover:bg-indigo-50"
                         >
                           ✎ 编辑
@@ -949,10 +971,7 @@ const QCView: React.FC = () => {
                             ✓ 保存
                           </button>
                           <button
-                            onClick={() => {
-                            setProgressEditMode(false);
-                            setEditedProgress({});
-                          }}
+                            onClick={() => setProgressEditMode(false)}
                             className="text-[11px] font-bold text-gray-600 border border-gray-200 px-2 py-1 rounded bg-white hover:bg-gray-50"
                           >
                             ✕ 取消
@@ -962,142 +981,145 @@ const QCView: React.FC = () => {
                     </div>
                   </div>
 
-                  {!progressEditMode && studentProgress && (
-                    <div className="grid grid-cols-3 gap-3 text-center">
-                      <div className="bg-white rounded-lg p-2">
-                        <div className="text-[8px] text-orange-600 font-bold mb-1">语文</div>
-                        <div className="text-xs font-bold text-gray-800">
-                          {studentProgress.chinese?.unit}单元 {studentProgress.chinese?.lesson ? `${studentProgress.chinese.lesson}课` : ''}
-                        </div>
-                        <div className="text-[9px] text-gray-500 truncate">
-                          {studentProgress.chinese?.title}
-                        </div>
-                      </div>
-                      <div className="bg-white rounded-lg p-2">
-                        <div className="text-[8px] text-blue-600 font-bold mb-1">数学</div>
-                        <div className="text-xs font-bold text-gray-800">
-                          {studentProgress.math?.unit}单元 {studentProgress.math?.lesson ? `${studentProgress.math?.lesson}课` : ''}
-                        </div>
-                        <div className="text-[9px] text-gray-500 truncate">
-                          {studentProgress.math?.title}
-                        </div>
-                      </div>
-                      <div className="bg-white rounded-lg p-2">
-                        <div className="text-[8px] text-purple-600 font-bold mb-1">英语</div>
-                        <div className="text-xs font-bold text-gray-800">
-                          {studentProgress.english?.unit}单元
-                        </div>
-                        <div className="text-[9px] text-gray-500 truncate">
-                          {studentProgress.english?.title}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {progressEditMode && (
-                    <div className="space-y-3">
-                      {/* 语文编辑 */}
-                      <div className="bg-white rounded-lg p-3">
-                        <div className="text-[10px] text-orange-600 font-bold mb-2">语文进度</div>
-                        <div className="grid grid-cols-3 gap-2 mb-2">
-                          <input
-                            type="text"
-                            placeholder="单元"
-                            value={editedProgress.chinese?.unit || ''}
-                            onChange={(e) => setEditedProgress(prev => ({
-                              ...prev,
-                              chinese: { ...prev.chinese, unit: e.target.value }
-                            }))}
-                            className="px-2 py-1 text-xs border border-gray-200 rounded"
-                          />
-                          <input
-                            type="text"
-                            placeholder="课时"
-                            value={editedProgress.chinese?.lesson || ''}
-                            onChange={(e) => setEditedProgress(prev => ({
-                              ...prev,
-                              chinese: { ...prev.chinese, lesson: e.target.value }
-                            }))}
-                            className="px-2 py-1 text-xs border border-gray-200 rounded"
-                          />
-                          <input
-                            type="text"
-                            placeholder="课程标题"
-                            value={editedProgress.chinese?.title || ''}
-                            onChange={(e) => setEditedProgress(prev => ({
-                              ...prev,
-                              chinese: { ...prev.chinese, title: e.target.value }
-                            }))}
-                            className="px-2 py-1 text-xs border border-gray-200 rounded col-span-3"
-                          />
-                        </div>
-                      </div>
-
-                      {/* 数学编辑 */}
-                      <div className="bg-white rounded-lg p-3">
-                        <div className="text-[10px] text-blue-600 font-bold mb-2">数学进度</div>
-                        <div className="grid grid-cols-3 gap-2 mb-2">
-                          <input
-                            type="text"
-                            placeholder="单元"
-                            value={editedProgress.math?.unit || ''}
-                            onChange={(e) => setEditedProgress(prev => ({
-                              ...prev,
-                              math: { ...prev.math, unit: e.target.value }
-                            }))}
-                            className="px-2 py-1 text-xs border border-gray-200 rounded"
-                          />
-                          <input
-                            type="text"
-                            placeholder="课时"
-                            value={editedProgress.math?.lesson || ''}
-                            onChange={(e) => setEditedProgress(prev => ({
-                              ...prev,
-                              math: { ...prev.math, lesson: e.target.value }
-                            }))}
-                            className="px-2 py-1 text-xs border border-gray-200 rounded"
-                          />
-                          <input
-                            type="text"
-                            placeholder="课程标题"
-                            value={editedProgress.math?.title || ''}
-                            onChange={(e) => setEditedProgress(prev => ({
-                              ...prev,
-                              math: { ...prev.math, title: e.target.value }
-                            }))}
-                            className="px-2 py-1 text-xs border border-gray-200 rounded col-span-3"
-                          />
-                        </div>
-                      </div>
-
-                      {/* 英语编辑 */}
-                      <div className="bg-white rounded-lg p-3">
-                        <div className="text-[10px] text-purple-600 font-bold mb-2">英语进度</div>
-                        <div className="grid grid-cols-2 gap-2 mb-2">
-                          <input
-                            type="text"
-                            placeholder="单元"
-                            value={editedProgress.english?.unit || ''}
-                            onChange={(e) => setEditedProgress(prev => ({
-                              ...prev,
-                              english: { ...prev.english, unit: e.target.value }
-                            }))}
-                            className="px-2 py-1 text-xs border border-gray-200 rounded"
-                          />
-                          <input
-                            type="text"
-                            placeholder="课程标题"
-                            value={editedProgress.english?.title || ''}
-                            onChange={(e) => setEditedProgress(prev => ({
-                              ...prev,
-                              english: { ...prev.english, title: e.target.value }
-                            }))}
-                            className="px-2 py-1 text-xs border border-gray-200 rounded"
-                          />
-                        </div>
+                  <div className="space-y-3">
+                    {/* 语文 - 完全复制备课页的布局 */}
+                    <div className={`group flex items-center p-1.5 pr-4 rounded-2xl transition-colors ${SUBJECT_CONFIG.chinese.bgClass}`}>
+                      <div className={`w-10 h-10 rounded-xl bg-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0 ml-1 ${SUBJECT_CONFIG.chinese.textClass}`}>语</div>
+                      <div className="flex-1 flex items-center gap-1.5 ml-3 overflow-hidden">
+                        {!progressEditMode ? (
+                          <>
+                            <div className={`flex items-center gap-1 bg-white/60 px-2 py-1.5 rounded-lg border border-transparent transition-colors shadow-sm shrink-0 ${SUBJECT_CONFIG.chinese.focusBorder}`}>
+                              <span className="bg-transparent w-5 text-center font-bold text-slate-800 text-sm p-0">
+                                {courseInfo.chinese.unit}
+                              </span>
+                              <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">单元</span>
+                            </div>
+                            {courseInfo.chinese.lesson && (
+                              <div className={`flex items-center gap-1 bg-white/60 px-2 py-1.5 rounded-lg border border-transparent transition-colors shadow-sm shrink-0 ${SUBJECT_CONFIG.chinese.focusBorder}`}>
+                                <span className="bg-transparent w-5 text-center font-bold text-slate-800 text-sm p-0">
+                                  {courseInfo.chinese.lesson}
+                                </span>
+                                <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">课</span>
+                              </div>
+                            )}
+                            <div className="bg-transparent flex-1 font-bold text-slate-800 text-sm px-3 py-1.5 ml-1 rounded-md">
+                              {courseInfo.chinese.title}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className={`flex items-center gap-1 bg-white/60 px-2 py-1.5 rounded-lg border border-transparent transition-colors shadow-sm shrink-0 ${SUBJECT_CONFIG.chinese.focusBorder}`}>
+                              <input
+                                className="bg-transparent w-5 text-center font-bold text-slate-800 text-sm p-0 outline-none"
+                                value={courseInfo.chinese.unit}
+                                onChange={(e) => handleCourseChange('chinese', 'unit', e.target.value)}
+                              />
+                              <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">单元</span>
+                            </div>
+                            <div className={`flex items-center gap-1 bg-white/60 px-2 py-1.5 rounded-lg border border-transparent transition-colors shadow-sm shrink-0 ${SUBJECT_CONFIG.chinese.focusBorder}`}>
+                              <input
+                                className="bg-transparent w-5 text-center font-bold text-slate-800 text-sm p-0 outline-none"
+                                value={courseInfo.chinese.lesson}
+                                onChange={(e) => handleCourseChange('chinese', 'lesson', e.target.value)}
+                              />
+                              <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">课</span>
+                            </div>
+                            <input
+                              className="bg-transparent flex-1 font-bold text-slate-800 text-sm px-3 py-1.5 ml-1 placeholder:text-slate-300 outline-none rounded-md focus:bg-white/50 transition-colors"
+                              value={courseInfo.chinese.title}
+                              onChange={(e) => handleCourseChange('chinese', 'title', e.target.value)}
+                            />
+                          </>
+                        )}
                       </div>
                     </div>
-                  )}
+
+                    {/* 数学 - 完全复制备课页的布局 */}
+                    <div className={`group flex items-center p-1.5 pr-4 rounded-2xl transition-colors ${SUBJECT_CONFIG.math.bgClass}`}>
+                      <div className={`w-10 h-10 rounded-xl bg-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0 ml-1 ${SUBJECT_CONFIG.math.textClass}`}>数</div>
+                      <div className="flex-1 flex items-center gap-1.5 ml-3 overflow-hidden">
+                        {!progressEditMode ? (
+                          <>
+                            <div className={`flex items-center gap-1 bg-white/60 px-2 py-1.5 rounded-lg border border-transparent transition-colors shadow-sm shrink-0 ${SUBJECT_CONFIG.math.focusBorder}`}>
+                              <span className="bg-transparent w-5 text-center font-bold text-slate-800 text-sm p-0">
+                                {courseInfo.math.unit}
+                              </span>
+                              <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">章</span>
+                            </div>
+                            <div className={`flex items-center gap-1 bg-white/60 px-2 py-1.5 rounded-lg border border-transparent transition-colors shadow-sm shrink-0 ${SUBJECT_CONFIG.math.focusBorder}`}>
+                              <span className="bg-transparent w-5 text-center font-bold text-slate-800 text-sm p-0">
+                                {courseInfo.math.lesson}
+                              </span>
+                              <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">节</span>
+                            </div>
+                            <div className="bg-transparent flex-1 font-bold text-slate-800 text-sm px-3 py-1.5 ml-1 rounded-md">
+                              {courseInfo.math.title}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className={`flex items-center gap-1 bg-white/60 px-2 py-1.5 rounded-lg border border-transparent transition-colors shadow-sm shrink-0 ${SUBJECT_CONFIG.math.focusBorder}`}>
+                              <input
+                                className="bg-transparent w-5 text-center font-bold text-slate-800 text-sm p-0 outline-none"
+                                value={courseInfo.math.unit}
+                                onChange={(e) => handleCourseChange('math', 'unit', e.target.value)}
+                              />
+                              <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">章</span>
+                            </div>
+                            <div className={`flex items-center gap-1 bg-white/60 px-2 py-1.5 rounded-lg border border-transparent transition-colors shadow-sm shrink-0 ${SUBJECT_CONFIG.math.focusBorder}`}>
+                              <input
+                                className="bg-transparent w-5 text-center font-bold text-slate-800 text-sm p-0 outline-none"
+                                value={courseInfo.math.lesson}
+                                onChange={(e) => handleCourseChange('math', 'lesson', e.target.value)}
+                              />
+                              <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">节</span>
+                            </div>
+                            <input
+                              className="bg-transparent flex-1 font-bold text-slate-800 text-sm px-3 py-1.5 ml-1 placeholder:text-slate-300 outline-none rounded-md focus:bg-white/50 transition-colors"
+                              value={courseInfo.math.title}
+                              onChange={(e) => handleCourseChange('math', 'title', e.target.value)}
+                            />
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 英语 - 完全复制备课页的布局 */}
+                    <div className={`group flex items-center p-1.5 pr-4 rounded-2xl transition-colors ${SUBJECT_CONFIG.english.bgClass}`}>
+                      <div className={`w-10 h-10 rounded-xl bg-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0 ml-1 ${SUBJECT_CONFIG.english.textClass}`}>英</div>
+                      <div className="flex-1 flex items-center gap-1.5 ml-3 overflow-hidden">
+                        {!progressEditMode ? (
+                          <>
+                            <div className={`flex items-center gap-1 bg-white/60 px-2 py-1.5 rounded-lg border border-transparent transition-colors shadow-sm shrink-0 ${SUBJECT_CONFIG.english.focusBorder}`}>
+                              <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">Unit</span>
+                              <span className="bg-transparent w-6 text-center font-bold text-slate-800 text-sm p-0">
+                                {courseInfo.english.unit}
+                              </span>
+                            </div>
+                            <div className="bg-transparent flex-1 font-bold text-slate-800 text-sm px-3 py-1.5 ml-1 rounded-md">
+                              {courseInfo.english.title}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className={`flex items-center gap-1 bg-white/60 px-2 py-1.5 rounded-lg border border-transparent transition-colors shadow-sm shrink-0 ${SUBJECT_CONFIG.english.focusBorder}`}>
+                              <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">Unit</span>
+                              <input
+                                className="bg-transparent w-6 text-center font-bold text-slate-800 text-sm p-0 outline-none"
+                                value={courseInfo.english.unit}
+                                onChange={(e) => handleCourseChange('english', 'unit', e.target.value)}
+                              />
+                            </div>
+                            <input
+                              className="bg-transparent flex-1 font-bold text-slate-800 text-sm px-3 py-1.5 ml-1 placeholder:text-slate-300 outline-none rounded-md focus:bg-white/50 transition-colors"
+                              value={courseInfo.english.title}
+                              onChange={(e) => handleCourseChange('english', 'title', e.target.value)}
+                            />
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* 临时：显示所有任务类型以便调试 */}
