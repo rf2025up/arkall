@@ -90,7 +90,7 @@ const QC_CONFIG: Record<string, any> = {
 };
 
 const PrepView: React.FC = () => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const { currentClass, viewMode } = useClass(); // 🆕 获取viewMode用于UI安全锁
 
   // --- 3. 数据获取 ---
@@ -521,14 +521,19 @@ const PrepView: React.FC = () => {
               <h1 className="text-2xl font-bold tracking-tight text-slate-900">今日备课</h1>
               <div className="flex items-center gap-2 mt-1">
                 <p className="text-xs font-semibold text-slate-400">{dateStr}</p>
-                {currentClass !== 'ALL' && (
+                {viewMode === 'MY_STUDENTS' && (
                   <div className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                    {currentClass}
+                    {user?.name}的班级
                   </div>
                 )}
-                {currentClass === 'ALL' && (
+                {viewMode === 'ALL_SCHOOL' && (
                   <div className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
-                    全校
+                    全校大名单
+                  </div>
+                )}
+                {viewMode === 'SPECIFIC_CLASS' && currentClass !== 'ALL' && (
+                  <div className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                    {currentClass}
                   </div>
                 )}
               </div>

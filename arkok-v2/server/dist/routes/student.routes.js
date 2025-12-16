@@ -533,9 +533,22 @@ class StudentRoutes {
                 classRoom: req.query.classRoom,
                 search: req.query.search,
                 page: req.query.page ? parseInt(req.query.page) : undefined,
-                limit: req.query.limit ? parseInt(req.query.limit) : undefined
+                limit: req.query.limit ? parseInt(req.query.limit) : undefined,
+                // 🆕 新增师生绑定相关参数
+                teacherId: req.query.teacherId,
+                scope: req.query.scope,
+                userRole: req.query.userRole,
+                requesterId: req.query.requesterId
             };
             console.log(`[DEBUG] Query object sent to service:`, query);
+            // 🚨 临时调试：添加 teacherId 诊断日志
+            if (!query.teacherId) {
+                console.log(`[DEBUG] ❌ CRITICAL: teacherId is missing from query!`);
+                console.log(`[DEBUG] Available query params:`, Object.keys(req.query));
+            }
+            else {
+                console.log(`[DEBUG] ✅ teacherId is present: ${query.teacherId}`);
+            }
             const result = await this.studentService.getStudents(query);
             console.log(`[DEBUG] Service returned:`, result);
             console.log(`[DEBUG] Number of students in result:`, result?.students?.length);
@@ -635,7 +648,8 @@ class StudentRoutes {
             const data = {
                 name: req.body.name,
                 className: req.body.className || req.body.classRoom, // 兼容旧的 classRoom 字段
-                schoolId: req.schoolId
+                schoolId: req.schoolId,
+                teacherId: req.body.teacherId || req.user?.id // 🆕 必须指定归属老师
             };
             console.log("Processed data object:", data);
             const student = await this.studentService.createStudent(data);
@@ -701,11 +715,12 @@ class StudentRoutes {
         }
     }
     /**
-     * 转班（支持Admin和Teacher）
+     * 🆕 师生关系转移 - 从"转班"升级为"抢人"
      */
     async transferStudents(req, res) {
         try {
-            const { studentIds, targetClassName } = req.body;
+            // 🆕 参数变更：从 targetClassName 改为 targetTeacherId
+            const { studentIds, targetTeacherId } = req.body;
             const user = req.user;
             if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
                 res.status(400).json({
@@ -714,17 +729,18 @@ class StudentRoutes {
                 });
                 return;
             }
-            if (!targetClassName || targetClassName.trim() === '') {
+            if (!targetTeacherId || targetTeacherId.trim() === '') {
                 res.status(400).json({
                     success: false,
-                    message: '目标班级名称不能为空'
+                    message: '目标老师ID不能为空'
                 });
                 return;
             }
-            const result = await this.studentService.transferStudents(studentIds, targetClassName.trim(), req.schoolId, user.username);
+            // 🆕 调用新的师生关系转移方法
+            const result = await this.studentService.transferStudents(studentIds, targetTeacherId.trim(), req.schoolId, user.username);
             res.status(200).json({
                 success: true,
-                message: `成功将 ${result.length} 名学生转入 ${targetClassName}`,
+                message: `成功将 ${result.length} 名学生移入老师名下`,
                 data: result
             });
         }
@@ -732,7 +748,7 @@ class StudentRoutes {
             console.error('Transfer students error:', error);
             res.status(500).json({
                 success: false,
-                message: '转班过程中发生错误'
+                message: '师生关系转移过程中发生错误'
             });
         }
     }

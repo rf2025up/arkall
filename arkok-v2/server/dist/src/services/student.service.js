@@ -43,12 +43,10 @@ class StudentService {
                 console.log(`[TEACHER BINDING] Querying ALL_SCHOOL for ADMIN`);
             }
             else if (scope === 'ALL_SCHOOL' && userRole === 'TEACHER') {
-                // 老师查看全校学生 - 用于"抢人"功能
-                console.log(`[TEACHER BINDING] Querying ALL_SCHOOL for teacher (for transfer): ${teacherId}`);
-                // 可以查询全校，但排除已经归属给自己的学生（避免重复显示）
-                if (teacherId) {
-                    whereCondition.teacherId = { not: teacherId };
-                }
+                // 老师查看全校学生 - 显示所有学生（包括已归属和未归属的）
+                console.log(`[TEACHER BINDING] Querying ALL_SCHOOL for TEACHER: ${teacherId}`);
+                // 🆕 修复：显示全校所有学生，不再限制teacherId
+                // 老师可以看到所有学生，然后通过前端按钮选择"移入"
             }
             else if (scope === 'SPECIFIC_TEACHER' && teacherId) {
                 // 🆕 新增：查看特定老师的学生（用于抢人功能）
@@ -661,7 +659,7 @@ class StudentService {
             where: { id: studentId, schoolId },
             data: {
                 teacherId: targetTeacherId, // 🆕 核心变更：更新老师归属
-                // className: targetTeacher.primaryClassName || targetTeacher.name + '班'  // 可选：同步更新班级名
+                className: targetTeacher.primaryClassName || targetTeacher.name + '班' // 🔒 修复：同步更新班级名
             }
         })));
         // 🆕 创建师生关系转移记录

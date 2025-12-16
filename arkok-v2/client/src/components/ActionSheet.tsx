@@ -108,7 +108,7 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
           <div className="flex items-center space-x-3">
             {selectedStudents.length === 1 ? (
               <>
-                <img src="/1024.jpg" alt="avatar" className="w-12 h-12 rounded-full border-2 border-orange-100 shadow-sm" />
+                <img src={selectedStudents[0]?.avatarUrl || '/1024.jpg'} alt="avatar" className="w-12 h-12 rounded-full border-2 border-orange-100 shadow-sm" />
                 <div>
                   <p className="font-bold text-lg text-gray-800">{selectedStudents[0].name}</p>
                   <div className="flex items-center space-x-2 text-xs font-medium">

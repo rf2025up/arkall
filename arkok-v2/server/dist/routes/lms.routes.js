@@ -14,6 +14,26 @@ exports.lmsRoutes = router;
 const prisma = new client_1.PrismaClient();
 const lmsService = new lms_service_1.LMSService(prisma);
 const authService = new auth_service_1.default(prisma);
+// 🚨 临时调试端点 - 测试前端是否能调用API (无认证)
+router.get('/debug-test', async (req, res) => {
+    console.log('🔥 [DEBUG] ===== 前端API调用测试成功！ =====');
+    console.log('🔥 [DEBUG] 请求时间:', new Date().toISOString());
+    console.log('🔥 [DEBUG] 请求URL:', req.originalUrl);
+    console.log('🔥 [DEBUG] 请求方法:', req.method);
+    console.log('🔥 [DEBUG] User-Agent:', req.headers['user-agent']);
+
+    res.json({
+        success: true,
+        message: '前端API调用测试成功！',
+        timestamp: new Date().toISOString(),
+        requestInfo: {
+            url: req.originalUrl,
+            method: req.method,
+            userAgent: req.headers['user-agent']
+        }
+    });
+});
+
 // 应用认证中间件到所有路由
 router.use((0, auth_middleware_1.authenticateToken)(authService));
 // 临时处理mistakes端点 - 临时解决方案
@@ -279,6 +299,7 @@ router.get('/stats/:schoolId', async (req, res) => {
         });
     }
 });
+
 // 获取学生的每日任务记录
 router.get('/daily-records', async (req, res) => {
     try {

@@ -82,21 +82,61 @@ const QCView: React.FC = () => {
 
   // 获取学生任务记录
   const fetchStudentRecords = async (studentId: string, date: string) => {
-    if (!token) return [];
+    if (!token) {
+      console.log(`🔥 [QCView Detail] ⚠️ 没有token，无法查询学生 ${studentId} 的任务记录`);
+      return [];
+    }
 
     try {
-      console.log(`🔍 [QCView] 获取学生 ${studentId} 的任务记录 (${date})`);
+      console.log(`🔥 [QCView Detail] ===== 开始获取学生任务记录 =====`);
+      console.log(`🔥 [QCView Detail] 学生ID: ${studentId}`);
+      console.log(`🔥 [QCView Detail] 查询日期: ${date}`);
+      console.log(`🔥 [QCView Detail] Token状态: ${token ? '有效' : '无效'}`);
+      console.log(`🔥 [QCView Detail] API端点: /lms/daily-records?studentId=${studentId}&date=${date}`);
+
       const response = await apiService.get(`/lms/daily-records?studentId=${studentId}&date=${date}`);
+
+      console.log(`🔥 [QCView Detail] ===== API响应数据 =====`);
+      console.log(`🔥 [QCView Detail] 完整响应:`, response);
+      console.log(`🔥 [QCView Detail] 响应成功: ${response.success}`);
+      console.log(`🔥 [QCView Detail] 响应消息: ${response.message}`);
+      console.log(`🔥 [QCView Detail] 数据类型: ${typeof response.data}`);
+      console.log(`🔥 [QCView Detail] 数据长度: ${Array.isArray(response.data) ? response.data.length : 'N/A'}`);
 
       if (response.success && response.data) {
         const records = response.data as any[];
-        console.log(`✅ [QCView] 学生 ${studentId} 任务记录数量: ${records.length}`);
+        console.log(`🔥 [QCView Detail] 学生 ${studentId} 任务记录数量: ${records.length}`);
+
+        if (records.length > 0) {
+          console.log(`🔥 [QCView Detail] ===== 记录详情 =====`);
+          records.forEach((record, index) => {
+            console.log(`🔥 [QCView Detail] 记录 ${index + 1}:`, {
+              id: record.id,
+              title: record.title,
+              type: record.type,
+              status: record.status,
+              exp: record.expAwarded,
+              createdAt: record.createdAt
+            });
+          });
+        } else {
+          console.log(`🔥 [QCView Detail] ⚠️ 没有找到任务记录！`);
+        }
+
         return records;
+      } else {
+        console.log(`🔥 [QCView Detail] ❌ API调用失败或无数据`);
       }
     } catch (error) {
-      console.error(`❌ [QCView] 获取学生 ${studentId} 任务记录失败:`, error);
+      console.error(`🔥 [QCView Detail] 💥 获取学生 ${studentId} 任务记录异常:`, error);
+      console.error(`🔥 [QCView Detail] 错误详情:`, {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
     }
 
+    console.log(`🔥 [QCView Detail] ===== 返回空数组 =====`);
     return [];
   };
 
@@ -515,6 +555,19 @@ const QCView: React.FC = () => {
     }));
   };
 
+  // 🚨 临时测试函数 - 调试API连接
+  const testAPIConnection = async () => {
+    console.log('🔥 [API_TEST] ===== 开始测试API连接 =====');
+    try {
+      const response = await apiService.get('/lms/debug-test');
+      console.log('🔥 [API_TEST] API调用成功:', response);
+      alert('API连接测试成功！请查看控制台和服务器日志。');
+    } catch (error) {
+      console.error('🔥 [API_TEST] API调用失败:', error);
+      alert('API连接测试失败！请查看控制台。');
+    }
+  };
+
   return (
     <ProtectedRoute>
       <div className="flex flex-col h-full bg-gray-100 font-sans text-slate-900" style={pageStyle}>
@@ -522,25 +575,33 @@ const QCView: React.FC = () => {
         {/* === 顶部 Header (V1原版样式) === */}
         <div className="bg-white pt-10 px-4 pb-2 border-b border-gray-200 shadow-sm z-10">
           <div className="flex justify-between items-start mb-2">
-            <div>
+            <div className="flex items-center gap-2">
               <div className="text-xl font-extrabold text-slate-800">
                 {activeTab === 'qc' ? '过关台' : '任务结算台'}
               </div>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-slate-400">
-                  {activeTab === 'qc' ? '记录辅导过程，体现深度服务' : '确认完成 & 发放EXP'}
-                </span>
-                {currentClass !== 'ALL' && (
-                  <div className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                    {currentClass}
-                  </div>
-                )}
-                {currentClass === 'ALL' && (
-                  <div className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
-                    全校
-                  </div>
-                )}
-              </div>
+              {/* 🚨 临时测试按钮 */}
+              <button
+                onClick={testAPIConnection}
+                className="px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
+                style={{ fontSize: '10px' }}
+              >
+                测试API
+              </button>
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-xs text-slate-400">
+                {activeTab === 'qc' ? '记录辅导过程，体现深度服务' : '确认完成 & 发放EXP'}
+              </span>
+              {currentClass !== 'ALL' && (
+                <div className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                  {currentClass}
+                </div>
+              )}
+              {currentClass === 'ALL' && (
+                <div className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
+                  全校
+                </div>
+              )}
             </div>
 
             {/* 结算页显示总分 */}
@@ -756,7 +817,14 @@ const QCView: React.FC = () => {
 
                 {/* QC List */}
                 <div className="space-y-0">
-                  {getSelectedStudent()?.tasks.filter(t => t.type === 'QC').map(task => {
+                  {getSelectedStudent()?.tasks.filter(t => t.type === 'QC').length === 0 ? (
+                    <div className="text-center py-8 text-gray-400">
+                      <Shield size={32} className="mx-auto mb-3 opacity-50" />
+                      <p className="text-sm font-medium mb-1">暂无过关项目</p>
+                      <p className="text-xs">请先到备课页发布任务，或在下方自主任务申报中添加</p>
+                    </div>
+                  ) : (
+                    getSelectedStudent()?.tasks.filter(t => t.type === 'QC').map(task => {
                     const isPass = task.status === 'PASSED';
                     return (
                       <div
@@ -797,7 +865,8 @@ const QCView: React.FC = () => {
                         </div>
                       </div>
                     );
-                  })}
+                  })
+                  )}
                 </div>
 
                 <div className="mt-6 text-center text-[10px] text-gray-300">

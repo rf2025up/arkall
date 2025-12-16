@@ -506,7 +506,7 @@ const Home = () => {
                     >
                         <div className="relative">
                             <img
-                                src="/1024.jpg"
+                                src={student.avatarUrl || '/1024.jpg'}
                                 alt={student.name}
                                 onError={(e)=>{ e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 fill=%22%23e5e7eb%22/><circle cx=%2232%22 cy=%2224%22 r=%2212%22 fill=%22%23cbd5e1%22/><rect x=%2216%22 y=%2240%22 width=%2232%22 height=%2216%22 rx=%228%22 fill=%22%23cbd5e1%22/></svg>'; }}
                                 className={`w-14 h-14 rounded-full object-cover border-2 transition-all select-none pointer-events-none ${

@@ -145,6 +145,14 @@ class LMSService {
         const { schoolId, teacherId, title, content, date, tasks, className } = request;
         try {
             console.log(`📚 Publishing lesson plan: ${title} for school: ${schoolId}${className ? ` (class: ${className})` : ' (all classes)'}`);
+
+            // 🆕 防重检查：获取当前时间范围
+            const now = new Date();
+            const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+            const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+            console.log(`🔍 [ANTI_DUPLICATE] 执行防重检查，时间范围: ${startOfDay.toISOString()} - ${endOfDay.toISOString()}`);
+
             // 1. 获取目标班级的学生 - 支持班级隔离
             const whereClause = {
                 schoolId,
@@ -154,20 +162,68 @@ class LMSService {
             if (className && className !== 'ALL') {
                 whereClause.className = className;
             }
+
+            // 🆕 添加teacherId限制确保只能查询到自己的学生
+            whereClause.teacherId = teacherId;
+
+            console.log(`🔍 [LMS_SECURITY] 查询条件:`, JSON.stringify(whereClause, null, 2));
+
             const students = await this.prisma.student.findMany({
                 where: whereClause,
                 select: {
                     id: true,
-                    className: true
+                    className: true,
+                    teacherId: true
                 }
             });
-            if (students.length === 0) {
-                const target = className && className !== 'ALL' ? `class ${className}` : 'school';
-                throw new Error(`No active students found in ${target}`);
+
+            // 🚨 额外安全验证：检查所有返回的学生都确实属于当前老师
+            const invalidStudents = students.filter(s => s.teacherId !== teacherId);
+            if (invalidStudents.length > 0) {
+                console.error(`🚨 [LMS_SECURITY] CRITICAL: Found students belonging to other teachers:`, invalidStudents);
+                throw new Error('严重安全错误：查询结果包含其他老师的学生');
             }
-            const target = className && className !== 'ALL' ? `class ${className}` : 'school';
-            console.log(`👥 Found ${students.length} students in ${target}`);
-            // 2. 创建教学计划
+            if (students.length === 0) {
+                console.log(`⚠️ [LMS_SECURITY] No students found for teacher: ${teacherId}`);
+                throw new Error(`该老师名下暂无学生，无法发布任务`);
+            }
+
+            console.log(`👥 [LMS_SECURITY] Found ${students.length} students for teacher: ${teacherId}`);
+            students.forEach(s => {
+                console.log(`👤 [LMS_SECURITY] Student: ${s.id} (${s.className}) - teacherId: ${s.teacherId}`);
+            });
+            // 2. 🆕 防重处理：删除当天旧的教学计划和任务记录
+            console.log(`🔄 [ANTI_DUPLICATE] 开始清理当天旧数据...`);
+
+            // 2.1 删除当天该老师的旧教学计划
+            const deletedLessonPlans = await this.prisma.lessonPlan.deleteMany({
+                where: {
+                    schoolId,
+                    teacherId,
+                    date: {
+                        gte: startOfDay,
+                        lte: endOfDay
+                    }
+                }
+            });
+            console.log(`🗑️ [ANTI_DUPLICATE] 删除了 ${deletedLessonPlans.count} 个旧教学计划`);
+
+            // 2.2 删除当天该老师学生的旧任务记录
+            const deletedTaskRecords = await this.prisma.taskRecord.deleteMany({
+                where: {
+                    schoolId,
+                    studentId: {
+                        in: students.map(s => s.id)
+                    },
+                    createdAt: {
+                        gte: startOfDay,
+                        lte: endOfDay
+                    }
+                }
+            });
+            console.log(`🗑️ [ANTI_DUPLICATE] 删除了 ${deletedTaskRecords.count} 个旧任务记录`);
+
+            // 2.3 创建全新的教学计划
             const lessonPlan = await this.prisma.lessonPlan.create({
                 data: {
                     schoolId,
@@ -175,16 +231,22 @@ class LMSService {
                     title,
                     content: {
                         ...content,
-                        targetClass: className || 'ALL' // 记录目标班级信息
+                        targetClass: className || 'ALL', // 记录目标班级信息
+                        deletedOldPlans: deletedLessonPlans.count,
+                        deletedOldRecords: deletedTaskRecords.count
                     },
                     date: new Date(date),
                     isActive: true
                 }
             });
-            console.log(`✅ Created lesson plan: ${lessonPlan.id}`);
-            // 3. 批量创建任务记录
+            console.log(`✅ Created new lesson plan: ${lessonPlan.id} (替换了 ${deletedLessonPlans.count} 个旧计划)`);
+
+            // 3. 批量创建新的任务记录（无需防重检查，因为旧数据已清理）
             const taskRecords = [];
             const affectedClasses = new Set();
+
+            console.log(`📝 [ANTI_DUPLICATE] 开始为 ${students.length} 个学生创建新任务记录...`);
+
             for (const student of students) {
                 affectedClasses.add(student.className);
                 for (const task of tasks) {
@@ -214,6 +276,10 @@ class LMSService {
                 });
                 console.log(`✅ Created ${taskRecords.length} task records`);
             }
+
+            // 🆕 防重统计输出
+            console.log(`🛡️ [ANTI_DUPLICATE] 新防重逻辑完成: 删除了 ${deletedLessonPlans.count} 个旧计划，${deletedTaskRecords.count} 个旧任务，创建了 ${taskRecords.length} 个新任务`);
+
             // 4. 计算统计信息
             const taskStats = {
                 totalStudents: students.length,
@@ -365,16 +431,32 @@ class LMSService {
      */
     async getDailyRecords(schoolId, studentId, date) {
         try {
+            console.log(`🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====`);
+            console.log(`🔥 [LMS DEBUG] 传入参数: schoolId=${schoolId}, studentId=${studentId}, date=${date}`);
+
             const targetDate = new Date(date);
-            const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
-            const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
+            const year = targetDate.getFullYear();
+            const month = targetDate.getMonth();
+            const day = targetDate.getDate();
+
+            const startOfDay = new Date(year, month, day, 0, 0, 0, 0);
+            const endOfDay = new Date(year, month, day, 23, 59, 59, 999);
+
+            // 🔥 [时区修复] 扩展查询范围
+            const extendedStart = new Date(startOfDay.getTime() - 24 * 60 * 60 * 1000);
+            const extendedEnd = new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000);
+
+            console.log(`🔥 [LMS DEBUG] 原始查询范围: ${startOfDay.toISOString()} - ${endOfDay.toISOString()}`);
+            console.log(`🔥 [LMS DEBUG] 扩展查询范围: ${extendedStart.toISOString()} - ${extendedEnd.toISOString()}`);
+            console.log(`🔥 [LMS DEBUG] 服务器当前时间: ${new Date().toISOString()}`);
+
             const records = await this.prisma.taskRecord.findMany({
                 where: {
                     schoolId,
                     studentId,
                     createdAt: {
-                        gte: startOfDay,
-                        lte: endOfDay
+                        gte: extendedStart,
+                        lte: extendedEnd
                     }
                 },
                 include: {
@@ -390,6 +472,26 @@ class LMSService {
                     { createdAt: 'asc' }
                 ]
             });
+
+            console.log(`🔥 [LMS DEBUG] 查询结果: 找到 ${records.length} 条记录`);
+
+            if (records.length > 0) {
+                console.log(`🔥 [LMS DEBUG] ===== 记录详情 =====`);
+                records.forEach((record, index) => {
+                    console.log(`🔥 [LMS DEBUG] 记录 ${index + 1}:`);
+                    console.log(`   - ID: ${record.id}`);
+                    console.log(`   - Title: ${record.title}`);
+                    console.log(`   - Type: ${record.type}`);
+                    console.log(`   - Status: ${record.status}`);
+                    console.log(`   - Created: ${record.createdAt.toISOString()}`);
+                    console.log(`   - Created Local: ${record.createdAt.toLocaleString()}`);
+                    console.log(`   - Exp: ${record.expAwarded}`);
+                    console.log(`   - Student: ${record.student?.name}`);
+                });
+            } else {
+                console.log(`🔥 [LMS DEBUG] ⚠️ 没有找到任何记录！`);
+            }
+
             return records;
         }
         catch (error) {
