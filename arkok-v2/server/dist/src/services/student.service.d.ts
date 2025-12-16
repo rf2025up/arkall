@@ -6,8 +6,9 @@ export interface StudentQuery {
     page?: number;
     limit?: number;
     teacherId?: string;
-    scope?: 'MY_STUDENTS' | 'ALL_SCHOOL';
+    scope?: 'MY_STUDENTS' | 'ALL_SCHOOL' | 'SPECIFIC_TEACHER';
     userRole?: 'ADMIN' | 'TEACHER';
+    requesterId?: string;
 }
 export interface AddScoreRequest {
     studentIds: string[];

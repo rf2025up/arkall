@@ -9,8 +9,9 @@ export interface StudentQuery {
   limit?: number;
   // 🆕 新增师生绑定相关参数
   teacherId?: string;     // 查询指定老师的学生
-  scope?: 'MY_STUDENTS' | 'ALL_SCHOOL';  // 查询范围：我的学生 vs 全校
+  scope?: 'MY_STUDENTS' | 'ALL_SCHOOL' | 'SPECIFIC_TEACHER';  // 查询范围：我的学生 vs 全校 vs 特定老师
   userRole?: 'ADMIN' | 'TEACHER';       // 用户角色，用于权限控制
+  requesterId?: string;   // 请求者ID（用于查看其他老师班级时的权限记录）
 }
 
 export interface AddScoreRequest {
@@ -115,6 +116,10 @@ export class StudentService {
         if (teacherId) {
           whereCondition.teacherId = { not: teacherId };
         }
+      } else if (scope === 'SPECIFIC_TEACHER' && teacherId) {
+        // 🆕 新增：查看特定老师的学生（用于抢人功能）
+        whereCondition.teacherId = teacherId;
+        console.log(`[TEACHER BINDING] Querying SPECIFIC_TEACHER: ${teacherId}, requester: ${query.requesterId}`);
       } else {
         // 默认情况：如果指定了teacherId，查询该老师的学生
         if (teacherId) {

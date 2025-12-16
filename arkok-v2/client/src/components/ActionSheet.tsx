@@ -32,7 +32,7 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
     viewMode,
     hasOnTransfer: !!onTransfer,
     selectedStudentsCount: selectedStudents.length,
-    shouldShowTransferButton: !!(onTransfer && viewMode === 'ALL_SCHOOL')
+    shouldShowTransferButton: !!(onTransfer && (viewMode === 'ALL_SCHOOL' || viewMode === 'SPECIFIC_CLASS'))
   });
 
   useEffect(() => {
@@ -129,9 +129,9 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
           </button>
         </div>
 
-        {/* 🆕 抢人功能 - 仅在全校视图且老师角色时显示 */}
+        {/* 🆕 抢人功能 - 在全校视图和特定班级视图时显示 */}
         {(() => {
-          const shouldShow = !!(onTransfer && viewMode === 'ALL_SCHOOL');
+          const shouldShow = !!(onTransfer && (viewMode === 'ALL_SCHOOL' || viewMode === 'SPECIFIC_CLASS'));
           console.log('[DEBUG] ActionSheet transfer button render check:', {
             hasOnTransfer: !!onTransfer,
             viewMode: viewMode,
@@ -154,44 +154,59 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
           </div>
         )}
 
-        {/* 预制加分项目提示 */}
-        <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl mx-4">
-          <div className="text-center">
-            <p className="text-sm font-medium text-orange-600 mb-1">🚧 预制加分项目暂时关闭</p>
-            <p className="text-xs text-orange-500">请使用下方手动填写功能进行调整</p>
-          </div>
-        </div>
+        {/* 🆕 积分调整功能 - 仅在我的学生视图下显示 */}
+        {viewMode === 'MY_STUDENTS' && (
+          <>
+            {/* 预制加分项目提示 */}
+            <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl mx-4">
+              <div className="text-center">
+                <p className="text-sm font-medium text-orange-600 mb-1">🚧 预制加分项目暂时关闭</p>
+                <p className="text-xs text-orange-500">请使用下方手动填写功能进行调整</p>
+              </div>
+            </div>
 
-        <div className="p-5 border-t border-gray-100 bg-white pb-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]">
-          <div className="flex gap-3 items-center mb-3">
-            <div className="flex-1 relative">
-               <label className="absolute -top-2 left-2 bg-white px-1 text-[10px] font-bold text-gray-400">积分</label>
-               <input
-                  type="number"
-                  placeholder="0"
-                  value={customPoints}
-                  onChange={(e) => setCustomPoints(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-center font-bold text-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-gray-50"
-               />
+            <div className="p-5 border-t border-gray-100 bg-white pb-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]">
+              <div className="flex gap-3 items-center mb-3">
+                <div className="flex-1 relative">
+                   <label className="absolute -top-2 left-2 bg-white px-1 text-[10px] font-bold text-gray-400">积分</label>
+                   <input
+                      type="number"
+                      placeholder="0"
+                      value={customPoints}
+                      onChange={(e) => setCustomPoints(e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-center font-bold text-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-gray-50"
+                   />
+                </div>
+                <div className="flex-1 relative">
+                   <label className="absolute -top-2 left-2 bg-white px-1 text-[10px] font-bold text-gray-400">经验值</label>
+                   <input
+                      type="number"
+                      placeholder="0"
+                      value={customExp}
+                      onChange={(e) => setCustomExp(e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-center font-bold text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none bg-gray-50"
+                   />
+                </div>
+              </div>
+              <button
+                onClick={handleCustomConfirm}
+                className="w-full bg-gray-900 text-white font-bold rounded-xl py-3.5 hover:bg-gray-800 active:scale-[0.98] transition-all shadow-lg"
+              >
+                 确认调整
+               </button>
             </div>
-            <div className="flex-1 relative">
-               <label className="absolute -top-2 left-2 bg-white px-1 text-[10px] font-bold text-gray-400">经验值</label>
-               <input
-                  type="number"
-                  placeholder="0"
-                  value={customExp}
-                  onChange={(e) => setCustomExp(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-center font-bold text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none bg-gray-50"
-               />
+          </>
+        )}
+
+        {/* 🆕 非我的学生视图的提示 */}
+        {viewMode !== 'MY_STUDENTS' && (
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl mx-4 mb-4">
+            <div className="text-center">
+              <p className="text-sm font-medium text-blue-600 mb-1">🔒 积分调整功能锁定</p>
+              <p className="text-xs text-blue-500">请切换到"我的学生"视图以调整积分</p>
             </div>
           </div>
-          <button
-            onClick={handleCustomConfirm}
-            className="w-full bg-gray-900 text-white font-bold rounded-xl py-3.5 hover:bg-gray-800 active:scale-[0.98] transition-all shadow-lg"
-          >
-             确认调整
-           </button>
-        </div>
+        )}
 
       </div>
     </div>

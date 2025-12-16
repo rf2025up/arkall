@@ -31,7 +31,7 @@ const scorePresets: PointPreset[] = [
 const Home = () => {
   const navigate = useNavigate();
   const { token, user } = useAuth();
-  const { viewMode, switchViewMode, currentClass, availableClasses, switchClass } = useClass();  // 🆕 获取 viewMode 和班级列表
+  const { viewMode, switchViewMode, selectedTeacherId, currentClass, availableClasses, switchClass } = useClass();  // 🆕 获取 viewMode、selectedTeacherId 和班级列表
 
   // --- 状态管理（来自旧版UI的肉体）---
   const [students, setStudents] = useState<Student[]>([]);
@@ -78,6 +78,14 @@ const Home = () => {
         params.append('userRole', user?.role || 'TEACHER');
         if (user?.userId) {
           params.append('teacherId', user.userId);
+        }
+      } else if (viewMode === 'SPECIFIC_CLASS' && selectedTeacherId) {
+        // 🆕 新增：查看特定老师的学生
+        params.append('scope', 'SPECIFIC_TEACHER');
+        params.append('teacherId', selectedTeacherId);
+        params.append('userRole', user?.role || 'TEACHER');
+        if (user?.userId) {
+          params.append('requesterId', user.userId);
         }
       }
 
@@ -409,10 +417,15 @@ const Home = () => {
                             <User size={24} />
                             {user?.name}的班级
                         </>
-                    ) : (
+                    ) : viewMode === 'ALL_SCHOOL' ? (
                         <>
                             <Users size={24} />
                             全校大名单
+                        </>
+                    ) : (
+                        <>
+                            <User size={24} />
+                            {availableClasses.find(cls => cls.teacherId === selectedTeacherId)?.teacherName}的班级
                         </>
                     )}
                     <ChevronDown size={20} className="text-white/80" />
@@ -421,6 +434,7 @@ const Home = () => {
                     {visibleStudents.length} 位学生
                     {viewMode === 'MY_STUDENTS' && ` · ${user?.name}老师名下的学生`}
                     {viewMode === 'ALL_SCHOOL' && ' · 可从中选择学生移入您的班级'}
+                    {viewMode === 'SPECIFIC_CLASS' && ` · 可从中选择学生移入您的班级`}
                 </p>
             </div>
             <div className="flex items-center space-x-2">
@@ -672,20 +686,26 @@ const Home = () => {
                   key={`teacher-${cls.teacherId}-${index}`}
                   onClick={() => {
                     // 🆕 切换到指定老师的班级视图
-                    switchViewMode('MY_STUDENTS');
-                    // 这里可以扩展为支持查看其他老师的学生
+                    switchViewMode('SPECIFIC_CLASS', cls.teacherId);
                     setIsClassDrawerOpen(false);
-                    setToastMsg(`查看${cls.teacherName}的班级功能开发中...`);
+                    setToastMsg(`正在查看${cls.teacherName}的班级`);
                   }}
-                  className="w-full flex items-center justify-between p-4 rounded-xl transition-colors bg-gray-50 border-2 border-transparent hover:bg-gray-100"
+                  className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors ${
+                    viewMode === 'SPECIFIC_CLASS' && selectedTeacherId === cls.teacherId
+                      ? 'bg-purple-100 border-2 border-purple-500 text-purple-700'
+                      : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                  }`}
                 >
                   <div className="flex items-center gap-3">
-                    <User size={20} className="text-gray-600" />
+                    <User size={20} className={viewMode === 'SPECIFIC_CLASS' && selectedTeacherId === cls.teacherId ? "text-purple-600" : "text-gray-600"} />
                     <div className="text-left">
                       <div className="font-medium">{cls.teacherName}的班级</div>
                       <div className="text-sm text-gray-500">共{cls.studentCount}名学生</div>
                     </div>
                   </div>
+                  {viewMode === 'SPECIFIC_CLASS' && selectedTeacherId === cls.teacherId && (
+                    <Check size={20} className="text-purple-600" />
+                  )}
                 </button>
               ))}
           </div>
@@ -695,6 +715,8 @@ const Home = () => {
             <div className={`mt-4 p-3 border rounded-xl ${
               viewMode === 'ALL_SCHOOL'
                 ? 'bg-blue-50 border-blue-200'
+                : viewMode === 'SPECIFIC_CLASS'
+                ? 'bg-purple-50 border-purple-200'
                 : 'bg-green-50 border-green-200'
             }`}>
               <div className="flex items-center gap-2">
@@ -702,6 +724,11 @@ const Home = () => {
                   <>
                     <UserPlus size={16} className="text-blue-700" />
                     <span className="text-sm font-medium text-blue-700">抢人功能</span>
+                  </>
+                ) : viewMode === 'SPECIFIC_CLASS' ? (
+                  <>
+                    <UserPlus size={16} className="text-purple-700" />
+                    <span className="text-sm font-medium text-purple-700">抢人功能</span>
                   </>
                 ) : (
                   <>
@@ -711,9 +738,13 @@ const Home = () => {
                 )}
               </div>
               <p className={`text-xs mt-1 ${
-                viewMode === 'ALL_SCHOOL' ? 'text-blue-600' : 'text-green-600'
+                viewMode === 'ALL_SCHOOL'
+                  ? 'text-blue-600'
+                  : viewMode === 'SPECIFIC_CLASS'
+                  ? 'text-purple-600'
+                  : 'text-green-600'
               }`}>
-                {viewMode === 'ALL_SCHOOL'
+                {viewMode === 'ALL_SCHOOL' || viewMode === 'SPECIFIC_CLASS'
                   ? '长按学生头像，选择"移入我的班级"即可将学生划归到您名下'
                   : '长按学生头像，可调整积分和经验值'
                 }

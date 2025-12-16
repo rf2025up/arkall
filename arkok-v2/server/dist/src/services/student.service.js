@@ -50,6 +50,11 @@ class StudentService {
                     whereCondition.teacherId = { not: teacherId };
                 }
             }
+            else if (scope === 'SPECIFIC_TEACHER' && teacherId) {
+                // 🆕 新增：查看特定老师的学生（用于抢人功能）
+                whereCondition.teacherId = teacherId;
+                console.log(`[TEACHER BINDING] Querying SPECIFIC_TEACHER: ${teacherId}, requester: ${query.requesterId}`);
+            }
             else {
                 // 默认情况：如果指定了teacherId，查询该老师的学生
                 if (teacherId) {

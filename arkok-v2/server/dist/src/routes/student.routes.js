@@ -537,7 +537,8 @@ class StudentRoutes {
                 // 🆕 新增师生绑定相关参数
                 teacherId: req.query.teacherId,
                 scope: req.query.scope,
-                userRole: req.query.userRole
+                userRole: req.query.userRole,
+                requesterId: req.query.requesterId
             };
             console.log(`[DEBUG] Query object sent to service:`, query);
             // 🚨 临时调试：添加 teacherId 诊断日志

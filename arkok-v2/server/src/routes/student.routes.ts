@@ -552,8 +552,9 @@ export class StudentRoutes {
         limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
         // 🆕 新增师生绑定相关参数
         teacherId: req.query.teacherId as string,
-        scope: req.query.scope as 'MY_STUDENTS' | 'ALL_SCHOOL',
-        userRole: req.query.userRole as 'ADMIN' | 'TEACHER'
+        scope: req.query.scope as 'MY_STUDENTS' | 'ALL_SCHOOL' | 'SPECIFIC_TEACHER',
+        userRole: req.query.userRole as 'ADMIN' | 'TEACHER',
+        requesterId: req.query.requesterId as string
       };
 
       console.log(`[DEBUG] Query object sent to service:`, query);

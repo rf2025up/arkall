@@ -3,7 +3,7 @@ import { useAuth } from './AuthContext';
 
 // 🆕 师生绑定相关类型定义
 export interface ViewMode {
-  type: 'MY_STUDENTS' | 'ALL_SCHOOL';  // 我的学生 vs 全校大名单
+  type: 'MY_STUDENTS' | 'ALL_SCHOOL' | 'SPECIFIC_CLASS';  // 我的学生 vs 全校大名单 vs 特定班级
 }
 
 export interface ClassInfo {
@@ -16,13 +16,14 @@ export interface ClassInfo {
 
 export interface ClassContextType {
   // 🆕 核心变更：从班级切换改为视图模式切换
-  viewMode: ViewMode['type'];  // 当前视图模式
-  currentClass: string;        // 保留兼容性，当前选中的班级，'ALL' 表示全校
-  availableClasses: ClassInfo[]; // 可用的班级列表
+  viewMode: ViewMode['type'];     // 当前视图模式
+  currentClass: string;           // 保留兼容性，当前选中的班级，'ALL' 表示全校
+  selectedTeacherId: string | null; // 当前选择的老师ID（用于SPECIFIC_CLASS模式）
+  availableClasses: ClassInfo[];  // 可用的班级列表
 
   // 🆕 新的方法
-  switchViewMode: (mode: ViewMode['type']) => void;  // 切换视图模式
-  switchClass: (className: string) => void;          // 保留兼容性
+  switchViewMode: (mode: ViewMode['type'], teacherId?: string) => void;  // 切换视图模式
+  switchClass: (className: string) => void;                           // 保留兼容性
 
   isLoading: boolean;
   refreshClasses: () => Promise<void>; // 刷新班级列表
@@ -42,6 +43,7 @@ export const ClassProvider: React.FC<ClassProviderProps> = ({ children }) => {
   // 🆕 核心状态：视图模式 + 兼容性状态
   const [viewMode, setViewMode] = useState<ViewMode['type']>('MY_STUDENTS');  // 默认查看我的学生
   const [currentClass, setCurrentClass] = useState<string>('ALL');  // 保留兼容性
+  const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);  // 当前选择的老师ID
   const [availableClasses, setAvailableClasses] = useState<ClassInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -108,11 +110,18 @@ export const ClassProvider: React.FC<ClassProviderProps> = ({ children }) => {
   };
 
   // 🆕 切换视图模式 - 核心新功能
-  const switchViewMode = (mode: ViewMode['type']) => {
+  const switchViewMode = (mode: ViewMode['type'], teacherId?: string) => {
     setViewMode(mode);
+    if (teacherId) {
+      setSelectedTeacherId(teacherId);
+      localStorage.setItem('selected_teacher_id', teacherId);
+    } else {
+      setSelectedTeacherId(null);
+      localStorage.removeItem('selected_teacher_id');
+    }
     // 保存到 localStorage
     localStorage.setItem('view_mode', mode);
-    console.log(`[TEACHER BINDING] Switched to view mode: ${mode}`);
+    console.log(`[TEACHER BINDING] Switched to view mode: ${mode}, teacherId: ${teacherId}`);
   };
 
   // 保留兼容性：切换班级
@@ -133,8 +142,13 @@ export const ClassProvider: React.FC<ClassProviderProps> = ({ children }) => {
 
       // 🆕 从 localStorage 恢复上次的视图模式
       const savedViewMode = localStorage.getItem('view_mode') as ViewMode['type'];
-      if (savedViewMode && ['MY_STUDENTS', 'ALL_SCHOOL'].includes(savedViewMode)) {
+      if (savedViewMode && ['MY_STUDENTS', 'ALL_SCHOOL', 'SPECIFIC_CLASS'].includes(savedViewMode)) {
         setViewMode(savedViewMode);
+        // 恢复选中的老师ID
+        const savedTeacherId = localStorage.getItem('selected_teacher_id');
+        if (savedTeacherId) {
+          setSelectedTeacherId(savedTeacherId);
+        }
       }
 
       // 从 localStorage 恢复上次选择的班级（兼容性）
@@ -149,6 +163,7 @@ export const ClassProvider: React.FC<ClassProviderProps> = ({ children }) => {
   const contextValue: ClassContextType = {
     // 🆕 新的核心状态
     viewMode,
+    selectedTeacherId,
     switchViewMode,
 
     // 保留兼容性的状态
