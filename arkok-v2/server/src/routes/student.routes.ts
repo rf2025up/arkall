@@ -557,6 +557,15 @@ export class StudentRoutes {
       };
 
       console.log(`[DEBUG] Query object sent to service:`, query);
+
+      // 🚨 临时调试：添加 teacherId 诊断日志
+      if (!query.teacherId) {
+        console.log(`[DEBUG] ❌ CRITICAL: teacherId is missing from query!`);
+        console.log(`[DEBUG] Available query params:`, Object.keys(req.query));
+      } else {
+        console.log(`[DEBUG] ✅ teacherId is present: ${query.teacherId}`);
+      }
+
       const result = await this.studentService.getStudents(query);
 
       console.log(`[DEBUG] Service returned:`, result);

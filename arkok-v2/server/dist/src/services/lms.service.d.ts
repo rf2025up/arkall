@@ -21,7 +21,6 @@ export interface PublishPlanRequest {
         content?: any;
         expAwarded: number;
     }>;
-    className?: string;
 }
 export interface PublishPlanResult {
     lessonPlan: LessonPlan;
@@ -48,9 +47,9 @@ export declare class LMSService {
      */
     private getDefaultTaskLibrary;
     /**
-     * 发布教学计划
+     * 🆕 发布教学计划 - 基于师生绑定的安全投送
      * 1. 创建 LessonPlan
-     * 2. 为学校所有学生批量创建 TaskRecord
+     * 2. 🚫 安全锁定：只给发布者名下的学生创建 TaskRecord
      * 3. 返回统计信息
      */
     publishPlan(request: PublishPlanRequest, io: any): Promise<PublishPlanResult>;

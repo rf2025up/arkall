@@ -10,6 +10,8 @@ export interface ClassInfo {
   name: string;
   studentCount: number;
   isPrimaryClass?: boolean;
+  teacherId?: string;
+  teacherName?: string;
 }
 
 export interface ClassContextType {
@@ -79,13 +81,17 @@ export const ClassProvider: React.FC<ClassProviderProps> = ({ children }) => {
           const classes: ClassInfo[] = data.data.map((cls: any) => ({
             name: cls.className,
             studentCount: parseInt(cls.studentCount),
-            isPrimaryClass: cls.className === user.primaryClassName
+            isPrimaryClass: cls.className === user.primaryClassName,
+            teacherId: cls.teacherId,
+            teacherName: cls.teacherName || '未知老师'
           }));
 
-          // 按学生数量排序，主班级排在前面
+          // 🆕 新的排序逻辑：当前老师的班级排第一，其他老师按学生数量排序
           classes.sort((a, b) => {
-            if (a.isPrimaryClass) return -1;
-            if (b.isPrimaryClass) return 1;
+            // 当前老师的班级排最前面
+            if (a.teacherId === user.userId) return -1;
+            if (b.teacherId === user.userId) return 1;
+            // 其他按学生数量排序
             return b.studentCount - a.studentCount;
           });
 

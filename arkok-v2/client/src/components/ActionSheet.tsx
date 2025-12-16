@@ -27,6 +27,14 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
   const [customPoints, setCustomPoints] = useState<string>('');
   const [customExp, setCustomExp] = useState<string>('');
 
+  console.log('[DEBUG] ActionSheet component state:', {
+    isOpen,
+    viewMode,
+    hasOnTransfer: !!onTransfer,
+    selectedStudentsCount: selectedStudents.length,
+    shouldShowTransferButton: !!(onTransfer && viewMode === 'ALL_SCHOOL')
+  });
+
   useEffect(() => {
     if (isOpen) {
       const keys = Object.keys(categoryNames);
@@ -59,10 +67,24 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
 
   // 🆕 处理师生关系转移 - "抢人"功能
   const handleTransferToMyClass = () => {
+    console.log('[DEBUG] ActionSheet handleTransferToMyClass called', {
+      hasOnTransfer: !!onTransfer,
+      selectedStudentsCount: selectedStudents.length,
+      viewMode: viewMode,
+      studentNames: selectedStudents.map(s => s.name)
+    });
+
     if (onTransfer && selectedStudents.length > 0) {
       const studentIds = selectedStudents.map(s => s.id);
-      onTransfer(studentIds, undefined); // targetTeacherId将在Home.tsx中设置
+      console.log('[DEBUG] Calling onTransfer with studentIds:', studentIds);
+      // 传递当前用户ID作为目标教师ID
+      onTransfer(studentIds, 'current'); // 使用'current'标识当前老师
       onClose();
+    } else {
+      console.log('[DEBUG] Transfer not executed:', {
+        hasOnTransfer: !!onTransfer,
+        selectedStudentsCount: selectedStudents.length
+      });
     }
   };
 
@@ -108,7 +130,16 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
         </div>
 
         {/* 🆕 抢人功能 - 仅在全校视图且老师角色时显示 */}
-        {onTransfer && viewMode === 'ALL_SCHOOL' && (
+        {(() => {
+          const shouldShow = !!(onTransfer && viewMode === 'ALL_SCHOOL');
+          console.log('[DEBUG] ActionSheet transfer button render check:', {
+            hasOnTransfer: !!onTransfer,
+            viewMode: viewMode,
+            shouldShow,
+            selectedStudentsCount: selectedStudents.length
+          });
+          return shouldShow;
+        })() && (
           <div className="px-4 pb-2">
             <button
               onClick={handleTransferToMyClass}

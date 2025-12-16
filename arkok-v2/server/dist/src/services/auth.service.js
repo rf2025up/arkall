@@ -32,9 +32,13 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const jwt = __importStar(require("jsonwebtoken"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const JWT_SECRET = process.env.JWT_SECRET || 'arkok-v2-super-secret-jwt-key-2024';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 class AuthService {
@@ -47,7 +51,57 @@ class AuthService {
     async login(loginData) {
         const { username, password } = loginData;
         try {
-            // 硬编码的用户验证（临时实现）
+            // 首先尝试数据库用户验证（支持所有老师账号）
+            const dbUser = await this.prisma.teacher.findFirst({
+                where: { username },
+                include: {
+                    school: true
+                }
+            });
+            if (dbUser) {
+                // 验证密码
+                let passwordValid = false;
+                // 特殊处理admin账号（兼容历史数据）
+                if (username === 'admin' && password === '123456') {
+                    passwordValid = dbUser.password === '123456' || await bcryptjs_1.default.compare(password, dbUser.password);
+                }
+                else {
+                    // 其他账号使用bcrypt验证
+                    passwordValid = await bcryptjs_1.default.compare(password, dbUser.password);
+                }
+                if (passwordValid) {
+                    // 生成 JWT 令牌
+                    const token = jwt.sign({
+                        userId: dbUser.id,
+                        username: dbUser.username,
+                        name: dbUser.name,
+                        displayName: dbUser.displayName,
+                        email: dbUser.email,
+                        role: dbUser.role,
+                        schoolId: dbUser.schoolId,
+                        schoolName: dbUser.school?.name,
+                        primaryClassName: dbUser.primaryClassName
+                    }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+                    const expiresIn = this.parseExpiresIn(JWT_EXPIRES_IN);
+                    return {
+                        success: true,
+                        user: {
+                            userId: dbUser.id,
+                            username: dbUser.username,
+                            name: dbUser.name,
+                            displayName: dbUser.displayName || undefined,
+                            email: dbUser.email || undefined,
+                            role: dbUser.role,
+                            schoolId: dbUser.schoolId,
+                            schoolName: dbUser.school?.name || undefined,
+                            primaryClassName: dbUser.primaryClassName || undefined
+                        },
+                        token,
+                        expiresIn
+                    };
+                }
+            }
+            // 兼容性：如果没有找到数据库用户，尝试admin硬编码逻辑
             if (username === 'admin' && password === '123456') {
                 // 查找或创建默认用户
                 let user = await this.prisma.teacher.findFirst({

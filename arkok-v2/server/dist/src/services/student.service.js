@@ -8,35 +8,82 @@ class StudentService {
         this.io = io;
     }
     /**
-     * 获取学生列表 - 强制重写修复
+     * 🆕 获取学生列表 - 基于师生绑定的重构版本
      */
     async getStudents(query) {
-        const { schoolId } = query;
-        console.log(`🔍 Fetching students for school: ${schoolId}`);
+        const { schoolId, teacherId, scope, userRole } = query;
+        console.log(`[TEACHER BINDING] Fetching students with query:`, { schoolId, teacherId, scope, userRole });
         try {
+            // 🆕 构建查询条件 - 基于师生关系
+            let whereCondition = {
+                schoolId: schoolId,
+                isActive: true,
+            };
+            // 🚨 临时调试：检查现有学生的teacherId分布
+            console.log(`[DEBUG] 🔍 Checking teacherId distribution before query...`);
+            const allStudents = await this.prisma.student.findMany({
+                where: { schoolId, isActive: true },
+                select: { id: true, name: true, teacherId: true, className: true }
+            });
+            const teacherIdStats = allStudents.reduce((acc, student) => {
+                const tid = student.teacherId || 'null';
+                acc[tid] = (acc[tid] || 0) + 1;
+                return acc;
+            }, {});
+            console.log(`[DEBUG] 📊 TeacherId distribution:`, teacherIdStats);
+            console.log(`[DEBUG] 📊 Total students in DB: ${allStudents.length}`);
+            // 根据查询范围和用户角色确定查询条件
+            if (scope === 'MY_STUDENTS' && teacherId) {
+                // 老师查看自己的学生
+                whereCondition.teacherId = teacherId;
+                console.log(`[TEACHER BINDING] Querying MY_STUDENTS for teacher: ${teacherId}`);
+            }
+            else if (scope === 'ALL_SCHOOL' && userRole === 'ADMIN') {
+                // 管理员查看全校学生 - 无需额外条件
+                console.log(`[TEACHER BINDING] Querying ALL_SCHOOL for ADMIN`);
+            }
+            else if (scope === 'ALL_SCHOOL' && userRole === 'TEACHER') {
+                // 老师查看全校学生 - 用于"抢人"功能
+                console.log(`[TEACHER BINDING] Querying ALL_SCHOOL for teacher (for transfer): ${teacherId}`);
+                // 可以查询全校，但排除已经归属给自己的学生（避免重复显示）
+                if (teacherId) {
+                    whereCondition.teacherId = { not: teacherId };
+                }
+            }
+            else {
+                // 默认情况：如果指定了teacherId，查询该老师的学生
+                if (teacherId) {
+                    whereCondition.teacherId = teacherId;
+                    console.log(`[TEACHER BINDING] Default: querying students for teacher: ${teacherId}`);
+                }
+            }
+            // 保留搜索功能
+            if (query.search) {
+                whereCondition.name = {
+                    contains: query.search,
+                    mode: 'insensitive'
+                };
+            }
             const students = await this.prisma.student.findMany({
-                where: {
-                    schoolId: schoolId,
-                    isActive: true,
-                },
+                where: whereCondition,
                 orderBy: [
-                    { exp: 'desc' }, // 使用正确的 'exp' 字段
+                    { exp: 'desc' }, // 按经验值排序
                     { name: 'asc' },
                 ],
             });
-            console.log(`✅ Found ${students.length} students.`);
+            console.log(`[TEACHER BINDING] ✅ Found ${students.length} students for scope: ${scope}`);
             return {
                 students: students,
                 pagination: {
-                    page: 1,
-                    limit: students.length,
+                    page: query.page || 1,
+                    limit: query.limit || students.length,
                     total: students.length,
                     totalPages: 1
                 }
             };
         }
         catch (error) {
-            console.error("❌ Error fetching students:", error);
+            console.error("[TEACHER BINDING] ❌ Error fetching students:", error);
             throw new Error("Could not fetch students.");
         }
     }
@@ -291,39 +338,40 @@ class StudentService {
         };
         return typeLabels[type] || type;
     }
-    // in student.service.ts
+    // 🆕 重构后的 createStudent 方法 - 基于师生绑定
     async createStudent(studentData) {
-        console.log('[BACKEND FIX] Attempting to create student with data:', studentData);
-        if (!studentData.name || !studentData.className || !studentData.schoolId) {
-            console.error('[BACKEND FIX] Validation failed: Missing name, className, or schoolId.');
-            throw new Error('Missing required student data.');
+        console.log('[TEACHER BINDING] Creating student with data:', studentData);
+        // 🆕 新的验证逻辑
+        if (!studentData.name || !studentData.schoolId || !studentData.teacherId) {
+            console.error('[TEACHER BINDING] Validation failed: Missing name, schoolId, or teacherId.');
+            throw new Error('Missing required student data: name, schoolId, and teacherId are required');
         }
         try {
             const newStudent = await this.prisma.student.create({
                 data: {
                     name: studentData.name,
-                    className: studentData.className,
+                    className: studentData.className, // 可选，仅作为显示标签
+                    teacherId: studentData.teacherId, // 🆕 核心变更：直接绑定到老师
                     school: {
                         connect: { id: studentData.schoolId }
                     },
                     avatarUrl: `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(studentData.name)}`,
-                    // --- 这是最关键的修复：确保新学生是可见的！ ---
                     isActive: true
                 },
             });
-            console.log('[BACKEND FIX] Successfully created student in DB:', newStudent);
+            console.log('[TEACHER BINDING] Successfully created student with teacher binding:', newStudent);
             return newStudent;
         }
         catch (error) {
-            console.error('[BACKEND FIX] Prisma create operation failed:', error);
+            console.error('[TEACHER BINDING] Prisma create operation failed:', error);
             if (error instanceof Error) {
-                console.error('[BACKEND FIX] Error details:', {
+                console.error('[TEACHER BINDING] Error details:', {
                     name: error.name,
                     message: error.message,
                     stack: error.stack
                 });
             }
-            throw error; // 将原始错误抛出，以便上层捕获
+            throw error;
         }
     }
     /**
@@ -523,30 +571,65 @@ class StudentService {
     }
     /**
      * 获取班级列表（用于班级切换）
+     * 🆕 修改：返回按老师分组的班级信息，支持多老师显示
      */
     async getClasses(schoolId) {
-        const classes = await this.prisma.student.groupBy({
-            by: ['className'],
+        // 🆕 按老师分组获取学生统计
+        const teacherGroups = await this.prisma.student.groupBy({
+            by: ['teacherId'],
             where: {
                 schoolId,
-                isActive: true
+                isActive: true,
+                teacherId: { not: null } // 排除没有归属老师的学生
             },
             _count: {
                 id: true
-            },
-            orderBy: {
-                className: 'asc'
             }
         });
-        return classes.map(cls => ({
-            className: cls.className,
-            studentCount: cls._count.id
-        }));
+        // 获取对应的老师信息
+        const teacherIds = teacherGroups.map(g => g.teacherId);
+        const teachers = await this.prisma.user.findMany({
+            where: {
+                id: { in: teacherIds },
+                schoolId,
+                role: 'TEACHER'
+            },
+            select: {
+                id: true,
+                name: true
+            }
+        });
+        // 组装数据：每个老师作为一个"班级"
+        const classData = teacherGroups.map(group => {
+            const teacher = teachers.find(t => t.id === group.teacherId);
+            return {
+                className: `${teacher?.name || '未知老师'}的班级`,
+                studentCount: group._count.id,
+                teacherId: group.teacherId,
+                teacherName: teacher?.name || '未知老师'
+            };
+        });
+        // 添加"全校"选项
+        const totalStudents = await this.prisma.student.count({
+            where: {
+                schoolId,
+                isActive: true
+            }
+        });
+        classData.unshift({
+            className: '全校大名单',
+            studentCount: totalStudents,
+            teacherId: 'ALL',
+            teacherName: '全校'
+        });
+        return classData;
     }
     /**
-     * 转班（支持Admin和Teacher）
+     * 🆕 师生关系转移 - 从"转班"升级为"抢人"
+     * 将学生划归到指定老师名下
      */
-    async transferStudents(studentIds, targetClassName, schoolId, updatedBy) {
+    async transferStudents(studentIds, targetTeacherId, schoolId, updatedBy) {
+        console.log(`[TEACHER BINDING] Transferring ${studentIds.length} students to teacher: ${targetTeacherId}`);
         // 验证学生是否属于该学校
         const students = await this.prisma.student.findMany({
             where: {
@@ -558,39 +641,57 @@ class StudentService {
         if (students.length !== studentIds.length) {
             throw new Error('部分学生不存在或不属于该学校');
         }
-        // 批量更新学生班级
+        // 🆕 验证目标老师是否存在且属于同一学校
+        const targetTeacher = await this.prisma.teacher.findFirst({
+            where: {
+                id: targetTeacherId,
+                schoolId: schoolId
+            }
+        });
+        if (!targetTeacher) {
+            throw new Error('目标老师不存在或不属于同一学校');
+        }
+        // 批量更新学生的老师归属
         const updatedStudents = await this.prisma.$transaction(studentIds.map(studentId => this.prisma.student.update({
             where: { id: studentId, schoolId },
-            data: { className: targetClassName }
+            data: {
+                teacherId: targetTeacherId, // 🆕 核心变更：更新老师归属
+                // className: targetTeacher.primaryClassName || targetTeacher.name + '班'  // 可选：同步更新班级名
+            }
         })));
-        // 创建转班记录
+        // 🆕 创建师生关系转移记录
         await this.prisma.$transaction(studentIds.map(studentId => this.prisma.taskRecord.create({
             data: {
                 studentId,
                 schoolId,
                 type: 'SPECIAL',
-                title: '转班',
+                title: '移入班级',
                 content: {
-                    action: 'TRANSFER',
-                    fromClassName: students.find(s => s.id === studentId)?.className,
-                    toClassName: targetClassName,
-                    updatedBy
+                    action: 'TEACHER_TRANSFER',
+                    fromTeacherId: students.find(s => s.id === studentId)?.teacherId,
+                    toTeacherId: targetTeacherId,
+                    toTeacherName: targetTeacher.name,
+                    updatedBy,
+                    transferType: 'STUDENT_MOVED_TO_TEACHER'
                 },
                 status: 'COMPLETED',
                 expAwarded: 0
             }
         })));
-        // 广播转班事件
+        // 🆕 广播师生关系转移事件
         this.broadcastToSchool(schoolId, {
             type: 'STUDENTS_TRANSFERRED',
             data: {
                 studentIds,
-                targetClassName,
+                targetTeacherId,
+                targetTeacherName: targetTeacher.name,
                 updatedBy,
                 timestamp: new Date().toISOString(),
-                updatedStudents
+                updatedStudents,
+                transferType: 'TEACHER_BINDING' // 标识这是师生关系转移
             }
         });
+        console.log(`[TEACHER BINDING] ✅ Successfully transferred ${studentIds.length} students to ${targetTeacher.name}`);
         return updatedStudents;
     }
     /**

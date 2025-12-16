@@ -236,6 +236,23 @@ export class ApiService {
     return extractData(response);
   }
 
+  // 🆕 学生相关API
+  public get students() {
+    return {
+      create: (data: {
+        name: string;
+        className: string;
+        teacherId: string;
+        schoolId: string;
+      }) => this.post<Student>('/students', data),
+
+      transfer: (data: {
+        studentIds: string[];
+        targetTeacherId: string;
+      }) => this.post<any>('/students/transfer', data)
+    };
+  }
+
   public async getHabits(): Promise<ApiResponse<HabitsResponse>> {
     return this.get<HabitsResponse>('/habits');
   }
@@ -314,7 +331,15 @@ export const API = {
     create: (data: {
       name: string;
       className: string;
+      teacherId: string;
+      schoolId: string;
     }) => apiService.post<Student>('/students', data),
+
+    // 🆕 师生关系转移 - "抢人"功能
+    transfer: (data: {
+      studentIds: string[];
+      targetTeacherId: string;
+    }) => apiService.post<any>('/students/transfer', data),
   },
 
   // LMS教学计划相关

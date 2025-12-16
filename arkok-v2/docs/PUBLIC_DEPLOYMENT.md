@@ -7,9 +7,15 @@
 
 ### 🌟 部署状态 | Deployment Status
 
-✅ **大屏已成功部署到公网**
+⚠️ **公网服务状态检查中**
 🌐 **Public URL**: https://esboimzbkure.sealosbja.site/screen
-🎯 **BigScreen Public Access**: Successfully Deployed
+🔍 **Status**: 需要验证服务可用性
+📋 **最后检查**: 2025-12-16 00:43
+
+**🚨 当前状态说明**：
+- 配置文件显示公网部署已就绪
+- 可能需要重新部署或检查服务状态
+- 建议执行健康检查验证
 
 ---
 

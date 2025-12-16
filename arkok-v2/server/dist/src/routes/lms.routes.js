@@ -103,13 +103,14 @@ router.get('/task-library', async (req, res) => {
         });
     }
 });
-// 发布教学计划
+// 🆕 发布教学计划 - 基于师生绑定的安全发布
 router.post('/publish', async (req, res) => {
     try {
         const io = req.app.get('io'); // 从app实例获取io
-        const { courseInfo, qcTasks, normalTasks, specialTasks, className } = req.body;
-        // 从认证中间件获取用户信息（已由中间件验证）
+        const { courseInfo, qcTasks, normalTasks, specialTasks } = req.body;
+        // 🆕 从认证中间件获取用户信息（已由中间件验证）
         const user = req.user;
+        const publisherId = user.userId; // 🆕 发布者ID，用于安全锁定
         // 验证请求数据
         if (!courseInfo || !courseInfo.title) {
             return res.status(400).json({
@@ -117,19 +118,23 @@ router.post('/publish', async (req, res) => {
                 message: 'Course info and title are required'
             });
         }
-        // 构建发布请求
+        console.log(`🔒 [LMS_SECURITY] Teacher ${publisherId} is publishing tasks`);
+        // 🆕 构建发布请求 - 基于师生绑定安全约束
         const publishRequest = {
             schoolId: user.schoolId,
-            teacherId: user.userId,
+            teacherId: publisherId, // 🆕 使用发布者ID进行安全锁定
             title: courseInfo.title,
             content: {
                 courseInfo,
                 qcTasks,
                 normalTasks,
-                specialTasks
+                specialTasks,
+                // 🆕 记录发布安全信息
+                publisherId: publisherId,
+                securityScope: 'TEACHERS_STUDENTS',
+                publishedAt: new Date().toISOString()
             },
             date: courseInfo.date ? new Date(courseInfo.date) : new Date(),
-            className: className, // 传递目标班级信息
             tasks: [] // 根据前端数据构建任务数组
         };
         // 将前端的任务数据转换为服务所需的格式

@@ -2,6 +2,86 @@
 
 > **核心原则**: 文档即真理，代码质量优先，架构规范至上，用户体验为本
 
+## 🌐 部署环境说明 (Deployment Environment)
+
+### 📋 当前部署状态
+- **主环境**: **公网生产环境** (优先级高于本地开发)
+- **公网地址**: https://esboimzbkure.sealosbja.site
+- **部署平台**: Sealos Kubernetes 平台
+- **命名空间**: ns-bg6fgs6y
+- **版本**: v2.0.0
+
+### 🚀 访问地址
+| 功能 | URL | 说明 |
+|------|-----|------|
+| **手机端教师应用** | https://esboimzbkure.sealosbja.site | 主要应用入口 |
+| **大屏展示** | https://esboimzbkure.sealosbja.site/screen | 双模大屏系统 |
+| **健康检查** | https://esboimzbkure.sealosbja.site/health | 服务状态监控 |
+
+### 🔄 开发到部署流程 (最高优先级)
+1. **公网部署优先**: `./deploy-to-sealos.sh` (必须首先执行)
+2. **公网环境验证**: 在 https://esboimzbkure.sealosbja.site 验证功能
+3. **本地开发**: `./dev.sh` (仅当公网环境不可用时用于调试)
+
+**🚨 关键原则**:
+- **新会话启动时**: 自动执行公网部署，不再询问
+- **功能验证**: 必须在公网环境验证，本地环境仅作为备用
+- **部署优先**: 任何代码修改后立即部署到公网测试
+
+### 🚀 新会话启动流程 (Session Startup Protocol)
+
+**🚨 新会话启动时的强制检查流程**：
+当 AI 助手启动新会话时，会自动执行以下流程：
+
+```bash
+# 🔄 新会话启动时的强制检查流程
+# 1. 读取任务进度 (必须首先执行)
+cat docs/TASK_PROGRESS.md
+
+# 2. 读取开发规则 (包含部署环境信息)
+cat docs/DEVELOPMENT_RULES.md
+
+# 3. 读取架构白皮书
+cat docs/ARCHITECTURE_WHITEPAPER.md
+
+# 4. 🚨 优先执行公网部署 (自动执行，不再询问)
+./deploy-to-sealos.sh
+
+# 5. 验证公网环境可用性
+curl -I https://esboimzbkure.sealosbja.site/health
+
+# 6. 仅当公网不可用时，启动本地服务
+./dev.sh
+```
+
+**🎯 核心设计原理**：
+1. **公网部署优先**: 自动部署到公网环境，无需人工干预
+2. **公网验证优先**: 首先在公网环境验证功能
+3. **本地备用**: 仅当公网不可用时才启动本地开发服务
+4. **文档驱动**: 所有决策基于文档中的配置信息
+
+**📋 启动检查清单** (每次新会话自动执行)：
+- [x] 读取 `TASK_PROGRESS.md` - 了解上次工作断点
+- [x] 读取 `DEVELOPMENT_RULES.md` - 了解部署环境
+- [x] 读取 `ARCHITECTURE_WHITEPAPER.md` - 理解系统架构
+- [x] 启动本地服务 `./dev.sh` - 提供即时开发环境
+
+**🔄 工作模式决策逻辑**：
+```typescript
+// 启动时的环境决策
+const deploymentStrategy = {
+  hasPublicDeployment: true,  // 从 DEVELOPMENT_RULES.md 读取
+  publicURL: "https://esboimzbkure.sealosbja.site",  // 文档中定义
+  localEnv: "development",    // ./dev.sh 启动
+  strategy: "DUAL_ENV"       // 双环境策略
+};
+
+// 决策流程：
+// 1. 启动本地服务用于快速测试
+// 2. 提醒用户公网部署的存在
+// 3. 建议最终在公网环境验证功能
+```
+
 ## ⚠️ 最高铁律 - Rule #0 (零号法则) - CRITICAL
 
 ### 0. 📝 文档即真理 (Documentation is Truth) - CRITICAL

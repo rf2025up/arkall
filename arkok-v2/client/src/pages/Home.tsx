@@ -31,7 +31,7 @@ const scorePresets: PointPreset[] = [
 const Home = () => {
   const navigate = useNavigate();
   const { token, user } = useAuth();
-  const { viewMode, switchViewMode, currentClass, availableClasses, switchClass } = useClass();  // 🆕 获取 viewMode
+  const { viewMode, switchViewMode, currentClass, availableClasses, switchClass } = useClass();  // 🆕 获取 viewMode 和班级列表
 
   // --- 状态管理（来自旧版UI的肉体）---
   const [students, setStudents] = useState<Student[]>([]);
@@ -134,7 +134,7 @@ const Home = () => {
         return;
       }
 
-      await apiService.post('/students', {
+      await apiService.students.create({
         name: studentData.name,
         className: studentData.className,  // 可选，仅作为显示标签
         schoolId: user.schoolId,          // 需要从 user 中获取 schoolId
@@ -161,18 +161,39 @@ const Home = () => {
 
   // --- 触摸事件处理 (解决单击/长按冲突) ---
   const handleTouchStart = (e: React.TouchEvent, student: Student) => {
+    console.log('[DEBUG] Long press started:', {
+      studentName: student.name,
+      viewMode,
+      userRole: user?.role,
+      isMultiSelectMode,
+      timestamp: new Date().toISOString()
+    });
+
     const touch = e.touches[0];
     touchStartPos.current = { x: touch.clientX, y: touch.clientY };
     isLongPressTriggered.current = false; // 重置长按标记
 
     // 设置长按定时器 (600ms)
     longPressTimer.current = setTimeout(() => {
+      console.log('[DEBUG] Long press timer triggered:', {
+        studentName: student.name,
+        isMultiSelectMode,
+        willTrigger: !isMultiSelectMode
+      });
+
       // 只有非多选模式下，长按才触发积分面板
       if (!isMultiSelectMode) {
         isLongPressTriggered.current = true; // 标记已触发长按
         setScoringStudent(student);
         setIsSheetOpen(true); // 打开积分面板
         if (navigator.vibrate) navigator.vibrate(50);
+
+        console.log('[DEBUG] ActionSheet should open:', {
+          studentName: student.name,
+          viewMode,
+          userRole: user?.role,
+          hasTransferFunction: !!handleTransferStudents
+        });
       }
     }, 600);
   };
@@ -208,7 +229,7 @@ const Home = () => {
     }
 
     // 2. 普通模式：点击跳转到个人详情页
-    console.log('跳转到学生详情页:', student.name); // 调试日志
+    console.log('[DEBUG] Navigate to student detail:', student.name);
     navigate(`/student/${student.id}`);
   };
 
@@ -243,21 +264,13 @@ const Home = () => {
     }
 
     try {
-      const response = await fetch('/api/students/score', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          studentIds: idsToUpdate,
-          points: points,
-          exp: exp || 0,
-          reason: reason
-        }),
+      // 📋 使用封装的API服务，符合架构白皮书规范
+      const data = await apiService.post('/students/score', {
+        studentIds: idsToUpdate,
+        points: points,
+        exp: exp || 0,
+        reason: reason
       });
-
-      const data = await response.json();
 
       if (data.success) {
         const nameText = scoringStudent ? scoringStudent.name : `已选 ${idsToUpdate.length} 人`;
@@ -297,25 +310,26 @@ const Home = () => {
 
   // 🆕 处理师生关系转移 - "抢人"功能
   const handleTransferStudents = async (studentIds: string[], targetTeacherId: string) => {
-    if (!token || !user?.userId) {
+    console.log('[DEBUG] Home.tsx handleTransferStudents called', {
+      studentIds: studentIds,
+      targetTeacherId: targetTeacherId,
+      currentUserId: user?.userId
+    });
+
+    if (!user?.userId) {
       setToastMsg('请先登录');
       return;
     }
 
     try {
-      const response = await fetch('/api/students/transfer', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          studentIds: studentIds,
-          targetTeacherId: targetTeacherId || user.userId  // 🆕 使用老师ID而不是班级名
-        }),
-      });
+      const actualTeacherId = targetTeacherId === 'current' ? user.userId : targetTeacherId;
+      console.log('[DEBUG] Using teacherId:', actualTeacherId);
 
-      const data = await response.json();
+      // 📋 使用封装的API服务，符合架构白皮书规范
+      const data = await apiService.students.transfer({
+        studentIds: studentIds,
+        targetTeacherId: actualTeacherId  // 🆕 使用实际老师ID
+      });
 
       if (data.success) {
         const transferredCount = studentIds.length;
@@ -393,7 +407,7 @@ const Home = () => {
                     {viewMode === 'MY_STUDENTS' ? (
                         <>
                             <User size={24} />
-                            我的学生
+                            {user?.name}的班级
                         </>
                     ) : (
                         <>
@@ -405,7 +419,7 @@ const Home = () => {
                 </button>
                 <p className="text-orange-100 text-sm opacity-90">
                     {visibleStudents.length} 位学生
-                    {viewMode === 'MY_STUDENTS' && ' · 您名下的学生'}
+                    {viewMode === 'MY_STUDENTS' && ` · ${user?.name}老师名下的学生`}
                     {viewMode === 'ALL_SCHOOL' && ' · 可从中选择学生移入您的班级'}
                 </p>
             </div>
@@ -615,8 +629,8 @@ const Home = () => {
               <div className="flex items-center gap-3">
                 <User size={20} className={viewMode === 'MY_STUDENTS' ? 'text-blue-600' : 'text-gray-600'} />
                 <div className="text-left">
-                  <div className="font-medium">我的学生</div>
-                  <div className="text-sm text-gray-500">查看归属您名下的学生</div>
+                  <div className="font-medium">{user?.name}的班级</div>
+                  <div className="text-sm text-gray-500">查看归属{user?.name}名下的学生</div>
                 </div>
               </div>
               {viewMode === 'MY_STUDENTS' && (
@@ -649,17 +663,60 @@ const Home = () => {
                 <Check size={20} className="text-orange-600" />
               )}
             </button>
+
+            {/* 🆕 其他老师班级选项 */}
+            {availableClasses
+              .filter(cls => cls.teacherId && cls.teacherId !== user?.userId && cls.teacherId !== 'ALL')
+              .map((cls, index) => (
+                <button
+                  key={`teacher-${cls.teacherId}-${index}`}
+                  onClick={() => {
+                    // 🆕 切换到指定老师的班级视图
+                    switchViewMode('MY_STUDENTS');
+                    // 这里可以扩展为支持查看其他老师的学生
+                    setIsClassDrawerOpen(false);
+                    setToastMsg(`查看${cls.teacherName}的班级功能开发中...`);
+                  }}
+                  className="w-full flex items-center justify-between p-4 rounded-xl transition-colors bg-gray-50 border-2 border-transparent hover:bg-gray-100"
+                >
+                  <div className="flex items-center gap-3">
+                    <User size={20} className="text-gray-600" />
+                    <div className="text-left">
+                      <div className="font-medium">{cls.teacherName}的班级</div>
+                      <div className="text-sm text-gray-500">共{cls.studentCount}名学生</div>
+                    </div>
+                  </div>
+                </button>
+              ))}
           </div>
 
-          {/* 🆕 抢人功能提示 */}
-          {viewMode === 'ALL_SCHOOL' && user?.role === 'TEACHER' && (
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
-              <div className="flex items-center gap-2 text-blue-700">
-                <UserPlus size={16} />
-                <span className="text-sm font-medium">抢人功能</span>
+          {/* 🆕 功能提示 - 根据视图模式显示不同提示 */}
+          {user?.role === 'TEACHER' && (
+            <div className={`mt-4 p-3 border rounded-xl ${
+              viewMode === 'ALL_SCHOOL'
+                ? 'bg-blue-50 border-blue-200'
+                : 'bg-green-50 border-green-200'
+            }`}>
+              <div className="flex items-center gap-2">
+                {viewMode === 'ALL_SCHOOL' ? (
+                  <>
+                    <UserPlus size={16} className="text-blue-700" />
+                    <span className="text-sm font-medium text-blue-700">抢人功能</span>
+                  </>
+                ) : (
+                  <>
+                    <Trophy size={16} className="text-green-700" />
+                    <span className="text-sm font-medium text-green-700">积分调整</span>
+                  </>
+                )}
               </div>
-              <p className="text-xs text-blue-600 mt-1">
-                长按学生头像，选择"移入我的班级"即可将学生划归到您名下
+              <p className={`text-xs mt-1 ${
+                viewMode === 'ALL_SCHOOL' ? 'text-blue-600' : 'text-green-600'
+              }`}>
+                {viewMode === 'ALL_SCHOOL'
+                  ? '长按学生头像，选择"移入我的班级"即可将学生划归到您名下'
+                  : '长按学生头像，可调整积分和经验值'
+                }
               </p>
             </div>
           )}

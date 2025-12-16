@@ -136,37 +136,33 @@ class LMSService {
         ];
     }
     /**
-     * 发布教学计划
+     * 🆕 发布教学计划 - 基于师生绑定的安全投送
      * 1. 创建 LessonPlan
-     * 2. 为学校所有学生批量创建 TaskRecord
+     * 2. 🚫 安全锁定：只给发布者名下的学生创建 TaskRecord
      * 3. 返回统计信息
      */
     async publishPlan(request, io) {
-        const { schoolId, teacherId, title, content, date, tasks, className } = request;
+        const { schoolId, teacherId, title, content, date, tasks } = request;
         try {
-            console.log(`📚 Publishing lesson plan: ${title} for school: ${schoolId}${className ? ` (class: ${className})` : ' (all classes)'}`);
-            // 1. 获取目标班级的学生 - 支持班级隔离
-            const whereClause = {
-                schoolId,
-                isActive: true
-            };
-            // 如果指定了className，则只获取该班级的学生
-            if (className && className !== 'ALL') {
-                whereClause.className = className;
-            }
+            console.log(`📚 [LMS_SECURITY] Publishing lesson plan: ${title} for teacher: ${teacherId}`);
+            // 🆕 安全锁定：只查找归属该老师的学生
             const students = await this.prisma.student.findMany({
-                where: whereClause,
+                where: {
+                    schoolId: schoolId,
+                    teacherId: teacherId, // 🔒 核心安全约束：只给发布者的学生投送
+                    isActive: true
+                },
                 select: {
                     id: true,
+                    name: true,
                     className: true
                 }
             });
             if (students.length === 0) {
-                const target = className && className !== 'ALL' ? `class ${className}` : 'school';
-                throw new Error(`No active students found in ${target}`);
+                console.log(`⚠️ [LMS_SECURITY] No students found for teacher: ${teacherId}`);
+                throw new Error(`该老师名下暂无学生，无法发布任务`);
             }
-            const target = className && className !== 'ALL' ? `class ${className}` : 'school';
-            console.log(`👥 Found ${students.length} students in ${target}`);
+            console.log(`👥 [LMS_SECURITY] Found ${students.length} students for teacher: ${teacherId}`);
             // 2. 创建教学计划
             const lessonPlan = await this.prisma.lessonPlan.create({
                 data: {
@@ -175,31 +171,32 @@ class LMSService {
                     title,
                     content: {
                         ...content,
-                        targetClass: className || 'ALL' // 记录目标班级信息
+                        // 🆕 记录发布范围信息
+                        publishedTo: 'TEACHERS_STUDENTS',
+                        publisherId: teacherId
                     },
                     date: new Date(date),
                     isActive: true
                 }
             });
-            console.log(`✅ Created lesson plan: ${lessonPlan.id}`);
-            // 3. 批量创建任务记录
+            console.log(`✅ [LMS_SECURITY] Created lesson plan: ${lessonPlan.id} for ${students.length} students`);
+            // 3. 批量创建任务记录 - 只给发布者名下的学生
             const taskRecords = [];
             const affectedClasses = new Set();
             for (const student of students) {
-                affectedClasses.add(student.className);
+                affectedClasses.add(student.className || '未分班');
                 for (const task of tasks) {
                     taskRecords.push({
                         schoolId,
                         studentId: student.id,
+                        lessonPlanId: lessonPlan.id, // 🆕 关联教学计划
                         type: task.type,
                         title: task.title,
                         content: {
                             ...task.content,
                             lessonPlanId: lessonPlan.id,
-                            lessonPlanTitle: lessonPlan.title
-                        } || {
-                            lessonPlanId: lessonPlan.id,
-                            lessonPlanTitle: lessonPlan.title
+                            lessonPlanTitle: lessonPlan.title,
+                            publisherId: teacherId
                         },
                         status: 'PENDING',
                         expAwarded: task.expAwarded,
@@ -212,7 +209,7 @@ class LMSService {
                 await this.prisma.taskRecord.createMany({
                     data: taskRecords
                 });
-                console.log(`✅ Created ${taskRecords.length} task records`);
+                console.log(`✅ [LMS_SECURITY] Created ${taskRecords.length} task records for ${students.length} students`);
             }
             // 4. 计算统计信息
             const taskStats = {
@@ -220,16 +217,19 @@ class LMSService {
                 tasksCreated: taskRecords.length,
                 totalExpAwarded: tasks.reduce((sum, task) => sum + (task.expAwarded * students.length), 0)
             };
-            // 5. 广播教学计划发布事件
-            io.emit(socketHandlers_1.SOCKET_EVENTS.PLAN_PUBLISHED, {
+            // 5. 🆕 安全广播：只向该老师的房间广播事件
+            const teacherRoom = `teacher_${teacherId}`;
+            io.to(teacherRoom).emit(socketHandlers_1.SOCKET_EVENTS.PLAN_PUBLISHED, {
                 lessonPlanId: lessonPlan.id,
                 schoolId,
+                publisherId: teacherId,
                 title,
                 date: lessonPlan.date,
                 taskStats,
-                affectedClasses: Array.from(affectedClasses)
+                affectedClasses: Array.from(affectedClasses),
+                securityScope: 'TEACHERS_STUDENTS' // 🆕 标识安全范围
             });
-            console.log(`📡 Broadcasted plan published event for ${taskStats.totalStudents} students`);
+            console.log(`📡 [LMS_SECURITY] Broadcasted plan published event to teacher ${teacherId} for ${taskStats.totalStudents} students`);
             return {
                 lessonPlan,
                 taskStats,

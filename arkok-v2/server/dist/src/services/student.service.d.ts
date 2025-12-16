@@ -5,6 +5,9 @@ export interface StudentQuery {
     search?: string;
     page?: number;
     limit?: number;
+    teacherId?: string;
+    scope?: 'MY_STUDENTS' | 'ALL_SCHOOL';
+    userRole?: 'ADMIN' | 'TEACHER';
 }
 export interface AddScoreRequest {
     studentIds: string[];
@@ -16,8 +19,9 @@ export interface AddScoreRequest {
 }
 export interface CreateStudentRequest {
     name: string;
-    className: string;
+    className?: string;
     schoolId: string;
+    teacherId: string;
 }
 export interface UpdateStudentRequest {
     id: string;
@@ -54,7 +58,7 @@ export declare class StudentService {
     private io;
     constructor(io: SocketIOServer);
     /**
-     * 获取学生列表 - 强制重写修复
+     * 🆕 获取学生列表 - 基于师生绑定的重构版本
      */
     getStudents(query: StudentQuery): Promise<StudentListResponse>;
     /**
@@ -73,18 +77,15 @@ export declare class StudentService {
      * 获取任务类型标签
      */
     private getTaskTypeLabel;
-    createStudent(studentData: {
-        name: string;
-        className: string;
-        schoolId: string;
-    }): Promise<{
+    createStudent(studentData: CreateStudentRequest): Promise<{
         name: string;
         id: string;
         schoolId: string;
+        teacherId: string | null;
         isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
-        className: string;
+        className: string | null;
         level: number;
         points: number;
         exp: number;
@@ -113,12 +114,14 @@ export declare class StudentService {
     getClassStats(schoolId: string): Promise<any>;
     /**
      * 获取班级列表（用于班级切换）
+     * 🆕 修改：返回按老师分组的班级信息，支持多老师显示
      */
     getClasses(schoolId: string): Promise<any[]>;
     /**
-     * 转班（支持Admin和Teacher）
+     * 🆕 师生关系转移 - 从"转班"升级为"抢人"
+     * 将学生划归到指定老师名下
      */
-    transferStudents(studentIds: string[], targetClassName: string, schoolId: string, updatedBy: string): Promise<any[]>;
+    transferStudents(studentIds: string[], targetTeacherId: string, schoolId: string, updatedBy: string): Promise<any[]>;
     /**
      * 计算等级
      */

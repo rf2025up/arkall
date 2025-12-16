@@ -35,7 +35,7 @@ export declare class StudentRoutes {
      */
     private deleteStudent;
     /**
-     * 转班（支持Admin和Teacher）
+     * 🆕 师生关系转移 - 从"转班"升级为"抢人"
      */
     private transferStudents;
     /**

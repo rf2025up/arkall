@@ -84,6 +84,22 @@ export class StudentService {
         isActive: true,
       };
 
+      // 🚨 临时调试：检查现有学生的teacherId分布
+      console.log(`[DEBUG] 🔍 Checking teacherId distribution before query...`);
+      const allStudents = await this.prisma.student.findMany({
+        where: { schoolId, isActive: true },
+        select: { id: true, name: true, teacherId: true, className: true }
+      });
+
+      const teacherIdStats = allStudents.reduce((acc, student) => {
+        const tid = student.teacherId || 'null';
+        acc[tid] = (acc[tid] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      console.log(`[DEBUG] 📊 TeacherId distribution:`, teacherIdStats);
+      console.log(`[DEBUG] 📊 Total students in DB: ${allStudents.length}`);
+
       // 根据查询范围和用户角色确定查询条件
       if (scope === 'MY_STUDENTS' && teacherId) {
         // 老师查看自己的学生
@@ -693,26 +709,63 @@ export class StudentService {
 
   /**
    * 获取班级列表（用于班级切换）
+   * 🆕 修改：返回按老师分组的班级信息，支持多老师显示
    */
   async getClasses(schoolId: string): Promise<any[]> {
-    const classes = await this.prisma.student.groupBy({
-      by: ['className'],
+    // 🆕 按老师分组获取学生统计
+    const teacherGroups = await this.prisma.student.groupBy({
+      by: ['teacherId'],
       where: {
         schoolId,
-        isActive: true
+        isActive: true,
+        teacherId: { not: null }  // 排除没有归属老师的学生
       },
       _count: {
         id: true
-      },
-      orderBy: {
-        className: 'asc'
       }
     });
 
-    return classes.map(cls => ({
-      className: cls.className,
-      studentCount: cls._count.id
-    }));
+    // 获取对应的老师信息
+    const teacherIds = teacherGroups.map(g => g.teacherId!);
+    const teachers = await this.prisma.user.findMany({
+      where: {
+        id: { in: teacherIds },
+        schoolId,
+        role: 'TEACHER'
+      },
+      select: {
+        id: true,
+        name: true
+      }
+    });
+
+    // 组装数据：每个老师作为一个"班级"
+    const classData = teacherGroups.map(group => {
+      const teacher = teachers.find(t => t.id === group.teacherId);
+      return {
+        className: `${teacher?.name || '未知老师'}的班级`,
+        studentCount: group._count.id,
+        teacherId: group.teacherId,
+        teacherName: teacher?.name || '未知老师'
+      };
+    });
+
+    // 添加"全校"选项
+    const totalStudents = await this.prisma.student.count({
+      where: {
+        schoolId,
+        isActive: true
+      }
+    });
+
+    classData.unshift({
+      className: '全校大名单',
+      studentCount: totalStudents,
+      teacherId: 'ALL',
+      teacherName: '全校'
+    });
+
+    return classData;
   }
 
   /**
