@@ -9,6 +9,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { API } from '../services/api.service';
+import apiService from '../services/api.service';
 
 // 本周数据过滤工具函数
 const filterThisWeek = <T extends { created_at?: string; date?: string }>(items: T[]): T[] => {
@@ -160,6 +161,17 @@ const StudentDetail: React.FC = () => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [availableWeeks, setAvailableWeeks] = useState<any[]>([]);
 
+  // --- 实时任务记录状态管理 ---
+  const [taskRecords, setTaskRecords] = useState<Array<{
+    id: string;
+    title: string;
+    type: string;
+    status: string;
+    expAwarded: number;
+    createdAt: string;
+    content?: Record<string, unknown>;
+  }>>([]);
+
   // V1 兼容状态
   const [habitStats, setHabitStats] = useState<Record<string, number>>({
     '早起': 15, '阅读': 23, '运动': 8, '思考': 12, '卫生': 20, '助人': 18,
@@ -177,6 +189,7 @@ const StudentDetail: React.FC = () => {
     { id: 2, result: 'lose', topic: '语文背诵', opponent: '李小红', date: '2025-12-10' },
     { id: 3, result: 'win', topic: '英语单词', opponent: '王小刚', date: '2025-12-09' }
   ]);
+  // 🚀 基于任务记录的挑战数据 - 使用SPECIAL类型任务
   const [studentChallenges, setStudentChallenges] = useState<Array<{
     id: number;
     title: string;
@@ -184,15 +197,42 @@ const StudentDetail: React.FC = () => {
     date: string;
     rewardPoints: number;
     rewardExp: number;
-  }>>([
-    { id: 1, title: '阅读15分钟', result: 'success', date: '2025-12-11', rewardPoints: 10, rewardExp: 5 },
-    { id: 2, title: '数学练习', result: 'fail', date: '2025-12-10', rewardPoints: 0, rewardExp: 0 },
-    { id: 3, title: '运动打卡', result: 'success', date: '2025-12-09', rewardPoints: 15, rewardExp: 8 }
-  ]);
+  }>>([]);
 
   // --- 3. 获取学生信息 ---
   const student = studentProfile?.student;
   const studentName = student?.name || '未知学生';
+
+  // --- 获取学生任务记录 ---
+  const fetchStudentTaskRecords = async (studentId: string) => {
+    try {
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0]; // YYYY-MM-DD格式
+
+      const response = await apiService.get(`/lms/daily-records?studentId=${studentId}&date=${dateStr}`);
+
+      if (response.success && response.data) {
+        const records = response.data as any[];
+        setTaskRecords(records);
+
+        // 🚀 基于SPECIAL类型任务更新挑战数据
+        const challenges = records
+          .filter(record => record.type.toUpperCase() === 'SPECIAL')
+          .map((record, index) => ({
+            id: index + 1,
+            title: record.title,
+            result: record.status === 'COMPLETED' ? 'success' :
+                    record.status === 'PENDING' ? 'in_progress' : 'fail' as 'success' | 'fail' | 'in_progress',
+            date: new Date(record.createdAt).toLocaleDateString('zh-CN'),
+            rewardPoints: record.status === 'COMPLETED' ? record.expAwarded : 0,
+            rewardExp: record.status === 'COMPLETED' ? Math.floor(record.expAwarded / 2) : 0
+          }));
+        setStudentChallenges(challenges);
+      }
+    } catch (error) {
+      console.error('[StudentDetail] 获取任务记录失败:', error);
+    }
+  };
 
   // --- 4. 数据获取 ---
   useEffect(() => {
@@ -225,6 +265,9 @@ const StudentDetail: React.FC = () => {
               }));
               setStudentPKRecords(pkRecords);
             }
+
+            // 🚀 获取实时任务记录数据
+            await fetchStudentTaskRecords(studentId);
           } else {
             setError(response.message || '获取学生数据失败');
           }
@@ -266,13 +309,44 @@ const StudentDetail: React.FC = () => {
     setExpandedLessons(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // 模拟补过动画
-  const handlePassTask = (lessonId: number, taskId: number) => {
-    const btn = document.getElementById(`btn-pass-${taskId}`);
-    if(btn) {
-      btn.innerHTML = '<span class="text-green-600 font-bold text-xs">刚补过</span>';
-      btn.parentElement!.style.opacity = '0.5';
-      btn.parentElement!.style.backgroundColor = '#F9FAFB';
+  // 🚀 实时任务状态更新
+  const handlePassTask = async (lessonId: number, taskId: number) => {
+    try {
+      // 找到对应的任务记录
+      const taskRecord = taskRecords.find(record => record.id === taskId);
+      if (!taskRecord) {
+        console.error('[StudentDetail] 未找到任务记录:', taskId);
+        return;
+      }
+
+      // 调用API更新任务状态
+      const response = await apiService.patch(`/lms/records/${taskId}/status`, {
+        status: 'COMPLETED'
+      });
+
+      if (response.success) {
+        // 更新本地状态
+        setTaskRecords(prev => prev.map(record =>
+          record.id === taskId ? { ...record, status: 'COMPLETED' } : record
+        ));
+
+        // UI反馈动画
+        const btn = document.getElementById(`btn-pass-${taskId}`);
+        if(btn) {
+          btn.innerHTML = '<span class="text-green-600 font-bold text-xs">刚补过</span>';
+          btn.parentElement!.style.opacity = '0.5';
+          btn.parentElement!.style.backgroundColor = '#F9FAFB';
+        }
+
+        // 震动反馈
+        if (navigator.vibrate) navigator.vibrate(50);
+      } else {
+        console.error('[StudentDetail] 更新任务状态失败:', response.message);
+        alert(`更新失败: ${response.message}`);
+      }
+    } catch (error) {
+      console.error('[StudentDetail] 更新任务状态异常:', error);
+      alert('更新任务状态失败，请重试');
     }
   };
 
@@ -463,38 +537,35 @@ const StudentDetail: React.FC = () => {
     pkRecords: studentPKRecords
   };
 
-  // 静态数据（模拟）- 完全复制V1的数据结构
+  // 🚀 动态数据 - 使用实时任务记录数据
   const academicData = {
     aiComment: `通过对${studentName}的学情分析，该生整体学习态度端正，知识点掌握较为扎实。建议继续保持良好的学习习惯，同时在薄弱环节加强练习。`,
-    pendingTasks: [
-      { id: 1, title: '数学基础运算', attempts: 2 },
-      { id: 2, title: '语文古诗词背诵', attempts: 0 }
-    ],
+    pendingTasks: taskRecords
+      .filter(record => record.type.toUpperCase() === 'QC' && record.status === 'PENDING')
+      .map(record => ({
+        id: record.id,
+        title: record.title,
+        attempts: (record.content as any)?.attempts || 0
+      })),
     timeline: {
-      chinese: [
-        {
-          id: 101, unit: 1, lesson: 1, title: '观潮', status: 'done',
-          tasks: [
-            { id: 1, name: '全文背诵', status: 'passed', attempts: 0, date: '12/01' },
-            { id: 2, name: '生字听写', status: 'passed', attempts: 0, date: '12/01' },
-            { id: 3, name: '课文理解', status: 'passed', attempts: 1, date: '12/02' },
-            { id: 4, name: '小练笔', status: 'passed', attempts: 0, date: '12/03' },
-          ]
-        }
-      ] as TimelineLesson[],
+      chinese: [] as TimelineLesson[],
       math: [] as TimelineLesson[],
       english: [] as TimelineLesson[]
     }
   };
 
-  // 过程任务数据 (模拟备课中的任务库)
-  const processTasks = [
-    { id: 1, name: '课堂笔记', category: '课堂任务', default_exp: 10, status: 'completed', created_at: '2025-12-11' },
-    { id: 2, name: '小组讨论', category: '课堂任务', default_exp: 15, status: 'in_progress', created_at: '2025-12-10' },
-    { id: 3, name: '课后练习', category: '课后任务', default_exp: 20, status: 'pending', created_at: '2025-12-09' },
-    { id: 4, name: '实验报告', category: '实践任务', default_exp: 25, status: 'completed', created_at: '2025-12-08' },
-    { id: 5, name: '拓展阅读', category: '拓展任务', default_exp: 12, status: 'pending', created_at: '2025-12-07' }
-  ];
+  // 🚀 基于任务记录的过程任务数据
+  const processTasks = taskRecords
+    .filter(record => record.type.toUpperCase() === 'TASK') // 只显示TASK类型
+    .map(record => ({
+      id: record.id,
+      name: record.title,
+      category: '课堂任务', // 可以根据需要从content中提取
+      default_exp: record.expAwarded,
+      status: record.status === 'COMPLETED' ? 'completed' :
+              record.status === 'PENDING' ? 'pending' : 'in_progress',
+      created_at: record.createdAt
+    }));
   const thisWeekProcessTasks = filterThisWeek(processTasks);
 
   // 个性化加餐数据 (模拟备课中的个性化加餐) - 使用真实学生姓名
@@ -969,7 +1040,9 @@ const StudentDetail: React.FC = () => {
                 <div>
                   <h3 className="font-bold text-gray-700 mb-2 flex justify-between items-center px-1">
                     今日过关
-                    <span className="text-xs font-normal text-gray-400">进行中 2</span>
+                    <span className="text-xs font-normal text-gray-400">
+                      进行中 {academicData.pendingTasks.length}
+                    </span>
                   </h3>
                   <div className="space-y-2">
                     {academicData.pendingTasks.map(task => (

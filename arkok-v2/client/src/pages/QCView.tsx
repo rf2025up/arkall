@@ -83,60 +83,23 @@ const QCView: React.FC = () => {
   // 获取学生任务记录
   const fetchStudentRecords = async (studentId: string, date: string) => {
     if (!token) {
-      console.log(`🔥 [QCView Detail] ⚠️ 没有token，无法查询学生 ${studentId} 的任务记录`);
+      console.warn(`[QCView] 没有token，无法查询学生 ${studentId} 的任务记录`);
       return [];
     }
 
     try {
-      console.log(`🔥 [QCView Detail] ===== 开始获取学生任务记录 =====`);
-      console.log(`🔥 [QCView Detail] 学生ID: ${studentId}`);
-      console.log(`🔥 [QCView Detail] 查询日期: ${date}`);
-      console.log(`🔥 [QCView Detail] Token状态: ${token ? '有效' : '无效'}`);
-      console.log(`🔥 [QCView Detail] API端点: /lms/daily-records?studentId=${studentId}&date=${date}`);
-
       const response = await apiService.get(`/lms/daily-records?studentId=${studentId}&date=${date}`);
-
-      console.log(`🔥 [QCView Detail] ===== API响应数据 =====`);
-      console.log(`🔥 [QCView Detail] 完整响应:`, response);
-      console.log(`🔥 [QCView Detail] 响应成功: ${response.success}`);
-      console.log(`🔥 [QCView Detail] 响应消息: ${response.message}`);
-      console.log(`🔥 [QCView Detail] 数据类型: ${typeof response.data}`);
-      console.log(`🔥 [QCView Detail] 数据长度: ${Array.isArray(response.data) ? response.data.length : 'N/A'}`);
 
       if (response.success && response.data) {
         const records = response.data as any[];
-        console.log(`🔥 [QCView Detail] 学生 ${studentId} 任务记录数量: ${records.length}`);
-
-        if (records.length > 0) {
-          console.log(`🔥 [QCView Detail] ===== 记录详情 =====`);
-          records.forEach((record, index) => {
-            console.log(`🔥 [QCView Detail] 记录 ${index + 1}:`, {
-              id: record.id,
-              title: record.title,
-              type: record.type,
-              status: record.status,
-              exp: record.expAwarded,
-              createdAt: record.createdAt
-            });
-          });
-        } else {
-          console.log(`🔥 [QCView Detail] ⚠️ 没有找到任务记录！`);
-        }
-
         return records;
       } else {
-        console.log(`🔥 [QCView Detail] ❌ API调用失败或无数据`);
+        console.warn(`[QCView] API调用失败或无数据:`, response.message);
       }
     } catch (error) {
-      console.error(`🔥 [QCView Detail] 💥 获取学生 ${studentId} 任务记录异常:`, error);
-      console.error(`🔥 [QCView Detail] 错误详情:`, {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
+      console.error(`[QCView] 获取学生 ${studentId} 任务记录异常:`, error);
     }
 
-    console.log(`🔥 [QCView Detail] ===== 返回空数组 =====`);
     return [];
   };
 
@@ -166,10 +129,8 @@ const QCView: React.FC = () => {
       }
 
       const url = `/students${params.toString() ? '?' + params.toString() : ''}`;
-      console.log(`🔒 [QC_VIEW] Fetching students with URL: ${url}`);
 
       const response = await apiService.get(url);
-      console.log("[QCView] API Response Object:", response);
 
       // 智能数据提取
       let studentData = [];
@@ -197,8 +158,9 @@ const QCView: React.FC = () => {
           // 将后端记录转换为前端需要的格式
           const tasks = records.map((record: any) => ({
             id: record.id,
-            name: record.title,
-            type: record.type.toLowerCase(), // QC, TASK, SPECIAL
+            recordId: record.id, // 🚀 关键修复：确保recordId字段存在，用于API调用
+            name: record.title, // 使用 record.title 而不是 record.name
+            type: record.type.toUpperCase(), // QC, TASK, SPECIAL - 确保大写
             status: record.status === 'PENDING' ? 'PENDING' :
                    record.status === 'SUBMITTED' ? 'PENDING' :
                    record.status === 'COMPLETED' ? 'COMPLETED' : 'PENDING',
@@ -216,7 +178,6 @@ const QCView: React.FC = () => {
         })
       );
 
-      console.log("[QCView] Extracted students with tasks:", studentsWithTasks);
       setQcStudents(studentsWithTasks);
     } catch (err) {
       console.error("[QCView] Failed to fetch students:", err);
@@ -229,8 +190,6 @@ const QCView: React.FC = () => {
 
   // 数据获取
   useEffect(() => {
-    console.log('QCView - 开始加载数据');
-
     // 并行获取学生数据和任务库数据
     const fetchInitialData = async () => {
       try {
@@ -238,9 +197,8 @@ const QCView: React.FC = () => {
           fetchStudents(),
           fetchTaskLibrary()
         ]);
-        console.log('✅ [QC_VIEW] 所有初始数据加载完成');
       } catch (error) {
-        console.error('❌ [QC_VIEW] 初始数据加载失败:', error);
+        console.error('[QCView] 初始数据加载失败:', error);
       }
     };
 
@@ -263,42 +221,34 @@ const QCView: React.FC = () => {
   // 获取任务库 (复用PrepView逻辑)
   const fetchTaskLibrary = async () => {
     if (!token) {
-      console.error('🔍 [QC_VIEW] 获取任务库失败：未找到认证token');
+      console.warn('[QCView] 获取任务库失败：未找到认证token');
       return;
     }
 
-    console.log('🔍 [QC_VIEW] 开始获取任务库...');
     setIsTasksLoading(true);
     setTasksError(null);
 
     try {
-      console.log('📡 [QC_VIEW] 正在调用API: /lms/task-library');
       const response = await apiService.get('/lms/task-library');
-
-      console.log('📊 [QC_VIEW] API响应:', { success: response.success, dataLength: Array.isArray(response.data) ? response.data.length : 0, message: response.message });
 
       if (response.success && response.data) {
         const tasks = response.data as TaskLibraryItem[];
-        console.log('✅ [QC_VIEW] 任务库获取成功，任务数量:', tasks.length);
-        console.log('📋 [QC_VIEW] 任务列表预览:', tasks.map(t => ({ name: t.name, category: t.category, exp: t.defaultExp })));
 
         // 转换为TaskLibrary格式
         const convertedLibrary = convertApiToTaskLibrary(tasks);
         setTaskLibrary(convertedLibrary);
         setTaskDB(convertedLibrary); // 同时更新CMS的任务库
       } else {
-        console.error('❌ [QC_VIEW] 获取任务库失败:', response.message);
         setTasksError(response.message || '获取任务库失败');
       }
     } catch (err) {
-      console.error('💥 [QC_VIEW] 获取任务库异常:', err);
+      console.error('[QCView] 获取任务库异常:', err);
       setTasksError('网络错误，获取任务库失败');
       // API失败时不使用降级数据，保持空状态
       setTaskLibrary(EMPTY_TASK_LIBRARY);
       setTaskDB(EMPTY_TASK_LIBRARY);
     } finally {
       setIsTasksLoading(false);
-      console.log('🏁 [QC_VIEW] 任务库获取流程结束');
     }
   };
 
@@ -338,6 +288,8 @@ const QCView: React.FC = () => {
 
   // 1. 质检台操作
   const openQCDrawer = (sid: number) => {
+    const student = qcStudents.find(s => s.id === sid);
+
     setSelectedStudentId(sid);
     setIsQCDrawerOpen(true);
   };
@@ -399,29 +351,112 @@ const QCView: React.FC = () => {
     }
   };
 
-  const toggleQCPass = (studentId: number, taskId: number) => {
-    setQcStudents(prev => prev.map(s => {
-      if (s.id !== studentId) return s;
-      return {
-        ...s,
-        tasks: s.tasks.map(t => {
-          if (t.id !== taskId) return t;
-          const newStatus = t.status === 'PASSED' ? 'PENDING' : 'PASSED';
-          return { ...t, status: newStatus };
-        })
-      };
-    }));
+  const toggleQCPass = async (studentId: number, taskId: number) => {
+    try {
+      // 找到对应的学生和任务
+      const student = qcStudents.find(s => s.id === studentId);
+      const task = student?.tasks.find(t => t.id === taskId);
+
+      if (!student || !task || !task.recordId) {
+        console.error('[QCView] 未找到学生、任务或任务记录ID');
+        // 降级处理：更新本地状态
+        setQcStudents(prev => prev.map(s => {
+          if (s.id !== studentId) return s;
+          return {
+            ...s,
+            tasks: s.tasks.map(t => {
+              if (t.id !== taskId) return t;
+              const newStatus = t.status === 'PASSED' ? 'PENDING' : 'PASSED';
+              return { ...t, status: newStatus };
+            })
+          };
+        }));
+        return;
+      }
+
+      const newStatus = task.status === 'PASSED' ? 'PENDING' : 'COMPLETED';
+
+      // 调用API更新任务状态
+      const response = await apiService.patch(`/lms/records/${task.recordId}/status`, {
+        status: newStatus
+      });
+
+      if (response.success) {
+        // 更新本地状态
+        setQcStudents(prev => prev.map(s => {
+          if (s.id !== studentId) return s;
+          return {
+            ...s,
+            tasks: s.tasks.map(t => {
+              if (t.id !== taskId) return t;
+              return { ...t, status: newStatus === 'COMPLETED' ? 'PASSED' : 'PENDING' };
+            })
+          };
+        }));
+
+        // 震动反馈
+        if (navigator.vibrate) navigator.vibrate(50);
+      } else {
+        console.error('[QCView] API更新失败:', response.message);
+        alert(`更新失败: ${response.message}`);
+      }
+
+    } catch (error) {
+      console.error('[QCView] 切换QC任务状态失败:', error);
+      alert('更新任务状态失败，请重试');
+    }
   };
 
-  const passAllQC = () => {
+  const passAllQC = async () => {
     if (!selectedStudentId) return;
-    setQcStudents(prev => prev.map(s => {
-      if (s.id !== selectedStudentId) return s;
-      return {
-        ...s,
-        tasks: s.tasks.map(t => t.type === 'QC' ? { ...t, status: 'PASSED' } : t)
-      };
-    }));
+
+    try {
+      // 获取当前学生的QC任务记录ID
+      const selectedStudent = qcStudents.find(s => s.id === selectedStudentId);
+      if (!selectedStudent) {
+        console.error('[QCView] 未找到选中的学生');
+        return;
+      }
+
+      const qcTaskIds = selectedStudent.tasks
+        .filter(t => t.type === 'QC' && t.status !== 'PASSED')
+        .map(t => t.recordId)
+        .filter(id => id); // 过滤掉空值
+
+      if (qcTaskIds.length === 0) {
+        alert('所有QC任务都已过关！');
+        return;
+      }
+
+      // 调用API批量更新任务状态
+      const response = await apiService.patch('/lms/records/batch/status', {
+        recordIds: qcTaskIds,
+        status: 'COMPLETED'
+      });
+
+      if (response.success) {
+        // 更新本地状态
+        setQcStudents(prev => prev.map(s => {
+          if (s.id !== selectedStudentId) return s;
+          return {
+            ...s,
+            tasks: s.tasks.map(t => t.type === 'QC' ? { ...t, status: 'PASSED' } : t)
+          };
+        }));
+
+        // 震动反馈
+        if (navigator.vibrate) navigator.vibrate(100);
+
+        alert(`一键过关成功！已更新 ${qcTaskIds.length} 个任务`);
+      } else {
+        console.error('[QCView] API更新失败:', response.message);
+        alert(`更新失败: ${response.message}`);
+      }
+
+    } catch (error) {
+      console.error('[QCView] 一键过关操作失败:', error);
+      alert('一键过关失败，请重试');
+    }
   };
 
   const deleteTask = (studentId: number, taskId: number) => {
@@ -433,18 +468,45 @@ const QCView: React.FC = () => {
   };
 
   // 2. 结算台操作
-  const toggleTaskComplete = (studentId: number, taskId: number) => {
-    setQcStudents(prev => prev.map(s => {
-      if (s.id !== studentId) return s;
-      return {
-        ...s,
-        tasks: s.tasks.map(t => {
-          if (t.id !== taskId) return t;
-          const newStatus = t.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED';
-          return { ...t, status: newStatus };
-        })
-      };
-    }));
+  const toggleTaskComplete = async (studentId: number, taskId: number) => {
+    try {
+      // 找到对应的学生和任务
+      const student = qcStudents.find(s => s.id === studentId);
+      const task = student?.tasks.find(t => t.id === taskId);
+
+      if (!student || !task || !task.recordId) {
+        console.error('[QCView] 未找到学生、任务或任务记录ID');
+        return;
+      }
+
+      const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED';
+
+      // 调用API更新任务状态
+      const response = await apiService.patch(`/lms/records/${task.recordId}/status`, {
+        status: newStatus
+      });
+
+      if (response.success) {
+        // 更新本地状态
+        setQcStudents(prev => prev.map(s => {
+          if (s.id !== studentId) return s;
+          return {
+            ...s,
+            tasks: s.tasks.map(t => {
+              if (t.id !== taskId) return t;
+              return { ...t, status: newStatus };
+            })
+          };
+        }));
+      } else {
+        console.error('[QCView] API更新失败:', response.message);
+        alert(`更新失败: ${response.message}`);
+      }
+
+    } catch (error) {
+      console.error('[QCView] 切换任务状态失败:', error);
+      alert('更新任务状态失败，请重试');
+    }
   };
 
   // 结算功能 - V1原版逻辑
@@ -555,19 +617,7 @@ const QCView: React.FC = () => {
     }));
   };
 
-  // 🚨 临时测试函数 - 调试API连接
-  const testAPIConnection = async () => {
-    console.log('🔥 [API_TEST] ===== 开始测试API连接 =====');
-    try {
-      const response = await apiService.get('/lms/debug-test');
-      console.log('🔥 [API_TEST] API调用成功:', response);
-      alert('API连接测试成功！请查看控制台和服务器日志。');
-    } catch (error) {
-      console.error('🔥 [API_TEST] API调用失败:', error);
-      alert('API连接测试失败！请查看控制台。');
-    }
-  };
-
+  
   return (
     <ProtectedRoute>
       <div className="flex flex-col h-full bg-gray-100 font-sans text-slate-900" style={pageStyle}>
@@ -579,14 +629,6 @@ const QCView: React.FC = () => {
               <div className="text-xl font-extrabold text-slate-800">
                 {activeTab === 'qc' ? '过关台' : '任务结算台'}
               </div>
-              {/* 🚨 临时测试按钮 */}
-              <button
-                onClick={testAPIConnection}
-                className="px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
-                style={{ fontSize: '10px' }}
-              >
-                测试API
-              </button>
             </div>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-xs text-slate-400">
@@ -811,13 +853,20 @@ const QCView: React.FC = () => {
                   </button>
                 </div>
 
+                {/* 临时：显示所有任务类型以便调试 */}
                 <div className="text-xs font-bold text-red-500 mb-2 flex items-center gap-1">
                   <Shield size={12} /> 需过关项目 (⚠️ 点一次记录一次努力)
                 </div>
 
+                
                 {/* QC List */}
                 <div className="space-y-0">
-                  {getSelectedStudent()?.tasks.filter(t => t.type === 'QC').length === 0 ? (
+                  {(() => {
+                    const selectedStudent = getSelectedStudent();
+                    const allTasks = selectedStudent?.tasks || [];
+                    const qcTasks = allTasks.filter(t => t.type === 'QC');
+                    return qcTasks.length === 0;
+                  })() ? (
                     <div className="text-center py-8 text-gray-400">
                       <Shield size={32} className="mx-auto mb-3 opacity-50" />
                       <p className="text-sm font-medium mb-1">暂无过关项目</p>
