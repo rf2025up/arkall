@@ -692,11 +692,20 @@ export class StudentRoutes {
       console.log("Request Headers:", req.headers);
 
       console.log(`🔧 Controller: Creating student with data:`, req.body);
+      // 强制要求明确指定 teacherId，不允许降级处理
+      if (!req.body.teacherId) {
+        return res.status(400).json({
+          success: false,
+          message: '必须指定归属老师 (teacherId)',
+          error: 'teacherId is required'
+        });
+      }
+
       const data: CreateStudentRequest = {
         name: req.body.name,
         className: req.body.className || req.body.classRoom, // 兼容旧的 classRoom 字段
         schoolId: req.schoolId!,
-        teacherId: req.body.teacherId || (req.user as any)?.id // 🆕 必须指定归属老师
+        teacherId: req.body.teacherId // 🆕 强制要求明确的师生关系
       };
 
       console.log("Processed data object:", data);
