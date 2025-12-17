@@ -64,6 +64,20 @@ interface TimelineLesson {
 }
 
 // V2 API 数据类型定义
+interface TaskRecord {
+  id: string;
+  title: string;
+  type: string;
+  status: string;
+  expAwarded: number;
+  createdAt: string;
+  content?: {
+    attempts?: number;
+    [key: string]: unknown;
+  };
+  lessonPlan?: Record<string, unknown>;
+}
+
 interface StudentProfile {
   student: {
     id: string;
@@ -75,17 +89,16 @@ interface StudentProfile {
     totalExp: number;
     avatarUrl?: string;
     createdAt: string;
+    // 🚀 添加课程进度信息
+    progress?: {
+      chinese?: { unit: string; lesson?: string; title: string };
+      math?: { unit: string; lesson?: string; title: string };
+      english?: { unit: string; title: string };
+      source: 'lesson_plan' | 'default';
+      updatedAt: string;
+    };
   };
-  taskRecords: Array<{
-    id: string;
-    title: string;
-    type: string;
-    status: string;
-    expAwarded: number;
-    createdAt: string;
-    content?: Record<string, unknown>;
-    lessonPlan?: Record<string, unknown>;
-  }>;
+  taskRecords: TaskRecord[];
   pkRecords: Array<{
     id: string;
     topic: string;
@@ -215,7 +228,13 @@ const StudentDetail: React.FC = () => {
           student: {
             ...prev.student,
             // 添加课程进度信息
-            progress: response.data
+            progress: response.data as {
+              chinese?: { unit: string; lesson?: string; title: string };
+              math?: { unit: string; lesson?: string; title: string };
+              english?: { unit: string; title: string };
+              source: 'lesson_plan' | 'default';
+              updatedAt: string;
+            }
           }
         } : null);
       }
@@ -233,7 +252,7 @@ const StudentDetail: React.FC = () => {
       const response = await apiService.get(`/lms/daily-records?studentId=${studentId}&date=${dateStr}`);
 
       if (response.success && response.data) {
-        const records = response.data as any[];
+        const records: TaskRecord[] = response.data as TaskRecord[];
         setTaskRecords(records);
 
         // 🚀 基于SPECIAL类型任务更新挑战数据
@@ -337,7 +356,7 @@ const StudentDetail: React.FC = () => {
   const handlePassTask = async (lessonId: number, taskId: number) => {
     try {
       // 找到对应的任务记录
-      const taskRecord = taskRecords.find(record => record.id === taskId);
+      const taskRecord = taskRecords.find(record => record.id === taskId.toString());
       if (!taskRecord) {
         console.error('[StudentDetail] 未找到任务记录:', taskId);
         return;
@@ -351,7 +370,7 @@ const StudentDetail: React.FC = () => {
       if (response.success) {
         // 更新本地状态
         setTaskRecords(prev => prev.map(record =>
-          record.id === taskId ? { ...record, status: 'COMPLETED' } : record
+          record.id === taskId.toString() ? { ...record, status: 'COMPLETED' } : record
         ));
 
         // UI反馈动画
@@ -567,14 +586,14 @@ const StudentDetail: React.FC = () => {
     pendingTasks: taskRecords
       .filter(record => record.type.toUpperCase() === 'QC' && record.status === 'PENDING')
       .map(record => ({
-        id: record.id,
+        id: parseInt(record.id),
         title: record.title,
-        attempts: (record.content as any)?.attempts || 0
+        attempts: record.content?.attempts || 0
       })),
     // 🚀 基于真实课程进度数据生成学期地图
     timeline: (() => {
       // 使用从API获取的真实课程进度数据
-      const currentProgress = (studentProfile?.student as any)?.progress || {
+      const currentProgress = studentProfile?.student?.progress || {
         chinese: { unit: "1", lesson: "1", title: "默认课程" },
         math: { unit: "1", lesson: "1", title: "默认课程" },
         english: { unit: "1", title: "Default Course" }
@@ -615,7 +634,7 @@ const StudentDetail: React.FC = () => {
                   id: parseInt(record.id) + index,
                   name: record.title,
                   status: record.status === 'COMPLETED' ? 'passed' : 'pending',
-                  attempts: (record.content as any)?.attempts || 0,
+                  attempts: (record.content?.attempts as number) || 0,
                   date: new Date(record.createdAt).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
                 }))
             });
@@ -1128,7 +1147,7 @@ const StudentDetail: React.FC = () => {
                       <div key={task.id} className="bg-white p-3 rounded-xl border-l-4 border-orange-400 shadow-sm flex justify-between items-center">
                         <div>
                           <div className="text-sm font-bold text-gray-800">{task.title}</div>
-                          {task.attempts > 0 && <div className="text-[10px] text-orange-500 font-bold mt-1">🔥 辅导: {task.attempts} 次</div>}
+                          {(task.attempts as number) > 0 && <div className="text-[10px] text-orange-500 font-bold mt-1">🔥 辅导: {task.attempts as number} 次</div>}
                         </div>
                         <div className="flex gap-2">
                           <button className="w-8 h-8 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center active:bg-orange-200"><Plus size={16} /></button>

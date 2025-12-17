@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Check, Search, Settings, Trash2, Plus, ChevronRight, User, Shield, Award, Calendar } from 'lucide-react';
+import { X, Check, Search, Settings, Trash2, Plus, ChevronRight, User, Shield, Award, Calendar, BookOpen } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useClass } from '../context/ClassContext';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -7,8 +7,18 @@ import apiService from '../services/api.service';
 
 // --- 类型定义 ---
 
+// 🚀 API响应类型定义
+interface StudentProgressResponse {
+  chinese?: { unit: string; lesson?: string; title: string };
+  math?: { unit: string; lesson?: string; title: string };
+  english?: { unit: string; title: string };
+  source: 'lesson_plan' | 'default';
+  updatedAt: string;
+}
+
 interface Task {
   id: number;
+  recordId?: string; // 🚀 添加recordId字段用于API调用
   name: string;
   type: 'QC' | 'TASK' | 'SPECIAL';
   status: 'PENDING' | 'PASSED' | 'COMPLETED';
@@ -133,8 +143,8 @@ const QCView: React.FC = () => {
       const response = await apiService.get(`/lms/student-progress?studentId=${studentId}`);
 
       if (response.success && response.data) {
-        // 将API数据转换为courseInfo格式
-        const progressData = response.data;
+        // 使用正确的类型定义
+        const progressData: StudentProgressResponse = response.data as StudentProgressResponse;
         setCourseInfo({
           chinese: progressData.chinese || { unit: "1", lesson: "1", title: "默认课程" },
           math: progressData.math || { unit: "1", lesson: "1", title: "默认课程" },

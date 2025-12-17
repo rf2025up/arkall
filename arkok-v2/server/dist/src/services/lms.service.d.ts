@@ -111,5 +111,50 @@ export declare class LMSService {
         failed: number;
         errors: string[];
     }>;
+    /**
+     * 获取学生课程进度 - 集成备课页数据
+     */
+    getStudentProgress(schoolId: string, studentId: string): Promise<{
+        chinese?: {
+            unit: string;
+            lesson?: string;
+            title: string;
+        };
+        math?: {
+            unit: string;
+            lesson?: string;
+            title: string;
+        };
+        english?: {
+            unit: string;
+            title: string;
+        };
+        source: 'lesson_plan' | 'default';
+        updatedAt: string;
+    }>;
+    /**
+     * 更新学生课程进度 - 权限高于备课页
+     * 这里我们将进度信息直接存储在学生的最新任务记录中
+     */
+    updateStudentProgress(schoolId: string, studentId: string, teacherId: string, progress: {
+        chinese?: {
+            unit: string;
+            lesson?: string;
+            title: string;
+        };
+        math?: {
+            unit: string;
+            lesson?: string;
+            title: string;
+        };
+        english?: {
+            unit: string;
+            title: string;
+        };
+    }): Promise<{
+        success: boolean;
+        progress: any;
+        message: string;
+    }>;
 }
 //# sourceMappingURL=lms.service.d.ts.map

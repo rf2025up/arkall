@@ -762,22 +762,11 @@ export class LMSService {
     try {
       console.log(`[LMS_SERVICE] Getting student progress for ${studentId}`);
 
-      // 1. 首先查找最新的教学计划（按日期降序）
+      // 1. 首先查找该学校的最新教学计划（不限制必须有任务记录）
       const latestLessonPlan = await this.prisma.lessonPlan.findFirst({
         where: {
           schoolId: schoolId,
           isActive: true
-        },
-        include: {
-          taskRecords: {
-            where: {
-              studentId: studentId
-            },
-            orderBy: {
-              createdAt: 'desc'
-            },
-            take: 1 // 只需要最新的任务记录来确认关联
-          }
         },
         orderBy: {
           date: 'desc'
@@ -787,6 +776,13 @@ export class LMSService {
       // 2. 如果有教学计划，提取课程进度信息
       if (latestLessonPlan) {
         const content = latestLessonPlan.content as any;
+
+        console.log(`[LMS_SERVICE] Found lesson plan ${latestLessonPlan.id} with student records`);
+        console.log(`[LMS_SERVICE] Content structure:`, {
+          hasContent: !!content,
+          hasCourseInfo: !!content?.courseInfo,
+          courseInfoKeys: content?.courseInfo ? Object.keys(content.courseInfo) : []
+        });
 
         // 检查content中是否包含courseInfo
         if (content?.courseInfo?.chinese || content?.courseInfo?.math || content?.courseInfo?.english) {
@@ -799,7 +795,12 @@ export class LMSService {
             source: 'lesson_plan',
             updatedAt: latestLessonPlan.updatedAt.toISOString()
           };
+        } else {
+          console.log(`[LMS_SERVICE] No courseInfo found in lesson plan content`);
+          console.log(`[LMS_SERVICE] Content data:`, content);
         }
+      } else {
+        console.log(`[LMS_SERVICE] No lesson plan found for student ${studentId}`);
       }
 
       // 3. 如果没有找到教学计划或进度信息，返回默认数据

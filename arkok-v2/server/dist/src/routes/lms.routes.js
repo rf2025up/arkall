@@ -284,24 +284,6 @@ router.get('/stats/:schoolId', async (req, res) => {
         });
     }
 });
-// 🚨 临时调试端点 - 测试前端是否能调用API
-router.get('/debug-test', async (req, res) => {
-    console.log('🔥 [DEBUG] ===== 前端API调用测试成功！ =====');
-    console.log('🔥 [DEBUG] 请求时间:', new Date().toISOString());
-    console.log('🔥 [DEBUG] 请求URL:', req.originalUrl);
-    console.log('🔥 [DEBUG] 请求方法:', req.method);
-    console.log('🔥 [DEBUG] User-Agent:', req.headers['user-agent']);
-    res.json({
-        success: true,
-        message: '前端API调用测试成功！',
-        timestamp: new Date().toISOString(),
-        requestInfo: {
-            url: req.originalUrl,
-            method: req.method,
-            userAgent: req.headers['user-agent']
-        }
-    });
-});
 // 获取学生的每日任务记录
 router.get('/daily-records', async (req, res) => {
     try {
@@ -411,6 +393,64 @@ router.patch('/records/batch/status', async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to batch update records',
+            error: error.message
+        });
+    }
+});
+// 获取学生课程进度 - 集成备课页数据
+router.get('/student-progress', async (req, res) => {
+    try {
+        const { studentId } = req.query;
+        if (!studentId) {
+            return res.status(400).json({
+                success: false,
+                message: 'studentId is required'
+            });
+        }
+        // 从认证中间件获取用户信息（已由中间件验证）
+        const user = req.user;
+        // 获取该学生最新的课程进度数据
+        const latestProgress = await lmsService.getStudentProgress(user.schoolId, studentId);
+        res.json({
+            success: true,
+            data: latestProgress,
+            message: 'Student progress retrieved successfully'
+        });
+    }
+    catch (error) {
+        console.error('❌ Error in GET /api/lms/student-progress:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to get student progress',
+            error: error.message
+        });
+    }
+});
+// 更新学生课程进度 - 权限高于备课页
+router.patch('/student-progress/:studentId', async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        const { chinese, math, english } = req.body;
+        if (!chinese && !math && !english) {
+            return res.status(400).json({
+                success: false,
+                message: 'At least one subject progress must be provided'
+            });
+        }
+        // 从认证中间件获取用户信息（已由中间件验证）
+        const user = req.user;
+        const updatedProgress = await lmsService.updateStudentProgress(user.schoolId, studentId, user.userId, { chinese, math, english });
+        res.json({
+            success: true,
+            data: updatedProgress,
+            message: 'Student progress updated successfully'
+        });
+    }
+    catch (error) {
+        console.error('❌ Error in PATCH /api/lms/student-progress/:studentId:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update student progress',
             error: error.message
         });
     }
