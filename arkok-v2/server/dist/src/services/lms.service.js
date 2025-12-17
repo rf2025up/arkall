@@ -621,16 +621,11 @@ class LMSService {
     async getStudentProgress(schoolId, studentId) {
         try {
             console.log(`[LMS_SERVICE] Getting student progress for ${studentId}`);
-            // 1. 首先查找包含学生任务记录的最新教学计划
+            // 1. 首先查找该学校的最新教学计划（不限制必须有任务记录）
             const latestLessonPlan = await this.prisma.lessonPlan.findFirst({
                 where: {
                     schoolId: schoolId,
-                    isActive: true,
-                    taskRecords: {
-                        some: {
-                            studentId: studentId
-                        }
-                    }
+                    isActive: true
                 },
                 orderBy: {
                     date: 'desc'

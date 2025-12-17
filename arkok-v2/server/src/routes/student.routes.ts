@@ -126,8 +126,7 @@ export class StudentRoutes {
      *       401:
      *         description: 用户未认证
      */
-    this.router.get('/:id', this.getStudentById.bind(this));
-
+    
     /**
      * @swagger
      * /api/students/{id}/profile:
@@ -187,6 +186,31 @@ export class StudentRoutes {
      *         description: 用户未认证
      */
     this.router.get('/:id/profile', this.getStudentProfile.bind(this));
+
+    /**
+     * @swagger
+     * /api/students/{id}:
+     *   get:
+     *     summary: 获取单个学生详情
+     *     tags: [Students]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: 学生ID
+     *     responses:
+     *       200:
+     *         description: 获取学生详情成功
+     *       404:
+     *         description: 学生不存在
+     *       401:
+     *         description: 用户未认证
+     */
+    this.router.get('/:id', this.getStudentById.bind(this));
 
     /**
      * @swagger

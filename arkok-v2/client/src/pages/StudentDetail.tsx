@@ -276,16 +276,21 @@ const StudentDetail: React.FC = () => {
 
   // --- 4. 数据获取 ---
   useEffect(() => {
+    console.log('[DEBUG] StudentDetail useEffect triggered, studentId:', studentId);
     if (studentId) {
       const fetchStudentProfile = async () => {
+        console.log('[DEBUG] fetchStudentProfile started');
         setIsLoading(true);
         setError(null);
 
         try {
           // 使用 V2 API 获取学生数据
+          console.log('[DEBUG] About to call API.get:', `/students/${studentId}/profile`);
           const response = await API.get(`/students/${studentId}/profile`);
+          console.log('[DEBUG] API response received:', response);
 
           if (response.success) {
+            console.log('[DEBUG] Setting studentProfile with data:', response.data);
             setStudentProfile(response.data as StudentProfile);
 
             // 转换数据格式以兼容 V1 组件结构
@@ -315,7 +320,8 @@ const StudentDetail: React.FC = () => {
             setError(response.message || '获取学生数据失败');
           }
         } catch (err) {
-          console.error('获取学生数据失败:', err);
+          console.error('[DEBUG] 获取学生数据失败:', err);
+          console.error('[DEBUG] Error details:', err.message, err.stack);
           setError('网络错误，请稍后重试');
 
           // 使用 V1 风格的模拟数据作为兜底
@@ -339,6 +345,7 @@ const StudentDetail: React.FC = () => {
           };
           setStudentProfile(mockStudent);
         } finally {
+          console.log('[DEBUG] fetchStudentProfile finished, setting isLoading to false');
           setIsLoading(false);
         }
       };
@@ -692,7 +699,10 @@ const StudentDetail: React.FC = () => {
     </div>
   );
 
+  console.log('[DEBUG] Render check - error:', error, 'isLoading:', isLoading, 'studentProfile:', studentProfile);
+
   if (error) {
+    console.log('[DEBUG] Rendering error state with error:', error);
     return (
       <div className="min-h-screen bg-[#F2F4F7] text-[#1E293B] flex items-center justify-center">
         <div className="text-center">
@@ -709,6 +719,7 @@ const StudentDetail: React.FC = () => {
   }
 
   if (!studentProfile || isLoading) {
+    console.log('[DEBUG] Rendering loading/empty state - isLoading:', isLoading, 'hasProfile:', !!studentProfile);
     return (
       <div className="min-h-screen bg-[#F2F4F7] text-[#1E293B] flex items-center justify-center">
         <div className="text-center">
@@ -726,6 +737,8 @@ const StudentDetail: React.FC = () => {
       </div>
     );
   }
+
+  console.log('[DEBUG] Rendering main component content - studentProfile.student.name:', studentProfile?.student?.name);
 
   return (
     <ProtectedRoute>
