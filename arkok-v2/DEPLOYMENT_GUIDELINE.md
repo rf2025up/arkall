@@ -1,32 +1,97 @@
-# 🚀 ArkOK V2 公网部署标准化指南
+# 🚀 ArkOK V2 公网部署标准化指南（无PM2 - 云原生最佳实践）
 
 **版本**: v2.0.0
 **创建时间**: 2025-12-12
-**架构**: Plan C 智能代理模式
+**更新时间**: 2025-12-18
+**架构**: 统一托管架构
 **状态**: ✅ 生产就绪
 
 ## 📋 核心架构说明
 
-**Plan C 智能代理架构:**
+**统一托管架构 (云原生最佳实践):**
 ```
 🌐 公网流量 (Sealos Ingress)
     ↓
-端口 3000 (智能代理服务器)
+端口 3000 (Node.js 统一服务)
     ↓
 ┌─────────────────────────────────────┐
-│         智能路由分发                │
+│         统一托管服务器                │
 ├─────────────────┬───────────────────┤
 │   /api/*        │     /*            │
 │   ↓             │     ↓            │
-│   后端 API      │   前端 UI         │
-│   端口 3001     │   端口 5173       │
+│   API 业务逻辑   │   静态资源托管     │
+│   Express       │   client/dist     │
 └─────────────────┴───────────────────┘
 ```
 
 **关键组件:**
-- **智能代理服务器**: `proxy-server.js` (端口3000)
-- **后端API服务**: Express + Socket.io (端口3001)
-- **前端UI服务**: Vite + React (端口5173)
+- **统一服务器**: `node dist/index.js` (端口3000)
+- **后端API服务**: Express + Socket.io (集成在统一服务中)
+- **前端静态资源**: 直接托管 client/dist 目录
+
+## 🚀 标准化部署流程（无PM2 - 云原生最佳实践）
+
+**当用户说"公网部署"时，AI助手自动执行以下4阶段流程：**
+
+### 📋 阶段1：环境准备与清理
+```bash
+# 检查并清理端口占用
+fuser -k 3000/tcp 2>/dev/null
+fuser -k 3001/tcp 2>/dev/null
+
+# 清理PM2进程（如果存在）
+pm2 kill 2>/dev/null
+
+# 清理现有服务进程
+pkill -f "node dist/index.js"
+
+# 验证环境配置
+grep -q "PORT=3000" server/.env
+```
+
+### 📋 阶段2：代码编译
+```bash
+# 前端编译（必须执行）
+cd client && npm run build
+
+# 后端编译（推荐执行）
+cd server && npm run build
+```
+
+### 📋 阶段3：服务启动（无PM2）
+```bash
+# 直接启动服务（云原生最佳实践）
+cd server
+nohup node dist/index.js > server.log 2>&1 &
+
+# 等待服务启动
+sleep 5
+```
+
+### 📋 阶段4：部署验证
+```bash
+# 本地健康检查
+curl -s -f "http://localhost:3000/health"
+
+# 公网连通性验证
+curl -s -f -I "https://esboimzbkure.sealosbja.site/health"
+```
+
+## 🛠️ 自动化部署脚本
+
+使用标准化脚本：`./deploy-public.sh`
+
+```bash
+# AI助手自动执行
+./deploy-public.sh
+```
+
+**脚本特点：**
+- ✅ 4阶段标准化流程
+- ✅ 完整的错误处理
+- ✅ 彩色日志输出
+- ✅ 自动重试机制
+- ✅ 部署结果报告
 
 ## 📋 全局部署要求
 
