@@ -1,0 +1,66 @@
+# ArkOK V2 系统要求
+
+## 🔧 必需软件
+
+### 运行环境
+- **操作系统**: Ubuntu 18.04+ / Debian 10+ / CentOS 8+ / macOS 10.15+
+- **Node.js**: 18.x 或更高版本
+- **npm**: 8.x 或更高版本
+- **PostgreSQL**: 13.x 或更高版本
+
+### 开发工具（推荐）
+- **PM2**: Node.js 进程管理器
+- **Git**: 版本控制
+- **Vim/Nano**: 文本编辑器
+
+## 💻 硬件要求
+
+### 最低配置
+- **CPU**: 2核心
+- **内存**: 4GB RAM
+- **存储**: 20GB 可用空间
+- **网络**: 稳定的互联网连接
+
+### 推荐配置
+- **CPU**: 4核心或更多
+- **内存**: 8GB RAM 或更多
+- **存储**: 50GB SSD
+- **网络**: 高速互联网连接
+
+## 🌐 网络端口
+
+### 需要开放的端口
+- **3000**: 后端API服务
+- **5173**: 前端开发服务器
+- **5432**: PostgreSQL数据库（仅本地访问）
+- **22**: SSH（远程管理）
+
+### 防火墙配置
+```bash
+# Ubuntu/Debian
+sudo ufw allow 3000
+sudo ufw allow 5173
+sudo ufw allow 22
+
+# CentOS/RHEL
+sudo firewall-cmd --permanent --add-port=3000/tcp
+sudo firewall-cmd --permanent --add-port=5173/tcp
+sudo firewall-cmd --reload
+```
+
+## 📋 安装验证
+
+运行以下命令验证环境：
+```bash
+# 检查Node.js
+node --version  # 应该 >= 18.x
+
+# 检查npm
+npm --version   # 应该 >= 8.x
+
+# 检查PostgreSQL
+psql --version  # 应该 >= 13.x
+
+# 检查PM2
+pm2 -v          # 应该能正常运行
+```
