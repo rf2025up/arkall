@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { HabitService } from '../services/habit.service';
+import { AuthService } from '../services/auth.service';
 export interface HabitResponse {
     success: boolean;
     message?: string;
@@ -16,8 +17,9 @@ export interface HabitResponse {
  */
 export declare class HabitRoutes {
     private habitService;
+    private authService;
     private router;
-    constructor(habitService: HabitService);
+    constructor(habitService: HabitService, authService: AuthService);
     private initializeRoutes;
     /**
      * 获取习惯列表

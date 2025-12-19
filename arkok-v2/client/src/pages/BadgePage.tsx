@@ -62,40 +62,42 @@ const mockBadges = [
 ]
 
 const mockStudents = [
-  { id: '1', name: '张小明', className: '三年级一班', avatarUrl: 'https://api.dicebear.com/7.x/notionists/svg?seed=张小明&backgroundColor=ffffff' },
-  { id: '2', name: '李小红', className: '三年级二班', avatarUrl: 'https://api.dicebear.com/7.x/notionists/svg?seed=李小红&backgroundColor=ffffff' },
-  { id: '3', name: '王小强', className: '三年级一班', avatarUrl: 'https://api.dicebear.com/7.x/notionists/svg?seed=王小强&backgroundColor=ffffff' },
-  { id: '4', name: '陈小美', className: '三年级二班', avatarUrl: 'https://api.dicebear.com/7.x/notionists/svg?seed=陈小美&backgroundColor=ffffff' },
-  { id: '5', name: '刘小军', className: '三年级三班', avatarUrl: 'https://api.dicebear.com/7.x/notionists/svg?seed=刘小军&backgroundColor=ffffff' },
-  { id: '6', name: '赵小丽', className: '三年级三班', avatarUrl: 'https://api.dicebear.com/7.x/notionists/svg?seed=赵小丽&backgroundColor=ffffff' },
+  { id: '65697759-b4ba-49ae-9f18-101730f7bf47', name: '刘梓萌', className: '龙老师班', avatarUrl: '/avatar.jpg' },
+  { id: '1896c410-1a91-4281-ac02-797756c638cc', name: '宁可歆', className: '龙老师班', avatarUrl: '/avatar.jpg' },
+  { id: '47938c35-a307-4191-84a8-bf798d599505', name: '廖潇然', className: '龙老师班', avatarUrl: '/avatar.jpg' },
+  { id: '83147758-d2d7-4541-a7c1-5892b809ccc8', name: '彭斯晟', className: '龙老师班', avatarUrl: '/avatar.jpg' },
+  { id: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb', name: '曾欣媛', className: '龙老师班', avatarUrl: '/avatar.jpg' },
+  { id: 'a3a72793-7c76-4f14-b18c-d786db55ff26', name: '樊牧宸', className: '龙老师班', avatarUrl: '/avatar.jpg' },
+  { id: 'b043aea7-874b-4505-8274-50526192fde8', name: '肖浩轩', className: '龙老师班', avatarUrl: '/avatar.jpg' },
+  { id: 'bb61ac5c-9bee-4ff9-95ef-1d9e25728f76', name: '肖雨虹', className: '龙老师班', avatarUrl: '/avatar.jpg' }
 ]
 
 const mockStudentBadges = [
   {
     id: '1',
-    studentId: '1',
+    studentId: '65697759-b4ba-49ae-9f18-101730f7bf47',
     badgeId: '1',
     awardedAt: new Date(Date.now() - 86400000).toISOString(),
     reason: '期中考试成绩优秀',
-    student: { id: '1', name: '张小明', className: '三年级一班', avatarUrl: 'https://api.dicebear.com/7.x/notionists/svg?seed=张小明&backgroundColor=ffffff' },
+    student: { id: '65697759-b4ba-49ae-9f18-101730f7bf47', name: '刘梓萌', className: '龙老师班', avatarUrl: '/avatar.jpg' },
     badge: { id: '1', name: '学术之星', icon: '⭐', category: 'ACADEMIC' }
   },
   {
     id: '2',
-    studentId: '2',
+    studentId: '1896c410-1a91-4281-ac02-797756c638cc',
     badgeId: '4',
     awardedAt: new Date(Date.now() - 172800000).toISOString(),
     reason: '本月阅读量最高',
-    student: { id: '2', name: '李小红', className: '三年级二班', avatarUrl: 'https://api.dicebear.com/7.x/notionists/svg?seed=李小红&backgroundColor=ffffff' },
+    student: { id: '1896c410-1a91-4281-ac02-797756c638cc', name: '宁可歆', className: '龙老师班', avatarUrl: '/avatar.jpg' },
     badge: { id: '4', name: '阅读小达人', icon: '📚', category: 'ACADEMIC' }
   },
   {
     id: '3',
-    studentId: '3',
+    studentId: '47938c35-a307-4191-84a8-bf798d599505',
     badgeId: '2',
     awardedAt: new Date(Date.now() - 259200000).toISOString(),
     reason: '课堂表现积极',
-    student: { id: '3', name: '王小强', className: '三年级一班', avatarUrl: 'https://api.dicebear.com/7.x/notionists/svg?seed=王小强&backgroundColor=ffffff' },
+    student: { id: '47938c35-a307-4191-84a8-bf798d599505', name: '廖潇然', className: '龙老师班', avatarUrl: '/avatar.jpg' },
     badge: { id: '2', name: '学习先锋', icon: '🏆', category: 'BEHAVIOR' }
   }
 ]
@@ -233,7 +235,7 @@ const BadgePage: React.FC = () => {
           id: student.id,
           name: student.name,
           className: student.className,
-          avatarUrl: student.avatarUrl || `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(student.name)}&backgroundColor=ffffff`
+          avatarUrl: student.avatarUrl || '/avatar.jpg'
         }));
         setStudents(formattedStudents);
       }
@@ -702,11 +704,11 @@ const BadgePage: React.FC = () => {
                       }`}
                     >
                       <img
-                        src={student.avatarUrl}
+                        src={student.avatarUrl || '/avatar.jpg'}
                         alt={student.name}
                         className="w-8 h-8 rounded-full mx-auto mb-2 object-cover"
                         onError={(e) => {
-                          e.currentTarget.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="%23e5e7eb"/><circle cx="32" cy="24" r="12" fill="%23cbd5e1"/><rect x="16" y="40" width="32" height="16" rx="8" fill="%23cbd5e1"/></svg>`
+                          e.currentTarget.src = '/avatar.jpg';
                         }}
                       />
                       <div className="text-xs font-medium text-gray-800 truncate">{student.name}</div>

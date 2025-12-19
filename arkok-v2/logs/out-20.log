@@ -1,0 +1,4263 @@
+2025-12-17T14:43:02: 🚀 Starting ArkOK V2 Server...
+2025-12-17T14:43:02: 🌍 Environment: production
+2025-12-17T14:43:02: 🔌 Port: 3000
+2025-12-17T14:43:02: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T14:43:02: 📁 Static path exists: true
+2025-12-17T14:43:02: 🔧 Setting up Socket.IO handlers...
+2025-12-17T14:43:02: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T14:43:02: ✅ Database connected successfully
+2025-12-17T14:43:02: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T14:43:02: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T14:43:02: 🔌 WebSocket server ready
+2025-12-17T14:43:02: 🌐 Environment: production
+2025-12-17T14:45:34: 2025-12-17T14:45:34.466Z - GET /api/students/classes
+2025-12-17T14:45:34: 🔐 [AUTH_MIDDLEWARE] Processing GET /classes
+2025-12-17T14:45:34: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T14:45:34: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T14:45:34: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T14:45:34: 2025-12-17T14:45:34.572Z - GET /api/students
+2025-12-17T14:45:34: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T14:45:34: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T14:45:34: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T14:45:34: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T14:45:34: --- [DEBUG] GET /api/students endpoint hit ---
+2025-12-17T14:45:34: Authenticated User: {
+  userId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  username: 'long',
+  name: '龙老师',
+  displayName: '龙老师',
+  email: null,
+  role: 'TEACHER',
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  schoolName: '星途与伴',
+  primaryClassName: '六年级1班'
+}
+2025-12-17T14:45:34: School ID from user: 625e503b-aa7e-44fe-9982-237d828af717
+2025-12-17T14:45:34: Request query params: {}
+2025-12-17T14:45:34: [DEBUG] Query object sent to service: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  classRoom: undefined,
+  search: undefined,
+  page: undefined,
+  limit: undefined,
+  teacherId: undefined,
+  scope: undefined,
+  userRole: undefined,
+  requesterId: undefined
+}
+2025-12-17T14:45:34: [DEBUG] ❌ CRITICAL: teacherId is missing from query!
+2025-12-17T14:45:34: [DEBUG] Available query params: []
+2025-12-17T14:45:34: [TEACHER BINDING] Fetching students with query: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  teacherId: undefined,
+  scope: undefined,
+  userRole: undefined
+}
+2025-12-17T14:45:34: [DEBUG] 🔍 Checking teacherId distribution before query...
+2025-12-17T14:45:34: [DEBUG] 📊 TeacherId distribution: {
+  '7054e764-d83f-472e-b5c9-05d2d633bd66': 38,
+  '5ca64703-c978-4d01-bf44-a7568f34f556': 8
+}
+2025-12-17T14:45:34: [DEBUG] 📊 Total students in DB: 46
+2025-12-17T14:45:34: [TEACHER BINDING] ✅ Found 46 students for scope: undefined
+2025-12-17T14:45:34: [DEBUG] Service returned: {
+  students: [
+    {
+      id: 'acd9081e-fb02-4d3e-817f-914707fd7cb5',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '李小红',
+      className: '三年一班',
+      level: 20,
+      points: 1435,
+      exp: 1958,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-11T14:47:40.691Z,
+      updatedAt: 2025-12-16T05:35:03.010Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '80428dc8-3118-4a34-b9d7-976fd0d43a54',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘小华',
+      className: '三年一班',
+      level: 19,
+      points: 1380,
+      exp: 1850,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-11T14:47:40.694Z,
+      updatedAt: 2025-12-16T05:35:03.010Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '35018b04-4b1d-4a39-8411-09d55fd8aba4',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '赵小美',
+      className: '三年二班',
+      level: 3,
+      points: 950,
+      exp: 1600,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-11T14:47:40.693Z,
+      updatedAt: 2025-12-16T05:35:03.012Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '4e1ce33f-1081-4d32-98c0-b0ef2a8feccd',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '张小明',
+      className: '三年一班',
+      level: 3,
+      points: 870,
+      exp: 1205,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-11T14:47:40.689Z,
+      updatedAt: 2025-12-16T05:35:03.010Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '3922d8e1-7631-4d76-9e77-e0cdd16fd55f',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '王小强',
+      className: '三年二班',
+      level: 3,
+      points: 780,
+      exp: 1100,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-11T14:47:40.692Z,
+      updatedAt: 2025-12-16T05:35:03.012Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'eddc5a62-7994-45ab-831f-7678a2e33e92',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '111',
+      className: '1111',
+      level: 4,
+      points: 258,
+      exp: 300,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T01:26:06.769Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '570e41be-681d-4892-bb57-d4bad7e40985',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '唐艺馨',
+      className: '姜老师班',
+      level: 2,
+      points: 10310,
+      exp: 199,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.151Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'a0c083ed-3dbb-4b19-83e3-fe3136e56da4',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '宋子晨',
+      className: '姜老师班',
+      level: 1,
+      points: 1100,
+      exp: 90,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.153Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '1896c410-1a91-4281-ac02-797756c638cc',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '宁可歆',
+      className: '龙老师班',
+      level: 1,
+      points: 6632,
+      exp: 87,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.188Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '樊牧宸',
+      className: '龙老师班',
+      level: 1,
+      points: 219,
+      exp: 78,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.157Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '曾欣媛',
+      className: '龙老师班',
+      level: 1,
+      points: 202,
+      exp: 70,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.163Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '56451443-918f-4784-a759-7a010457312f',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '彭柏成',
+      className: '姜老师班',
+      level: 1,
+      points: 2995,
+      exp: 58,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.182Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'ec2b8cff-ab40-48ce-aad6-21d58c81c980',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '何泽昕',
+      className: '姜老师班',
+      level: 1,
+      points: 445,
+      exp: 51,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.185Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '65697759-b4ba-49ae-9f18-101730f7bf47',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘梓萌',
+      className: '龙老师班',
+      level: 1,
+      points: 671,
+      exp: 51,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.175Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'c1b7becf-7c22-4901-bf4b-dddfbe4f845c',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '廖研曦',
+      className: '姜老师班',
+      level: 1,
+      points: 1880,
+      exp: 50,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.167Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '83147758-d2d7-4541-a7c1-5892b809ccc8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '彭斯晟',
+      className: '龙老师班',
+      level: 1,
+      points: 553,
+      exp: 47,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.165Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'fb3e1095-1edb-4b42-81b8-3d5f5744f4a8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖正楠',
+      className: '黄老师班',
+      level: 1,
+      points: 1153,
+      exp: 47,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.140Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '577a615e-0ec0-40c7-b7ea-d274fc6eb142',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '黄衍恺',
+      className: '姜老师班',
+      level: 1,
+      points: 1270,
+      exp: 47,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.191Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'bb61ac5c-9bee-4ff9-95ef-1d9e25728f76',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖雨虹',
+      className: '龙老师班',
+      level: 1,
+      points: 1496,
+      exp: 46,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.146Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '8a629a26-84df-414a-8541-6f543ae84ef2',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '方景怡',
+      className: '姜老师班',
+      level: 1,
+      points: 3185,
+      exp: 44,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.195Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '47938c35-a307-4191-84a8-bf798d599505',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '廖潇然',
+      className: '龙老师班',
+      level: 1,
+      points: 1201,
+      exp: 40,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.150Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '456bb6e1-6a12-40d9-978f-8dacf78508ed',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '吴逸桐',
+      className: '黄老师班',
+      level: 1,
+      points: 1279,
+      exp: 37,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.148Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'f3b26359-2347-44a0-a991-780c87adacbb',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '王彦舒',
+      className: '黄老师班',
+      level: 1,
+      points: 605,
+      exp: 34,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.159Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'b043aea7-874b-4505-8274-50526192fde8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖浩轩',
+      className: '龙老师班',
+      level: 1,
+      points: 148,
+      exp: 33,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.189Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '55978b8f-9467-48f1-8bcd-f95224e044d3',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '舒昱恺',
+      className: '姜老师班',
+      level: 1,
+      points: 290,
+      exp: 26,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.155Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '6fcc0c5f-912b-48e4-ba1b-c17e7f226d6a',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '陈金锐',
+      className: '黄老师班',
+      level: 1,
+      points: 1580,
+      exp: 26,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.143Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'a151595d-26a6-42a4-97fc-0988220b0e65',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '谌雨涵',
+      className: '姜老师班',
+      level: 1,
+      points: 1060,
+      exp: 24,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.193Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '9ebb1630-0692-4d37-81f9-01c89f1f602f',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '余沁妍',
+      className: '黄老师班',
+      level: 1,
+      points: 3233,
+      exp: 22,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.160Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '1dd13004-95e4-4643-947f-eac9e198f465',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '徐汇洋',
+      className: '姜老师班',
+      level: 1,
+      points: 5,
+      exp: 22,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.178Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'be503d07-18a9-4c5b-8836-7f6b943ae051',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '陈笑妍',
+      className: '姜老师班',
+      level: 1,
+      points: 3790,
+      exp: 14,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.180Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'd4d0d812-d0cf-4477-bce3-b6a8684971b7',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '庞子玥',
+      className: '黄老师班',
+      level: 1,
+      points: 1310,
+      exp: 7,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.162Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'f35c8b56-4200-4dcf-8950-eb72832214fe',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘凡兮',
+      className: '黄老师班',
+      level: 1,
+      points: 385,
+      exp: 5,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.183Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '40a3cf36-1ccb-40fe-b34e-f9c49c91c6ed',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘润霖',
+      className: '黄老师班',
+      level: 1,
+      points: 466,
+      exp: 3,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.173Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '14c6339d-7b8c-48c7-8695-f638375a6b3d',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '115',
+      className: '115',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T16:35:27.558Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '8ff2199c-2c15-4d39-937a-d6b86018b1a9',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '21112',
+      className: '2111',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T01:09:01.127Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '98aef396-f106-4627-b8a0-9a019b27e88c',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '33',
+      className: '33',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T01:05:53.670Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '777b75ac-9cdc-4709-ac3d-c289078803d6',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '333',
+      className: '222',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T01:02:58.178Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '33a7f6cf-d714-498d-97d3-a2c15547cce7',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '33】】44',
+      className: '33444',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T01:06:08.006Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'ab6b62de-5f9d-4ed9-a381-b4664c1dcbed',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '55',
+      className: '77',
+      level: 1,
+      points: 100,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T01:47:09.986Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '9cc96732-9117-47d4-ad46-fa1a8cc7a8a2',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: 'FinalTestSuccess',
+      className: 'FinalClassSuccess',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T01:02:31.347Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'ed35b905-2274-4297-b1c2-fd505728c5b7',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: 'FinalVerificationTest',
+      className: 'VerificationClass',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T01:08:51.236Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '00752949-2494-48e7-9211-c019e4fd5db4',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: 'Service修复测试',
+      className: '三年级五班',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-12T17:35:10.820Z,
+      updatedAt: 2025-12-16T05:34:23.644Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'b0f71df3-b899-4cb9-bf1f-20d753618586',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: 'TestVisibility',
+      className: 'TestClass',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T01:05:03.624Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '01137edf-b8ec-46a1-8196-d20268402df7',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '哈哈哈',
+      className: '哈哈哈',
+      level: 1,
+      points: 200,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T15:47:57.349Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '62b956ae-2baa-465c-a3af-80fbd740b6a7',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '廖一凡',
+      className: '姜老师班',
+      level: 1,
+      points: 1005,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.176Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'cf16afa2-6d8a-41c1-9d9d-bc66d8538a96',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '测试学生',
+      className: '三年级三班',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-12T17:33:24.918Z,
+      updatedAt: 2025-12-16T05:34:23.644Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    }
+  ],
+  pagination: { page: 1, limit: 46, total: 46, totalPages: 1 }
+}
+2025-12-17T14:45:34: [DEBUG] Number of students in result: 46
+2025-12-17T14:45:34: [DEBUG] Students data preview: [
+  {
+    id: 'acd9081e-fb02-4d3e-817f-914707fd7cb5',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '李小红',
+    className: '三年一班',
+    level: 20,
+    points: 1435,
+    exp: 1958,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-11T14:47:40.691Z,
+    updatedAt: 2025-12-16T05:35:03.010Z,
+    teamId: null,
+    teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+  },
+  {
+    id: '80428dc8-3118-4a34-b9d7-976fd0d43a54',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '刘小华',
+    className: '三年一班',
+    level: 19,
+    points: 1380,
+    exp: 1850,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-11T14:47:40.694Z,
+    updatedAt: 2025-12-16T05:35:03.010Z,
+    teamId: null,
+    teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+  }
+]
+2025-12-17T14:45:34: [DEBUG] Response sent to frontend successfully
+2025-12-17T14:45:34: 2025-12-17T14:45:34.840Z - GET /avatar.jpg
+2025-12-17T14:49:21: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T14:49:21: 🛑 Shutting down server...
+2025-12-17T14:49:21: ✅ Database disconnected
+2025-12-17T14:49:21: 🚀 Starting ArkOK V2 Server...
+2025-12-17T14:49:21: 🌍 Environment: production
+2025-12-17T14:49:21: 🔌 Port: 3000
+2025-12-17T14:49:21: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T14:49:21: 📁 Static path exists: true
+2025-12-17T14:49:21: 🔧 Setting up Socket.IO handlers...
+2025-12-17T14:49:21: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T14:49:21: ✅ Database connected successfully
+2025-12-17T14:49:21: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T14:49:21: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T14:49:21: 🔌 WebSocket server ready
+2025-12-17T14:49:21: 🌐 Environment: production
+2025-12-17T15:01:04: 2025-12-17T15:01:04.634Z - GET /api/students
+2025-12-17T15:01:04: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T15:01:04: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:01:04: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:01:04: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:01:04: --- [DEBUG] GET /api/students endpoint hit ---
+2025-12-17T15:01:04: Authenticated User: {
+  userId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  username: 'long',
+  name: '龙老师',
+  displayName: '龙老师',
+  email: null,
+  role: 'TEACHER',
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  schoolName: '星途与伴',
+  primaryClassName: '六年级1班'
+}
+2025-12-17T15:01:04: School ID from user: 625e503b-aa7e-44fe-9982-237d828af717
+2025-12-17T15:01:04: Request query params: {
+  scope: 'ALL_SCHOOL',
+  userRole: 'TEACHER',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+}
+2025-12-17T15:01:04: [DEBUG] Query object sent to service: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  classRoom: undefined,
+  search: undefined,
+  page: undefined,
+  limit: undefined,
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'ALL_SCHOOL',
+  userRole: 'TEACHER',
+  requesterId: undefined
+}
+2025-12-17T15:01:04: [DEBUG] ✅ teacherId is present: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:01:04: [TEACHER BINDING] Fetching students with query: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'ALL_SCHOOL',
+  userRole: 'TEACHER'
+}
+2025-12-17T15:01:04: [DEBUG] 🔍 Checking teacherId distribution before query...
+2025-12-17T15:01:04: [DEBUG] 📊 TeacherId distribution: {
+  '7054e764-d83f-472e-b5c9-05d2d633bd66': 38,
+  '5ca64703-c978-4d01-bf44-a7568f34f556': 8
+}
+2025-12-17T15:01:04: [DEBUG] 📊 Total students in DB: 46
+2025-12-17T15:01:04: [TEACHER BINDING] Querying ALL_SCHOOL for teacher (for transfer): 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:01:04: [TEACHER BINDING] ✅ Found 0 students for scope: ALL_SCHOOL
+2025-12-17T15:01:04: [DEBUG] Service returned: {
+  students: [],
+  pagination: { page: 1, limit: 0, total: 0, totalPages: 1 }
+}
+2025-12-17T15:01:04: [DEBUG] Number of students in result: 0
+2025-12-17T15:01:04: [DEBUG] Students data preview: []
+2025-12-17T15:01:04: [DEBUG] Response sent to frontend successfully
+2025-12-17T15:01:08: 2025-12-17T15:01:08.027Z - GET /api/students
+2025-12-17T15:01:08: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T15:01:08: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:01:08: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:01:08: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:01:08: --- [DEBUG] GET /api/students endpoint hit ---
+2025-12-17T15:01:08: Authenticated User: {
+  userId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  username: 'long',
+  name: '龙老师',
+  displayName: '龙老师',
+  email: null,
+  role: 'TEACHER',
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  schoolName: '星途与伴',
+  primaryClassName: '六年级1班'
+}
+2025-12-17T15:01:08: School ID from user: 625e503b-aa7e-44fe-9982-237d828af717
+2025-12-17T15:01:08: Request query params: {}
+2025-12-17T15:01:08: [DEBUG] Query object sent to service: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  classRoom: undefined,
+  search: undefined,
+  page: undefined,
+  limit: undefined,
+  teacherId: undefined,
+  scope: undefined,
+  userRole: undefined,
+  requesterId: undefined
+}
+2025-12-17T15:01:08: [DEBUG] ❌ CRITICAL: teacherId is missing from query!
+2025-12-17T15:01:08: [DEBUG] Available query params: []
+2025-12-17T15:01:08: [TEACHER BINDING] Fetching students with query: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  teacherId: undefined,
+  scope: undefined,
+  userRole: undefined
+}
+2025-12-17T15:01:08: [DEBUG] 🔍 Checking teacherId distribution before query...
+2025-12-17T15:01:08: [DEBUG] 📊 TeacherId distribution: {
+  '7054e764-d83f-472e-b5c9-05d2d633bd66': 38,
+  '5ca64703-c978-4d01-bf44-a7568f34f556': 8
+}
+2025-12-17T15:01:08: [DEBUG] 📊 Total students in DB: 46
+2025-12-17T15:01:08: [TEACHER BINDING] ✅ Found 46 students for scope: undefined
+2025-12-17T15:01:08: [DEBUG] Service returned: {
+  students: [
+    {
+      id: 'acd9081e-fb02-4d3e-817f-914707fd7cb5',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '李小红',
+      className: '三年一班',
+      level: 20,
+      points: 1435,
+      exp: 1958,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-11T14:47:40.691Z,
+      updatedAt: 2025-12-16T05:35:03.010Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '80428dc8-3118-4a34-b9d7-976fd0d43a54',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘小华',
+      className: '三年一班',
+      level: 19,
+      points: 1380,
+      exp: 1850,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-11T14:47:40.694Z,
+      updatedAt: 2025-12-16T05:35:03.010Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '35018b04-4b1d-4a39-8411-09d55fd8aba4',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '赵小美',
+      className: '三年二班',
+      level: 3,
+      points: 950,
+      exp: 1600,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-11T14:47:40.693Z,
+      updatedAt: 2025-12-16T05:35:03.012Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '4e1ce33f-1081-4d32-98c0-b0ef2a8feccd',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '张小明',
+      className: '三年一班',
+      level: 3,
+      points: 870,
+      exp: 1205,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-11T14:47:40.689Z,
+      updatedAt: 2025-12-16T05:35:03.010Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '3922d8e1-7631-4d76-9e77-e0cdd16fd55f',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '王小强',
+      className: '三年二班',
+      level: 3,
+      points: 780,
+      exp: 1100,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-11T14:47:40.692Z,
+      updatedAt: 2025-12-16T05:35:03.012Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'eddc5a62-7994-45ab-831f-7678a2e33e92',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '111',
+      className: '1111',
+      level: 4,
+      points: 258,
+      exp: 300,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T01:26:06.769Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '570e41be-681d-4892-bb57-d4bad7e40985',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '唐艺馨',
+      className: '姜老师班',
+      level: 2,
+      points: 10310,
+      exp: 199,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.151Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'a0c083ed-3dbb-4b19-83e3-fe3136e56da4',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '宋子晨',
+      className: '姜老师班',
+      level: 1,
+      points: 1100,
+      exp: 90,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.153Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '1896c410-1a91-4281-ac02-797756c638cc',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '宁可歆',
+      className: '龙老师班',
+      level: 1,
+      points: 6632,
+      exp: 87,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.188Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '樊牧宸',
+      className: '龙老师班',
+      level: 1,
+      points: 219,
+      exp: 78,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.157Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '曾欣媛',
+      className: '龙老师班',
+      level: 1,
+      points: 202,
+      exp: 70,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.163Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '56451443-918f-4784-a759-7a010457312f',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '彭柏成',
+      className: '姜老师班',
+      level: 1,
+      points: 2995,
+      exp: 58,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.182Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'ec2b8cff-ab40-48ce-aad6-21d58c81c980',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '何泽昕',
+      className: '姜老师班',
+      level: 1,
+      points: 445,
+      exp: 51,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.185Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '65697759-b4ba-49ae-9f18-101730f7bf47',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘梓萌',
+      className: '龙老师班',
+      level: 1,
+      points: 671,
+      exp: 51,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.175Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'c1b7becf-7c22-4901-bf4b-dddfbe4f845c',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '廖研曦',
+      className: '姜老师班',
+      level: 1,
+      points: 1880,
+      exp: 50,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.167Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '83147758-d2d7-4541-a7c1-5892b809ccc8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '彭斯晟',
+      className: '龙老师班',
+      level: 1,
+      points: 553,
+      exp: 47,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.165Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'fb3e1095-1edb-4b42-81b8-3d5f5744f4a8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖正楠',
+      className: '黄老师班',
+      level: 1,
+      points: 1153,
+      exp: 47,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.140Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '577a615e-0ec0-40c7-b7ea-d274fc6eb142',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '黄衍恺',
+      className: '姜老师班',
+      level: 1,
+      points: 1270,
+      exp: 47,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.191Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'bb61ac5c-9bee-4ff9-95ef-1d9e25728f76',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖雨虹',
+      className: '龙老师班',
+      level: 1,
+      points: 1496,
+      exp: 46,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.146Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '8a629a26-84df-414a-8541-6f543ae84ef2',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '方景怡',
+      className: '姜老师班',
+      level: 1,
+      points: 3185,
+      exp: 44,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.195Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '47938c35-a307-4191-84a8-bf798d599505',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '廖潇然',
+      className: '龙老师班',
+      level: 1,
+      points: 1201,
+      exp: 40,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.150Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '456bb6e1-6a12-40d9-978f-8dacf78508ed',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '吴逸桐',
+      className: '黄老师班',
+      level: 1,
+      points: 1279,
+      exp: 37,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.148Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'f3b26359-2347-44a0-a991-780c87adacbb',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '王彦舒',
+      className: '黄老师班',
+      level: 1,
+      points: 605,
+      exp: 34,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.159Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'b043aea7-874b-4505-8274-50526192fde8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖浩轩',
+      className: '龙老师班',
+      level: 1,
+      points: 148,
+      exp: 33,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.189Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '55978b8f-9467-48f1-8bcd-f95224e044d3',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '舒昱恺',
+      className: '姜老师班',
+      level: 1,
+      points: 290,
+      exp: 26,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.155Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '6fcc0c5f-912b-48e4-ba1b-c17e7f226d6a',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '陈金锐',
+      className: '黄老师班',
+      level: 1,
+      points: 1580,
+      exp: 26,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.143Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'a151595d-26a6-42a4-97fc-0988220b0e65',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '谌雨涵',
+      className: '姜老师班',
+      level: 1,
+      points: 1060,
+      exp: 24,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.193Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '9ebb1630-0692-4d37-81f9-01c89f1f602f',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '余沁妍',
+      className: '黄老师班',
+      level: 1,
+      points: 3233,
+      exp: 22,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.160Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '1dd13004-95e4-4643-947f-eac9e198f465',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '徐汇洋',
+      className: '姜老师班',
+      level: 1,
+      points: 5,
+      exp: 22,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.178Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'be503d07-18a9-4c5b-8836-7f6b943ae051',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '陈笑妍',
+      className: '姜老师班',
+      level: 1,
+      points: 3790,
+      exp: 14,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.180Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'd4d0d812-d0cf-4477-bce3-b6a8684971b7',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '庞子玥',
+      className: '黄老师班',
+      level: 1,
+      points: 1310,
+      exp: 7,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.162Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'f35c8b56-4200-4dcf-8950-eb72832214fe',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘凡兮',
+      className: '黄老师班',
+      level: 1,
+      points: 385,
+      exp: 5,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.183Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '40a3cf36-1ccb-40fe-b34e-f9c49c91c6ed',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘润霖',
+      className: '黄老师班',
+      level: 1,
+      points: 466,
+      exp: 3,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.173Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '14c6339d-7b8c-48c7-8695-f638375a6b3d',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '115',
+      className: '115',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T16:35:27.558Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '8ff2199c-2c15-4d39-937a-d6b86018b1a9',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '21112',
+      className: '2111',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T01:09:01.127Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '98aef396-f106-4627-b8a0-9a019b27e88c',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '33',
+      className: '33',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T01:05:53.670Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '777b75ac-9cdc-4709-ac3d-c289078803d6',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '333',
+      className: '222',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T01:02:58.178Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '33a7f6cf-d714-498d-97d3-a2c15547cce7',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '33】】44',
+      className: '33444',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T01:06:08.006Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'ab6b62de-5f9d-4ed9-a381-b4664c1dcbed',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '55',
+      className: '77',
+      level: 1,
+      points: 100,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T01:47:09.986Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '9cc96732-9117-47d4-ad46-fa1a8cc7a8a2',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: 'FinalTestSuccess',
+      className: 'FinalClassSuccess',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T01:02:31.347Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'ed35b905-2274-4297-b1c2-fd505728c5b7',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: 'FinalVerificationTest',
+      className: 'VerificationClass',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T01:08:51.236Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '00752949-2494-48e7-9211-c019e4fd5db4',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: 'Service修复测试',
+      className: '三年级五班',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-12T17:35:10.820Z,
+      updatedAt: 2025-12-16T05:34:23.644Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'b0f71df3-b899-4cb9-bf1f-20d753618586',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: 'TestVisibility',
+      className: 'TestClass',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T01:05:03.624Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '01137edf-b8ec-46a1-8196-d20268402df7',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '哈哈哈',
+      className: '哈哈哈',
+      level: 1,
+      points: 200,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T15:47:57.349Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: '62b956ae-2baa-465c-a3af-80fbd740b6a7',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '廖一凡',
+      className: '姜老师班',
+      level: 1,
+      points: 1005,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.176Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    },
+    {
+      id: 'cf16afa2-6d8a-41c1-9d9d-bc66d8538a96',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '测试学生',
+      className: '三年级三班',
+      level: 1,
+      points: 0,
+      exp: 0,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-12T17:33:24.918Z,
+      updatedAt: 2025-12-16T05:34:23.644Z,
+      teamId: null,
+      teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+    }
+  ],
+  pagination: { page: 1, limit: 46, total: 46, totalPages: 1 }
+}
+2025-12-17T15:01:08: [DEBUG] Number of students in result: 46
+2025-12-17T15:01:08: [DEBUG] Students data preview: [
+  {
+    id: 'acd9081e-fb02-4d3e-817f-914707fd7cb5',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '李小红',
+    className: '三年一班',
+    level: 20,
+    points: 1435,
+    exp: 1958,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-11T14:47:40.691Z,
+    updatedAt: 2025-12-16T05:35:03.010Z,
+    teamId: null,
+    teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+  },
+  {
+    id: '80428dc8-3118-4a34-b9d7-976fd0d43a54',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '刘小华',
+    className: '三年一班',
+    level: 19,
+    points: 1380,
+    exp: 1850,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-11T14:47:40.694Z,
+    updatedAt: 2025-12-16T05:35:03.010Z,
+    teamId: null,
+    teacherId: '7054e764-d83f-472e-b5c9-05d2d633bd66'
+  }
+]
+2025-12-17T15:01:08: [DEBUG] Response sent to frontend successfully
+2025-12-17T15:01:09: 2025-12-17T15:01:09.345Z - GET /api/students
+2025-12-17T15:01:09: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T15:01:09: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:01:09: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:01:09: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:01:09: --- [DEBUG] GET /api/students endpoint hit ---
+2025-12-17T15:01:09: Authenticated User: {
+  userId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  username: 'long',
+  name: '龙老师',
+  displayName: '龙老师',
+  email: null,
+  role: 'TEACHER',
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  schoolName: '星途与伴',
+  primaryClassName: '六年级1班'
+}
+2025-12-17T15:01:09: School ID from user: 625e503b-aa7e-44fe-9982-237d828af717
+2025-12-17T15:01:09: Request query params: {
+  scope: 'ALL_SCHOOL',
+  userRole: 'TEACHER',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+}
+2025-12-17T15:01:09: [DEBUG] Query object sent to service: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  classRoom: undefined,
+  search: undefined,
+  page: undefined,
+  limit: undefined,
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'ALL_SCHOOL',
+  userRole: 'TEACHER',
+  requesterId: undefined
+}
+2025-12-17T15:01:09: [DEBUG] ✅ teacherId is present: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:01:09: [TEACHER BINDING] Fetching students with query: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'ALL_SCHOOL',
+  userRole: 'TEACHER'
+}
+2025-12-17T15:01:09: [DEBUG] 🔍 Checking teacherId distribution before query...
+2025-12-17T15:01:09: [DEBUG] 📊 TeacherId distribution: {
+  '7054e764-d83f-472e-b5c9-05d2d633bd66': 38,
+  '5ca64703-c978-4d01-bf44-a7568f34f556': 8
+}
+2025-12-17T15:01:09: [DEBUG] 📊 Total students in DB: 46
+2025-12-17T15:01:09: [TEACHER BINDING] Querying ALL_SCHOOL for teacher (for transfer): 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:01:09: [TEACHER BINDING] ✅ Found 0 students for scope: ALL_SCHOOL
+2025-12-17T15:01:09: [DEBUG] Service returned: {
+  students: [],
+  pagination: { page: 1, limit: 0, total: 0, totalPages: 1 }
+}
+2025-12-17T15:01:09: [DEBUG] Number of students in result: 0
+2025-12-17T15:01:09: [DEBUG] Students data preview: []
+2025-12-17T15:01:09: [DEBUG] Response sent to frontend successfully
+2025-12-17T15:01:09: 2025-12-17T15:01:09.354Z - GET /api/lms/task-library
+2025-12-17T15:01:09: 🔐 [AUTH_MIDDLEWARE] Processing GET /task-library
+2025-12-17T15:01:09: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:01:09: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:01:09: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:01:09: 🔍 [LMS_SERVICE] 开始获取任务库数据...
+2025-12-17T15:01:09: 🔍 [LMS_SERVICE] 任务库活跃任务数量: 82
+2025-12-17T15:01:09: ✅ [LMS_SERVICE] 成功获取任务库，任务数量: 82
+2025-12-17T15:01:10: 2025-12-17T15:01:10.308Z - GET /api/lms/task-library
+2025-12-17T15:01:10: 🔐 [AUTH_MIDDLEWARE] Processing GET /task-library
+2025-12-17T15:01:10: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:01:10: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:01:10: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:01:10: 🔍 [LMS_SERVICE] 开始获取任务库数据...
+2025-12-17T15:01:10: 🔍 [LMS_SERVICE] 任务库活跃任务数量: 82
+2025-12-17T15:01:10: ✅ [LMS_SERVICE] 成功获取任务库，任务数量: 82
+2025-12-17T15:01:10: 2025-12-17T15:01:10.929Z - GET /api/lms/task-library
+2025-12-17T15:01:10: 🔐 [AUTH_MIDDLEWARE] Processing GET /task-library
+2025-12-17T15:01:10: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:01:10: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:01:10: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:01:10: 🔍 [LMS_SERVICE] 开始获取任务库数据...
+2025-12-17T15:01:10: 🔍 [LMS_SERVICE] 任务库活跃任务数量: 82
+2025-12-17T15:01:10: ✅ [LMS_SERVICE] 成功获取任务库，任务数量: 82
+2025-12-17T15:01:16: 2025-12-17T15:01:16.519Z - GET /api/students
+2025-12-17T15:01:16: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T15:01:16: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:01:16: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:01:16: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:01:16: --- [DEBUG] GET /api/students endpoint hit ---
+2025-12-17T15:01:16: Authenticated User: {
+  userId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  username: 'long',
+  name: '龙老师',
+  displayName: '龙老师',
+  email: null,
+  role: 'TEACHER',
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  schoolName: '星途与伴',
+  primaryClassName: '六年级1班'
+}
+2025-12-17T15:01:16: School ID from user: 625e503b-aa7e-44fe-9982-237d828af717
+2025-12-17T15:01:16: Request query params: {
+  scope: 'MY_STUDENTS',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+}
+2025-12-17T15:01:16: [DEBUG] Query object sent to service: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  classRoom: undefined,
+  search: undefined,
+  page: undefined,
+  limit: undefined,
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: undefined,
+  requesterId: undefined
+}
+2025-12-17T15:01:16: [DEBUG] ✅ teacherId is present: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:01:16: [TEACHER BINDING] Fetching students with query: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: undefined
+}
+2025-12-17T15:01:16: [DEBUG] 🔍 Checking teacherId distribution before query...
+2025-12-17T15:01:16: [DEBUG] 📊 TeacherId distribution: {
+  '7054e764-d83f-472e-b5c9-05d2d633bd66': 38,
+  '5ca64703-c978-4d01-bf44-a7568f34f556': 8
+}
+2025-12-17T15:01:16: [DEBUG] 📊 Total students in DB: 46
+2025-12-17T15:01:16: [TEACHER BINDING] Querying MY_STUDENTS for teacher: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:01:16: [TEACHER BINDING] ✅ Found 8 students for scope: MY_STUDENTS
+2025-12-17T15:01:16: [DEBUG] Service returned: {
+  students: [
+    {
+      id: '1896c410-1a91-4281-ac02-797756c638cc',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '宁可歆',
+      className: '龙老师班',
+      level: 1,
+      points: 6632,
+      exp: 87,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.188Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '樊牧宸',
+      className: '龙老师班',
+      level: 1,
+      points: 219,
+      exp: 78,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.157Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '曾欣媛',
+      className: '龙老师班',
+      level: 1,
+      points: 202,
+      exp: 70,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.163Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '65697759-b4ba-49ae-9f18-101730f7bf47',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘梓萌',
+      className: '龙老师班',
+      level: 1,
+      points: 671,
+      exp: 51,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.175Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '83147758-d2d7-4541-a7c1-5892b809ccc8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '彭斯晟',
+      className: '龙老师班',
+      level: 1,
+      points: 553,
+      exp: 47,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.165Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'bb61ac5c-9bee-4ff9-95ef-1d9e25728f76',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖雨虹',
+      className: '龙老师班',
+      level: 1,
+      points: 1496,
+      exp: 46,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.146Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '47938c35-a307-4191-84a8-bf798d599505',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '廖潇然',
+      className: '龙老师班',
+      level: 1,
+      points: 1201,
+      exp: 40,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.150Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'b043aea7-874b-4505-8274-50526192fde8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖浩轩',
+      className: '龙老师班',
+      level: 1,
+      points: 148,
+      exp: 33,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.189Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    }
+  ],
+  pagination: { page: 1, limit: 8, total: 8, totalPages: 1 }
+}
+2025-12-17T15:01:16: [DEBUG] Number of students in result: 8
+2025-12-17T15:01:16: [DEBUG] Students data preview: [
+  {
+    id: '1896c410-1a91-4281-ac02-797756c638cc',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '宁可歆',
+    className: '龙老师班',
+    level: 1,
+    points: 6632,
+    exp: 87,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.188Z,
+    updatedAt: 2025-12-17T13:36:08.323Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  },
+  {
+    id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '樊牧宸',
+    className: '龙老师班',
+    level: 1,
+    points: 219,
+    exp: 78,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.157Z,
+    updatedAt: 2025-12-17T13:36:08.323Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  }
+]
+2025-12-17T15:01:16: [DEBUG] Response sent to frontend successfully
+2025-12-17T15:01:17: 2025-12-17T15:01:17.131Z - GET /api/students
+2025-12-17T15:01:17: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T15:01:17: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:01:17: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:01:17: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:01:17: --- [DEBUG] GET /api/students endpoint hit ---
+2025-12-17T15:01:17: Authenticated User: {
+  userId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  username: 'long',
+  name: '龙老师',
+  displayName: '龙老师',
+  email: null,
+  role: 'TEACHER',
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  schoolName: '星途与伴',
+  primaryClassName: '六年级1班'
+}
+2025-12-17T15:01:17: School ID from user: 625e503b-aa7e-44fe-9982-237d828af717
+2025-12-17T15:01:17: Request query params: {
+  scope: 'ALL_SCHOOL',
+  userRole: 'TEACHER',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+}
+2025-12-17T15:01:17: [DEBUG] Query object sent to service: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  classRoom: undefined,
+  search: undefined,
+  page: undefined,
+  limit: undefined,
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'ALL_SCHOOL',
+  userRole: 'TEACHER',
+  requesterId: undefined
+}
+2025-12-17T15:01:17: [DEBUG] ✅ teacherId is present: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:01:17: [TEACHER BINDING] Fetching students with query: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'ALL_SCHOOL',
+  userRole: 'TEACHER'
+}
+2025-12-17T15:01:17: [DEBUG] 🔍 Checking teacherId distribution before query...
+2025-12-17T15:01:17: [DEBUG] 📊 TeacherId distribution: {
+  '7054e764-d83f-472e-b5c9-05d2d633bd66': 38,
+  '5ca64703-c978-4d01-bf44-a7568f34f556': 8
+}
+2025-12-17T15:01:17: [DEBUG] 📊 Total students in DB: 46
+2025-12-17T15:01:17: [TEACHER BINDING] Querying ALL_SCHOOL for teacher (for transfer): 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:01:17: [TEACHER BINDING] ✅ Found 0 students for scope: ALL_SCHOOL
+2025-12-17T15:01:17: [DEBUG] Service returned: {
+  students: [],
+  pagination: { page: 1, limit: 0, total: 0, totalPages: 1 }
+}
+2025-12-17T15:01:17: [DEBUG] Number of students in result: 0
+2025-12-17T15:01:17: [DEBUG] Students data preview: []
+2025-12-17T15:01:17: [DEBUG] Response sent to frontend successfully
+2025-12-17T15:01:21: 2025-12-17T15:01:21.411Z - GET /api/lms/task-library
+2025-12-17T15:01:21: 🔐 [AUTH_MIDDLEWARE] Processing GET /task-library
+2025-12-17T15:01:21: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:01:21: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:01:21: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:01:21: 🔍 [LMS_SERVICE] 开始获取任务库数据...
+2025-12-17T15:01:21: 🔍 [LMS_SERVICE] 任务库活跃任务数量: 82
+2025-12-17T15:01:21: ✅ [LMS_SERVICE] 成功获取任务库，任务数量: 82
+2025-12-17T15:01:21: 2025-12-17T15:01:21.558Z - GET /api/lms/daily-records
+2025-12-17T15:01:21: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T15:01:21: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:01:21: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:01:21: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=83147758-d2d7-4541-a7c1-5892b809ccc8, date=2025-12-17
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T15:01:21.560Z
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] 查询结果: 找到 12 条记录
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] ===== 记录详情 =====
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] 记录 1:
+2025-12-17T15:01:21:    - ID: cabfc355-686e-403b-a128-d83434597b3e
+2025-12-17T15:01:21:    - Title: 句型练习
+2025-12-17T15:01:21:    - Type: QC
+2025-12-17T15:01:21:    - Status: PENDING
+2025-12-17T15:01:21:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:01:21:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:01:21:    - Exp: 5
+2025-12-17T15:01:21:    - Student: 彭斯晟
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] 记录 2:
+2025-12-17T15:01:21:    - ID: 6b44e086-d82e-4630-b484-cf9adb09b549
+2025-12-17T15:01:21:    - Title: 古诗背诵
+2025-12-17T15:01:21:    - Type: QC
+2025-12-17T15:01:21:    - Status: PENDING
+2025-12-17T15:01:21:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:01:21:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:01:21:    - Exp: 5
+2025-12-17T15:01:21:    - Student: 彭斯晟
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] 记录 3:
+2025-12-17T15:01:21:    - ID: bb4f9d9d-3574-46a2-b3f5-52245a657501
+2025-12-17T15:01:21:    - Title: 生字听写
+2025-12-17T15:01:21:    - Type: QC
+2025-12-17T15:01:21:    - Status: PENDING
+2025-12-17T15:01:21:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:01:21:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:01:21:    - Exp: 5
+2025-12-17T15:01:21:    - Student: 彭斯晟
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] 记录 4:
+2025-12-17T15:01:21:    - ID: 6d23fb28-2fcd-4b8e-a07f-7fe2bac045c5
+2025-12-17T15:01:21:    - Title: 口算练习
+2025-12-17T15:01:21:    - Type: QC
+2025-12-17T15:01:21:    - Status: PENDING
+2025-12-17T15:01:21:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:01:21:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:01:21:    - Exp: 5
+2025-12-17T15:01:21:    - Student: 彭斯晟
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] 记录 5:
+2025-12-17T15:01:21:    - ID: fe09a4cc-cdd0-4aae-8ddb-8a821493d714
+2025-12-17T15:01:21:    - Title: 应用题
+2025-12-17T15:01:21:    - Type: QC
+2025-12-17T15:01:21:    - Status: PENDING
+2025-12-17T15:01:21:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:01:21:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:01:21:    - Exp: 5
+2025-12-17T15:01:21:    - Student: 彭斯晟
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] 记录 6:
+2025-12-17T15:01:21:    - ID: fe01b10f-2904-4924-b9a0-538fd380fbb5
+2025-12-17T15:01:21:    - Title: 单词背诵
+2025-12-17T15:01:21:    - Type: QC
+2025-12-17T15:01:21:    - Status: PENDING
+2025-12-17T15:01:21:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:01:21:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:01:21:    - Exp: 5
+2025-12-17T15:01:21:    - Student: 彭斯晟
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] 记录 7:
+2025-12-17T15:01:21:    - ID: 8fddc84b-ccb8-4b59-b489-43e8e7acd905
+2025-12-17T15:01:21:    - Title: 句型练习
+2025-12-17T15:01:21:    - Type: QC
+2025-12-17T15:01:21:    - Status: PENDING
+2025-12-17T15:01:21:    - Created: 2025-12-17T12:10:12.137Z
+2025-12-17T15:01:21:    - Created Local: 12/17/2025, 12:10:12 PM
+2025-12-17T15:01:21:    - Exp: 5
+2025-12-17T15:01:21:    - Student: 彭斯晟
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] 记录 8:
+2025-12-17T15:01:21:    - ID: 6d78128c-4c3d-4331-b4f7-7c1fec1260f4
+2025-12-17T15:01:21:    - Title: 生字听写
+2025-12-17T15:01:21:    - Type: QC
+2025-12-17T15:01:21:    - Status: PENDING
+2025-12-17T15:01:21:    - Created: 2025-12-17T12:10:12.137Z
+2025-12-17T15:01:21:    - Created Local: 12/17/2025, 12:10:12 PM
+2025-12-17T15:01:21:    - Exp: 5
+2025-12-17T15:01:21:    - Student: 彭斯晟
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] 记录 9:
+2025-12-17T15:01:21:    - ID: cbf8e369-9f4c-45c5-a753-fb081d54c159
+2025-12-17T15:01:21:    - Title: 口算练习
+2025-12-17T15:01:21:    - Type: QC
+2025-12-17T15:01:21:    - Status: PENDING
+2025-12-17T15:01:21:    - Created: 2025-12-17T12:10:12.137Z
+2025-12-17T15:01:21:    - Created Local: 12/17/2025, 12:10:12 PM
+2025-12-17T15:01:21:    - Exp: 5
+2025-12-17T15:01:21:    - Student: 彭斯晟
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] 记录 10:
+2025-12-17T15:01:21:    - ID: 124ad01a-ab56-4e6b-a804-a9f1f16a6036
+2025-12-17T15:01:21:    - Title: 应用题
+2025-12-17T15:01:21:    - Type: QC
+2025-12-17T15:01:21:    - Status: PENDING
+2025-12-17T15:01:21:    - Created: 2025-12-17T12:10:12.137Z
+2025-12-17T15:01:21:    - Created Local: 12/17/2025, 12:10:12 PM
+2025-12-17T15:01:21:    - Exp: 5
+2025-12-17T15:01:21:    - Student: 彭斯晟
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] 记录 11:
+2025-12-17T15:01:21:    - ID: a8602312-c80f-45b7-a906-471fdcc54b89
+2025-12-17T15:01:21:    - Title: 单词背诵
+2025-12-17T15:01:21:    - Type: QC
+2025-12-17T15:01:21:    - Status: PENDING
+2025-12-17T15:01:21:    - Created: 2025-12-17T12:10:12.137Z
+2025-12-17T15:01:21:    - Created Local: 12/17/2025, 12:10:12 PM
+2025-12-17T15:01:21:    - Exp: 5
+2025-12-17T15:01:21:    - Student: 彭斯晟
+2025-12-17T15:01:21: 🔥 [LMS DEBUG] 记录 12:
+2025-12-17T15:01:21:    - ID: d11a95f9-3ea7-4008-94f3-cc48cb561aa4
+2025-12-17T15:01:21:    - Title: 古诗背诵
+2025-12-17T15:01:21:    - Type: QC
+2025-12-17T15:01:21:    - Status: PENDING
+2025-12-17T15:01:21:    - Created: 2025-12-17T12:10:12.137Z
+2025-12-17T15:01:21:    - Created Local: 12/17/2025, 12:10:12 PM
+2025-12-17T15:01:21:    - Exp: 5
+2025-12-17T15:01:21:    - Student: 彭斯晟
+2025-12-17T15:07:22: 2025-12-17T15:07:22.912Z - GET /api/lms/daily-records
+2025-12-17T15:07:22: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T15:07:22: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:07:22: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:07:22: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=47938c35-a307-4191-84a8-bf798d599505, date=2025-12-17
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T15:07:22.914Z
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 查询结果: 找到 15 条记录
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] ===== 记录详情 =====
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 记录 1:
+2025-12-17T15:07:22:    - ID: a235ce13-1a69-4fb6-9f8d-c724cd7fa94a
+2025-12-17T15:07:22:    - Title: 生字听写
+2025-12-17T15:07:22:    - Type: QC
+2025-12-17T15:07:22:    - Status: COMPLETED
+2025-12-17T15:07:22:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:07:22:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:07:22:    - Exp: 5
+2025-12-17T15:07:22:    - Student: 廖潇然
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 记录 2:
+2025-12-17T15:07:22:    - ID: ca56c496-acd5-4cfe-8141-c57e3c02e40a
+2025-12-17T15:07:22:    - Title: 句型练习
+2025-12-17T15:07:22:    - Type: QC
+2025-12-17T15:07:22:    - Status: PENDING
+2025-12-17T15:07:22:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:07:22:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:07:22:    - Exp: 5
+2025-12-17T15:07:22:    - Student: 廖潇然
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 记录 3:
+2025-12-17T15:07:22:    - ID: b86265c1-0d62-45f8-9603-b7ea63bcf860
+2025-12-17T15:07:22:    - Title: 应用题
+2025-12-17T15:07:22:    - Type: QC
+2025-12-17T15:07:22:    - Status: PENDING
+2025-12-17T15:07:22:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:07:22:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:07:22:    - Exp: 5
+2025-12-17T15:07:22:    - Student: 廖潇然
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 记录 4:
+2025-12-17T15:07:22:    - ID: cbe36e51-b656-4fc1-aa67-93a594b93f5b
+2025-12-17T15:07:22:    - Title: 古诗背诵
+2025-12-17T15:07:22:    - Type: QC
+2025-12-17T15:07:22:    - Status: COMPLETED
+2025-12-17T15:07:22:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:07:22:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:07:22:    - Exp: 5
+2025-12-17T15:07:22:    - Student: 廖潇然
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 记录 5:
+2025-12-17T15:07:22:    - ID: 735d4ade-8f20-4cec-9204-06d5f43ca887
+2025-12-17T15:07:22:    - Title: 单词背诵
+2025-12-17T15:07:22:    - Type: QC
+2025-12-17T15:07:22:    - Status: COMPLETED
+2025-12-17T15:07:22:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:07:22:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:07:22:    - Exp: 5
+2025-12-17T15:07:22:    - Student: 廖潇然
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 记录 6:
+2025-12-17T15:07:22:    - ID: cc790862-d856-4300-822a-6e02cc3d650f
+2025-12-17T15:07:22:    - Title: 口算练习
+2025-12-17T15:07:22:    - Type: QC
+2025-12-17T15:07:22:    - Status: PENDING
+2025-12-17T15:07:22:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:07:22:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:07:22:    - Exp: 5
+2025-12-17T15:07:22:    - Student: 廖潇然
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 记录 7:
+2025-12-17T15:07:22:    - ID: 84beb0a4-0dad-4c58-b70a-9da668fdecee
+2025-12-17T15:07:22:    - Title: 古诗背诵
+2025-12-17T15:07:22:    - Type: QC
+2025-12-17T15:07:22:    - Status: PENDING
+2025-12-17T15:07:22:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:07:22:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:07:22:    - Exp: 5
+2025-12-17T15:07:22:    - Student: 廖潇然
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 记录 8:
+2025-12-17T15:07:22:    - ID: 7d04df64-2f52-483c-90bc-0c21e205a248
+2025-12-17T15:07:22:    - Title: 生字听写
+2025-12-17T15:07:22:    - Type: QC
+2025-12-17T15:07:22:    - Status: PENDING
+2025-12-17T15:07:22:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:07:22:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:07:22:    - Exp: 5
+2025-12-17T15:07:22:    - Student: 廖潇然
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 记录 9:
+2025-12-17T15:07:22:    - ID: a9563974-038f-4298-a4ec-036687d06685
+2025-12-17T15:07:22:    - Title: 口算练习
+2025-12-17T15:07:22:    - Type: QC
+2025-12-17T15:07:22:    - Status: PENDING
+2025-12-17T15:07:22:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:07:22:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:07:22:    - Exp: 5
+2025-12-17T15:07:22:    - Student: 廖潇然
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 记录 10:
+2025-12-17T15:07:22:    - ID: b1738117-8eac-4fc7-b39a-97950be57cc4
+2025-12-17T15:07:22:    - Title: 应用题
+2025-12-17T15:07:22:    - Type: QC
+2025-12-17T15:07:22:    - Status: PENDING
+2025-12-17T15:07:22:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:07:22:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:07:22:    - Exp: 5
+2025-12-17T15:07:22:    - Student: 廖潇然
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 记录 11:
+2025-12-17T15:07:22:    - ID: 1ba55a2c-002e-460d-b9b4-18fd288b2508
+2025-12-17T15:07:22:    - Title: 单词背诵
+2025-12-17T15:07:22:    - Type: QC
+2025-12-17T15:07:22:    - Status: PENDING
+2025-12-17T15:07:22:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:07:22:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:07:22:    - Exp: 5
+2025-12-17T15:07:22:    - Student: 廖潇然
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 记录 12:
+2025-12-17T15:07:22:    - ID: 09a4bc31-a440-4b81-bd81-1717133b935d
+2025-12-17T15:07:22:    - Title: 句型练习
+2025-12-17T15:07:22:    - Type: QC
+2025-12-17T15:07:22:    - Status: PENDING
+2025-12-17T15:07:22:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:07:22:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:07:22:    - Exp: 5
+2025-12-17T15:07:22:    - Student: 廖潇然
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 记录 13:
+2025-12-17T15:07:22:    - ID: 4f26ad80-2f70-406f-8868-8c46bc4f9d67
+2025-12-17T15:07:22:    - Title: 5道旧错题的重做练习
+2025-12-17T15:07:22:    - Type: TASK
+2025-12-17T15:07:22:    - Status: PENDING
+2025-12-17T15:07:22:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:07:22:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:07:22:    - Exp: 10
+2025-12-17T15:07:22:    - Student: 廖潇然
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 记录 14:
+2025-12-17T15:07:22:    - ID: 2a2bdefb-64a0-4c25-86e9-2a1268bb7d53
+2025-12-17T15:07:22:    - Title: 错题的摘抄与归因
+2025-12-17T15:07:22:    - Type: TASK
+2025-12-17T15:07:22:    - Status: PENDING
+2025-12-17T15:07:22:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:07:22:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:07:22:    - Exp: 10
+2025-12-17T15:07:22:    - Student: 廖潇然
+2025-12-17T15:07:22: 🔥 [LMS DEBUG] 记录 15:
+2025-12-17T15:07:22:    - ID: 13e653d4-603a-40e5-ab80-c3be6087c149
+2025-12-17T15:07:22:    - Title: 错题的红笔订正
+2025-12-17T15:07:22:    - Type: TASK
+2025-12-17T15:07:22:    - Status: PENDING
+2025-12-17T15:07:22:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:07:22:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:07:22:    - Exp: 10
+2025-12-17T15:07:22:    - Student: 廖潇然
+2025-12-17T15:07:49: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T15:07:49: 🛑 Shutting down server...
+2025-12-17T15:07:49: ✅ Database disconnected
+2025-12-17T15:07:50: 🚀 Starting ArkOK V2 Server...
+2025-12-17T15:07:50: 🌍 Environment: production
+2025-12-17T15:07:50: 🔌 Port: 3000
+2025-12-17T15:07:50: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T15:07:50: 📁 Static path exists: true
+2025-12-17T15:07:50: 🔧 Setting up Socket.IO handlers...
+2025-12-17T15:07:50: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T15:07:50: ✅ Database connected successfully
+2025-12-17T15:07:50: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T15:07:50: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T15:07:50: 🔌 WebSocket server ready
+2025-12-17T15:07:50: 🌐 Environment: production
+2025-12-17T15:13:11: 2025-12-17T15:13:11.107Z - GET /api/students
+2025-12-17T15:13:11: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T15:13:11: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:13:11: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:13:11: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:13:11: --- [DEBUG] GET /api/students endpoint hit ---
+2025-12-17T15:13:11: Authenticated User: {
+  userId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  username: 'long',
+  name: '龙老师',
+  displayName: '龙老师',
+  email: null,
+  role: 'TEACHER',
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  schoolName: '星途与伴',
+  primaryClassName: '六年级1班'
+}
+2025-12-17T15:13:11: School ID from user: 625e503b-aa7e-44fe-9982-237d828af717
+2025-12-17T15:13:11: Request query params: {
+  scope: 'MY_STUDENTS',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  userRole: 'TEACHER',
+  classRoom: '龙老师的班级'
+}
+2025-12-17T15:13:11: [DEBUG] Query object sent to service: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  classRoom: '龙老师的班级',
+  search: undefined,
+  page: undefined,
+  limit: undefined,
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: 'TEACHER',
+  requesterId: undefined
+}
+2025-12-17T15:13:11: [DEBUG] ✅ teacherId is present: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:13:11: [TEACHER BINDING] Fetching students with query: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: 'TEACHER'
+}
+2025-12-17T15:13:11: [DEBUG] 🔍 Checking teacherId distribution before query...
+2025-12-17T15:13:11: [DEBUG] 📊 TeacherId distribution: {
+  '7054e764-d83f-472e-b5c9-05d2d633bd66': 38,
+  '5ca64703-c978-4d01-bf44-a7568f34f556': 8
+}
+2025-12-17T15:13:11: [DEBUG] 📊 Total students in DB: 46
+2025-12-17T15:13:11: [TEACHER BINDING] Querying MY_STUDENTS for teacher: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:13:11: [TEACHER BINDING] ✅ Found 8 students for scope: MY_STUDENTS
+2025-12-17T15:13:11: [DEBUG] Service returned: {
+  students: [
+    {
+      id: '1896c410-1a91-4281-ac02-797756c638cc',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '宁可歆',
+      className: '龙老师班',
+      level: 1,
+      points: 6632,
+      exp: 87,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.188Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '樊牧宸',
+      className: '龙老师班',
+      level: 1,
+      points: 219,
+      exp: 78,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.157Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '曾欣媛',
+      className: '龙老师班',
+      level: 1,
+      points: 202,
+      exp: 70,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.163Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '65697759-b4ba-49ae-9f18-101730f7bf47',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘梓萌',
+      className: '龙老师班',
+      level: 1,
+      points: 671,
+      exp: 51,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.175Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '83147758-d2d7-4541-a7c1-5892b809ccc8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '彭斯晟',
+      className: '龙老师班',
+      level: 1,
+      points: 553,
+      exp: 47,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.165Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'bb61ac5c-9bee-4ff9-95ef-1d9e25728f76',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖雨虹',
+      className: '龙老师班',
+      level: 1,
+      points: 1496,
+      exp: 46,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.146Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '47938c35-a307-4191-84a8-bf798d599505',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '廖潇然',
+      className: '龙老师班',
+      level: 1,
+      points: 1201,
+      exp: 40,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.150Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'b043aea7-874b-4505-8274-50526192fde8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖浩轩',
+      className: '龙老师班',
+      level: 1,
+      points: 148,
+      exp: 33,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.189Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    }
+  ],
+  pagination: { page: 1, limit: 8, total: 8, totalPages: 1 }
+}
+2025-12-17T15:13:11: [DEBUG] Number of students in result: 8
+2025-12-17T15:13:11: [DEBUG] Students data preview: [
+  {
+    id: '1896c410-1a91-4281-ac02-797756c638cc',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '宁可歆',
+    className: '龙老师班',
+    level: 1,
+    points: 6632,
+    exp: 87,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.188Z,
+    updatedAt: 2025-12-17T13:36:08.323Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  },
+  {
+    id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '樊牧宸',
+    className: '龙老师班',
+    level: 1,
+    points: 219,
+    exp: 78,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.157Z,
+    updatedAt: 2025-12-17T13:36:08.323Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  }
+]
+2025-12-17T15:13:11: [DEBUG] Response sent to frontend successfully
+2025-12-17T15:13:11: 2025-12-17T15:13:11.254Z - GET /avatar.jpg
+2025-12-17T15:13:12: 2025-12-17T15:13:12.176Z - GET /api/students
+2025-12-17T15:13:12: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T15:13:12: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:13:12: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:13:12: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:13:12: --- [DEBUG] GET /api/students endpoint hit ---
+2025-12-17T15:13:12: Authenticated User: {
+  userId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  username: 'long',
+  name: '龙老师',
+  displayName: '龙老师',
+  email: null,
+  role: 'TEACHER',
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  schoolName: '星途与伴',
+  primaryClassName: '六年级1班'
+}
+2025-12-17T15:13:12: School ID from user: 625e503b-aa7e-44fe-9982-237d828af717
+2025-12-17T15:13:12: Request query params: {
+  scope: 'MY_STUDENTS',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+}
+2025-12-17T15:13:12: [DEBUG] Query object sent to service: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  classRoom: undefined,
+  search: undefined,
+  page: undefined,
+  limit: undefined,
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: undefined,
+  requesterId: undefined
+}
+2025-12-17T15:13:12: [DEBUG] ✅ teacherId is present: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:13:12: [TEACHER BINDING] Fetching students with query: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: undefined
+}
+2025-12-17T15:13:12: [DEBUG] 🔍 Checking teacherId distribution before query...
+2025-12-17T15:13:12: [DEBUG] 📊 TeacherId distribution: {
+  '7054e764-d83f-472e-b5c9-05d2d633bd66': 38,
+  '5ca64703-c978-4d01-bf44-a7568f34f556': 8
+}
+2025-12-17T15:13:12: [DEBUG] 📊 Total students in DB: 46
+2025-12-17T15:13:12: [TEACHER BINDING] Querying MY_STUDENTS for teacher: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:13:12: [TEACHER BINDING] ✅ Found 8 students for scope: MY_STUDENTS
+2025-12-17T15:13:12: [DEBUG] Service returned: {
+  students: [
+    {
+      id: '1896c410-1a91-4281-ac02-797756c638cc',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '宁可歆',
+      className: '龙老师班',
+      level: 1,
+      points: 6632,
+      exp: 87,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.188Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '樊牧宸',
+      className: '龙老师班',
+      level: 1,
+      points: 219,
+      exp: 78,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.157Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '曾欣媛',
+      className: '龙老师班',
+      level: 1,
+      points: 202,
+      exp: 70,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.163Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '65697759-b4ba-49ae-9f18-101730f7bf47',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘梓萌',
+      className: '龙老师班',
+      level: 1,
+      points: 671,
+      exp: 51,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.175Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '83147758-d2d7-4541-a7c1-5892b809ccc8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '彭斯晟',
+      className: '龙老师班',
+      level: 1,
+      points: 553,
+      exp: 47,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.165Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'bb61ac5c-9bee-4ff9-95ef-1d9e25728f76',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖雨虹',
+      className: '龙老师班',
+      level: 1,
+      points: 1496,
+      exp: 46,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.146Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '47938c35-a307-4191-84a8-bf798d599505',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '廖潇然',
+      className: '龙老师班',
+      level: 1,
+      points: 1201,
+      exp: 40,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.150Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'b043aea7-874b-4505-8274-50526192fde8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖浩轩',
+      className: '龙老师班',
+      level: 1,
+      points: 148,
+      exp: 33,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.189Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    }
+  ],
+  pagination: { page: 1, limit: 8, total: 8, totalPages: 1 }
+}
+2025-12-17T15:13:12: [DEBUG] Number of students in result: 8
+2025-12-17T15:13:12: [DEBUG] Students data preview: [
+  {
+    id: '1896c410-1a91-4281-ac02-797756c638cc',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '宁可歆',
+    className: '龙老师班',
+    level: 1,
+    points: 6632,
+    exp: 87,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.188Z,
+    updatedAt: 2025-12-17T13:36:08.323Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  },
+  {
+    id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '樊牧宸',
+    className: '龙老师班',
+    level: 1,
+    points: 219,
+    exp: 78,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.157Z,
+    updatedAt: 2025-12-17T13:36:08.323Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  }
+]
+2025-12-17T15:13:12: [DEBUG] Response sent to frontend successfully
+2025-12-17T15:13:12: 2025-12-17T15:13:12.277Z - GET /api/habits
+2025-12-17T15:13:12: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T15:13:12: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:13:12: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:13:12: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:13:15: 2025-12-17T15:13:15.516Z - GET /api/students
+2025-12-17T15:13:15: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T15:13:15: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:13:15: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:13:15: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:13:15: --- [DEBUG] GET /api/students endpoint hit ---
+2025-12-17T15:13:15: Authenticated User: {
+  userId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  username: 'long',
+  name: '龙老师',
+  displayName: '龙老师',
+  email: null,
+  role: 'TEACHER',
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  schoolName: '星途与伴',
+  primaryClassName: '六年级1班'
+}
+2025-12-17T15:13:15: School ID from user: 625e503b-aa7e-44fe-9982-237d828af717
+2025-12-17T15:13:15: Request query params: {
+  scope: 'MY_STUDENTS',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  userRole: 'TEACHER',
+  classRoom: '龙老师的班级'
+}
+2025-12-17T15:13:15: [DEBUG] Query object sent to service: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  classRoom: '龙老师的班级',
+  search: undefined,
+  page: undefined,
+  limit: undefined,
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: 'TEACHER',
+  requesterId: undefined
+}
+2025-12-17T15:13:15: [DEBUG] ✅ teacherId is present: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:13:15: [TEACHER BINDING] Fetching students with query: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: 'TEACHER'
+}
+2025-12-17T15:13:15: [DEBUG] 🔍 Checking teacherId distribution before query...
+2025-12-17T15:13:15: [DEBUG] 📊 TeacherId distribution: {
+  '7054e764-d83f-472e-b5c9-05d2d633bd66': 38,
+  '5ca64703-c978-4d01-bf44-a7568f34f556': 8
+}
+2025-12-17T15:13:15: [DEBUG] 📊 Total students in DB: 46
+2025-12-17T15:13:15: [TEACHER BINDING] Querying MY_STUDENTS for teacher: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:13:15: [TEACHER BINDING] ✅ Found 8 students for scope: MY_STUDENTS
+2025-12-17T15:13:15: [DEBUG] Service returned: {
+  students: [
+    {
+      id: '1896c410-1a91-4281-ac02-797756c638cc',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '宁可歆',
+      className: '龙老师班',
+      level: 1,
+      points: 6632,
+      exp: 87,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.188Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '樊牧宸',
+      className: '龙老师班',
+      level: 1,
+      points: 219,
+      exp: 78,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.157Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '曾欣媛',
+      className: '龙老师班',
+      level: 1,
+      points: 202,
+      exp: 70,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.163Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '65697759-b4ba-49ae-9f18-101730f7bf47',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘梓萌',
+      className: '龙老师班',
+      level: 1,
+      points: 671,
+      exp: 51,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.175Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '83147758-d2d7-4541-a7c1-5892b809ccc8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '彭斯晟',
+      className: '龙老师班',
+      level: 1,
+      points: 553,
+      exp: 47,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.165Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'bb61ac5c-9bee-4ff9-95ef-1d9e25728f76',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖雨虹',
+      className: '龙老师班',
+      level: 1,
+      points: 1496,
+      exp: 46,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.146Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '47938c35-a307-4191-84a8-bf798d599505',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '廖潇然',
+      className: '龙老师班',
+      level: 1,
+      points: 1201,
+      exp: 40,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.150Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'b043aea7-874b-4505-8274-50526192fde8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖浩轩',
+      className: '龙老师班',
+      level: 1,
+      points: 148,
+      exp: 33,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.189Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    }
+  ],
+  pagination: { page: 1, limit: 8, total: 8, totalPages: 1 }
+}
+2025-12-17T15:13:15: [DEBUG] Number of students in result: 8
+2025-12-17T15:13:15: [DEBUG] Students data preview: [
+  {
+    id: '1896c410-1a91-4281-ac02-797756c638cc',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '宁可歆',
+    className: '龙老师班',
+    level: 1,
+    points: 6632,
+    exp: 87,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.188Z,
+    updatedAt: 2025-12-17T13:36:08.323Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  },
+  {
+    id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '樊牧宸',
+    className: '龙老师班',
+    level: 1,
+    points: 219,
+    exp: 78,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.157Z,
+    updatedAt: 2025-12-17T13:36:08.323Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  }
+]
+2025-12-17T15:13:15: [DEBUG] Response sent to frontend successfully
+2025-12-17T15:13:20: 2025-12-17T15:13:20.611Z - GET /api/students
+2025-12-17T15:13:20: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T15:13:20: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:13:20: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:13:20: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:13:20: --- [DEBUG] GET /api/students endpoint hit ---
+2025-12-17T15:13:20: Authenticated User: {
+  userId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  username: 'long',
+  name: '龙老师',
+  displayName: '龙老师',
+  email: null,
+  role: 'TEACHER',
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  schoolName: '星途与伴',
+  primaryClassName: '六年级1班'
+}
+2025-12-17T15:13:20: School ID from user: 625e503b-aa7e-44fe-9982-237d828af717
+2025-12-17T15:13:20: Request query params: {
+  scope: 'MY_STUDENTS',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+}
+2025-12-17T15:13:20: [DEBUG] Query object sent to service: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  classRoom: undefined,
+  search: undefined,
+  page: undefined,
+  limit: undefined,
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: undefined,
+  requesterId: undefined
+}
+2025-12-17T15:13:20: [DEBUG] ✅ teacherId is present: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:13:20: [TEACHER BINDING] Fetching students with query: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: undefined
+}
+2025-12-17T15:13:20: [DEBUG] 🔍 Checking teacherId distribution before query...
+2025-12-17T15:13:20: [DEBUG] 📊 TeacherId distribution: {
+  '7054e764-d83f-472e-b5c9-05d2d633bd66': 38,
+  '5ca64703-c978-4d01-bf44-a7568f34f556': 8
+}
+2025-12-17T15:13:20: [DEBUG] 📊 Total students in DB: 46
+2025-12-17T15:13:20: [TEACHER BINDING] Querying MY_STUDENTS for teacher: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:13:20: [TEACHER BINDING] ✅ Found 8 students for scope: MY_STUDENTS
+2025-12-17T15:13:20: [DEBUG] Service returned: {
+  students: [
+    {
+      id: '1896c410-1a91-4281-ac02-797756c638cc',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '宁可歆',
+      className: '龙老师班',
+      level: 1,
+      points: 6632,
+      exp: 87,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.188Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '樊牧宸',
+      className: '龙老师班',
+      level: 1,
+      points: 219,
+      exp: 78,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.157Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '曾欣媛',
+      className: '龙老师班',
+      level: 1,
+      points: 202,
+      exp: 70,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.163Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '65697759-b4ba-49ae-9f18-101730f7bf47',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘梓萌',
+      className: '龙老师班',
+      level: 1,
+      points: 671,
+      exp: 51,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.175Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '83147758-d2d7-4541-a7c1-5892b809ccc8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '彭斯晟',
+      className: '龙老师班',
+      level: 1,
+      points: 553,
+      exp: 47,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.165Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'bb61ac5c-9bee-4ff9-95ef-1d9e25728f76',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖雨虹',
+      className: '龙老师班',
+      level: 1,
+      points: 1496,
+      exp: 46,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.146Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '47938c35-a307-4191-84a8-bf798d599505',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '廖潇然',
+      className: '龙老师班',
+      level: 1,
+      points: 1201,
+      exp: 40,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.150Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'b043aea7-874b-4505-8274-50526192fde8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖浩轩',
+      className: '龙老师班',
+      level: 1,
+      points: 148,
+      exp: 33,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.189Z,
+      updatedAt: 2025-12-17T13:36:08.323Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    }
+  ],
+  pagination: { page: 1, limit: 8, total: 8, totalPages: 1 }
+}
+2025-12-17T15:13:20: [DEBUG] Number of students in result: 8
+2025-12-17T15:13:20: [DEBUG] Students data preview: [
+  {
+    id: '1896c410-1a91-4281-ac02-797756c638cc',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '宁可歆',
+    className: '龙老师班',
+    level: 1,
+    points: 6632,
+    exp: 87,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.188Z,
+    updatedAt: 2025-12-17T13:36:08.323Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  },
+  {
+    id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '樊牧宸',
+    className: '龙老师班',
+    level: 1,
+    points: 219,
+    exp: 78,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.157Z,
+    updatedAt: 2025-12-17T13:36:08.323Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  }
+]
+2025-12-17T15:13:20: [DEBUG] Response sent to frontend successfully
+2025-12-17T15:13:32: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T15:13:32: 🛑 Shutting down server...
+2025-12-17T15:13:32: ✅ Database disconnected
+2025-12-17T15:13:33: 🚀 Starting ArkOK V2 Server...
+2025-12-17T15:13:33: 🌍 Environment: production
+2025-12-17T15:13:33: 🔌 Port: 3000
+2025-12-17T15:13:33: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T15:13:33: 📁 Static path exists: true
+2025-12-17T15:13:33: 🔧 Setting up Socket.IO handlers...
+2025-12-17T15:13:33: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T15:13:33: ✅ Database connected successfully
+2025-12-17T15:13:33: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T15:13:33: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T15:13:33: 🔌 WebSocket server ready
+2025-12-17T15:13:33: 🌐 Environment: production
+2025-12-17T15:16:07: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T15:16:07: 🛑 Shutting down server...
+2025-12-17T15:16:07: ✅ Database disconnected
+2025-12-17T15:16:07: 🚀 Starting ArkOK V2 Server...
+2025-12-17T15:16:07: 🌍 Environment: production
+2025-12-17T15:16:07: 🔌 Port: 3000
+2025-12-17T15:16:07: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T15:16:07: 📁 Static path exists: true
+2025-12-17T15:16:07: 🔧 Setting up Socket.IO handlers...
+2025-12-17T15:16:07: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T15:16:08: ✅ Database connected successfully
+2025-12-17T15:16:08: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T15:16:08: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T15:16:08: 🔌 WebSocket server ready
+2025-12-17T15:16:08: 🌐 Environment: production
+2025-12-17T15:20:49: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T15:20:49: 🛑 Shutting down server...
+2025-12-17T15:20:49: ✅ Database disconnected
+2025-12-17T15:20:50: 🚀 Starting ArkOK V2 Server...
+2025-12-17T15:20:50: 🌍 Environment: production
+2025-12-17T15:20:50: 🔌 Port: 3000
+2025-12-17T15:20:50: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T15:20:50: 📁 Static path exists: true
+2025-12-17T15:20:50: 🔧 Setting up Socket.IO handlers...
+2025-12-17T15:20:50: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T15:20:50: ✅ Database connected successfully
+2025-12-17T15:20:50: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T15:20:50: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T15:20:50: 🔌 WebSocket server ready
+2025-12-17T15:20:50: 🌐 Environment: production
+2025-12-17T15:33:36: 2025-12-17T15:33:36.102Z - GET /api/students
+2025-12-17T15:33:36: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T15:33:36: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:33:36: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:33:36: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:33:36: --- [DEBUG] GET /api/students endpoint hit ---
+2025-12-17T15:33:36: Authenticated User: {
+  userId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  username: 'long',
+  name: '龙老师',
+  displayName: '龙老师',
+  email: null,
+  role: 'TEACHER',
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  schoolName: '星途与伴',
+  primaryClassName: '六年级1班'
+}
+2025-12-17T15:33:36: School ID from user: 625e503b-aa7e-44fe-9982-237d828af717
+2025-12-17T15:33:36: Request query params: {
+  scope: 'MY_STUDENTS',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+}
+2025-12-17T15:33:36: [DEBUG] Query object sent to service: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  classRoom: undefined,
+  search: undefined,
+  page: undefined,
+  limit: undefined,
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: undefined,
+  requesterId: undefined
+}
+2025-12-17T15:33:36: [DEBUG] ✅ teacherId is present: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:33:36: [TEACHER BINDING] Fetching students with query: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: undefined
+}
+2025-12-17T15:33:36: [DEBUG] 🔍 Checking teacherId distribution before query...
+2025-12-17T15:33:36: [DEBUG] 📊 TeacherId distribution: { null: 38, '5ca64703-c978-4d01-bf44-a7568f34f556': 8 }
+2025-12-17T15:33:36: [DEBUG] 📊 Total students in DB: 46
+2025-12-17T15:33:36: [TEACHER BINDING] Querying MY_STUDENTS for teacher: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:33:36: [TEACHER BINDING] ✅ Found 8 students for scope: MY_STUDENTS
+2025-12-17T15:33:36: [DEBUG] Service returned: {
+  students: [
+    {
+      id: '1896c410-1a91-4281-ac02-797756c638cc',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '宁可歆',
+      className: null,
+      level: 1,
+      points: 6632,
+      exp: 87,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.188Z,
+      updatedAt: 2025-12-17T15:32:53.182Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '樊牧宸',
+      className: null,
+      level: 1,
+      points: 219,
+      exp: 78,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.157Z,
+      updatedAt: 2025-12-17T15:33:02.635Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '曾欣媛',
+      className: null,
+      level: 1,
+      points: 202,
+      exp: 70,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.163Z,
+      updatedAt: 2025-12-17T15:33:06.985Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '65697759-b4ba-49ae-9f18-101730f7bf47',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘梓萌',
+      className: null,
+      level: 1,
+      points: 671,
+      exp: 51,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.175Z,
+      updatedAt: 2025-12-17T15:32:48.644Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '83147758-d2d7-4541-a7c1-5892b809ccc8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '彭斯晟',
+      className: null,
+      level: 1,
+      points: 553,
+      exp: 47,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.165Z,
+      updatedAt: 2025-12-17T15:32:43.481Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'bb61ac5c-9bee-4ff9-95ef-1d9e25728f76',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖雨虹',
+      className: null,
+      level: 1,
+      points: 1496,
+      exp: 46,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.146Z,
+      updatedAt: 2025-12-17T15:32:39.656Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '47938c35-a307-4191-84a8-bf798d599505',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '廖潇然',
+      className: null,
+      level: 1,
+      points: 1201,
+      exp: 40,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.150Z,
+      updatedAt: 2025-12-17T15:32:29.198Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'b043aea7-874b-4505-8274-50526192fde8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖浩轩',
+      className: null,
+      level: 1,
+      points: 148,
+      exp: 33,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.189Z,
+      updatedAt: 2025-12-17T15:32:34.372Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    }
+  ],
+  pagination: { page: 1, limit: 8, total: 8, totalPages: 1 }
+}
+2025-12-17T15:33:36: [DEBUG] Number of students in result: 8
+2025-12-17T15:33:36: [DEBUG] Students data preview: [
+  {
+    id: '1896c410-1a91-4281-ac02-797756c638cc',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '宁可歆',
+    className: null,
+    level: 1,
+    points: 6632,
+    exp: 87,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.188Z,
+    updatedAt: 2025-12-17T15:32:53.182Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  },
+  {
+    id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '樊牧宸',
+    className: null,
+    level: 1,
+    points: 219,
+    exp: 78,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.157Z,
+    updatedAt: 2025-12-17T15:33:02.635Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  }
+]
+2025-12-17T15:33:36: [DEBUG] Response sent to frontend successfully
+2025-12-17T15:41:05: 2025-12-17T15:41:05.907Z - GET /api/lms/daily-records
+2025-12-17T15:41:05: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T15:41:05: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:41:05: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:41:05: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=1896c410-1a91-4281-ac02-797756c638cc, date=2025-12-17
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T15:41:05.909Z
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] 查询结果: 找到 12 条记录
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] ===== 记录详情 =====
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] 记录 1:
+2025-12-17T15:41:05:    - ID: af3d8a20-eee4-4d59-aa58-0a2d92ec0972
+2025-12-17T15:41:05:    - Title: 古诗背诵
+2025-12-17T15:41:05:    - Type: QC
+2025-12-17T15:41:05:    - Status: COMPLETED
+2025-12-17T15:41:05:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:41:05:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:41:05:    - Exp: 5
+2025-12-17T15:41:05:    - Student: 宁可歆
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] 记录 2:
+2025-12-17T15:41:05:    - ID: 0e264478-a72a-4d61-b8ea-350e06100b6d
+2025-12-17T15:41:05:    - Title: 口算练习
+2025-12-17T15:41:05:    - Type: QC
+2025-12-17T15:41:05:    - Status: COMPLETED
+2025-12-17T15:41:05:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:41:05:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:41:05:    - Exp: 5
+2025-12-17T15:41:05:    - Student: 宁可歆
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] 记录 3:
+2025-12-17T15:41:05:    - ID: 4d7037ca-da99-4e17-9530-bed21a6c50e9
+2025-12-17T15:41:05:    - Title: 生字听写
+2025-12-17T15:41:05:    - Type: QC
+2025-12-17T15:41:05:    - Status: COMPLETED
+2025-12-17T15:41:05:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:41:05:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:41:05:    - Exp: 5
+2025-12-17T15:41:05:    - Student: 宁可歆
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] 记录 4:
+2025-12-17T15:41:05:    - ID: fd7fc7b9-47f4-41b5-80bb-cd5a1fb91a6e
+2025-12-17T15:41:05:    - Title: 单词背诵
+2025-12-17T15:41:05:    - Type: QC
+2025-12-17T15:41:05:    - Status: PENDING
+2025-12-17T15:41:05:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:41:05:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:41:05:    - Exp: 5
+2025-12-17T15:41:05:    - Student: 宁可歆
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] 记录 5:
+2025-12-17T15:41:05:    - ID: ec32514a-e9e5-4948-bda2-95e6a10d9fba
+2025-12-17T15:41:05:    - Title: 句型练习
+2025-12-17T15:41:05:    - Type: QC
+2025-12-17T15:41:05:    - Status: PENDING
+2025-12-17T15:41:05:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:41:05:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:41:05:    - Exp: 5
+2025-12-17T15:41:05:    - Student: 宁可歆
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] 记录 6:
+2025-12-17T15:41:05:    - ID: 144f50f6-f291-426d-821c-b43ea05077b6
+2025-12-17T15:41:05:    - Title: 应用题
+2025-12-17T15:41:05:    - Type: QC
+2025-12-17T15:41:05:    - Status: COMPLETED
+2025-12-17T15:41:05:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:41:05:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:41:05:    - Exp: 5
+2025-12-17T15:41:05:    - Student: 宁可歆
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] 记录 7:
+2025-12-17T15:41:05:    - ID: e70f1bac-24e7-45b3-806b-13164eba2a27
+2025-12-17T15:41:05:    - Title: 古诗背诵
+2025-12-17T15:41:05:    - Type: QC
+2025-12-17T15:41:05:    - Status: PENDING
+2025-12-17T15:41:05:    - Created: 2025-12-17T15:39:56.139Z
+2025-12-17T15:41:05:    - Created Local: 12/17/2025, 3:39:56 PM
+2025-12-17T15:41:05:    - Exp: 5
+2025-12-17T15:41:05:    - Student: 宁可歆
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] 记录 8:
+2025-12-17T15:41:05:    - ID: bf3b813b-185c-4146-a38f-78001cb1a5c4
+2025-12-17T15:41:05:    - Title: 生字听写
+2025-12-17T15:41:05:    - Type: QC
+2025-12-17T15:41:05:    - Status: PENDING
+2025-12-17T15:41:05:    - Created: 2025-12-17T15:39:56.139Z
+2025-12-17T15:41:05:    - Created Local: 12/17/2025, 3:39:56 PM
+2025-12-17T15:41:05:    - Exp: 5
+2025-12-17T15:41:05:    - Student: 宁可歆
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] 记录 9:
+2025-12-17T15:41:05:    - ID: 94deec0d-8f0b-438f-a387-c4170ddb9436
+2025-12-17T15:41:05:    - Title: 口算练习
+2025-12-17T15:41:05:    - Type: QC
+2025-12-17T15:41:05:    - Status: PENDING
+2025-12-17T15:41:05:    - Created: 2025-12-17T15:39:56.139Z
+2025-12-17T15:41:05:    - Created Local: 12/17/2025, 3:39:56 PM
+2025-12-17T15:41:05:    - Exp: 5
+2025-12-17T15:41:05:    - Student: 宁可歆
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] 记录 10:
+2025-12-17T15:41:05:    - ID: 0d5dd31f-a6f3-4528-baae-703d154047bf
+2025-12-17T15:41:05:    - Title: 应用题
+2025-12-17T15:41:05:    - Type: QC
+2025-12-17T15:41:05:    - Status: PENDING
+2025-12-17T15:41:05:    - Created: 2025-12-17T15:39:56.139Z
+2025-12-17T15:41:05:    - Created Local: 12/17/2025, 3:39:56 PM
+2025-12-17T15:41:05:    - Exp: 5
+2025-12-17T15:41:05:    - Student: 宁可歆
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] 记录 11:
+2025-12-17T15:41:05:    - ID: 11eb8cfa-8e95-41de-a930-299d0db3db1e
+2025-12-17T15:41:05:    - Title: 单词背诵
+2025-12-17T15:41:05:    - Type: QC
+2025-12-17T15:41:05:    - Status: PENDING
+2025-12-17T15:41:05:    - Created: 2025-12-17T15:39:56.139Z
+2025-12-17T15:41:05:    - Created Local: 12/17/2025, 3:39:56 PM
+2025-12-17T15:41:05:    - Exp: 5
+2025-12-17T15:41:05:    - Student: 宁可歆
+2025-12-17T15:41:05: 🔥 [LMS DEBUG] 记录 12:
+2025-12-17T15:41:05:    - ID: 948f949b-5914-4e53-92ba-6d09fe30edc1
+2025-12-17T15:41:05:    - Title: 句型练习
+2025-12-17T15:41:05:    - Type: QC
+2025-12-17T15:41:05:    - Status: PENDING
+2025-12-17T15:41:05:    - Created: 2025-12-17T15:39:56.139Z
+2025-12-17T15:41:05:    - Created Local: 12/17/2025, 3:39:56 PM
+2025-12-17T15:41:05:    - Exp: 5
+2025-12-17T15:41:05:    - Student: 宁可歆
+2025-12-17T15:49:24: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T15:49:24: 🛑 Shutting down server...
+2025-12-17T15:49:24: ✅ Database disconnected
+2025-12-17T15:49:24: 🚀 Starting ArkOK V2 Server...
+2025-12-17T15:49:24: 🌍 Environment: production
+2025-12-17T15:49:24: 🔌 Port: 3000
+2025-12-17T15:49:24: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T15:49:24: 📁 Static path exists: true
+2025-12-17T15:49:24: 🔧 Setting up Socket.IO handlers...
+2025-12-17T15:49:24: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T15:49:24: ✅ Database connected successfully
+2025-12-17T15:49:24: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T15:49:24: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T15:49:24: 🔌 WebSocket server ready
+2025-12-17T15:49:24: 🌐 Environment: production
+2025-12-17T16:01:36: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T16:01:36: 🛑 Shutting down server...
+2025-12-17T16:01:36: ✅ Database disconnected
+2025-12-17T16:01:36: 🚀 Starting ArkOK V2 Server...
+2025-12-17T16:01:36: 🌍 Environment: production
+2025-12-17T16:01:36: 🔌 Port: 3000
+2025-12-17T16:01:36: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T16:01:36: 📁 Static path exists: true
+2025-12-17T16:01:36: 🔧 Setting up Socket.IO handlers...
+2025-12-17T16:01:36: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T16:01:36: ✅ Database connected successfully
+2025-12-17T16:01:36: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T16:01:36: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T16:01:36: 🔌 WebSocket server ready
+2025-12-17T16:01:36: 🌐 Environment: production
+2025-12-17T16:06:37: 2025-12-17T16:06:37.354Z - GET /api/lms/daily-records
+2025-12-17T16:06:37: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T16:06:37: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T16:06:37: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:06:37: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=b043aea7-874b-4505-8274-50526192fde8, date=2025-12-17
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T16:06:37.358Z
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] 查询结果: 找到 12 条记录
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] ===== 记录详情 =====
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] 记录 1:
+2025-12-17T16:06:37:    - ID: 2590639b-564b-4962-b43d-71828523a17c
+2025-12-17T16:06:37:    - Title: 古诗背诵
+2025-12-17T16:06:37:    - Type: QC
+2025-12-17T16:06:37:    - Status: PENDING
+2025-12-17T16:06:37:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:06:37:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:06:37:    - Exp: 5
+2025-12-17T16:06:37:    - Student: 肖浩轩
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] 记录 2:
+2025-12-17T16:06:37:    - ID: ff4a54a9-5e87-4703-8712-535296575177
+2025-12-17T16:06:37:    - Title: 生字听写
+2025-12-17T16:06:37:    - Type: QC
+2025-12-17T16:06:37:    - Status: PENDING
+2025-12-17T16:06:37:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:06:37:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:06:37:    - Exp: 5
+2025-12-17T16:06:37:    - Student: 肖浩轩
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] 记录 3:
+2025-12-17T16:06:37:    - ID: ae26c012-0737-4766-a345-21237850901e
+2025-12-17T16:06:37:    - Title: 口算练习
+2025-12-17T16:06:37:    - Type: QC
+2025-12-17T16:06:37:    - Status: PENDING
+2025-12-17T16:06:37:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:06:37:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:06:37:    - Exp: 5
+2025-12-17T16:06:37:    - Student: 肖浩轩
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] 记录 4:
+2025-12-17T16:06:37:    - ID: e31e8163-15f9-4a65-9185-bd4c0cbc5b97
+2025-12-17T16:06:37:    - Title: 应用题
+2025-12-17T16:06:37:    - Type: QC
+2025-12-17T16:06:37:    - Status: PENDING
+2025-12-17T16:06:37:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:06:37:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:06:37:    - Exp: 5
+2025-12-17T16:06:37:    - Student: 肖浩轩
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] 记录 5:
+2025-12-17T16:06:37:    - ID: 1811dd86-87e8-4280-8fed-7de41aabf640
+2025-12-17T16:06:37:    - Title: 单词背诵
+2025-12-17T16:06:37:    - Type: QC
+2025-12-17T16:06:37:    - Status: PENDING
+2025-12-17T16:06:37:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:06:37:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:06:37:    - Exp: 5
+2025-12-17T16:06:37:    - Student: 肖浩轩
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] 记录 6:
+2025-12-17T16:06:37:    - ID: 5bceb7d6-3b65-4287-8e53-0a8a91525b86
+2025-12-17T16:06:37:    - Title: 句型练习
+2025-12-17T16:06:37:    - Type: QC
+2025-12-17T16:06:37:    - Status: PENDING
+2025-12-17T16:06:37:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:06:37:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:06:37:    - Exp: 5
+2025-12-17T16:06:37:    - Student: 肖浩轩
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] 记录 7:
+2025-12-17T16:06:37:    - ID: 53021dab-98a1-4a1e-a6e9-a0e4b4eec5e9
+2025-12-17T16:06:37:    - Title: 古诗背诵
+2025-12-17T16:06:37:    - Type: QC
+2025-12-17T16:06:37:    - Status: PENDING
+2025-12-17T16:06:37:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:06:37:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:06:37:    - Exp: 5
+2025-12-17T16:06:37:    - Student: 肖浩轩
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] 记录 8:
+2025-12-17T16:06:37:    - ID: 3cd722d4-6df3-4203-90f6-ec2dfb262b96
+2025-12-17T16:06:37:    - Title: 生字听写
+2025-12-17T16:06:37:    - Type: QC
+2025-12-17T16:06:37:    - Status: PENDING
+2025-12-17T16:06:37:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:06:37:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:06:37:    - Exp: 5
+2025-12-17T16:06:37:    - Student: 肖浩轩
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] 记录 9:
+2025-12-17T16:06:37:    - ID: 704ba20d-4aa1-43d0-8637-4873c313eb14
+2025-12-17T16:06:37:    - Title: 口算练习
+2025-12-17T16:06:37:    - Type: QC
+2025-12-17T16:06:37:    - Status: PENDING
+2025-12-17T16:06:37:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:06:37:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:06:37:    - Exp: 5
+2025-12-17T16:06:37:    - Student: 肖浩轩
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] 记录 10:
+2025-12-17T16:06:37:    - ID: 1e2bd157-a069-4a07-b0f8-59ef38870779
+2025-12-17T16:06:37:    - Title: 应用题
+2025-12-17T16:06:37:    - Type: QC
+2025-12-17T16:06:37:    - Status: PENDING
+2025-12-17T16:06:37:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:06:37:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:06:37:    - Exp: 5
+2025-12-17T16:06:37:    - Student: 肖浩轩
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] 记录 11:
+2025-12-17T16:06:37:    - ID: d7efa794-2189-4bb4-97a6-684135860c4a
+2025-12-17T16:06:37:    - Title: 单词背诵
+2025-12-17T16:06:37:    - Type: QC
+2025-12-17T16:06:37:    - Status: PENDING
+2025-12-17T16:06:37:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:06:37:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:06:37:    - Exp: 5
+2025-12-17T16:06:37:    - Student: 肖浩轩
+2025-12-17T16:06:37: 🔥 [LMS DEBUG] 记录 12:
+2025-12-17T16:06:37:    - ID: 5460e0d2-3bd1-49a2-aa29-fc2f63a3ca13
+2025-12-17T16:06:37:    - Title: 句型练习
+2025-12-17T16:06:37:    - Type: QC
+2025-12-17T16:06:37:    - Status: PENDING
+2025-12-17T16:06:37:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:06:37:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:06:37:    - Exp: 5
+2025-12-17T16:06:37:    - Student: 肖浩轩
+2025-12-17T16:12:11: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T16:12:11: 🛑 Shutting down server...
+2025-12-17T16:12:11: ✅ Database disconnected
+2025-12-17T16:14:35: 🚀 Starting ArkOK V2 Server...
+2025-12-17T16:14:35: 🌍 Environment: production
+2025-12-17T16:14:35: 🔌 Port: 3000
+2025-12-17T16:14:35: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T16:14:35: 📁 Static path exists: true
+2025-12-17T16:14:35: 🔧 Setting up Socket.IO handlers...
+2025-12-17T16:14:35: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T16:14:35: ✅ Database connected successfully
+2025-12-17T16:14:35: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T16:14:35: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T16:14:35: 🔌 WebSocket server ready
+2025-12-17T16:14:35: 🌐 Environment: production
+2025-12-17T16:20:54: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T16:20:54: 🛑 Shutting down server...
+2025-12-17T16:20:54: ✅ Database disconnected
+2025-12-17T16:20:54: 🚀 Starting ArkOK V2 Server...
+2025-12-17T16:20:54: 🌍 Environment: production
+2025-12-17T16:20:54: 🔌 Port: 3000
+2025-12-17T16:20:54: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T16:20:54: 📁 Static path exists: true
+2025-12-17T16:20:54: 🔧 Setting up Socket.IO handlers...
+2025-12-17T16:20:54: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T16:20:54: ✅ Database connected successfully
+2025-12-17T16:20:54: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T16:20:54: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T16:20:54: 🔌 WebSocket server ready
+2025-12-17T16:20:54: 🌐 Environment: production
+2025-12-17T16:22:32: 2025-12-17T16:22:32.378Z - GET /api/students
+2025-12-17T16:22:32: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T16:22:32: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T16:22:32: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:22:32: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:22:32: --- [DEBUG] GET /api/students endpoint hit ---
+2025-12-17T16:22:32: Authenticated User: {
+  userId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  username: 'long',
+  name: '龙老师',
+  displayName: '龙老师',
+  email: null,
+  role: 'TEACHER',
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  schoolName: 'Default Migration School',
+  primaryClassName: '六年级1班'
+}
+2025-12-17T16:22:32: School ID from user: 625e503b-aa7e-44fe-9982-237d828af717
+2025-12-17T16:22:32: Request query params: {
+  scope: 'MY_STUDENTS',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+}
+2025-12-17T16:22:32: [DEBUG] Query object sent to service: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  classRoom: undefined,
+  search: undefined,
+  page: undefined,
+  limit: undefined,
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: undefined,
+  requesterId: undefined
+}
+2025-12-17T16:22:32: [DEBUG] ✅ teacherId is present: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T16:22:32: [TEACHER BINDING] Fetching students with query: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: undefined
+}
+2025-12-17T16:22:32: [DEBUG] 🔍 Checking teacherId distribution before query...
+2025-12-17T16:22:32: [DEBUG] 📊 TeacherId distribution: { null: 38, '5ca64703-c978-4d01-bf44-a7568f34f556': 8 }
+2025-12-17T16:22:32: [DEBUG] 📊 Total students in DB: 46
+2025-12-17T16:22:32: [TEACHER BINDING] Querying MY_STUDENTS for teacher: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T16:22:32: [TEACHER BINDING] ✅ Found 8 students for scope: MY_STUDENTS
+2025-12-17T16:22:32: [DEBUG] Service returned: {
+  students: [
+    {
+      id: '1896c410-1a91-4281-ac02-797756c638cc',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '宁可歆',
+      className: null,
+      level: 1,
+      points: 6632,
+      exp: 87,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.188Z,
+      updatedAt: 2025-12-17T15:32:53.182Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '樊牧宸',
+      className: null,
+      level: 1,
+      points: 219,
+      exp: 78,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.157Z,
+      updatedAt: 2025-12-17T15:33:02.635Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '曾欣媛',
+      className: null,
+      level: 1,
+      points: 202,
+      exp: 70,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.163Z,
+      updatedAt: 2025-12-17T15:33:06.985Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '65697759-b4ba-49ae-9f18-101730f7bf47',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘梓萌',
+      className: null,
+      level: 1,
+      points: 671,
+      exp: 51,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.175Z,
+      updatedAt: 2025-12-17T15:32:48.644Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '83147758-d2d7-4541-a7c1-5892b809ccc8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '彭斯晟',
+      className: null,
+      level: 1,
+      points: 553,
+      exp: 47,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.165Z,
+      updatedAt: 2025-12-17T15:32:43.481Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'bb61ac5c-9bee-4ff9-95ef-1d9e25728f76',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖雨虹',
+      className: null,
+      level: 1,
+      points: 1496,
+      exp: 46,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.146Z,
+      updatedAt: 2025-12-17T15:32:39.656Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '47938c35-a307-4191-84a8-bf798d599505',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '廖潇然',
+      className: null,
+      level: 1,
+      points: 1201,
+      exp: 40,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.150Z,
+      updatedAt: 2025-12-17T15:32:29.198Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'b043aea7-874b-4505-8274-50526192fde8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖浩轩',
+      className: null,
+      level: 1,
+      points: 148,
+      exp: 33,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.189Z,
+      updatedAt: 2025-12-17T15:32:34.372Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    }
+  ],
+  pagination: { page: 1, limit: 8, total: 8, totalPages: 1 }
+}
+2025-12-17T16:22:32: [DEBUG] Number of students in result: 8
+2025-12-17T16:22:32: [DEBUG] Students data preview: [
+  {
+    id: '1896c410-1a91-4281-ac02-797756c638cc',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '宁可歆',
+    className: null,
+    level: 1,
+    points: 6632,
+    exp: 87,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.188Z,
+    updatedAt: 2025-12-17T15:32:53.182Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  },
+  {
+    id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '樊牧宸',
+    className: null,
+    level: 1,
+    points: 219,
+    exp: 78,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.157Z,
+    updatedAt: 2025-12-17T15:33:02.635Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  }
+]
+2025-12-17T16:22:32: [DEBUG] Response sent to frontend successfully
+2025-12-17T16:22:33: 2025-12-17T16:22:33.769Z - GET /api/students
+2025-12-17T16:22:33: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T16:22:33: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T16:22:33: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:22:33: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:22:33: --- [DEBUG] GET /api/students endpoint hit ---
+2025-12-17T16:22:33: Authenticated User: {
+  userId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  username: 'long',
+  name: '龙老师',
+  displayName: '龙老师',
+  email: null,
+  role: 'TEACHER',
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  schoolName: 'Default Migration School',
+  primaryClassName: '六年级1班'
+}
+2025-12-17T16:22:33: School ID from user: 625e503b-aa7e-44fe-9982-237d828af717
+2025-12-17T16:22:33: Request query params: {
+  scope: 'MY_STUDENTS',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  userRole: 'TEACHER'
+}
+2025-12-17T16:22:33: [DEBUG] Query object sent to service: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  classRoom: undefined,
+  search: undefined,
+  page: undefined,
+  limit: undefined,
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: 'TEACHER',
+  requesterId: undefined
+}
+2025-12-17T16:22:33: [DEBUG] ✅ teacherId is present: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T16:22:33: [TEACHER BINDING] Fetching students with query: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: 'TEACHER'
+}
+2025-12-17T16:22:33: [DEBUG] 🔍 Checking teacherId distribution before query...
+2025-12-17T16:22:33: [DEBUG] 📊 TeacherId distribution: { null: 38, '5ca64703-c978-4d01-bf44-a7568f34f556': 8 }
+2025-12-17T16:22:33: [DEBUG] 📊 Total students in DB: 46
+2025-12-17T16:22:33: [TEACHER BINDING] Querying MY_STUDENTS for teacher: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T16:22:33: [TEACHER BINDING] ✅ Found 8 students for scope: MY_STUDENTS
+2025-12-17T16:22:33: [DEBUG] Service returned: {
+  students: [
+    {
+      id: '1896c410-1a91-4281-ac02-797756c638cc',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '宁可歆',
+      className: null,
+      level: 1,
+      points: 6632,
+      exp: 87,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.188Z,
+      updatedAt: 2025-12-17T15:32:53.182Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '樊牧宸',
+      className: null,
+      level: 1,
+      points: 219,
+      exp: 78,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.157Z,
+      updatedAt: 2025-12-17T15:33:02.635Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '曾欣媛',
+      className: null,
+      level: 1,
+      points: 202,
+      exp: 70,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.163Z,
+      updatedAt: 2025-12-17T15:33:06.985Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '65697759-b4ba-49ae-9f18-101730f7bf47',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘梓萌',
+      className: null,
+      level: 1,
+      points: 671,
+      exp: 51,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.175Z,
+      updatedAt: 2025-12-17T15:32:48.644Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '83147758-d2d7-4541-a7c1-5892b809ccc8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '彭斯晟',
+      className: null,
+      level: 1,
+      points: 553,
+      exp: 47,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.165Z,
+      updatedAt: 2025-12-17T15:32:43.481Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'bb61ac5c-9bee-4ff9-95ef-1d9e25728f76',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖雨虹',
+      className: null,
+      level: 1,
+      points: 1496,
+      exp: 46,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.146Z,
+      updatedAt: 2025-12-17T15:32:39.656Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '47938c35-a307-4191-84a8-bf798d599505',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '廖潇然',
+      className: null,
+      level: 1,
+      points: 1201,
+      exp: 40,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.150Z,
+      updatedAt: 2025-12-17T15:32:29.198Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'b043aea7-874b-4505-8274-50526192fde8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖浩轩',
+      className: null,
+      level: 1,
+      points: 148,
+      exp: 33,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.189Z,
+      updatedAt: 2025-12-17T15:32:34.372Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    }
+  ],
+  pagination: { page: 1, limit: 8, total: 8, totalPages: 1 }
+}
+2025-12-17T16:22:33: [DEBUG] Number of students in result: 8
+2025-12-17T16:22:33: [DEBUG] Students data preview: [
+  {
+    id: '1896c410-1a91-4281-ac02-797756c638cc',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '宁可歆',
+    className: null,
+    level: 1,
+    points: 6632,
+    exp: 87,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.188Z,
+    updatedAt: 2025-12-17T15:32:53.182Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  },
+  {
+    id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '樊牧宸',
+    className: null,
+    level: 1,
+    points: 219,
+    exp: 78,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.157Z,
+    updatedAt: 2025-12-17T15:33:02.635Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  }
+]
+2025-12-17T16:22:33: [DEBUG] Response sent to frontend successfully
+2025-12-17T16:22:33: 2025-12-17T16:22:33.854Z - GET /api/lms/daily-records
+2025-12-17T16:22:33: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T16:22:33: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T16:22:33: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:22:33: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=a3a72793-7c76-4f14-b18c-d786db55ff26, date=2025-12-17
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T16:22:33.855Z
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] 查询结果: 找到 12 条记录
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] ===== 记录详情 =====
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] 记录 1:
+2025-12-17T16:22:33:    - ID: 13f8ff45-89eb-4551-9e24-257a19a38359
+2025-12-17T16:22:33:    - Title: 应用题
+2025-12-17T16:22:33:    - Type: QC
+2025-12-17T16:22:33:    - Status: COMPLETED
+2025-12-17T16:22:33:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:22:33:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:22:33:    - Exp: 5
+2025-12-17T16:22:33:    - Student: 樊牧宸
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] 记录 2:
+2025-12-17T16:22:33:    - ID: 80f48125-a527-43b6-82be-2fa4030f2b04
+2025-12-17T16:22:33:    - Title: 单词背诵
+2025-12-17T16:22:33:    - Type: QC
+2025-12-17T16:22:33:    - Status: COMPLETED
+2025-12-17T16:22:33:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:22:33:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:22:33:    - Exp: 5
+2025-12-17T16:22:33:    - Student: 樊牧宸
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] 记录 3:
+2025-12-17T16:22:33:    - ID: b9a4dc8b-b8b1-491a-8d05-8f1c72a5bb14
+2025-12-17T16:22:33:    - Title: 生字听写
+2025-12-17T16:22:33:    - Type: QC
+2025-12-17T16:22:33:    - Status: COMPLETED
+2025-12-17T16:22:33:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:22:33:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:22:33:    - Exp: 5
+2025-12-17T16:22:33:    - Student: 樊牧宸
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] 记录 4:
+2025-12-17T16:22:33:    - ID: 0e8b5b48-f589-436e-88e4-3ee190b58f9a
+2025-12-17T16:22:33:    - Title: 口算练习
+2025-12-17T16:22:33:    - Type: QC
+2025-12-17T16:22:33:    - Status: PENDING
+2025-12-17T16:22:33:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:22:33:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:22:33:    - Exp: 5
+2025-12-17T16:22:33:    - Student: 樊牧宸
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] 记录 5:
+2025-12-17T16:22:33:    - ID: 5db173a9-34c9-45a3-b3b5-12b113e211d7
+2025-12-17T16:22:33:    - Title: 句型练习
+2025-12-17T16:22:33:    - Type: QC
+2025-12-17T16:22:33:    - Status: PENDING
+2025-12-17T16:22:33:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:22:33:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:22:33:    - Exp: 5
+2025-12-17T16:22:33:    - Student: 樊牧宸
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] 记录 6:
+2025-12-17T16:22:33:    - ID: 1551e1d5-3f94-4287-acc3-6bedc734decd
+2025-12-17T16:22:33:    - Title: 古诗背诵
+2025-12-17T16:22:33:    - Type: QC
+2025-12-17T16:22:33:    - Status: COMPLETED
+2025-12-17T16:22:33:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:22:33:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:22:33:    - Exp: 5
+2025-12-17T16:22:33:    - Student: 樊牧宸
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] 记录 7:
+2025-12-17T16:22:33:    - ID: cf449c18-0175-4384-8bfc-b777c69acb24
+2025-12-17T16:22:33:    - Title: 古诗背诵
+2025-12-17T16:22:33:    - Type: QC
+2025-12-17T16:22:33:    - Status: PENDING
+2025-12-17T16:22:33:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:22:33:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:22:33:    - Exp: 5
+2025-12-17T16:22:33:    - Student: 樊牧宸
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] 记录 8:
+2025-12-17T16:22:33:    - ID: 38e2be24-c9a8-44f1-a7e5-2b5347036222
+2025-12-17T16:22:33:    - Title: 生字听写
+2025-12-17T16:22:33:    - Type: QC
+2025-12-17T16:22:33:    - Status: PENDING
+2025-12-17T16:22:33:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:22:33:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:22:33:    - Exp: 5
+2025-12-17T16:22:33:    - Student: 樊牧宸
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] 记录 9:
+2025-12-17T16:22:33:    - ID: 85b90d45-7cb5-4b78-992c-25da185184e4
+2025-12-17T16:22:33:    - Title: 口算练习
+2025-12-17T16:22:33:    - Type: QC
+2025-12-17T16:22:33:    - Status: PENDING
+2025-12-17T16:22:33:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:22:33:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:22:33:    - Exp: 5
+2025-12-17T16:22:33:    - Student: 樊牧宸
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] 记录 10:
+2025-12-17T16:22:33:    - ID: 532f0e9c-6df9-40b7-93d1-181611c9d3ad
+2025-12-17T16:22:33:    - Title: 应用题
+2025-12-17T16:22:33:    - Type: QC
+2025-12-17T16:22:33:    - Status: PENDING
+2025-12-17T16:22:33:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:22:33:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:22:33:    - Exp: 5
+2025-12-17T16:22:33:    - Student: 樊牧宸
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] 记录 11:
+2025-12-17T16:22:33:    - ID: 978b6fe7-b22f-40e6-b56b-fe9f57cd655b
+2025-12-17T16:22:33:    - Title: 单词背诵
+2025-12-17T16:22:33:    - Type: QC
+2025-12-17T16:22:33:    - Status: PENDING
+2025-12-17T16:22:33:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:22:33:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:22:33:    - Exp: 5
+2025-12-17T16:22:33:    - Student: 樊牧宸
+2025-12-17T16:22:33: 🔥 [LMS DEBUG] 记录 12:
+2025-12-17T16:22:33:    - ID: f016076c-642b-46f0-99f5-a0ab8673ae37
+2025-12-17T16:22:33:    - Title: 句型练习
+2025-12-17T16:22:33:    - Type: QC
+2025-12-17T16:22:33:    - Status: PENDING
+2025-12-17T16:22:33:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:22:33:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:22:33:    - Exp: 5
+2025-12-17T16:22:33:    - Student: 樊牧宸
+2025-12-17T16:25:34: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T16:25:34: 🛑 Shutting down server...
+2025-12-17T16:25:34: ✅ Database disconnected
+2025-12-17T16:25:34: 🚀 Starting ArkOK V2 Server...
+2025-12-17T16:25:34: 🌍 Environment: production
+2025-12-17T16:25:34: 🔌 Port: 3000
+2025-12-17T16:25:34: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T16:25:34: 📁 Static path exists: true
+2025-12-17T16:25:34: 🔧 Setting up Socket.IO handlers...
+2025-12-17T16:25:34: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T16:25:34: ✅ Database connected successfully
+2025-12-17T16:25:35: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T16:25:35: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T16:25:35: 🔌 WebSocket server ready
+2025-12-17T16:25:35: 🌐 Environment: production
+2025-12-17T16:32:04: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T16:32:04: 🛑 Shutting down server...
+2025-12-17T16:32:04: ✅ Database disconnected
+2025-12-17T16:40:19: 🚀 Starting ArkOK V2 Server...
+2025-12-17T16:40:19: 🌍 Environment: development
+2025-12-17T16:40:19: 🔌 Port: 3000
+2025-12-17T16:40:19: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T16:40:19: 📁 Static path exists: true
+2025-12-17T16:40:19: 🔧 Setting up Socket.IO handlers...
+2025-12-17T16:40:19: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T16:40:19: ✅ Database connected successfully
+2025-12-17T16:40:19: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T16:40:19: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T16:40:19: 🔌 WebSocket server ready
+2025-12-17T16:40:19: 🌐 Environment: development
+2025-12-17T16:55:07: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T16:55:07: 🛑 Shutting down server...
+2025-12-17T16:55:07: ✅ Database disconnected
+2025-12-17T18:10:12: 🚀 Starting ArkOK V2 Server...
+2025-12-17T18:10:12: 🌍 Environment: development
+2025-12-17T18:10:12: 🔌 Port: 3000
+2025-12-17T18:10:12: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T18:10:12: 📁 Static path exists: true
+2025-12-17T18:10:12: 🔧 Setting up Socket.IO handlers...
+2025-12-17T18:10:12: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T18:10:12: ✅ Database connected successfully
+2025-12-17T18:10:12: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T18:10:12: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T18:10:12: 🔌 WebSocket server ready
+2025-12-17T18:10:12: 🌐 Environment: development
+2025-12-17T18:14:42: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T18:14:42: 🛑 Shutting down server...
+2025-12-17T18:14:42: ✅ Database disconnected
+2025-12-18T05:28:24: 🚀 Starting ArkOK V2 Server...
+2025-12-18T05:28:24: 🌍 Environment: development
+2025-12-18T05:28:24: 🔌 Port: 3000
+2025-12-18T05:28:24: 🔍 Static files being served from: /home/devbox/project/arkok-v2/server/client/dist
+2025-12-18T05:28:24: 📁 Static path exists: false
+2025-12-18T05:28:24: 🔧 Setting up Socket.IO handlers...
+2025-12-18T05:28:25: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-18T05:28:25: ✅ Database connected successfully
+2025-12-18T05:28:25: 🚀 ArkOK V2 Server running on port 3000
+2025-12-18T05:28:25: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-18T05:28:25: 🔌 WebSocket server ready
+2025-12-18T05:28:25: 🌐 Environment: development
+2025-12-18T05:29:13: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-18T05:29:13: 🛑 Shutting down server...
+2025-12-18T05:29:13: ✅ Database disconnected

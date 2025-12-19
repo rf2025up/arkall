@@ -55,7 +55,7 @@ const BigScreen: React.FC = () => {
                 studentA: {
                   id: String(studentA.id),
                   name: studentA.name,
-                  avatar_url: studentA.avatarUrl || studentA.avatar_url || `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(studentA.name)}&backgroundColor=ffffff`,
+                  avatar_url: studentA.avatarUrl || studentA.avatar_url || '/avatar.jpg',
                   team_name: studentA.className || data.data.teams?.find((t: any) => String(t.id) === `t${studentA.team_id}`)?.name,
                   score: studentA.points || studentA.total_points,
                   energy: Math.min(100, (studentA.exp || studentA.total_exp || 0) % 100 + 50)
@@ -63,7 +63,7 @@ const BigScreen: React.FC = () => {
                 studentB: {
                   id: String(studentB.id),
                   name: studentB.name,
-                  avatar_url: studentB.avatarUrl || studentB.avatar_url || `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(studentB.name)}&backgroundColor=ffffff`,
+                  avatar_url: studentB.avatarUrl || studentB.avatar_url || '/avatar.jpg',
                   team_name: studentB.className || data.data.teams?.find((t: any) => String(t.id) === `t${studentB.team_id}`)?.name,
                   score: studentB.points || studentB.total_points,
                   energy: Math.min(100, (studentB.exp || studentB.total_exp || 0) % 100 + 30)
@@ -121,7 +121,7 @@ const BigScreen: React.FC = () => {
       studentA: {
         id: '1',
         name: '星际指挥官Alpha',
-        avatar_url: 'https://api.dicebear.com/7.x/notionists/svg?seed=alpha&backgroundColor=ffffff',
+        avatar_url: '/avatar.jpg',
         team_name: '银河战队',
         score: 12500,
         energy: 85
@@ -129,7 +129,7 @@ const BigScreen: React.FC = () => {
       studentB: {
         id: '2',
         name: '量子战士Beta',
-        avatar_url: 'https://api.dicebear.com/7.x/notionists/svg?seed=beta&backgroundColor=ffffff',
+        avatar_url: '/avatar.jpg',
         team_name: '星云小队',
         score: 9800,
         energy: 72

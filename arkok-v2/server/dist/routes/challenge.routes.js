@@ -731,3 +731,4 @@ class ChallengeRoutes {
 }
 exports.ChallengeRoutes = ChallengeRoutes;
 exports.default = ChallengeRoutes;
+//# sourceMappingURL=challenge.routes.js.map

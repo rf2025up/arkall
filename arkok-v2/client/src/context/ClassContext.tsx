@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
+import apiService from '../services/api.service';
 
 // 🆕 师生绑定相关类型定义
 export interface ViewMode {
@@ -50,10 +51,16 @@ export const ClassProvider: React.FC<ClassProviderProps> = ({ children }) => {
   // 🆕 智能路由逻辑：基于师生绑定的默认视图
   useEffect(() => {
     if (user) {
+      // 🆕 优先检查localStorage中是否有保存的班级
+      const savedClass = localStorage.getItem('current_class');
+
       if (user.role === 'TEACHER') {
         // 老师默认查看"我的学生"
         setViewMode('MY_STUDENTS');
-        setCurrentClass('ALL');  // 不再依赖班级名
+        // 只有当localStorage中没有保存的班级时才设置为ALL
+        if (!savedClass) {
+          setCurrentClass('ALL');  // 不再依赖班级名
+        }
       } else if (user.role === 'ADMIN') {
         // 管理员默认查看全校
         setViewMode('ALL_SCHOOL');
@@ -68,19 +75,10 @@ export const ClassProvider: React.FC<ClassProviderProps> = ({ children }) => {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/students/classes', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiService.get('/students/classes');
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          const classes: ClassInfo[] = data.data.map((cls: any) => ({
+      if (response.success && response.data) {
+          const classes: ClassInfo[] = (response.data as any[]).map((cls: any) => ({
             name: cls.className,
             studentCount: parseInt(cls.studentCount),
             isPrimaryClass: cls.className === user.primaryClassName,
@@ -91,16 +89,15 @@ export const ClassProvider: React.FC<ClassProviderProps> = ({ children }) => {
           // 🆕 新的排序逻辑：当前老师的班级排第一，其他老师按学生数量排序
           classes.sort((a, b) => {
             // 当前老师的班级排最前面
-            if (a.teacherId === user.userId) return -1;
-            if (b.teacherId === user.userId) return 1;
+            if (a.teacherId === user.id) return -1;
+            if (b.teacherId === user.id) return 1;
             // 其他按学生数量排序
             return b.studentCount - a.studentCount;
           });
 
           setAvailableClasses(classes);
-        }
       } else {
-        console.error('Failed to fetch classes:', response.statusText);
+        console.error('Failed to fetch classes:', response.message);
       }
     } catch (error) {
       console.error('Error fetching classes:', error);
@@ -126,8 +123,10 @@ export const ClassProvider: React.FC<ClassProviderProps> = ({ children }) => {
 
   // 保留兼容性：切换班级
   const switchClass = (className: string) => {
+    console.log('🔧 [CLASS_CONTEXT] switchClass被调用，设置className为:', className);
     setCurrentClass(className);
     localStorage.setItem('current_class', className);
+    console.log('🔧 [CLASS_CONTEXT] switchClass完成，currentClass已更新并保存到localStorage');
   };
 
   // 刷新班级列表
@@ -154,7 +153,13 @@ export const ClassProvider: React.FC<ClassProviderProps> = ({ children }) => {
       // 从 localStorage 恢复上次选择的班级（兼容性）
       const savedClass = localStorage.getItem('current_class');
       if (savedClass && (savedClass === 'ALL' || availableClasses.some(c => c.name === savedClass))) {
+        // 🆕 只有当savedClass在availableClasses中存在时才恢复，避免使用不匹配的班级名
+        console.log('🔧 [CLASS_CONTEXT] 从localStorage恢复currentClass:', savedClass, 'availableClasses长度:', availableClasses.length);
         setCurrentClass(savedClass);
+      } else if (savedClass && availableClasses.length === 0) {
+        // 🆕 当API失败时，为避免className不匹配，清空currentClass
+        console.log('🔧 [CLASS_CONTEXT] API失败且localStorage中的班级不存在，清空currentClass避免过滤问题');
+        setCurrentClass('ALL');
       }
     }
   }, [user]);

@@ -36,7 +36,7 @@ interface Lesson {
 }
 
 interface Student {
-  id: number;
+  id: string;
   name: string;
   avatar: string;
   lesson: Lesson;
@@ -54,10 +54,17 @@ interface TaskLibrary {
 // 空的任务库 - 完全依赖API数据
 const EMPTY_TASK_LIBRARY: TaskLibrary = {};
 
+// 🆕 标准Category标签顺序 - 根据最终版任务库标签
+const CATEGORY_ORDER = ['基础作业', '语文', '数学', '英语', '阅读', '自主性', '特色教学', '学校', '家庭'];
+
 // --- 类型定义 ---
 interface TaskLibraryItem {
   id: string;
-  category: string;
+  // 🏷️ 运营标签分类（过关页使用）
+  category: string; // 9个标准标签：基础作业、语文、数学、英语、阅读、自主性、特色教学、学校、家庭
+  // 📚 教育体系分类（备课页使用）
+  educationalDomain: string; // '核心教学法' | '综合成长' | '基础作业'
+  educationalSubcategory: string; // 具体维度/类别
   name: string;
   description?: string;
   defaultExp: number;
@@ -133,7 +140,7 @@ const QCView: React.FC = () => {
   };
 
   // 🚀 获取学生课程进度 - 集成备课页数据
-  const fetchStudentProgress = async (studentId: number) => {
+  const fetchStudentProgress = async (studentId: string) => {
     if (!token) {
       console.warn('[QCView] 没有token，无法查询学生课程进度');
       return;
@@ -170,7 +177,7 @@ const QCView: React.FC = () => {
   };
 
   // 🚀 更新学生课程进度 - 权限高于备课页
-  const updateStudentProgress = async (studentId: number) => {
+  const updateStudentProgress = async (studentId: string) => {
     if (!token) {
       alert('无法更新课程进度，请重新登录');
       return;
@@ -223,27 +230,38 @@ const QCView: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // 🆕 基于师生绑定，与Home.tsx保持一致的查询逻辑
+      // 🚀 QCView修复：根据视图模式动态查询学生数据
       const params = new URLSearchParams();
 
-      if (viewMode === 'MY_STUDENTS' && user?.userId) {
-        params.append('scope', 'MY_STUDENTS');
-        params.append('teacherId', user.userId);
-        params.append('userRole', user.role || 'TEACHER');
-      } else if (viewMode === 'ALL_SCHOOL') {
+      // 🔧 BUG修复：根据viewMode动态设置scope，不再强制MY_STUDENTS
+      if (viewMode === 'ALL_SCHOOL' && user?.role === 'ADMIN') {
+        // 管理员且选择了全校视图，查询所有学生
         params.append('scope', 'ALL_SCHOOL');
+        params.append('userRole', user.role);
+        params.append('schoolId', user.schoolId || '');
+      } else {
+        // 默认查询当前教师的学生，确保数据安全
+        params.append('scope', 'MY_STUDENTS');
+        params.append('teacherId', user?.id || '');
         params.append('userRole', user?.role || 'TEACHER');
-        if (user?.userId) {
-          params.append('teacherId', user.userId);
-        }
       }
+
+      console.log(`[QCView] 获取学生数据 - Teacher: ${user?.name}, Role: ${user?.role}, ViewMode: ${viewMode}`);
 
       // 保留兼容性：如果有具体的班级选择，也加上
       if (currentClass !== 'ALL' && currentClass !== '') {
-        params.append('classRoom', currentClass);
+        params.append('className', currentClass);
       }
 
-      const url = `/students${params.toString() ? '?' + params.toString() : ''}`;
+      const url = `students${params.toString() ? '?' + params.toString() : ''}`;
+
+      console.log(`[QCView] API调用URL: ${url}`);
+      console.log(`[QCView] 请求参数:`, {
+        scope: 'MY_STUDENTS',
+        teacherId: user?.id,
+        userRole: user?.role,
+        className: currentClass !== 'ALL' && currentClass !== '' ? currentClass : undefined
+      });
 
       const response = await apiService.get(url);
 
@@ -287,7 +305,7 @@ const QCView: React.FC = () => {
           return {
             ...student,
             tasks: tasks || [], // 使用真实任务记录
-            avatarUrl: student.avatarUrl || '/1024.jpg', // 设置默认头像为1024.jpg
+            avatarUrl: student.avatarUrl || '/avatar.jpg', // 统一使用avatar.jpg
             lesson: student.lesson || { unit: '1', lesson: '1', title: '默认课程' } // 添加默认lesson属性
           };
         })
@@ -318,16 +336,16 @@ const QCView: React.FC = () => {
     };
 
     fetchInitialData();
-  }, [token, currentClass, viewMode, user?.userId]); // 🆕 添加viewMode和userId依赖，确保视图切换时重新获取数据
+  }, [token, currentClass, viewMode, user?.id]); // 🆕 添加viewMode和id依赖，确保视图切换时重新获取数据
 
   // UI 控制状态
-  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [isQCDrawerOpen, setIsQCDrawerOpen] = useState(false);
   const [isCMSDrawerOpen, setIsCMSDrawerOpen] = useState(false);
 
   // CMS 状态
   const [taskDB, setTaskDB] = useState<TaskLibrary>(taskLibrary);
-  const [currentCategory, setCurrentCategory] = useState("基础核心");
+  const [currentCategory, setCurrentCategory] = useState("基础作业");
   const [isManageMode, setIsManageMode] = useState(false);
   const [manualName, setManualName] = useState("");
   const [manualExp, setManualExp] = useState(10);
@@ -383,6 +401,19 @@ const QCView: React.FC = () => {
     }, {} as TaskLibrary);
   };
 
+  // 🆕 动态生成排序后的分类列表
+  const getSortedCategories = (taskLibrary: TaskLibrary): string[] => {
+    const categories = Object.keys(taskLibrary);
+
+    // 按照标准顺序排序，不存在的分类跳过
+    const sortedCategories = CATEGORY_ORDER.filter(cat => categories.includes(cat));
+
+    // 添加不在标准顺序中的额外分类
+    const extraCategories = categories.filter(cat => !CATEGORY_ORDER.includes(cat));
+
+    return [...sortedCategories, ...extraCategories];
+  };
+
   const getSelectedStudent = () => qcStudents.find(s => s.id === selectedStudentId);
 
   const getLessonStr = (l: Lesson) => {
@@ -402,7 +433,7 @@ const QCView: React.FC = () => {
   // --- 交互逻辑 ---
 
   // 1. 质检台操作
-  const openQCDrawer = async (sid: number) => {
+  const openQCDrawer = async (sid: string) => {
     const student = qcStudents.find(s => s.id === sid);
 
     setSelectedStudentId(sid);
@@ -414,47 +445,44 @@ const QCView: React.FC = () => {
     }
   };
 
-  const recordAttempt = async (e: React.MouseEvent, studentId: number, taskId: number) => {
+  const recordAttempt = async (e: React.MouseEvent, studentId: string, taskId: number) => {
     e.stopPropagation();
 
     try {
-      // 获取API地址
-      const protocol = window.location.protocol;
-      const host = window.location.host;
-      const apiUrl = `${protocol}//${host}/api`;
+      // 找到对应的学生和任务
+      const student = qcStudents.find(s => s.id === studentId);
+      const task = student?.tasks.find(t => t.id === taskId);
 
-      // 调用后端API记录辅导尝试
-      const response = await fetch(`${apiUrl}/records/${taskId}/attempt`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          // 更新本地状态 - V1原版逻辑
-          setQcStudents(prev => prev.map(s => {
-            if (s.id !== studentId) return s;
-            return {
-              ...s,
-              tasks: s.tasks.map(t => {
-                if (t.id !== taskId || t.status === 'PASSED') return t;
-                return { ...t, attempts: t.attempts + 1 };
-              })
-            };
-          }));
-          // 震动反馈
-          if (navigator.vibrate) navigator.vibrate(50);
-          console.log('辅导尝试记录成功:', data.message);
-        } else {
-          console.error('记录辅导尝试失败:', data.error);
-          alert('记录辅导尝试失败: ' + data.error);
-        }
-      } else {
-        console.error('API调用失败:', response.statusText);
-        alert('记录辅导尝试失败，请稍后重试');
+      if (!student || !task || !task.recordId) {
+        const errorMsg = `[TUTOR_ERROR] 数据缺失: Student=${!!student}, Task=${!!task}, RecordID=${task?.recordId}`;
+        console.error(errorMsg);
+        alert(errorMsg);
+        return;
       }
-    } catch (error) {
+
+      // 🚀 统一使用 apiService 并增强错误捕获，修复API路径重复问题
+      const response = await apiService.patch(`lms/records/${task.recordId}/attempt`, {});
+
+      if (response.success) {
+        // 更新本地状态 - V1原版逻辑
+        setQcStudents(prev => prev.map(s => {
+          if (s.id !== studentId) return s;
+          return {
+            ...s,
+            tasks: s.tasks.map(t => {
+              if (t.id !== taskId || t.status === 'PASSED') return t;
+              return { ...t, attempts: t.attempts + 1 };
+            })
+          };
+        }));
+        // 震动反馈
+        if (navigator.vibrate) navigator.vibrate(50);
+        console.log('辅导尝试记录成功:', response.message);
+      } else {
+        console.error('记录辅导尝试失败:', response.message);
+        alert(`记录失败: ${response.message || '未知错误'}`);
+      }
+    } catch (error: any) {
       console.error('记录辅导尝试错误:', error);
       // 降级处理：直接更新本地状态
       setQcStudents(prev => prev.map(s => {
@@ -467,41 +495,35 @@ const QCView: React.FC = () => {
           })
         };
       }));
-      alert('记录辅导尝试失败，已本地更新');
+      alert(`记录辅导尝试失败: ${error.message || '网络异常'}`);
     }
   };
 
-  const toggleQCPass = async (studentId: number, taskId: number) => {
+  const toggleQCPass = async (studentId: string, taskId: number) => {
     try {
       // 找到对应的学生和任务
       const student = qcStudents.find(s => s.id === studentId);
       const task = student?.tasks.find(t => t.id === taskId);
 
       if (!student || !task || !task.recordId) {
-        console.error('[QCView] 未找到学生、任务或任务记录ID');
-        // 降级处理：更新本地状态
-        setQcStudents(prev => prev.map(s => {
-          if (s.id !== studentId) return s;
-          return {
-            ...s,
-            tasks: s.tasks.map(t => {
-              if (t.id !== taskId) return t;
-              const newStatus = t.status === 'PASSED' ? 'PENDING' : 'PASSED';
-              return { ...t, status: newStatus };
-            })
-          };
-        }));
+        const errorMsg = `[QC_ERROR] 数据缺失: Student=${!!student}, Task=${!!task}, RecordID=${task?.recordId}`;
+        console.error(errorMsg);
+        alert(errorMsg);
         return;
       }
 
       const newStatus = task.status === 'PASSED' ? 'PENDING' : 'COMPLETED';
+      const targetUrl = `lms/records/${task.recordId}/status`;
+
+      console.log(`🚀 [QC_API_CALL] 开始更新状态: ${targetUrl}, NewStatus=${newStatus}`);
 
       // 调用API更新任务状态
-      const response = await apiService.patch(`/lms/records/${task.recordId}/status`, {
+      const response = await apiService.patch(targetUrl, {
         status: newStatus
       });
 
       if (response.success) {
+        console.log(`✅ [QC_API_SUCCESS] 状态更新成功:`, response.data);
         // 更新本地状态
         setQcStudents(prev => prev.map(s => {
           if (s.id !== studentId) return s;
@@ -517,13 +539,22 @@ const QCView: React.FC = () => {
         // 震动反馈
         if (navigator.vibrate) navigator.vibrate(50);
       } else {
-        console.error('[QCView] API更新失败:', response.message);
-        alert(`更新失败: ${response.message}`);
+        const errorDetail = `[QC_API_FAILED] 接口返回失败:
+- 消息: ${response.message}
+- 代码: ${(response as any).code || 'N/A'}
+- 路径: ${targetUrl}`;
+        console.error(errorDetail);
+        alert(errorDetail);
       }
 
-    } catch (error) {
-      console.error('[QCView] 切换QC任务状态失败:', error);
-      alert('更新任务状态失败，请重试');
+    } catch (error: any) {
+      const exceptionDetail = `🚨 [QC_EXCEPTION] 网络或系统崩溃:
+- 类型: ${error.name}
+- 消息: ${error.message}
+- 状态码: ${error.status || error.response?.status || 'Unknown'}
+- 请检查后端 CORS 配置或是否已重启服务器`;
+      console.error(exceptionDetail, error);
+      alert(exceptionDetail);
     }
   };
 
@@ -579,7 +610,7 @@ const QCView: React.FC = () => {
     }
   };
 
-  const deleteTask = (studentId: number, taskId: number) => {
+  const deleteTask = (studentId: string, taskId: number) => {
     if (!window.confirm("确认删除此任务？")) return;
     setQcStudents(prev => prev.map(s => {
       if (s.id !== studentId) return s;
@@ -588,7 +619,7 @@ const QCView: React.FC = () => {
   };
 
   // 2. 结算台操作
-  const toggleTaskComplete = async (studentId: number, taskId: number) => {
+  const toggleTaskComplete = async (studentId: string, taskId: number) => {
     try {
       // 找到对应的学生和任务
       const student = qcStudents.find(s => s.id === studentId);
@@ -687,7 +718,7 @@ const QCView: React.FC = () => {
   };
 
   // 3. CMS / 自主任务
-  const openCMSDrawer = (sid: number) => {
+  const openCMSDrawer = (sid: string) => {
     setSelectedStudentId(sid);
     setIsCMSDrawerOpen(true);
   };
@@ -815,9 +846,9 @@ const QCView: React.FC = () => {
                   >
                     <div className="relative w-11 h-11 rounded-full mb-2 border-2 border-gray-100 overflow-hidden">
                       <img
-                        src="/1024.jpg"
+                        src="/avatar.jpg"
                         alt={student.name}
-                        onError={(e)=>{ e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 fill=%22%23e5e7eb%22/><circle cx=%2232%22 cy=%2224%22 r=%2212%22 fill=%22%23cbd5e1%22/><rect x=%2216%22 y=%2240%22 width=%2232%22 height=%2216%22 rx=%228%22 fill=%22%23cbd5e1%22/></svg>'; }}
+                        onError={(e)=>{ e.currentTarget.src = '/avatar.jpg'; }}
                         className="w-full h-full rounded-full bg-gray-200 object-cover select-none pointer-events-none"
                         draggable={false}
                         onContextMenu={(e) => e.preventDefault()}
@@ -850,9 +881,9 @@ const QCView: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full border-2 border-gray-100 overflow-hidden">
                         <img
-                          src="/1024.jpg"
+                          src="/avatar.jpg"
                           alt={student.name}
-                          onError={(e)=>{ e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 fill=%22%23e5e7eb%22/><circle cx=%2232%22 cy=%2224%22 r=%2212%22 fill=%22%23cbd5e1%22/><rect x=%2216%22 y=%2240%22 width=%2232%22 height=%2216%22 rx=%228%22 fill=%22%23cbd5e1%22/></svg>'; }}
+                          onError={(e)=>{ e.currentTarget.src = '/avatar.jpg'; }}
                           className="w-full h-full rounded-full bg-gray-200 object-cover select-none pointer-events-none"
                           draggable={false}
                           onContextMenu={(e) => e.preventDefault()}
@@ -1265,7 +1296,7 @@ const QCView: React.FC = () => {
               <div className="flex flex-1 overflow-hidden">
                 {/* Sidebar */}
                 <div className="w-24 bg-slate-50 border-r border-slate-100 overflow-y-auto">
-                  {Object.keys(taskDB).map(cat => (
+                  {getSortedCategories(taskDB).map(cat => (
                     <div
                       key={cat}
                       onClick={() => setCurrentCategory(cat)}

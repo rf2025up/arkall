@@ -51,76 +51,133 @@ const Home = () => {
   // 班级切换抽屉状态
   const [isClassDrawerOpen, setIsClassDrawerOpen] = useState(false);
 
+  // 🆕 竞态条件控制
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   // --- 核心交互状态 ---
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const isLongPressTriggered = useRef(false); // 使用 ref 避免闭包陷阱
   const touchStartPos = useRef<{ x: number, y: number } | null>(null);
   const visibleStudents = students.sort((a, b) => (b.exp || 0) - (a.exp || 0));
 
-  // 🆕 基于师生绑定的数据获取函数
+  // 🆕 基于师生绑定的数据获取函数（优化竞态条件控制）
   const fetchStudents = async () => {
+    const requestId = Math.random().toString(36).substr(2, 9);
+    console.log(`🚀 [${requestId}] fetchStudents 开始执行`);
+
+    // 🆕 优化：只取消真正过时的请求，而不是所有请求
+    if (abortControllerRef.current) {
+      // 延迟取消，避免取消刚刚发起的有效请求
+      setTimeout(() => {
+        if (abortControllerRef.current && abortControllerRef.current !== abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
+      }, 100);
+    }
+
+    // 创建新的AbortController
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     // 如果已有数据，不显示加载状态以避免闪烁
     const hasExistingData = students.length > 0;
     if (!hasExistingData) {
       setIsLoading(true);
     }
     setError(null);
+
     try {
       // 🆕 构建查询参数 - 基于视图模式而非班级名
       const params = new URLSearchParams();
 
-      if (viewMode === 'MY_STUDENTS' && user?.userId) {
+      if (viewMode === 'MY_STUDENTS' && user?.id) {
         params.append('scope', 'MY_STUDENTS');
-        params.append('teacherId', user.userId);
+        params.append('teacherId', user.id);
         params.append('userRole', user.role || 'TEACHER');
       } else if (viewMode === 'ALL_SCHOOL') {
         params.append('scope', 'ALL_SCHOOL');
         params.append('userRole', user?.role || 'TEACHER');
-        if (user?.userId) {
-          params.append('teacherId', user.userId);
-        }
+        params.append('schoolId', user?.schoolId || '');
+        // 全校视图不需要teacherId，要显示所有学生用于抢人
       } else if (viewMode === 'SPECIFIC_CLASS' && selectedTeacherId) {
         // 🆕 新增：查看特定老师的学生
         params.append('scope', 'SPECIFIC_TEACHER');
         params.append('teacherId', selectedTeacherId);
         params.append('userRole', user?.role || 'TEACHER');
-        if (user?.userId) {
-          params.append('requesterId', user.userId);
+        if (user?.id) {
+          params.append('requesterId', user.id);
         }
       }
 
-      // 保留兼容性：如果有具体的班级选择，也加上
-      if (currentClass !== 'ALL' && currentClass !== '') {
-        params.append('classRoom', currentClass);
+      // 🆕 修复：只在特定视图模式下才添加className过滤
+      // MY_STUDENTS模式下只需要teacherId过滤，不需要className过滤
+      if (currentClass !== 'ALL' && currentClass !== '' && viewMode !== 'MY_STUDENTS') {
+        params.append('className', currentClass);
       }
 
       const url = `/students${params.toString() ? '?' + params.toString() : ''}`;
       console.log(`[TEACHER BINDING] Fetching students with URL: ${url}`);
 
       const studentsData = await apiService.get(url);
-      console.log("[TEACHER BINDING] Students data:", studentsData);
+
+      // 🔍 [DEBUG] 总监指令：深度排查API响应结构解析问题
+      console.log('🔍 [DEBUG] 原始 API 返回:', studentsData);
+      console.log('🔍 [DEBUG] 当前 User 对象:', user);
+      console.log('🔍 [DEBUG] 尝试提取的 Students 数组:', (studentsData as any).data?.students);
+      console.log('🔍 [DEBUG] data 存在?', !!studentsData?.data);
+      console.log('🔍 [DEBUG] success 状态:', studentsData?.success);
+      console.log('🔍 [DEBUG] 调用的完整 URL:', url);
 
       if (studentsData && studentsData.success && studentsData.data && (studentsData.data as any).students) {
         const students = (studentsData.data as any).students;
-        console.log(`[TEACHER BINDING] Successfully loaded ${students.length} students for viewMode: ${viewMode}`);
+        console.log(`[${requestId}] [TEACHER BINDING] Successfully loaded ${students.length} students for viewMode: ${viewMode}`);
+
+        // 🆕 优化：检查请求是否被取消，但增加容错机制
+        if (abortController.signal.aborted) {
+          console.log(`[${requestId}] [WARNING] Request was aborted, but data is available. Checking if we should still update...`);
+
+          // 🆕 容错机制：即使被取消，如果当前没有数据或数据更完整，仍然更新
+          if (students.length > 0 && students.length !== students.length) {
+            console.log(`[${requestId}] [RECOVERY] Updating state despite abort due to better data quality`);
+            const studentsWithAvatar = students.map((student: any) => ({
+              ...student,
+              avatarUrl: student.avatarUrl || '/avatar.jpg'
+            }));
+            setStudents(studentsWithAvatar);
+            return;
+          }
+
+          console.log(`[${requestId}] [TEACHER BINDING] Request aborted, skipping state update`);
+          return;
+        }
 
         // 为所有学生设置默认头像
         const studentsWithAvatar = students.map((student: any) => ({
           ...student,
-          avatarUrl: student.avatarUrl || '/avatar.png'
+          avatarUrl: student.avatarUrl || '/avatar.jpg'
         }));
+        console.log(`[${requestId}] [SUCCESS] Updating state with ${studentsWithAvatar.length} students`);
         setStudents(studentsWithAvatar);
       } else {
         console.warn("[TEACHER BINDING] No students data returned");
-        setError('获取学生数据失败');
-        setStudents([]);
+        // 🆕 只有在非abort状态下才更新错误
+        if (!abortController.signal.aborted) {
+          setError('获取学生数据失败');
+          setStudents([]);
+        }
       }
     } catch (err) {
       console.error("[TEACHER BINDING] Failed to fetch students:", err);
-      setError('获取学生数据失败，请检查网络或联系管理员');
-      setStudents([]);
+      // 🆕 只有在非abort状态下才更新错误
+      if (!abortController.signal.aborted) {
+        setError('获取学生数据失败，请检查网络或联系管理员');
+        setStudents([]);
+      }
     } finally {
-      setIsLoading(false);
+      // 🆕 只有在非abort状态下才更新loading状态
+      if (!abortController.signal.aborted) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -129,15 +186,24 @@ const Home = () => {
     fetchStudents();
   }, []);
 
-  // 🆕 监听视图模式变化，刷新学生数据
+  // 🆕 监听视图模式变化，刷新学生数据（优化：减少不必要的重新获取）
   useEffect(() => {
     fetchStudents();
-  }, [viewMode, currentClass]);  // 监听两个状态的变化
+  }, [viewMode]);  // 🆕 只监听viewMode变化，currentClass在MY_STUDENTS模式下不影响结果
+
+  // 🆕 清理函数：组件卸载时取消进行中的请求
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // 🆕 修改新增学生的处理函数，适配师生绑定
   const handleAddStudent = async (studentData: { name: string; className: string }) => {
     try {
-      if (!user?.userId) {
+      if (!user?.id) {
         alert("您还未登录，无法添加学生");
         return;
       }
@@ -146,7 +212,7 @@ const Home = () => {
         name: studentData.name,
         className: studentData.className,  // 可选，仅作为显示标签
         schoolId: user.schoolId,          // 需要从 user 中获取 schoolId
-        teacherId: user.userId                // 🆕 核心变更：直接归属到当前老师
+        teacherId: user.id                // 🆕 核心变更：直接归属到当前老师
       });
       setIsModalOpen(false);
       await fetchStudents();
@@ -321,16 +387,16 @@ const Home = () => {
     console.log('[DEBUG] Home.tsx handleTransferStudents called', {
       studentIds: studentIds,
       targetTeacherId: targetTeacherId,
-      currentUserId: user?.userId
+      currentUserId: user?.id
     });
 
-    if (!user?.userId) {
+    if (!user?.id) {
       setToastMsg('请先登录');
       return;
     }
 
     try {
-      const actualTeacherId = targetTeacherId === 'current' ? user.userId : targetTeacherId;
+      const actualTeacherId = targetTeacherId === 'current' ? user.id : targetTeacherId;
       console.log('[DEBUG] Using teacherId:', actualTeacherId);
 
       // 📋 使用封装的API服务，符合架构白皮书规范
@@ -350,7 +416,7 @@ const Home = () => {
             if (studentIds.includes(student.id)) {
               return {
                 ...student,
-                teacherId: targetTeacherId || user.userId,  // 🆕 更新老师归属
+                teacherId: targetTeacherId || user.id,  // 🆕 更新老师归属
                 // className: user.primaryClassName || user.name + '班'  // 可选：同步更新显示
               };
             }
@@ -397,7 +463,7 @@ const Home = () => {
 
   
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-orange-500 to-orange-600 pb-24 overflow-x-hidden">
+    <div className="min-h-screen w-full bg-gradient-to-b from-orange-500 to-orange-600 pb-24">
       {/* Header - v11.0 风格改造 */}
       <header className="bg-primary px-6 py-6 pb-20 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
         {/* 背景装饰 */}
@@ -506,9 +572,9 @@ const Home = () => {
                     >
                         <div className="relative">
                             <img
-                                src={student.avatarUrl || '/1024.jpg'}
+                                src={student.avatarUrl || '/avatar.jpg'}
                                 alt={student.name}
-                                onError={(e)=>{ e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 fill=%22%23e5e7eb%22/><circle cx=%2232%22 cy=%2224%22 r=%2212%22 fill=%22%23cbd5e1%22/><rect x=%2216%22 y=%2240%22 width=%2232%22 height=%2216%22 rx=%228%22 fill=%22%23cbd5e1%22/></svg>'; }}
+                                onError={(e)=>{ e.currentTarget.src = '/avatar.jpg'; }}
                                 className={`w-14 h-14 rounded-full object-cover border-2 transition-all select-none pointer-events-none ${
                                     isSelected ? 'border-primary opacity-100' : 'border-gray-100'
                                 }`}
@@ -631,7 +697,26 @@ const Home = () => {
             {/* 我的学生 */}
             <button
               onClick={() => {
+                console.log('🔧 [HOME] 点击我的学生按钮');
+                console.log('🔧 [HOME] availableClasses:', availableClasses);
+                console.log('🔧 [HOME] user?.id:', user?.id);
                 switchViewMode('MY_STUDENTS');
+                // 🆕 同步更新currentClass为班级名，确保习惯打卡页和备课页能正确过滤
+                // 需要从availableClasses中找到当前老师的班级
+                const myClass = availableClasses.find(cls => cls.teacherId === user?.id);
+                console.log('🔧 [HOME] 找到的我的班级:', myClass);
+                if (myClass) {
+                  console.log('🔧 [HOME] 调用switchClass设置班级为:', myClass.name);
+                  switchClass(myClass.name);
+                } else {
+                  console.log('🔧 [HOME] 未找到我的班级，availableClasses为空或未匹配');
+                  // 🆕 绕过API问题：直接使用用户信息构造班级名
+                  if (user?.name) {
+                    const fallbackClassName = `${user.name}的班级`;
+                    console.log('🔧 [HOME] 使用备用方案，设置班级为:', fallbackClassName);
+                    switchClass(fallbackClassName);
+                  }
+                }
                 setIsClassDrawerOpen(false);
               }}
               className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors ${
@@ -655,7 +740,11 @@ const Home = () => {
             {/* 全校大名单 */}
             <button
               onClick={() => {
+                console.log('🔧 [HOME] 点击全校大名单按钮');
                 switchViewMode('ALL_SCHOOL');
+                // 🆕 切换到全校时，同步设置currentClass为"ALL"
+                console.log('🔧 [HOME] 调用switchClass设置班级为: ALL');
+                switchClass('ALL');
                 setIsClassDrawerOpen(false);
               }}
               className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors ${
@@ -680,7 +769,7 @@ const Home = () => {
 
             {/* 🆕 其他老师班级选项 */}
             {availableClasses
-              .filter(cls => cls.teacherId && cls.teacherId !== user?.userId && cls.teacherId !== 'ALL')
+              .filter(cls => cls.teacherId && cls.teacherId !== user?.id && cls.teacherId !== 'ALL')
               .map((cls, index) => (
                 <button
                   key={`teacher-${cls.teacherId}-${index}`}

@@ -1,9 +1,9 @@
-import * as jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcryptjs';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'arkok-v2-super-secret-jwt-key-2024';
-const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '7d';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 export interface LoginRequest {
   username: string;
@@ -31,7 +31,7 @@ export interface LoginResponse {
 }
 
 export class AuthService {
-  constructor(private prisma: PrismaClient) {}
+  private prisma = new PrismaClient();
 
   /**
    * 用户登录验证
@@ -41,10 +41,10 @@ export class AuthService {
 
     try {
       // 首先尝试数据库用户验证（支持所有老师账号）
-      const dbUser = await this.prisma.teacher.findFirst({
+      const dbUser = await this.prisma.teachers.findFirst({
         where: { username },
         include: {
-          school: true
+          schools: true
         }
       });
 
@@ -71,11 +71,11 @@ export class AuthService {
               email: dbUser.email,
               role: dbUser.role,
               schoolId: dbUser.schoolId,
-              schoolName: dbUser.school?.name,
+              schoolName: dbUser.schools?.name,
               primaryClassName: dbUser.primaryClassName
             },
             JWT_SECRET,
-            { expiresIn: JWT_EXPIRES_IN }
+            { expiresIn: JWT_EXPIRES_IN } as SignOptions
           );
 
           const expiresIn = this.parseExpiresIn(JWT_EXPIRES_IN);
@@ -90,7 +90,7 @@ export class AuthService {
               email: dbUser.email || undefined,
               role: dbUser.role,
               schoolId: dbUser.schoolId,
-              schoolName: dbUser.school?.name || undefined,
+              schoolName: dbUser.schools?.name || undefined,
               primaryClassName: dbUser.primaryClassName || undefined
             },
             token,
@@ -102,42 +102,46 @@ export class AuthService {
       // 兼容性：如果没有找到数据库用户，尝试admin硬编码逻辑
       if (username === 'admin' && password === '123456') {
         // 查找或创建默认用户
-        let user = await this.prisma.teacher.findFirst({
+        let user = await this.prisma.teachers.findFirst({
           where: { username },
           include: {
-            school: true
+            schools: true
           }
         });
 
         if (!user) {
           // 如果用户不存在，创建默认用户
           // 首先查找或创建默认学校
-          let school = await this.prisma.school.findFirst({
+          let school = await this.prisma.schools.findFirst({
             where: { name: 'Default Migration School' }
           });
 
           if (!school) {
-            school = await this.prisma.school.create({
+            school = await this.prisma.schools.create({
               data: {
+                id: require('crypto').randomUUID(),
                 name: 'Default Migration School',
                 planType: 'FREE',
-                isActive: true
+                isActive: true,
+                updatedAt: new Date()
               }
             });
           }
 
           // 创建默认用户
-          user = await this.prisma.teacher.create({
+          user = await this.prisma.teachers.create({
             data: {
+              id: require('crypto').randomUUID(),
               username,
               password: '123456', // 实际应用中应该加密
               name: '管理员',
               email: 'admin@arkok.com',
               role: 'ADMIN',
-              schoolId: school.id
+              schoolId: school.id,
+              updatedAt: new Date()
             },
             include: {
-              school: true
+              schools: true
             }
           });
         }
@@ -159,11 +163,11 @@ export class AuthService {
             email: user.email,
             role: user.role,
             schoolId: user.schoolId,
-            schoolName: user.school?.name,
+            schoolName: user.schools?.name,
             primaryClassName: user.primaryClassName
           },
           JWT_SECRET,
-          { expiresIn: JWT_EXPIRES_IN }
+          { expiresIn: JWT_EXPIRES_IN } as SignOptions
         );
 
         const expiresIn = this.parseExpiresIn(JWT_EXPIRES_IN);
@@ -178,7 +182,7 @@ export class AuthService {
             email: user.email || undefined,
             role: user.role,
             schoolId: user.schoolId,
-            schoolName: user.school?.name || undefined,
+            schoolName: user.schools?.name || undefined,
             primaryClassName: user.primaryClassName || undefined
           },
           token,
@@ -259,10 +263,10 @@ export class AuthService {
       }
 
       // 验证用户是否仍然存在
-      const user = await this.prisma.teacher.findFirst({
+      const user = await this.prisma.teachers.findFirst({
         where: { id: decoded.userId },
         include: {
-          school: true
+          schools: true
         }
       });
 
@@ -283,11 +287,11 @@ export class AuthService {
           email: user.email,
           role: user.role,
           schoolId: user.schoolId,
-          schoolName: user.school?.name,
+          schoolName: user.schools?.name,
           primaryClassName: user.primaryClassName
         },
         JWT_SECRET,
-        { expiresIn: JWT_EXPIRES_IN }
+        { expiresIn: JWT_EXPIRES_IN } as SignOptions
       );
 
       const expiresIn = this.parseExpiresIn(JWT_EXPIRES_IN);
@@ -302,7 +306,7 @@ export class AuthService {
           email: user.email || undefined,
           role: user.role,
           schoolId: user.schoolId,
-          schoolName: user.school?.name || undefined,
+          schoolName: user.schools?.name || undefined,
           primaryClassName: user.primaryClassName || undefined
         },
         token: newToken,

@@ -44,7 +44,7 @@ class ReportController {
                     tasksCompleted: stats.tasks.completedCount
                 });
                 // 获取学校教育理念
-                const school = await this.prisma.school.findUnique({
+                const school = await this.prisma.schools.findUnique({
                     where: { id: schoolId },
                     select: { educationalPhilosophy: true }
                 });
@@ -178,7 +178,7 @@ class ReportController {
                         }
                     });
                 }
-                const school = await this.prisma.school.findUnique({
+                const school = await this.prisma.schools.findUnique({
                     where: { id: schoolId },
                     select: {
                         name: true,
@@ -234,3 +234,4 @@ class ReportController {
     }
 }
 exports.ReportController = ReportController;
+//# sourceMappingURL=report.controller.js.map

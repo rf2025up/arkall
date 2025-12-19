@@ -22,9 +22,10 @@ const ChallengeArenaCard: React.FC<ChallengeArenaCardProps> = ({ challenges }) =
             {displayChallenges.map((challenge, index) => (
               <div key={`${challenge.id}-${index}`} className="flex items-center p-2 mb-2 bg-slate-800/40 border border-slate-700/50 rounded-lg">
                 <img
-                  src={challenge.challenger.avatar}
+                  src={challenge.challenger.avatar || '/avatar.jpg'}
                   alt={challenge.challenger.name}
                   className="w-9 h-9 rounded-full border-2 border-purple-400 mr-3 flex-shrink-0"
+                  onError={(e) => { e.currentTarget.src = '/avatar.jpg'; }}
                 />
                 <div className="flex-grow overflow-hidden">
                   <h4 className="font-bold text-sm text-purple-300 truncate">{challenge.title}</h4>

@@ -1,7 +1,7 @@
 // 认证相关类型定义
 
 export interface User {
-  userId: string;
+  id: string;
   username: string;
   name: string;
   displayName?: string;

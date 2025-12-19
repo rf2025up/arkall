@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 import { Server as SocketIOServer } from 'socket.io';
 export interface PKMatchQuery {
     schoolId: string;
@@ -48,7 +47,7 @@ export interface PKMatchStatsResponse {
 export declare class PKMatchService {
     private prisma;
     private io;
-    constructor(prisma: PrismaClient, io: SocketIOServer);
+    constructor(io: SocketIOServer);
     /**
      * 获取PK对战列表
      */

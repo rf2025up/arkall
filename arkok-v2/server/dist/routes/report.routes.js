@@ -23,3 +23,4 @@ router.get('/week-calendar', (req, res, next) => reportController.getWeekCalenda
  */
 router.get('/school-settings', (req, res, next) => reportController.getSchoolSettings(req, res, next));
 exports.default = router;
+//# sourceMappingURL=report.routes.js.map

@@ -37,13 +37,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
-const jwt = __importStar(require("jsonwebtoken"));
-const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const client_1 = require("@prisma/client");
+const bcrypt = __importStar(require("bcryptjs"));
 const JWT_SECRET = process.env.JWT_SECRET || 'arkok-v2-super-secret-jwt-key-2024';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 class AuthService {
-    constructor(prisma) {
-        this.prisma = prisma;
+    constructor() {
+        this.prisma = new client_1.PrismaClient();
     }
     /**
      * 用户登录验证
@@ -52,10 +53,10 @@ class AuthService {
         const { username, password } = loginData;
         try {
             // 首先尝试数据库用户验证（支持所有老师账号）
-            const dbUser = await this.prisma.teacher.findFirst({
+            const dbUser = await this.prisma.teachers.findFirst({
                 where: { username },
                 include: {
-                    school: true
+                    schools: true
                 }
             });
             if (dbUser) {
@@ -63,15 +64,15 @@ class AuthService {
                 let passwordValid = false;
                 // 特殊处理admin账号（兼容历史数据）
                 if (username === 'admin' && password === '123456') {
-                    passwordValid = dbUser.password === '123456' || await bcryptjs_1.default.compare(password, dbUser.password);
+                    passwordValid = dbUser.password === '123456' || await bcrypt.compare(password, dbUser.password);
                 }
                 else {
                     // 其他账号使用bcrypt验证
-                    passwordValid = await bcryptjs_1.default.compare(password, dbUser.password);
+                    passwordValid = await bcrypt.compare(password, dbUser.password);
                 }
                 if (passwordValid) {
                     // 生成 JWT 令牌
-                    const token = jwt.sign({
+                    const token = jsonwebtoken_1.default.sign({
                         userId: dbUser.id,
                         username: dbUser.username,
                         name: dbUser.name,
@@ -79,7 +80,7 @@ class AuthService {
                         email: dbUser.email,
                         role: dbUser.role,
                         schoolId: dbUser.schoolId,
-                        schoolName: dbUser.school?.name,
+                        schoolName: dbUser.schools?.name,
                         primaryClassName: dbUser.primaryClassName
                     }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
                     const expiresIn = this.parseExpiresIn(JWT_EXPIRES_IN);
@@ -93,7 +94,7 @@ class AuthService {
                             email: dbUser.email || undefined,
                             role: dbUser.role,
                             schoolId: dbUser.schoolId,
-                            schoolName: dbUser.school?.name || undefined,
+                            schoolName: dbUser.schools?.name || undefined,
                             primaryClassName: dbUser.primaryClassName || undefined
                         },
                         token,
@@ -104,39 +105,43 @@ class AuthService {
             // 兼容性：如果没有找到数据库用户，尝试admin硬编码逻辑
             if (username === 'admin' && password === '123456') {
                 // 查找或创建默认用户
-                let user = await this.prisma.teacher.findFirst({
+                let user = await this.prisma.teachers.findFirst({
                     where: { username },
                     include: {
-                        school: true
+                        schools: true
                     }
                 });
                 if (!user) {
                     // 如果用户不存在，创建默认用户
                     // 首先查找或创建默认学校
-                    let school = await this.prisma.school.findFirst({
+                    let school = await this.prisma.schools.findFirst({
                         where: { name: 'Default Migration School' }
                     });
                     if (!school) {
-                        school = await this.prisma.school.create({
+                        school = await this.prisma.schools.create({
                             data: {
+                                id: require('crypto').randomUUID(),
                                 name: 'Default Migration School',
                                 planType: 'FREE',
-                                isActive: true
+                                isActive: true,
+                                updatedAt: new Date()
                             }
                         });
                     }
                     // 创建默认用户
-                    user = await this.prisma.teacher.create({
+                    user = await this.prisma.teachers.create({
                         data: {
+                            id: require('crypto').randomUUID(),
                             username,
                             password: '123456', // 实际应用中应该加密
                             name: '管理员',
                             email: 'admin@arkok.com',
                             role: 'ADMIN',
-                            schoolId: school.id
+                            schoolId: school.id,
+                            updatedAt: new Date()
                         },
                         include: {
-                            school: true
+                            schools: true
                         }
                     });
                 }
@@ -147,7 +152,7 @@ class AuthService {
                     };
                 }
                 // 生成 JWT 令牌
-                const token = jwt.sign({
+                const token = jsonwebtoken_1.default.sign({
                     userId: user.id,
                     username: user.username,
                     name: user.name,
@@ -155,7 +160,7 @@ class AuthService {
                     email: user.email,
                     role: user.role,
                     schoolId: user.schoolId,
-                    schoolName: user.school?.name,
+                    schoolName: user.schools?.name,
                     primaryClassName: user.primaryClassName
                 }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
                 const expiresIn = this.parseExpiresIn(JWT_EXPIRES_IN);
@@ -169,7 +174,7 @@ class AuthService {
                         email: user.email || undefined,
                         role: user.role,
                         schoolId: user.schoolId,
-                        schoolName: user.school?.name || undefined,
+                        schoolName: user.schools?.name || undefined,
                         primaryClassName: user.primaryClassName || undefined
                     },
                     token,
@@ -194,7 +199,7 @@ class AuthService {
      */
     verifyToken(token) {
         try {
-            const decoded = jwt.verify(token, JWT_SECRET);
+            const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
             return {
                 userId: decoded.userId,
                 username: decoded.username,
@@ -239,7 +244,7 @@ class AuthService {
      */
     async refreshToken(oldToken) {
         try {
-            const decoded = jwt.verify(oldToken, JWT_SECRET, { ignoreExpiration: true });
+            const decoded = jsonwebtoken_1.default.verify(oldToken, JWT_SECRET, { ignoreExpiration: true });
             if (!decoded.userId || !decoded.schoolId) {
                 return {
                     success: false,
@@ -247,10 +252,10 @@ class AuthService {
                 };
             }
             // 验证用户是否仍然存在
-            const user = await this.prisma.teacher.findFirst({
+            const user = await this.prisma.teachers.findFirst({
                 where: { id: decoded.userId },
                 include: {
-                    school: true
+                    schools: true
                 }
             });
             if (!user) {
@@ -260,7 +265,7 @@ class AuthService {
                 };
             }
             // 生成新的令牌
-            const newToken = jwt.sign({
+            const newToken = jsonwebtoken_1.default.sign({
                 userId: user.id,
                 username: user.username,
                 name: user.name,
@@ -268,7 +273,7 @@ class AuthService {
                 email: user.email,
                 role: user.role,
                 schoolId: user.schoolId,
-                schoolName: user.school?.name,
+                schoolName: user.schools?.name,
                 primaryClassName: user.primaryClassName
             }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
             const expiresIn = this.parseExpiresIn(JWT_EXPIRES_IN);
@@ -282,7 +287,7 @@ class AuthService {
                     email: user.email || undefined,
                     role: user.role,
                     schoolId: user.schoolId,
-                    schoolName: user.school?.name || undefined,
+                    schoolName: user.schools?.name || undefined,
                     primaryClassName: user.primaryClassName || undefined
                 },
                 token: newToken,
@@ -310,3 +315,4 @@ class AuthService {
 }
 exports.AuthService = AuthService;
 exports.default = AuthService;
+//# sourceMappingURL=auth.service.js.map

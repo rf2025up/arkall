@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReportService = void 0;
+const client_1 = require("@prisma/client");
 class ReportService {
-    constructor(prisma) {
-        this.prisma = prisma;
+    constructor() {
+        this.prisma = new client_1.PrismaClient();
     }
     /**
      * 获取学生在指定时间范围内的综合统计数据
@@ -85,7 +86,7 @@ class ReportService {
     }
     // ===== 私有方法 =====
     async getStudentBaseInfo(studentId, schoolId) {
-        const student = await this.prisma.student.findUnique({
+        const student = await this.prisma.students.findUnique({
             where: {
                 id: studentId,
                 schoolId,
@@ -139,7 +140,7 @@ class ReportService {
         };
     }
     async getBadgesStats(studentId, startDate, endDate) {
-        const studentBadges = await this.prisma.studentBadge.findMany({
+        const studentBadges = await this.prisma.studentsBadge.findMany({
             where: {
                 studentId,
                 awardedAt: {
@@ -173,7 +174,7 @@ class ReportService {
     async getPKStats(studentId, startDate, endDate) {
         const [totalMatches, wins] = await Promise.all([
             // 总参赛场次
-            this.prisma.pKMatch.count({
+            this.prisma.pk_matcheses.count({
                 where: {
                     OR: [
                         { studentA: studentId },
@@ -187,7 +188,7 @@ class ReportService {
                 }
             }),
             // 胜利场次
-            this.prisma.pKMatch.count({
+            this.prisma.pk_matcheses.count({
                 where: {
                     winnerId: studentId,
                     updatedAt: {
@@ -207,7 +208,7 @@ class ReportService {
     async getMistakesStats(studentId, startDate, endDate) {
         const [totalMistakes, resolvedMistakes] = await Promise.all([
             // 总错题数
-            this.prisma.mistake.count({
+            this.prisma.mistakes.count({
                 where: {
                     studentId,
                     createdAt: {
@@ -217,7 +218,7 @@ class ReportService {
                 }
             }),
             // 已解决错题数
-            this.prisma.mistake.count({
+            this.prisma.mistakes.count({
                 where: {
                     studentId,
                     status: 'RESOLVED',
@@ -237,7 +238,7 @@ class ReportService {
     async getHabitsStats(studentId, startDate, endDate) {
         const [totalCheckins, activeHabits, maxStreak] = await Promise.all([
             // 总打卡次数
-            this.prisma.habitLog.count({
+            this.prisma.habits_logs.count({
                 where: {
                     studentId,
                     checkedAt: {
@@ -247,7 +248,7 @@ class ReportService {
                 }
             }),
             // 活跃习惯数
-            this.prisma.habitLog.groupBy({
+            this.prisma.habits_logs.groupBy({
                 by: ['habitId'],
                 where: {
                     studentId,
@@ -258,7 +259,7 @@ class ReportService {
                 }
             }).then(result => result.length),
             // 最高连续天数
-            this.prisma.habitLog.aggregate({
+            this.prisma.habits_logs.aggregate({
                 where: {
                     studentId,
                     checkedAt: {
@@ -350,3 +351,4 @@ ${this.generateSuggestions(stats)}
     }
 }
 exports.ReportService = ReportService;
+//# sourceMappingURL=report.service.js.map

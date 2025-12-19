@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { ChallengeService } from '../services/challenge.service';
+import { AuthService } from '../services/auth.service';
 export interface ChallengeResponse {
     success: boolean;
     message?: string;
@@ -16,8 +17,9 @@ export interface ChallengeResponse {
  */
 export declare class ChallengeRoutes {
     private challengeService;
+    private authService;
     private router;
-    constructor(challengeService: ChallengeService);
+    constructor(challengeService: ChallengeService, authService: AuthService);
     private initializeRoutes;
     /**
      * 获取挑战列表

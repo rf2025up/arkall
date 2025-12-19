@@ -228,13 +228,12 @@ const LegacyMonitorView: React.FC<LegacyMonitorViewProps> = ({ schoolId }) => {
 
                     {/* Avatar */}
                     <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-600">
-                      {student.avatarUrl ? (
-                        <img src={student.avatarUrl} alt={student.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white font-bold">
-                          {student.name.charAt(0)}
-                        </div>
-                      )}
+                      <img
+                        src={student.avatarUrl || '/avatar.jpg'}
+                        alt={student.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { e.currentTarget.src = '/avatar.jpg'; }}
+                      />
                     </div>
 
                     {/* Info */}

@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useClass } from '../context/ClassContext';
 import apiService from '../services/api.service';
+import PersonalizedTutoringSection from '../components/PersonalizedTutoringSection';
 
 // --- 1. 类型定义 ---
 
@@ -33,7 +34,11 @@ interface CourseInfo {
 
 interface TaskLibraryItem {
   id: string;
-  category: string;
+  // 🏷️ 运营标签分类（过关页使用）
+  category: string; // 9个标准标签：基础作业、语文、数学、英语、阅读、自主性、特色教学、学校、家庭
+  // 📚 教育体系分类（备课页使用）
+  educationalDomain: string; // '核心教学法' | '综合成长' | '基础作业'
+  educationalSubcategory: string; // 具体维度/类别
   name: string;
   description?: string;
   defaultExp: number;
@@ -91,7 +96,7 @@ const QC_CONFIG: Record<string, any> = {
 
 const PrepView: React.FC = () => {
   const { token, user } = useAuth();
-  const { currentClass, viewMode } = useClass(); // 🆕 获取viewMode用于UI安全锁
+  const { currentClass, viewMode, selectedTeacherId } = useClass(); // 🆕 获取完整视图状态
 
   // --- 3. 数据获取 ---
   const [taskLibrary, setTaskLibrary] = useState<TaskLibraryItem[]>([]);
@@ -111,11 +116,20 @@ const PrepView: React.FC = () => {
     success: false
   });
 
-  // 课程进度
+  // 🆕 最新教学计划响应类型
+interface LatestLessonPlanResponse {
+  id: string | null;
+  date: string | null;
+  content: any;
+  courseInfo: CourseInfo;
+  updatedAt: string;
+}
+
+// 课程进度 - 🆕 将从服务器加载最新教学计划数据
   const [courseInfo, setCourseInfo] = useState<CourseInfo>({
-    chinese: { unit: "3", lesson: "2", title: "古诗二首" },
-    math: { unit: "4", lesson: "1", title: "除法" },
-    english: { unit: "2", title: "Hello World" } // 英语没有 lesson
+    chinese: { unit: "1", lesson: "1", title: "加载中..." },
+    math: { unit: "1", lesson: "1", title: "加载中..." },
+    english: { unit: "1", title: "Loading..." } // 英语没有 lesson
   });
 
   // 过关项 (QC) - 动态从TaskLibrary获取，提供默认值
@@ -140,6 +154,8 @@ const PrepView: React.FC = () => {
   // 模态框状态
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isSpecialModalOpen, setIsSpecialModalOpen] = useState(false);
+  const [showOnlyMethodology, setShowOnlyMethodology] = useState(false); // 🆕 控制是否只显示特色教学法任务
+  const [showOnlyGrowth, setShowOnlyGrowth] = useState(false); // 🆕 控制是否只显示综合成长任务
 
   // 模态框临时数据
   const [tempSpecialStudents, setTempSpecialStudents] = useState<string[]>([]);
@@ -151,6 +167,87 @@ const PrepView: React.FC = () => {
   const dateStr = `${today.getMonth() + 1}月${today.getDate()}日 · 星期${['日','一','二','三','四','五','六'][today.getDay()]}`;
 
   // --- 5. 数据获取 useEffect ---
+
+  // 获取最新教学计划数据
+  const fetchLatestLessonPlan = async () => {
+    if (!token) {
+      console.error('🔍 [PREP_VIEW] 获取最新教学计划失败：未找到认证token');
+      return;
+    }
+
+    console.log('🔍 [PREP_VIEW] 开始获取最新教学计划...');
+    setIsLoading(true);
+
+    try {
+      const response = await apiService.get('/lms/latest-lesson-plan');
+
+      console.log('📊 [PREP_VIEW] 最新教学计划API响应:', {
+        success: response.success,
+        hasData: !!response.data
+      });
+
+      if (response.success && response.data) {
+        const responseData = response.data as LatestLessonPlanResponse;
+        const courseInfo = responseData.courseInfo;
+        const content = responseData.content;
+
+        console.log('✅ [PREP_VIEW] 获取到最新教学计划:', responseData);
+
+        // 1. 回填课程进度
+        setCourseInfo({
+          chinese: courseInfo?.chinese || { unit: "1", lesson: "1", title: "默认课程" },
+          math: courseInfo?.math || { unit: "1", lesson: "1", title: "默认课程" },
+          english: courseInfo?.english || { unit: "1", title: "Default Course" }
+        });
+
+        // 2. 回填选中的 QC 项
+        if (content?.qcTasks && Array.isArray(content.qcTasks)) {
+          const newSelectedQC: Record<string, string[]> = {
+            chinese: [],
+            math: [],
+            english: []
+          };
+
+          content.qcTasks.forEach((task: any) => {
+            const taskName = task.taskName;
+            // 根据后端存储的 category 映射回前端的学科 key
+            if (task.category === '基础核心') newSelectedQC.chinese.push(taskName);
+            else if (task.category === '数学巩固') newSelectedQC.math.push(taskName);
+            else if (task.category === '英语提升') newSelectedQC.english.push(taskName);
+          });
+
+          console.log('🎯 [PREP_VIEW] 回填选中的 QC 项:', newSelectedQC);
+          setSelectedQC(newSelectedQC);
+        }
+
+        // 3. 回填普通任务
+        if (content?.normalTasks && Array.isArray(content.normalTasks)) {
+          const newSelectedTasks = content.normalTasks.map((t: any) => t.taskName);
+          console.log('🎯 [PREP_VIEW] 回填普通任务:', newSelectedTasks);
+          setSelectedTasks(newSelectedTasks);
+        }
+
+        // 4. 回填个性化加餐
+        if (content?.specialTasks && Array.isArray(content.specialTasks)) {
+          const newSpecialTasks = content.specialTasks.map((t: any, index: number) => ({
+            id: Date.now() + index,
+            students: t.description?.replace('学生: ', '').split(', ') || [],
+            tasks: t.taskName.split(' + ')
+          }));
+          console.log('🎯 [PREP_VIEW] 回填个性化加餐:', newSpecialTasks);
+          setSpecialTasks(newSpecialTasks);
+        }
+
+        console.log('🎯 [PREP_VIEW] 表单状态已完整回填');
+      } else {
+        console.log('📝 [PREP_VIEW] 未找到教学计划，使用默认课程信息');
+      }
+    } catch (error) {
+      console.error('❌ [PREP_VIEW] 获取最新教学计划失败:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // 从TaskLibrary生成QC项目
   const generateQCItemsFromLibrary = (tasks: TaskLibraryItem[]) => {
@@ -212,7 +309,8 @@ const PrepView: React.FC = () => {
     setError(null);
 
     try {
-      console.log('📡 [PREP_VIEW] 正在调用API: /lms/task-library');
+      // 直接调用正式API
+      console.log('📡 [PREP_VIEW] 正在调用任务库API: /lms/task-library');
       const response = await apiService.get('/lms/task-library');
 
       console.log('📊 [PREP_VIEW] API响应:', { success: response.success, dataLength: Array.isArray(response.data) ? response.data.length : 0, message: response.message });
@@ -221,6 +319,37 @@ const PrepView: React.FC = () => {
         const tasks = response.data as TaskLibraryItem[];
         console.log('✅ [PREP_VIEW] 任务库获取成功，任务数量:', tasks.length);
         console.log('📋 [PREP_VIEW] 任务列表预览:', tasks.map(t => ({ name: t.name, category: t.category, exp: t.defaultExp })));
+
+        // 🆕 核心教学法分类 - 基于教学白皮书的9大维度
+        const methodologyCategories = [
+          '基础学习方法论',
+          '数学思维与解题策略',
+          '语文学科能力深化',
+          '英语应用与输出',
+          '阅读深度与分享',
+          '自主学习与规划',
+          '课堂互动与深度参与',
+          '家庭联结与知识迁移',
+          '高阶输出与创新'
+        ];
+
+        console.log('📊 [PREP_VIEW] 实际任务分类:', [...new Set(tasks.map(t => t.category))]);
+
+        // 核心教学法任务 - 使用educationalDomain字段（教育体系分类）
+        const methodologyTasks = tasks.filter(task =>
+          task.educationalDomain === '核心教学法'
+        );
+
+        // 综合成长任务 - 使用educationalDomain字段（教育体系分类）
+        const growthTasks = tasks.filter(task => task.educationalDomain === '综合成长');
+
+        // 基础作业/过关任务 - 使用educationalDomain字段（教育体系分类）
+        const basicTasks = tasks.filter(task => task.educationalDomain === '基础作业');
+
+        console.log(`🎯 [PREP_VIEW] 核心教学法任务数量: ${methodologyTasks.length}/${tasks.length}`);
+        console.log(`🌱 [PREP_VIEW] 综合成长任务数量: ${growthTasks.length}/${tasks.length}`);
+        console.log(`📚 [PREP_VIEW] 基础作业任务数量: ${basicTasks.length}/${tasks.length}`);
+
         setTaskLibrary(tasks);
 
         // 生成QC项目
@@ -247,16 +376,19 @@ const PrepView: React.FC = () => {
     if (!token) return;
 
     try {
-      // 集成ClassContext，实现班级隔离 - 与QCView保持一致
-      const url = currentClass === 'ALL' ? '/students' : `/students?classRoom=${encodeURIComponent(currentClass)}`;
+      // 🔒 备课页安全锁定：始终只显示当前老师的学生，不允许全校视图
+      // 因为个性化任务是针对本班学生的教学活动，不应该涉及全校学生或抢人功能
+      const url = `/students?scope=MY_STUDENTS&teacherId=${user?.id || ''}`;
+      console.log('🔒 [PREPVIEW_SECURITY] 备课页只显示本班学生，URL:', url);
       const response = await apiService.get(url);
+      console.log('[PREPVIEW] 学生数据响应:', response.success ? `成功，${(response.data as any)?.students?.length || 0}名学生` : '失败');
 
       if (response.success && response.data) {
         const studentsData = (response.data as { students: any[] }).students;
         setStudents(studentsData);
 
         // 提取班级信息
-        const uniqueClasses = Array.from(new Set(studentsData.map(s => s.classRoom).filter(Boolean)));
+        const uniqueClasses = Array.from(new Set(studentsData.map(s => s.className).filter(Boolean)));
         setClasses(uniqueClasses);
 
         // 如果没有选中班级，默认选择第一个班级
@@ -272,7 +404,7 @@ const PrepView: React.FC = () => {
 
         // 根据选中的班级筛选学生
         if (selectedClass) {
-          const classStudents = studentsData.filter(s => s.classRoom === selectedClass);
+          const classStudents = studentsData.filter(s => s.className === selectedClass);
           setSelectedStudents(classStudents.map(s => s.name));
         }
       }
@@ -282,9 +414,10 @@ const PrepView: React.FC = () => {
   };
 
   useEffect(() => {
+    fetchLatestLessonPlan(); // 🆕 加载最新教学计划数据
     fetchTaskLibrary();
     fetchStudents();
-  }, [token, currentClass]); // 添加currentClass依赖，确保班级切换时重新获取数据
+  }, [token, currentClass]); // 备课页不需要依赖视图模式，始终只显示本班学生
 
   // --- 6. 交互逻辑 ---
 
@@ -307,8 +440,15 @@ const PrepView: React.FC = () => {
     });
   };
 
-  // 添加更多QC项目 - 打开任务库选择
+  // 添加特色教学法任务 - 打开特色教学法任务库选择
   const addCustomQC = () => {
+    setShowOnlyMethodology(true); // 🆕 只显示特色教学法任务
+    setIsTaskModalOpen(true);
+  };
+
+  // 添加综合成长任务 - 打开综合成长任务库选择
+  const addGrowthTasks = () => {
+    setShowOnlyGrowth(true); // 🆕 只显示综合成长任务
     setIsTaskModalOpen(true);
   };
 
@@ -688,9 +828,9 @@ const PrepView: React.FC = () => {
 
           <button
             onClick={addCustomQC}
-            className="mt-6 w-full py-3 rounded-xl text-slate-400 text-xs font-bold flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 transition-colors active:scale-95"
+            className="mt-6 w-full py-3 rounded-xl text-red-600 text-xs font-bold flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 transition-colors active:scale-95"
           >
-            <Plus size={14} /> 自定义拓展
+            <Plus size={14} /> 核心教学法
           </button>
         </div>
 
@@ -724,10 +864,14 @@ const PrepView: React.FC = () => {
           </div>
 
           <button
-            onClick={() => setIsTaskModalOpen(true)}
+            onClick={() => {
+              setShowOnlyMethodology(false); // 不显示核心教学法
+              setShowOnlyGrowth(true); // 默认显示综合成长
+              setIsTaskModalOpen(true);
+            }}
             className="w-full py-3.5 bg-slate-900 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-slate-200 active:scale-95 transition-all"
           >
-            <ListPlus size={16} /> 打开任务库
+            <ListPlus size={16} /> 综合成长
           </button>
         </div>
 
@@ -783,7 +927,9 @@ const PrepView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-[#F8FAFC] w-full h-[90vh] rounded-t-[24px] flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300">
             <div className="flex justify-between items-center p-5 bg-white border-b border-slate-100 rounded-t-[24px]">
-              <h3 className="font-extrabold text-lg text-slate-800">任务库</h3>
+              <h3 className="font-extrabold text-lg text-slate-800">
+                {showOnlyMethodology ? '核心教学法任务' : showOnlyGrowth ? '综合成长任务' : '任务库'}
+              </h3>
               <div className="flex items-center gap-3">
                 <span className="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-md">
                   任务 {selectedTasks.length}
@@ -791,7 +937,11 @@ const PrepView: React.FC = () => {
                 <span className="text-xs font-bold text-orange-400 bg-orange-50 px-2 py-1 rounded-md">
                   QC {Object.values(selectedQC).flat().length}
                 </span>
-                <button onClick={() => setIsTaskModalOpen(false)} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-100">
+                <button onClick={() => {
+                  setIsTaskModalOpen(false);
+                  setShowOnlyMethodology(false); // 重置筛选状态
+                  setShowOnlyGrowth(false); // 重置综合成长筛选状态
+                }} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-100">
                   <X size={20} />
                 </button>
               </div>
@@ -808,23 +958,156 @@ const PrepView: React.FC = () => {
                   <AlertCircle size={24} className="text-red-400 mb-3" />
                   <p className="text-sm text-red-500 mb-3">加载失败</p>
                   <button
-                    onClick={fetchTaskLibrary}
+                    onClick={() => {
+                      fetchTaskLibrary();
+                      setShowOnlyMethodology(false); // 重置筛选状态
+                    }}
                     className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium"
                   >
                     重试
                   </button>
                 </div>
               ) : (
-                // 将taskLibrary按category分组
+                // 🆕 根据showOnlyMethodology或showOnlyGrowth筛选任务并按category分组
                 Object.entries(
-                  (taskLibrary || []).reduce((acc, task) => {
-                    if (!acc[task.category]) {
-                      acc[task.category] = [];
-                    }
-                    acc[task.category].push(task);
-                    return acc;
-                  }, {} as Record<string, TaskLibraryItem[]>)
-                ).map(([category, tasks], idx) => (
+                  (taskLibrary || [])
+                    .filter(task => {
+                      // 如果只显示核心教学法，则筛选educationalDomain为"核心教学法"的任务
+                      if (showOnlyMethodology) {
+                        return task.educationalDomain === "核心教学法";
+                      }
+                      // 如果只显示综合成长，则筛选educationalDomain为"综合成长"的任务
+                      if (showOnlyGrowth) {
+                        return task.educationalDomain === "综合成长";
+                      }
+                      // 否则显示所有任务
+                      return true;
+                    })
+                    .reduce((acc, task) => {
+                      // 🆕 综合成长任务按4大类重新分组
+                      if (showOnlyGrowth && task.educationalDomain === "综合成长") {
+                        // 根据任务名称映射到4个大类
+                        const readingTasks = ["年级同步阅读", "课外阅读30分钟", "填写阅读记录单", "阅读一个成语故事，并积累掌握3个成语"];
+                        const responsibilityTasks = ["离校前的个人卫生清理（桌面/抽屉/地面）", "离校前的书包整理", "一项集体贡献任务（浇花/整理书架/打扫等）", "吃饭时帮助维护秩序，确认光盘，地面保持干净", "为班级图书角推荐一本书，并写一句推荐语"];
+                        const creativityTasks = ["帮助同学（讲解/拍视频/打印等）", "一项创意表达任务（画画/写日记/做手工等）", "一项健康活力任务（眼保健操/拉伸/深呼吸/跳绳等）"];
+                        const familyTasks = ["与家人共读30分钟（可亲子读、兄弟姐妹读、给长辈读）", "帮家里完成一项力所及的家务（摆碗筷、倒垃圾/整理鞋柜等）"];
+
+                        if (readingTasks.includes(task.name)) {
+                          if (!acc["阅读广度类"]) acc["阅读广度类"] = [];
+                          acc["阅读广度类"].push(task);
+                        } else if (responsibilityTasks.includes(task.name)) {
+                          if (!acc["整理与贡献类"]) acc["整理与贡献类"] = [];
+                          acc["整理与贡献类"].push(task);
+                        } else if (creativityTasks.includes(task.name)) {
+                          if (!acc["互助与创新类"]) acc["互助与创新类"] = [];
+                          acc["互助与创新类"].push(task);
+                        } else if (familyTasks.includes(task.name)) {
+                          if (!acc["家庭联结类"]) acc["家庭联结类"] = [];
+                          acc["家庭联结类"].push(task);
+                        } else {
+                          // 兜底分类
+                          if (!acc["其他成长类"]) acc["其他成长类"] = [];
+                          acc["其他成长类"].push(task);
+                        }
+                      } else if (showOnlyMethodology) {
+                        // 核心教学法任务按9大教学法维度智能分组
+                        const taskName = task.name;
+
+                        // 基础学习方法论
+                        if (['作业的自主检查', '错题的红笔订正', '错题的摘抄与归因', '用"三色笔法"整理作业', '自评当日作业质量'].includes(taskName)) {
+                          if (!acc['基础学习方法论']) acc['基础学习方法论'] = [];
+                          acc['基础学习方法论'].push(task);
+                        }
+                        // 数学思维与解题策略
+                        else if (['5道旧错题的重做练习', '一项老师定制的数学拓展任务', '一道"说题"练习', '找一道生活中的数学问题', '高阶：母题归纳', '高阶：错题主动重做', '高阶：应用解题模型表'].includes(taskName)) {
+                          if (!acc['数学思维与解题策略']) acc['数学思维与解题策略'] = [];
+                          acc['数学思维与解题策略'].push(task);
+                        }
+                        // 语文学科能力深化
+                        else if (['仿写课文中的一个好句', '为当天生字编顺口溜或故事', '运用阅读理解解题模板', '查字典（查一查·读一读）', '分类组词与辨析（组一组·辨一辨）', '联想记忆法（想一想·记一记）'].includes(taskName)) {
+                          if (!acc['语文学科能力深化']) acc['语文学科能力深化'] = [];
+                          acc['语文学科能力深化'].push(task);
+                        }
+                        // 英语应用与输出
+                        else if (['用今日单词编小对话', '制作单词卡'].includes(taskName)) {
+                          if (!acc['英语应用与输出']) acc['英语应用与输出'] = [];
+                          acc['英语应用与输出'].push(task);
+                        }
+                        // 阅读深度与分享
+                        else if (['好词金句赏析', '画人物关系图/预测情节', '录制阅读小分享'].includes(taskName)) {
+                          if (!acc['阅读深度与分享']) acc['阅读深度与分享'] = [];
+                          acc['阅读深度与分享'].push(task);
+                        }
+                        // 自主学习与规划
+                        else if (['自主规划"复习"任务', '自主规划"预习"任务', '制定学习小计划', '设定并完成改进目标'].includes(taskName)) {
+                          if (!acc['自主学习与规划']) acc['自主学习与规划'] = [];
+                          acc['自主学习与规划'].push(task);
+                        }
+                        // 课堂互动与深度参与
+                        else if (['主动举手回答问题', '每节课准备一个问题', '主动申请课堂角色', '记录老师金句并写理解', '帮助同桌理解知识点'].includes(taskName)) {
+                          if (!acc['课堂互动与深度参与']) acc['课堂互动与深度参与'] = [];
+                          acc['课堂互动与深度参与'].push(task);
+                        }
+                        // 家庭联结与知识迁移
+                        else if (['向家长讲解学习方法', '教家人一个新知识', '主动展示复习成果', '分享"改进目标"完成情况', '用数学解决家庭问题'].includes(taskName)) {
+                          if (!acc['家庭联结与知识迁移']) acc['家庭联结与知识迁移'] = [];
+                          acc['家庭联结与知识迁移'].push(task);
+                        }
+                        // 高阶输出与创新
+                        else if (['录制"小老师"视频'].includes(taskName)) {
+                          if (!acc['高阶输出与创新']) acc['高阶输出与创新'] = [];
+                          acc['高阶输出与创新'].push(task);
+                        }
+                        // 兜底分类
+                        else {
+                          if (!acc['其他教学法']) acc['其他教学法'] = [];
+                          acc['其他教学法'].push(task);
+                        }
+                      } else {
+                        // 保持原有分类结构，按原category分组
+                        const category = task.category;
+                        if (!acc[category]) {
+                          acc[category] = [];
+                        }
+                        acc[category].push(task);
+                      }
+                      return acc;
+                    }, {} as Record<string, TaskLibraryItem[]>)
+                ).sort(([a], [b]) => {
+                  // 如果只显示核心教学法，则按9大教学法维度顺序排序
+                  if (showOnlyMethodology) {
+                    const methodologyOrder = [
+                      "基础学习方法论",
+                      "数学思维与解题策略",
+                      "语文学科能力深化",
+                      "英语应用与输出",
+                      "阅读深度与分享",
+                      "自主学习与规划",
+                      "课堂互动与深度参与",
+                      "家庭联结与知识迁移",
+                      "高阶输出与创新",
+                      "其他教学法" // 兜底分类放在最后
+                    ];
+                    const aIndex = methodologyOrder.indexOf(a);
+                    const bIndex = methodologyOrder.indexOf(b);
+                    if (aIndex === -1 && bIndex === -1) return a.localeCompare(b); // 都不在列表中，按字母排序
+                    if (aIndex === -1) return 1; // a不在列表中，排后面
+                    if (bIndex === -1) return -1; // b不在列表中，排后面
+                    return aIndex - bIndex;
+                  }
+                  // 如果只显示综合成长，按4大类排序
+                  if (showOnlyGrowth) {
+                    const growthOrder = ["阅读广度类", "整理与贡献类", "互助与创新类", "家庭联结类"];
+                    const aIndex = growthOrder.indexOf(a);
+                    const bIndex = growthOrder.indexOf(b);
+                    if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+                    if (aIndex !== -1) return -1;
+                    if (bIndex !== -1) return 1;
+                    return a.localeCompare(b);
+                  }
+                  // 否则按字母顺序排序
+                  return a.localeCompare(b);
+                }).map(([category, tasks], idx) => (
                   <div key={idx} className="mb-8">
                     <div className="sticky top-0 bg-[#F8FAFC] py-2 z-10 flex items-center gap-2 mb-2">
                       <div className="w-1 h-4 bg-slate-800 rounded-full"></div>
@@ -862,7 +1145,7 @@ const PrepView: React.FC = () => {
                                   </span>
                                 )}
                               </div>
-                              <span className="text-xs text-slate-400 ml-2">+{task.defaultExp} EXP</span>
+                              {!showOnlyMethodology && !showOnlyGrowth && <span className="text-xs text-slate-400 ml-2">+{task.defaultExp} EXP</span>}
                             </div>
                             <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all ${isSelected ? 'bg-slate-900 border-slate-900 text-white' : 'border-slate-300 bg-white'}`}>
                               {isSelected && <Check size={14} strokeWidth={3} />}
@@ -878,7 +1161,11 @@ const PrepView: React.FC = () => {
 
             <div className="p-5 bg-white border-t border-slate-100 absolute bottom-0 w-full rounded-t-[24px]">
               <button
-                onClick={() => setIsTaskModalOpen(false)}
+                onClick={() => {
+                  setIsTaskModalOpen(false);
+                  setShowOnlyMethodology(false); // 重置筛选状态
+                  setShowOnlyGrowth(false); // 重置综合成长筛选状态
+                }}
                 className="w-full bg-slate-900 text-white py-3.5 rounded-2xl font-bold text-sm shadow-lg active:scale-95 transition-transform"
               >
                 确认选择
@@ -960,6 +1247,9 @@ const PrepView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* 🆕 1v1讲解功能区 - 独立于顶部进度发布系统 */}
+      <PersonalizedTutoringSection />
 
     </div>
   );

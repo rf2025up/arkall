@@ -1,6 +1,12 @@
 import { Router } from 'express';
+import AuthService from '../services/auth.service';
+import { authenticateToken } from '../middleware/auth.middleware';
 
 const router = Router();
+const authService = new AuthService();
+
+// 应用认证中间件
+router.use(authenticateToken(authService));
 
 // 临时处理records端点 - 返回空数据
 router.get('/', async (req, res) => {
@@ -52,6 +58,41 @@ router.patch('/student/:studentId/pass-all', async (req, res) => {
     res.status(500).json({
       success: false,
       message: '更新学生通过所有记录失败'
+    });
+  }
+});
+
+// 更新任务状态 - 🚩 核心修复：添加控制台日志，并支持通过 /api/records 直接更新（增强兼容性）
+router.patch('/:recordId/status', async (req, res) => {
+  try {
+    const { recordId } = req.params;
+    const { status } = req.body;
+    const user = (req as any).user;
+
+    console.log(`🎯 [RECORDS_ROUTE] 收到状态更新: ID=${recordId}, Status=${status}, User=${user.username}`);
+
+    const { LMSService } = require('../services/lms.service');
+    const lmsService = new LMSService();
+
+    const result = await lmsService.updateMultipleRecordStatus(
+      user.schoolId,
+      [recordId],
+      status,
+      user.userId
+    );
+
+    console.log(`✅ [RECORDS_ROUTE] 更新结果:`, result);
+
+    res.json({
+      success: result.success > 0,
+      message: result.success > 0 ? 'Status updated' : 'Update failed',
+      data: result
+    });
+  } catch (error) {
+    console.error('❌ [RECORDS_ROUTE] 更新记录状态失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '更新记录状态失败'
     });
   }
 });

@@ -27,9 +27,9 @@ class ChallengeService {
             ];
         }
         // 获取总数
-        const total = await this.prisma.challenge.count({ where });
+        const total = await this.prisma.challenges.count({ where });
         // 获取挑战列表
-        const challenges = await this.prisma.challenge.findMany({
+        const challenges = await this.prisma.challenges.findMany({
             where,
             orderBy: [
                 { createdAt: 'desc' },
@@ -71,7 +71,7 @@ class ChallengeService {
      * 根据ID获取单个挑战详情
      */
     async getChallengeById(id, schoolId) {
-        const challenge = await this.prisma.challenge.findFirst({
+        const challenge = await this.prisma.challenges.findFirst({
             where: {
                 id,
                 schoolId
@@ -117,7 +117,7 @@ class ChallengeService {
     async createChallenge(data) {
         const { title, description, type, schoolId, creatorId, startDate, endDate, rewardPoints, rewardExp, maxParticipants, metadata } = data;
         // 验证创建者是否存在且属于该学校
-        const creator = await this.prisma.teacher.findFirst({
+        const creator = await this.prisma.teachers.findFirst({
             where: {
                 id: creatorId,
                 schoolId
@@ -126,7 +126,7 @@ class ChallengeService {
         if (!creator) {
             throw new Error('创建者不存在或不属于该学校');
         }
-        const challenge = await this.prisma.challenge.create({
+        const challenge = await this.prisma.challenges.create({
             data: {
                 title,
                 description,
@@ -166,7 +166,7 @@ class ChallengeService {
      */
     async updateChallenge(data) {
         const { id, schoolId, title, description, type, status, startDate, endDate, rewardPoints, rewardExp, maxParticipants, metadata, isActive } = data;
-        const challenge = await this.prisma.challenge.update({
+        const challenge = await this.prisma.challenges.update({
             where: {
                 id,
                 schoolId
@@ -219,7 +219,7 @@ class ChallengeService {
      * 删除挑战（软删除）
      */
     async deleteChallenge(id, schoolId) {
-        await this.prisma.challenge.update({
+        await this.prisma.challenges.update({
             where: {
                 id,
                 schoolId
@@ -243,7 +243,7 @@ class ChallengeService {
     async joinChallenge(data) {
         const { challengeId, studentId, schoolId } = data;
         // 验证挑战是否存在且属于该学校
-        const challenge = await this.prisma.challenge.findFirst({
+        const challenge = await this.prisma.challenges.findFirst({
             where: {
                 id: challengeId,
                 schoolId,
@@ -254,7 +254,7 @@ class ChallengeService {
             throw new Error('挑战不存在或已停用');
         }
         // 验证学生是否存在且属于该学校
-        const student = await this.prisma.student.findFirst({
+        const student = await this.prisma.students.findFirst({
             where: {
                 id: studentId,
                 schoolId,
@@ -273,7 +273,7 @@ class ChallengeService {
             throw new Error('挑战已结束');
         }
         // 检查是否已参加
-        const existingParticipant = await this.prisma.challengeParticipant.findFirst({
+        const existingParticipant = await this.prisma.challengesParticipant.findFirst({
             where: {
                 challengeId,
                 studentId
@@ -283,7 +283,7 @@ class ChallengeService {
             throw new Error('已参加该挑战');
         }
         // 检查参与人数限制
-        const currentParticipants = await this.prisma.challengeParticipant.count({
+        const currentParticipants = await this.prisma.challengesParticipant.count({
             where: {
                 challengeId
             }
@@ -292,7 +292,7 @@ class ChallengeService {
             throw new Error('挑战参与人数已满');
         }
         // 创建参与记录
-        const participant = await this.prisma.challengeParticipant.create({
+        const participant = await this.prisma.challengesParticipant.create({
             data: {
                 challengeId,
                 studentId,
@@ -330,7 +330,7 @@ class ChallengeService {
     async updateChallengeParticipant(data) {
         const { challengeId, studentId, schoolId, status, result, score, notes } = data;
         // 验证挑战是否存在且属于该学校
-        const challenge = await this.prisma.challenge.findFirst({
+        const challenge = await this.prisma.challenges.findFirst({
             where: {
                 id: challengeId,
                 schoolId
@@ -340,7 +340,7 @@ class ChallengeService {
             throw new Error('挑战不存在');
         }
         // 查找参与记录
-        const participant = await this.prisma.challengeParticipant.findFirst({
+        const participant = await this.prisma.challengesParticipant.findFirst({
             where: {
                 challengeId,
                 studentId
@@ -350,7 +350,7 @@ class ChallengeService {
             throw new Error('参与记录不存在');
         }
         // 更新参与记录
-        const updatedParticipant = await this.prisma.challengeParticipant.update({
+        const updatedParticipant = await this.prisma.challengesParticipant.update({
             where: {
                 id: participant.id
             },
@@ -397,7 +397,7 @@ class ChallengeService {
     async getChallengeParticipants(challengeId, schoolId, page = 1, limit = 20) {
         const skip = (page - 1) * limit;
         // 验证挑战是否存在且属于该学校
-        const challenge = await this.prisma.challenge.findFirst({
+        const challenge = await this.prisma.challenges.findFirst({
             where: {
                 id: challengeId,
                 schoolId
@@ -407,13 +407,13 @@ class ChallengeService {
             throw new Error('挑战不存在');
         }
         // 获取总数
-        const total = await this.prisma.challengeParticipant.count({
+        const total = await this.prisma.challengesParticipant.count({
             where: {
                 challengeId
             }
         });
         // 获取参与者列表
-        const participants = await this.prisma.challengeParticipant.findMany({
+        const participants = await this.prisma.challengesParticipant.findMany({
             where: {
                 challengeId
             },
@@ -463,7 +463,7 @@ class ChallengeService {
      */
     async getStudentChallengeStats(studentId, schoolId) {
         // 验证学生是否存在且属于该学校
-        const student = await this.prisma.student.findFirst({
+        const student = await this.prisma.students.findFirst({
             where: {
                 id: studentId,
                 schoolId,
@@ -474,7 +474,7 @@ class ChallengeService {
             throw new Error('学生不存在');
         }
         // 获取学生的参与记录
-        const participants = await this.prisma.challengeParticipant.findMany({
+        const participants = await this.prisma.challengesParticipant.findMany({
             where: {
                 studentId
             },
@@ -545,18 +545,18 @@ class ChallengeService {
     async getChallengeStats(schoolId) {
         // 获取挑战总数和状态分布
         const [totalChallenges, activeChallenges, completedChallenges] = await Promise.all([
-            this.prisma.challenge.count({
+            this.prisma.challenges.count({
                 where: { schoolId }
             }),
-            this.prisma.challenge.count({
+            this.prisma.challenges.count({
                 where: { schoolId, status: 'ACTIVE' }
             }),
-            this.prisma.challenge.count({
+            this.prisma.challenges.count({
                 where: { schoolId, status: 'COMPLETED' }
             })
         ]);
         // 获取参与统计
-        const totalParticipants = await this.prisma.challengeParticipant.count({
+        const totalParticipants = await this.prisma.challengesParticipant.count({
             where: {
                 challenge: {
                     schoolId
@@ -565,7 +565,7 @@ class ChallengeService {
         });
         const averageParticipation = totalChallenges > 0 ? Math.round(totalParticipants / totalChallenges) : 0;
         // 按类型统计挑战
-        const challengeTypes = await this.prisma.challenge.groupBy({
+        const challengeTypes = await this.prisma.challenges.groupBy({
             by: ['type'],
             where: { schoolId },
             _count: {
@@ -577,7 +577,7 @@ class ChallengeService {
             count: stat._count.type
         }));
         // 获取最近活动
-        const recentActivities = await this.prisma.challengeParticipant.findMany({
+        const recentActivities = await this.prisma.challengesParticipant.findMany({
             where: {
                 challenge: {
                     schoolId
@@ -618,7 +618,7 @@ class ChallengeService {
      */
     async grantChallengeRewards(studentId, challenge, participant) {
         // 更新学生积分和经验
-        await this.prisma.student.update({
+        await this.prisma.students.update({
             where: { id: studentId },
             data: {
                 points: { increment: challenge.rewardPoints || 0 },
@@ -672,3 +672,4 @@ class ChallengeService {
 }
 exports.ChallengeService = ChallengeService;
 exports.default = ChallengeService;
+//# sourceMappingURL=challenge.service.js.map

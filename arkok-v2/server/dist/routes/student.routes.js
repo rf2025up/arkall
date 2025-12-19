@@ -26,7 +26,7 @@ class StudentRoutes {
          *       - bearerAuth: []
          *     parameters:
          *       - in: query
-         *         name: classRoom
+         *         name: className
          *         schema:
          *           type: string
          *         description: 班级筛选
@@ -73,7 +73,7 @@ class StudentRoutes {
          *                             type: string
          *                           name:
          *                             type: string
-         *                           classRoom:
+         *                           className:
          *                             type: string
          *                           score:
          *                             type: number
@@ -121,7 +121,6 @@ class StudentRoutes {
          *       401:
          *         description: 用户未认证
          */
-        this.router.get('/:id', this.getStudentById.bind(this));
         /**
          * @swagger
          * /api/students/{id}/profile:
@@ -183,6 +182,61 @@ class StudentRoutes {
         this.router.get('/:id/profile', this.getStudentProfile.bind(this));
         /**
          * @swagger
+         * /api/students/classes:
+         *   get:
+         *     summary: 获取班级列表
+         *     tags: [Students]
+         *     security:
+         *       - bearerAuth: []
+         *     responses:
+         *       200:
+         *         description: 班级列表
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                 data:
+         *                   type: array
+         *                   items:
+         *                     type: object
+         *                     properties:
+         *                       className:
+         *                         type: string
+         *                       studentCount:
+         *                         type: integer
+         *       401:
+         *         description: 用户未认证
+         */
+        this.router.get('/classes', this.getClasses.bind(this));
+        /**
+         * @swagger
+         * /api/students/{id}:
+         *   get:
+         *     summary: 获取单个学生详情
+         *     tags: [Students]
+         *     security:
+         *       - bearerAuth: []
+         *     parameters:
+         *       - in: path
+         *         name: id
+         *         required: true
+         *         schema:
+         *           type: string
+         *         description: 学生ID
+         *     responses:
+         *       200:
+         *         description: 获取学生详情成功
+         *       404:
+         *         description: 学生不存在
+         *       401:
+         *         description: 用户未认证
+         */
+        this.router.get('/:id', this.getStudentById.bind(this));
+        /**
+         * @swagger
          * /api/students:
          *   post:
          *     summary: 创建新学生
@@ -195,13 +249,13 @@ class StudentRoutes {
          *         application/json:
          *           schema:
          *             type: object
-         *             required: [name, classRoom]
+         *             required: [name, className]
          *             properties:
          *               name:
          *                 type: string
          *                 example: "张三"
          *                 description: 学生姓名
-         *               classRoom:
+         *               className:
          *                 type: string
          *                 example: "三年级1班"
          *                 description: 班级
@@ -253,7 +307,7 @@ class StudentRoutes {
          *               name:
          *                 type: string
          *                 example: "李四"
-         *               classRoom:
+         *               className:
          *                 type: string
          *                 example: "三年级2班"
          *               avatar:
@@ -427,7 +481,7 @@ class StudentRoutes {
          *                             type: string
          *                           name:
          *                             type: string
-         *                           classRoom:
+         *                           className:
          *                             type: string
          *                           score:
          *                             type: number
@@ -469,7 +523,7 @@ class StudentRoutes {
          *                       items:
          *                         type: object
          *                         properties:
-         *                           classRoom:
+         *                           className:
          *                             type: string
          *                           studentCount:
          *                             type: integer
@@ -516,8 +570,7 @@ class StudentRoutes {
          *       401:
          *         description: 用户未认证
          */
-        this.router.get('/classes', this.getClasses.bind(this));
-    }
+          }
     /**
      * 获取学生列表 - 强制重写修复
      */
@@ -528,17 +581,19 @@ class StudentRoutes {
             console.log("Authenticated User:", req.user); // 检查用户是否被正确识别
             console.log("School ID from user:", req.user?.schoolId);
             console.log("Request query params:", req.query);
+            // 🆕 从认证用户获取信息
+            const user = req.user;
             const query = {
                 schoolId: req.schoolId,
-                classRoom: req.query.classRoom,
+                className: req.query.className,
                 search: req.query.search,
                 page: req.query.page ? parseInt(req.query.page) : undefined,
                 limit: req.query.limit ? parseInt(req.query.limit) : undefined,
-                // 🆕 新增师生绑定相关参数
-                teacherId: req.query.teacherId,
+                // 🆕 修复：从认证用户获取teacherId和role
+                teacherId: user?.userId || req.query.teacherId,
                 scope: req.query.scope,
-                userRole: req.query.userRole,
-                requesterId: req.query.requesterId
+                userRole: user?.role,
+                requesterId: user?.userId
             };
             console.log(`[DEBUG] Query object sent to service:`, query);
             // 🚨 临时调试：添加 teacherId 诊断日志
@@ -610,7 +665,7 @@ class StudentRoutes {
     async getStudentProfile(req, res) {
         try {
             const { id } = req.params;
-            const profile = await this.studentService.getStudentProfile(id, req.schoolId);
+            const profile = await this.studentService.getStudentProfile(id, req.schoolId, req.user.role, req.user.userId);
             res.status(200).json({
                 success: true,
                 message: '获取学生档案成功',
@@ -645,15 +700,23 @@ class StudentRoutes {
             console.log("School ID from request:", req.schoolId);
             console.log("Request Headers:", req.headers);
             console.log(`🔧 Controller: Creating student with data:`, req.body);
+            // 强制要求明确指定 teacherId，不允许降级处理
+            if (!req.body.teacherId) {
+                return res.status(400).json({
+                    success: false,
+                    message: '必须指定归属老师 (teacherId)',
+                    error: 'teacherId is required'
+                });
+            }
             const data = {
                 name: req.body.name,
-                className: req.body.className || req.body.classRoom, // 兼容旧的 classRoom 字段
+                className: req.body.className, // 移除className违宪用法，强制使用正确字段名
                 schoolId: req.schoolId,
-                teacherId: req.body.teacherId || req.user?.id // 🆕 必须指定归属老师
+                teacherId: req.body.teacherId // 🆕 强制要求明确的师生关系
             };
             console.log("Processed data object:", data);
             const student = await this.studentService.createStudent(data);
-            res.status(201).json({
+            return res.status(201).json({
                 success: true,
                 message: '创建学生成功',
                 data: student
@@ -661,7 +724,7 @@ class StudentRoutes {
         }
         catch (error) {
             console.error('❌ Create student error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 message: '创建学生过程中发生错误',
                 error: error.message
@@ -830,7 +893,19 @@ class StudentRoutes {
      */
     async getClasses(req, res) {
         try {
-            const classes = await this.studentService.getClasses(req.schoolId);
+            // 🆕 从认证用户获取schoolId，而不是从req.schoolId
+            const user = req.user;
+            console.log('[DEBUG] getClasses - User:', user);
+            if (!user || !user.schoolId) {
+                console.error('[ERROR] getClasses - No user or schoolId found');
+                res.status(400).json({
+                    success: false,
+                    message: '用户信息不完整'
+                });
+                return;
+            }
+            console.log('[DEBUG] getClasses - SchoolId:', user.schoolId);
+            const classes = await this.studentService.getClasses(user.schoolId);
             res.status(200).json({
                 success: true,
                 message: '获取班级列表成功',
@@ -854,3 +929,4 @@ class StudentRoutes {
 }
 exports.StudentRoutes = StudentRoutes;
 exports.default = StudentRoutes;
+//# sourceMappingURL=student.routes.js.map

@@ -674,3 +674,4 @@ class BadgeRoutes {
 }
 exports.BadgeRoutes = BadgeRoutes;
 exports.default = BadgeRoutes;
+//# sourceMappingURL=badge.routes.js.map

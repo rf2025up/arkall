@@ -1,7 +1,9 @@
-import { PrismaClient, LessonPlan, TaskRecord, TaskType } from '@prisma/client';
+import { lesson_plans, TaskType } from '@prisma/client';
 export interface TaskLibraryItem {
     id: string;
     category: string;
+    educationalDomain: string;
+    educationalSubcategory?: string;
     name: string;
     description?: string;
     defaultExp: number;
@@ -15,6 +17,7 @@ export interface PublishPlanRequest {
     title: string;
     content: any;
     date: Date;
+    progress?: any;
     tasks: Array<{
         type: TaskType;
         title: string;
@@ -23,7 +26,7 @@ export interface PublishPlanRequest {
     }>;
 }
 export interface PublishPlanResult {
-    lessonPlan: LessonPlan;
+    lessonPlan: lesson_plans;
     taskStats: {
         totalStudents: number;
         tasksCreated: number;
@@ -33,20 +36,29 @@ export interface PublishPlanResult {
 }
 export declare class LMSService {
     private prisma;
-    constructor(prisma: PrismaClient);
+    constructor();
     /**
      * 获取任务库
      */
     getTaskLibrary(): Promise<TaskLibraryItem[]>;
     /**
-     * 发布教学计划
-     * 1. 创建 LessonPlan
-     * 2. 为学校所有学生批量创建 TaskRecord
-     * 3. 返回统计信息
+     * 初始化默认任务库
+     */
+    private initializeDefaultTaskLibrary;
+    /**
+     * 获取默认任务库（降级方案）
+     */
+    private getDefaultTaskLibrary;
+    /**
+     * 🆕 发布教学计划 - 基于师生绑定的安全投送
      */
     publishPlan(request: PublishPlanRequest, io: any): Promise<PublishPlanResult>;
     /**
-     * 获取学校的教学计划列表
+     * 获取学生课程进度 - 🆕 升级版本：支持分科智能合并 (Override vs Plan)
+     */
+    getStudentProgress(schoolId: string, studentId: string): Promise<any>;
+    /**
+     * 获取教学计划列表
      */
     getLessonPlans(schoolId: string, options?: {
         page?: number;
@@ -54,54 +66,187 @@ export declare class LMSService {
         startDate?: Date;
         endDate?: Date;
     }): Promise<{
-        plans: LessonPlan[];
+        plans: ({
+            teachers: {
+                name: string;
+            };
+        } & {
+            id: string;
+            schoolId: string;
+            teacherId: string;
+            title: string;
+            content: import("@prisma/client/runtime/library").JsonValue;
+            date: Date;
+            isActive: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+        })[];
         total: number;
     }>;
     /**
-     * 获取教学计划详情（包含任务统计）
+     * 获取教学计划详情
      */
-    getLessonPlanDetail(lessonPlanId: string): Promise<{
-        lessonPlan: LessonPlan;
-        taskStats: {
-            total: number;
-            pending: number;
-            submitted: number;
-            completed: number;
+    getLessonPlanDetail(planId: string): Promise<{
+        teachers: {
+            name: string;
         };
+        task_records: ({
+            students: {
+                name: string;
+                className: string;
+            };
+        } & {
+            id: string;
+            schoolId: string;
+            title: string;
+            content: import("@prisma/client/runtime/library").JsonValue | null;
+            createdAt: Date;
+            updatedAt: Date;
+            type: import(".prisma/client").$Enums.TaskType;
+            status: import(".prisma/client").$Enums.TaskStatus;
+            expAwarded: number;
+            submittedAt: Date | null;
+            task_category: import(".prisma/client").$Enums.TaskCategory;
+            is_current: boolean;
+            isOverridden: boolean;
+            attempts: number;
+            subject: string | null;
+            studentId: string;
+            lessonPlanId: string | null;
+        })[];
+    } & {
+        id: string;
+        schoolId: string;
+        teacherId: string;
+        title: string;
+        content: import("@prisma/client/runtime/library").JsonValue;
+        date: Date;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     /**
-     * 删除教学计划（软删除）
+     * 删除教学计划
      */
-    deleteLessonPlan(lessonPlanId: string): Promise<void>;
+    deleteLessonPlan(planId: string): Promise<{
+        id: string;
+        schoolId: string;
+        teacherId: string;
+        title: string;
+        content: import("@prisma/client/runtime/library").JsonValue;
+        date: Date;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
     /**
-     * 获取学校的教学统计
+     * 获取学校统计信息
      */
     getSchoolStats(schoolId: string): Promise<{
         totalPlans: number;
-        activePlans: number;
-        totalTasks: number;
-        completedTasks: number;
-        avgCompletionRate: number;
+        totalStudents: number;
+        taskStats: (import(".prisma/client").Prisma.PickEnumerable<import(".prisma/client").Prisma.Task_recordsGroupByOutputType, "status"[]> & {
+            _count: number;
+        })[];
     }>;
     /**
-     * 获取指定学生某天的任务记录
+     * 获取学生的每日任务记录
      */
-    getDailyRecords(schoolId: string, studentId: string, date: string): Promise<TaskRecord[]>;
+    getDailyRecords(schoolId: string, studentId: string, date: string): Promise<{
+        id: string;
+        schoolId: string;
+        title: string;
+        content: import("@prisma/client/runtime/library").JsonValue | null;
+        createdAt: Date;
+        updatedAt: Date;
+        type: import(".prisma/client").$Enums.TaskType;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        expAwarded: number;
+        submittedAt: Date | null;
+        task_category: import(".prisma/client").$Enums.TaskCategory;
+        is_current: boolean;
+        isOverridden: boolean;
+        attempts: number;
+        subject: string | null;
+        studentId: string;
+        lessonPlanId: string | null;
+    }[]>;
     /**
-     * 增加任务尝试次数
+     * 获取学生所有历史任务记录
      */
-    markAttempt(recordId: string, userId: string): Promise<TaskRecord>;
+    getAllStudentRecords(schoolId: string, studentId: string, limit?: number): Promise<{
+        id: string;
+        schoolId: string;
+        title: string;
+        content: import("@prisma/client/runtime/library").JsonValue | null;
+        createdAt: Date;
+        updatedAt: Date;
+        type: import(".prisma/client").$Enums.TaskType;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        expAwarded: number;
+        submittedAt: Date | null;
+        task_category: import(".prisma/client").$Enums.TaskCategory;
+        is_current: boolean;
+        isOverridden: boolean;
+        attempts: number;
+        subject: string | null;
+        studentId: string;
+        lessonPlanId: string | null;
+    }[]>;
     /**
-     * 更新任务记录状态
+     * 记录尝试次数
      */
-    updateRecordStatus(recordId: string, status: 'PENDING' | 'SUBMITTED' | 'REVIEWED' | 'COMPLETED', userId: string): Promise<TaskRecord>;
+    markAttempt(recordId: string, userId: string): Promise<{
+        id: string;
+        schoolId: string;
+        title: string;
+        content: import("@prisma/client/runtime/library").JsonValue | null;
+        createdAt: Date;
+        updatedAt: Date;
+        type: import(".prisma/client").$Enums.TaskType;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        expAwarded: number;
+        submittedAt: Date | null;
+        task_category: import(".prisma/client").$Enums.TaskCategory;
+        is_current: boolean;
+        isOverridden: boolean;
+        attempts: number;
+        subject: string | null;
+        studentId: string;
+        lessonPlanId: string | null;
+    }>;
     /**
-     * 批量更新任务记录状态
+     * 批量更新任务状态
      */
-    updateMultipleRecordStatus(schoolId: string, recordIds: string[], status: 'PENDING' | 'SUBMITTED' | 'REVIEWED' | 'COMPLETED', userId: string): Promise<{
+    updateMultipleRecordStatus(schoolId: string, recordIds: string[], status: any, userId: string): Promise<{
         success: number;
         failed: number;
-        errors: string[];
     }>;
+    /**
+     * 更新学生课程进度 - 老师手动覆盖，优先级最高
+     */
+    updateStudentProgress(schoolId: string, studentId: string, teacherId: string, courseInfo: any): Promise<{
+        id: string;
+        schoolId: string;
+        title: string;
+        content: import("@prisma/client/runtime/library").JsonValue | null;
+        createdAt: Date;
+        updatedAt: Date;
+        type: import(".prisma/client").$Enums.TaskType;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        expAwarded: number;
+        submittedAt: Date | null;
+        task_category: import(".prisma/client").$Enums.TaskCategory;
+        is_current: boolean;
+        isOverridden: boolean;
+        attempts: number;
+        subject: string | null;
+        studentId: string;
+        lessonPlanId: string | null;
+    }>;
+    /**
+     * 获取最新教学计划
+     */
+    getLatestLessonPlan(schoolId: string, teacherId: string): Promise<lesson_plans | null>;
 }
 //# sourceMappingURL=lms.service.d.ts.map

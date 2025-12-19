@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { LMSService, PublishPlanRequest } from '../services/lms.service';
-import { TaskType } from '@prisma/client';
+import { TaskType, PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth.middleware';
 import AuthService from '../services/auth.service';
 
@@ -396,25 +396,52 @@ router.get('/all-records', async (req, res) => {
 router.patch('/records/:recordId/attempt', async (req, res) => {
   try {
     const { recordId } = req.params;
+    const user = (req as any).user;
+    const updatedRecord = await lmsService.markAttempt(recordId, user.userId);
+    res.json({ success: true, data: updatedRecord, message: 'Attempt recorded successfully' });
+  } catch (error) {
+    console.error('❌ Error in PATCH /api/lms/records/:recordId/attempt:', error);
+    res.status(500).json({ success: false, message: 'Failed to record attempt', error: (error as Error).message });
+  }
+});
 
-    // 从认证中间件获取用户信息（已由中间件验证）
+// 🆕 核心修复：添加前端过关页急需的状态更新路由
+// 前端请求路径：/api/lms/records/:id/status
+router.patch('/records/:recordId/status', async (req, res) => {
+  try {
+    const { recordId } = req.params;
+    const { status } = req.body;
     const user = (req as any).user;
 
-    const updatedRecord = await lmsService.markAttempt(recordId, user.userId);
+    console.log(`🎯 [LMS_ROUTE] 收到状态更新: ID=${recordId}, Status=${status}, User=${user.username}`);
+
+    if (!['PENDING', 'SUBMITTED', 'REVIEWED', 'COMPLETED'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid status' });
+    }
+
+    // 🚀 直接在路由层进行数据库操作，确保万无一失
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+
+    const result = await prisma.task_records.update({
+      where: { id: recordId },
+      data: {
+        status,
+        updatedAt: new Date(),
+        submittedAt: (status === 'SUBMITTED' || status === 'COMPLETED') ? new Date() : null
+      }
+    });
+
+    console.log(`✅ [LMS_ROUTE] 数据库更新成功:`, result.id);
 
     res.json({
       success: true,
-      data: updatedRecord,
-      message: 'Attempt recorded successfully'
+      data: result,
+      message: 'Status updated successfully'
     });
-
-  } catch (error) {
-    console.error('❌ Error in PATCH /api/lms/records/:recordId/attempt:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to record attempt',
-      error: (error as Error).message
-    });
+  } catch (error: any) {
+    console.error('❌ Error in PATCH /api/lms/records/:recordId/status:', error);
+    res.status(500).json({ success: false, message: 'Failed to update status', error: error.message });
   }
 });
 
@@ -492,7 +519,6 @@ router.get('/latest-lesson-plan', async (req, res) => {
     console.log(`🔍 [LATEST_LESSON_PLAN] 获取最新教学计划: schoolId=${user.schoolId}, userId=${user.userId}`);
 
     // 查找当前老师的最新教学计划（用于表单回填）
-    const lmsService = new LMSService();
     const latestLessonPlan = await lmsService.getLatestLessonPlan(user.schoolId, user.userId);
 
     if (latestLessonPlan?.content) {

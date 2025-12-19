@@ -49,3 +49,4 @@ router.get('/detailed', async (req, res) => {
         });
     }
 });
+//# sourceMappingURL=health.routes.js.map

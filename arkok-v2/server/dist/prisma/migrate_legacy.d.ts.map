@@ -1,1 +1,0 @@
-{"version":3,"file":"migrate_legacy.d.ts","sourceRoot":"","sources":["../../prisma/migrate_legacy.ts"],"names":[],"mappings":"AAKA,iBAAe,iBAAiB,kBAiK/B;AAGD,iBAAe,eAAe,kBAuD7B;AAGD,iBAAe,mBAAmB,IAAI,OAAO,CAAC,OAAO,CAAC,CAuCrD;AAGD,iBAAe,sBAAsB,kBA0FpC;AAeD,OAAO,EAAE,iBAAiB,EAAE,eAAe,EAAE,mBAAmB,EAAE,sBAAsB,EAAE,CAAC"}

@@ -27,6 +27,7 @@ import mistakesRoutes from './routes/mistakes.routes';
 import recordsRoutes from './routes/records.routes';
 import { UserRoutes } from './routes/user.routes';
 import reportRoutes from './routes/report.routes';
+import personalizedTutoringRoutes from './routes/personalized-tutoring.routes';
 import path from 'path';
 
 // 加载环境变量
@@ -52,13 +53,13 @@ export class App {
     this.io = new SocketIOServer(this.server, {
       cors: {
         origin: "*", // 开发环境允许所有来源
-        methods: ["GET", "POST"],
+        methods: ["GET", "POST", "PATCH"],
         credentials: true
       }
     });
 
     // 初始化服务
-    this.authService = new AuthService(this.prisma);
+    this.authService = new AuthService();
     this.studentService = new StudentService(this.io);
     this.socketService = new SocketService(this.io, this.authService);
     this.habitService = new HabitService(this.io);
@@ -76,7 +77,7 @@ export class App {
     // CORS配置
     this.app.use(cors({
       origin: "*", // 开发环境允许所有来源
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization"],
       credentials: true
     }));
@@ -138,15 +139,21 @@ export class App {
     // 报告和AI提示词路由
     this.app.use('/api/reports', reportRoutes);
 
-    // 旧版API路由（保持兼容性）
-    this.app.use('/api/schools', schoolRoutes);
+    // 1v1个性化讲解路由
+    this.app.use('/api/personalized-tutoring', personalizedTutoringRoutes);
+
+    // 🚩 核心修复：提升 lmsRoutes 优先级，防止 recordsRoutes 拦截 /api/lms/records 请求
     this.app.use('/api/lms', lmsRoutes);
-    this.app.use('/api/score', studentRoutes.getRoutes());
-    this.app.use('/api/dashboard', dashboardRoutes);
 
     // 错题和记录API路由
     this.app.use('/api/mistakes', mistakesRoutes);
     this.app.use('/api/records', recordsRoutes);
+
+    // 旧版API路由（保持兼容性）
+    this.app.use('/api/schools', schoolRoutes);
+    // this.app.use('/api/lms', lmsRoutes); // 移动到上方
+    this.app.use('/api/score', studentRoutes.getRoutes());
+    this.app.use('/api/dashboard', dashboardRoutes);
 
   
     // 静态文件服务 - 提供前端应用

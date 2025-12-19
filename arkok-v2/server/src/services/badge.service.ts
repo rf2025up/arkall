@@ -99,10 +99,10 @@ export class BadgeService {
     }
 
     // 获取总数
-    const total = await this.prisma.badge.count({ where });
+    const total = await this.prisma.badges.count({ where });
 
     // 获取勋章列表
-    const badges = await this.prisma.badge.findMany({
+    const badges = await this.prisma.badges.findMany({
       where,
       orderBy: [
         { createdAt: 'desc' },
@@ -141,7 +141,7 @@ export class BadgeService {
    * 根据ID获取单个勋章详情
    */
   async getBadgeById(id: string, schoolId: string): Promise<any> {
-    const badge = await this.prisma.badge.findFirst({
+    const badge = await this.prisma.badges.findFirst({
       where: {
         id,
         schoolId
@@ -189,7 +189,7 @@ export class BadgeService {
     const { name, description, icon, category, requirement, schoolId } = data;
 
     // 检查勋章名称是否已存在
-    const existingBadge = await this.prisma.badge.findFirst({
+    const existingBadge = await this.prisma.badges.findFirst({
       where: {
         name,
         schoolId
@@ -200,7 +200,7 @@ export class BadgeService {
       throw new Error('勋章名称已存在');
     }
 
-    const badge = await this.prisma.badge.create({
+    const badge = await this.prisma.badges.create({
       data: {
         name,
         description,
@@ -231,7 +231,7 @@ export class BadgeService {
 
     // 如果要更新名称，检查是否与其他勋章重复
     if (name) {
-      const existingBadge = await this.prisma.badge.findFirst({
+      const existingBadge = await this.prisma.badges.findFirst({
         where: {
           name,
           schoolId,
@@ -244,7 +244,7 @@ export class BadgeService {
       }
     }
 
-    const badge = await this.prisma.badge.update({
+    const badge = await this.prisma.badges.update({
       where: {
         id,
         schoolId
@@ -275,7 +275,7 @@ export class BadgeService {
    * 删除勋章（软删除）
    */
   async deleteBadge(id: string, schoolId: string): Promise<void> {
-    await this.prisma.badge.update({
+    await this.prisma.badges.update({
       where: {
         id,
         schoolId
@@ -302,7 +302,7 @@ export class BadgeService {
     const { studentId, badgeId, schoolId, reason, awardedBy } = data;
 
     // 验证勋章是否存在且属于该学校
-    const badge = await this.prisma.badge.findFirst({
+    const badge = await this.prisma.badges.findFirst({
       where: {
         id: badgeId,
         schoolId,
@@ -315,7 +315,7 @@ export class BadgeService {
     }
 
     // 验证学生是否存在且属于该学校
-    const student = await this.prisma.student.findFirst({
+    const student = await this.prisma.students.findFirst({
       where: {
         id: studentId,
         schoolId,
@@ -328,7 +328,7 @@ export class BadgeService {
     }
 
     // 检查是否已经获得过该勋章
-    const existingAward = await this.prisma.studentBadge.findFirst({
+    const existingAward = await this.prisma.studentsBadge.findFirst({
       where: {
         studentId,
         badgeId
@@ -340,7 +340,7 @@ export class BadgeService {
     }
 
     // 创建勋章授予记录
-    const studentBadge = await this.prisma.studentBadge.create({
+    const studentBadge = await this.prisma.studentsBadge.create({
       data: {
         studentId,
         badgeId,
@@ -369,7 +369,7 @@ export class BadgeService {
     });
 
     // 给予学生奖励
-    await this.prisma.student.update({
+    await this.prisma.students.update({
       where: { id: studentId },
       data: {
         points: { increment: 10 }, // 勋章奖励10积分
@@ -422,7 +422,7 @@ export class BadgeService {
    */
   async revokeBadge(studentId: string, badgeId: string, schoolId: string): Promise<void> {
     // 验证勋章是否存在且属于该学校
-    const badge = await this.prisma.badge.findFirst({
+    const badge = await this.prisma.badges.findFirst({
       where: {
         id: badgeId,
         schoolId
@@ -434,7 +434,7 @@ export class BadgeService {
     }
 
     // 验证学生是否存在且属于该学校
-    const student = await this.prisma.student.findFirst({
+    const student = await this.prisma.students.findFirst({
       where: {
         id: studentId,
         schoolId,
@@ -447,7 +447,7 @@ export class BadgeService {
     }
 
     // 删除勋章授予记录
-    await this.prisma.studentBadge.deleteMany({
+    await this.prisma.studentsBadge.deleteMany({
       where: {
         studentId,
         badgeId
@@ -472,7 +472,7 @@ export class BadgeService {
    */
   async getStudentBadges(studentId: string, schoolId: string): Promise<any> {
     // 验证学生是否存在且属于该学校
-    const student = await this.prisma.student.findFirst({
+    const student = await this.prisma.students.findFirst({
       where: {
         id: studentId,
         schoolId,
@@ -485,7 +485,7 @@ export class BadgeService {
     }
 
     // 获取学生的勋章
-    const studentBadges = await this.prisma.studentBadge.findMany({
+    const studentBadges = await this.prisma.studentsBadge.findMany({
       where: {
         studentId
       },
@@ -532,7 +532,7 @@ export class BadgeService {
    */
   async getAvailableBadges(studentId: string, schoolId: string): Promise<any> {
     // 验证学生是否存在且属于该学校
-    const student = await this.prisma.student.findFirst({
+    const student = await this.prisma.students.findFirst({
       where: {
         id: studentId,
         schoolId,
@@ -556,7 +556,7 @@ export class BadgeService {
     }
 
     // 获取所有活跃勋章
-    const allBadges = await this.prisma.badge.findMany({
+    const allBadges = await this.prisma.badges.findMany({
       where: {
         schoolId,
         isActive: true
@@ -600,16 +600,16 @@ export class BadgeService {
   async getBadgeStats(schoolId: string): Promise<BadgeStatsResponse> {
     // 获取勋章总数和活跃勋章数
     const [totalBadges, activeBadges] = await Promise.all([
-      this.prisma.badge.count({
+      this.prisma.badges.count({
         where: { schoolId }
       }),
-      this.prisma.badge.count({
+      this.prisma.badges.count({
         where: { schoolId, isActive: true }
       })
     ]);
 
     // 获取授予总数
-    const totalAwarded = await this.prisma.studentBadge.count({
+    const totalAwarded = await this.prisma.studentsBadge.count({
       where: {
         badge: {
           schoolId
@@ -618,7 +618,7 @@ export class BadgeService {
     });
 
     // 获取获得勋章的唯一学生数
-    const uniqueEarners = await this.prisma.studentBadge.groupBy({
+    const uniqueEarners = await this.prisma.studentsBadge.groupBy({
       by: ['studentId'],
       where: {
         badge: {
@@ -628,7 +628,7 @@ export class BadgeService {
     });
 
     // 按类别统计
-    const categoryDistribution = await this.prisma.badge.groupBy({
+    const categoryDistribution = await this.prisma.badges.groupBy({
       by: ['category'],
       where: { schoolId },
       _count: {
@@ -638,7 +638,7 @@ export class BadgeService {
 
     const categoryStats = await Promise.all(
       categoryDistribution.map(async (stat) => {
-        const awardedCount = await this.prisma.studentBadge.count({
+        const awardedCount = await this.prisma.studentsBadge.count({
           where: {
             badge: {
               schoolId,
@@ -656,7 +656,7 @@ export class BadgeService {
     );
 
     // 获取获得最多勋章的学生
-    const topEarners = await this.prisma.studentBadge.groupBy({
+    const topEarners = await this.prisma.studentsBadge.groupBy({
       by: ['studentId'],
       where: {
         badge: {
@@ -675,7 +675,7 @@ export class BadgeService {
     });
 
     // 获取学生信息
-    const students = await this.prisma.student.findMany({
+    const students = await this.prisma.students.findMany({
       where: {
         id: { in: topEarners.map(earner => earner.studentId) },
         schoolId
@@ -696,7 +696,7 @@ export class BadgeService {
     });
 
     // 获取最近授予记录
-    const recentAwards = await this.prisma.studentBadge.findMany({
+    const recentAwards = await this.prisma.studentsBadge.findMany({
       where: {
         badge: {
           schoolId
@@ -749,7 +749,7 @@ export class BadgeService {
     }
 
     // 获取学生统计信息
-    const student = await this.prisma.student.findUnique({
+    const student = await this.prisma.students.findUnique({
       where: { id: studentId },
       include: {
         taskRecords: true
@@ -789,7 +789,7 @@ export class BadgeService {
       analysis.requirement = `完成 ${targetCount} 个任务`;
     } else if (requirement.type === 'badge_collection') {
       // 简化版：检查已获得的勋章数量
-      const earnedBadges = await this.prisma.studentBadge.count({
+      const earnedBadges = await this.prisma.studentsBadge.count({
         where: { studentId }
       });
       const targetCount = requirement.value || 5;

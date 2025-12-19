@@ -35,6 +35,10 @@ export declare class StudentRoutes {
      */
     private deleteStudent;
     /**
+     * 🆕 师生关系转移 - 从"转班"升级为"抢人"
+     */
+    private transferStudents;
+    /**
      * 批量添加积分/经验
      */
     private addScore;
@@ -46,6 +50,10 @@ export declare class StudentRoutes {
      * 获取班级统计
      */
     private getClassStats;
+    /**
+     * 获取班级列表（用于班级切换）
+     */
+    private getClasses;
     /**
      * 获取路由器实例
      */

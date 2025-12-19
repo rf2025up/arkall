@@ -139,3 +139,4 @@ exports.default = {
     validateUser: exports.validateUser,
     authLogger: exports.authLogger
 };
+//# sourceMappingURL=auth.middleware.js.map

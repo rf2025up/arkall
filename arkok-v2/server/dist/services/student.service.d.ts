@@ -1,11 +1,14 @@
-import { PrismaClient } from '@prisma/client';
 import { Server as SocketIOServer } from 'socket.io';
 export interface StudentQuery {
     schoolId: string;
-    classRoom?: string;
+    className?: string;
     search?: string;
     page?: number;
     limit?: number;
+    teacherId?: string;
+    scope?: 'MY_STUDENTS' | 'ALL_SCHOOL' | 'SPECIFIC_TEACHER';
+    userRole?: 'ADMIN' | 'TEACHER';
+    requesterId?: string;
 }
 export interface AddScoreRequest {
     studentIds: string[];
@@ -17,14 +20,15 @@ export interface AddScoreRequest {
 }
 export interface CreateStudentRequest {
     name: string;
-    className: string;
+    className?: string;
     schoolId: string;
+    teacherId: string;
 }
 export interface UpdateStudentRequest {
     id: string;
     schoolId: string;
     name?: string;
-    classRoom?: string;
+    className?: string;
     avatar?: string;
     score?: number;
     exp?: number;
@@ -53,9 +57,9 @@ export interface ScoreUpdateEvent {
 export declare class StudentService {
     private prisma;
     private io;
-    constructor(prisma: PrismaClient, io: SocketIOServer);
+    constructor(io: SocketIOServer);
     /**
-     * 获取学生列表 - 强制重写修复
+     * 🆕 获取学生列表 - 基于师生绑定的重构版本
      */
     getStudents(query: StudentQuery): Promise<StudentListResponse>;
     /**
@@ -65,7 +69,7 @@ export declare class StudentService {
     /**
      * 获取学生完整档案（聚合所有相关数据）
      */
-    getStudentProfile(studentId: string, schoolId: string): Promise<any>;
+    getStudentProfile(studentId: string, schoolId: string, userRole?: 'ADMIN' | 'TEACHER', userId?: string): Promise<any>;
     /**
      * 构建时间轴数据
      */
@@ -74,22 +78,23 @@ export declare class StudentService {
      * 获取任务类型标签
      */
     private getTaskTypeLabel;
-    createStudent(studentData: {
-        name: string;
-        className: string;
-        schoolId: string;
-    }): Promise<{
+    createStudent(studentData: CreateStudentRequest): Promise<{
         name: string;
         id: string;
         schoolId: string;
+        teacherId: string | null;
         isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
-        className: string;
+        className: string | null;
         level: number;
         points: number;
         exp: number;
         avatarUrl: string | null;
+        currentUnit: string | null;
+        currentLesson: string | null;
+        currentLessonTitle: string | null;
+        teamId: string | null;
     }>;
     /**
      * 更新学生信息
@@ -111,6 +116,16 @@ export declare class StudentService {
      * 获取班级统计
      */
     getClassStats(schoolId: string): Promise<any>;
+    /**
+     * 获取班级列表（用于班级切换）
+     * 🆕 修改：返回按老师分组的班级信息，支持多老师显示
+     */
+    getClasses(schoolId: string): Promise<any[]>;
+    /**
+     * 🆕 师生关系转移 - 从"转班"升级为"抢人"
+     * 将学生划归到指定老师名下
+     */
+    transferStudents(studentIds: string[], targetTeacherId: string, schoolId: string, updatedBy: string): Promise<any[]>;
     /**
      * 计算等级
      */

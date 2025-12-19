@@ -1,29 +1,39 @@
-# 🌐 ArkOK V2 Sealos 架构部署指南
+# 🌐 ArkOK V2 Sealos 架构部署指南（无PM2 - 云原生最佳实践）
 
-**版本:** 1.0
-**更新时间:** 2025-12-12
+**版本:** 2.0
+**更新时间:** 2025-12-18
 **部署环境:** Sealos Kubernetes
+**架构特点:** 无PM2，统一托管，云原生最佳实践
 
 ---
 
 ## 🎯 架构概述
 
-基于 Sealos Kubernetes 平台的高可用、可扩展架构，支持多租户 SaaS 模式。
+基于 Sealos Kubernetes 平台的高可用、可扩展架构，采用**统一托管模式**，符合云原生最佳实践。
 
-### 系统架构图
+### 系统架构图（无PM2 - 云原生最佳实践）
 
 ```mermaid
 graph TD
     Ingress[🌐 公网 Ingress on Sealos]
 
     subgraph "Application Services (arkok-v2)"
-        Frontend[🎨 前端服务 (Vite on Port 5173)]
-        Backend[🚀 后端主服务 (Node.js on Port 3000)]
+        Unified[🚀 统一托管服务 (Node.js on Port 3000)]
     end
 
-    Ingress -- "/ (root and other UI paths)" --> Frontend
-    Ingress -- "/api/*" --> Backend
-    Ingress -- "/socket.io/*" --> Backend
+    Ingress -- "/ (root and other UI paths)" --> Unified
+    Ingress -- "/api/*" --> Unified
+    Ingress -- "/socket.io/*" --> Unified
+
+    subgraph "Unified Service Internal"
+        Frontend[🎨 静态资源托管 (client/dist)]
+        API[🔌 API 业务逻辑层]
+        Socket[📡 Socket.io 实时通信]
+    end
+
+    Unified --> Frontend
+    Unified --> API
+    Unified --> Socket
 
     subgraph "Internal Cluster Services"
         Database[(🐘 PostgreSQL Cluster)]

@@ -36,7 +36,7 @@ const BigScreen: React.FC = () => {
         studentA: data.playerA ? {
           id: data.playerA.id,
           name: data.playerA.name,
-          avatar_url: data.playerA.avatarUrl || `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(data.playerA.name)}&backgroundColor=ffffff`,
+          avatar_url: data.playerA.avatarUrl || '/avatar.jpg',
           team_name: data.playerA.className,
           energy: 100,
           score: data.playerA.exp || 0
@@ -44,7 +44,7 @@ const BigScreen: React.FC = () => {
         studentB: data.playerB ? {
           id: data.playerB.id,
           name: data.playerB.name,
-          avatar_url: data.playerB.avatarUrl || `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(data.playerB.name)}&backgroundColor=ffffff`,
+          avatar_url: data.playerB.avatarUrl || '/avatar.jpg',
           team_name: data.playerB.className,
           energy: 100,
           score: data.playerB.exp || 0
@@ -87,7 +87,7 @@ const BigScreen: React.FC = () => {
         studentA: data.student ? {
           id: data.student.id,
           name: data.student.name,
-          avatar_url: data.student.avatarUrl || `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(data.student.name)}&backgroundColor=ffffff`,
+          avatar_url: data.student.avatarUrl || '/avatar.jpg',
           team_name: data.student.className,
           energy: 100,
           score: data.student.exp || 0
@@ -119,18 +119,18 @@ const BigScreen: React.FC = () => {
     const mockBattleData: BattleData = {
       type: 'pk',
       studentA: {
-        id: '1',
-        name: '张小明',
-        avatar_url: 'https://api.dicebear.com/7.x/notionists/svg?seed=张小明&backgroundColor=ffffff',
-        team_name: '三年级一班',
+        id: '65697759-b4ba-49ae-9f18-101730f7bf47',
+        name: '刘梓萌',
+        avatar_url: '/avatar.jpg',
+        team_name: '龙老师班',
         energy: 100,
         score: 2500
       },
       studentB: {
-        id: '2',
-        name: '李小红',
-        avatar_url: 'https://api.dicebear.com/7.x/notionists/svg?seed=李小红&backgroundColor=ffffff',
-        team_name: '三年级二班',
+        id: '1896c410-1a91-4281-ac02-797756c638cc',
+        name: '宁可歆',
+        avatar_url: '/avatar.jpg',
+        team_name: '龙老师班',
         energy: 100,
         score: 2300
       },

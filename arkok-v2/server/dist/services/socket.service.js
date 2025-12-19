@@ -287,3 +287,4 @@ class SocketService {
 }
 exports.SocketService = SocketService;
 exports.default = SocketService;
+//# sourceMappingURL=socket.service.js.map

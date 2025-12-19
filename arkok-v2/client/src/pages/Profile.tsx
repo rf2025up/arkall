@@ -64,7 +64,7 @@ const Profile: React.FC<ProfileProps> = () => {
         const studentsData = (response.data as { students: any[] }).students;
         // 过滤指定班级的学生
         const classStudentList = studentsData.filter(student =>
-          student.classRoom === className && student.isActive !== false
+          student.className === className && student.isActive !== false
         );
 
         console.log(`✅ [PROFILE] ${className} 学生数量: ${classStudentList.length}`);

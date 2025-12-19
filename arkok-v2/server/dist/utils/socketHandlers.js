@@ -65,3 +65,4 @@ exports.SOCKET_EVENTS = {
     SYSTEM_NOTIFICATION: 'system_notification',
     HEALTH_CHECK: 'health_check'
 };
+//# sourceMappingURL=socketHandlers.js.map

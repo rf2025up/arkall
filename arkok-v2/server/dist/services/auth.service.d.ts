@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 export interface LoginRequest {
     username: string;
     password: string;
@@ -6,10 +5,13 @@ export interface LoginRequest {
 export interface AuthUser {
     userId: string;
     username: string;
+    name: string;
+    displayName?: string;
     email?: string;
     role: string;
     schoolId: string;
     schoolName?: string;
+    primaryClassName?: string;
 }
 export interface LoginResponse {
     success: boolean;
@@ -20,7 +22,6 @@ export interface LoginResponse {
 }
 export declare class AuthService {
     private prisma;
-    constructor(prisma: PrismaClient);
     /**
      * 用户登录验证
      */

@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 import { Server as SocketIOServer } from 'socket.io';
 export interface ChallengeQuery {
     schoolId: string;
@@ -75,7 +74,7 @@ export interface ChallengeStatsResponse {
 export declare class ChallengeService {
     private prisma;
     private io;
-    constructor(prisma: PrismaClient, io: SocketIOServer);
+    constructor(io: SocketIOServer);
     /**
      * 获取挑战列表
      */

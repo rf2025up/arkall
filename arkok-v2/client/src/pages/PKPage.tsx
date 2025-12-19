@@ -3,21 +3,23 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ChevronLeft, ChevronRight, Plus, Trophy, Target, Users, Zap, Crown, Star, Sparkles } from 'lucide-react'
 
-// 模拟数据
+// 龙老师班学生数据
 const mockStudents = [
-  { id: '1', name: '张小明', className: '三年级一班', avatar_url: 'https://api.dicebear.com/7.x/notionists/svg?seed=张小明&backgroundColor=ffffff' },
-  { id: '2', name: '李小红', className: '三年级二班', avatar_url: 'https://api.dicebear.com/7.x/notionists/svg?seed=李小红&backgroundColor=ffffff' },
-  { id: '3', name: '王小强', className: '三年级一班', avatar_url: 'https://api.dicebear.com/7.x/notionists/svg?seed=王小强&backgroundColor=ffffff' },
-  { id: '4', name: '陈小美', className: '三年级二班', avatar_url: 'https://api.dicebear.com/7.x/notionists/svg?seed=陈小美&backgroundColor=ffffff' },
-  { id: '5', name: '刘小军', className: '三年级三班', avatar_url: 'https://api.dicebear.com/7.x/notionists/svg?seed=刘小军&backgroundColor=ffffff' },
-  { id: '6', name: '赵小丽', className: '三年级三班', avatar_url: 'https://api.dicebear.com/7.x/notionists/svg?seed=赵小丽&backgroundColor=ffffff' },
+  { id: '65697759-b4ba-49ae-9f18-101730f7bf47', name: '刘梓萌', className: '龙老师班', avatar_url: '/avatar.jpg' },
+  { id: '1896c410-1a91-4281-ac02-797756c638cc', name: '宁可歆', className: '龙老师班', avatar_url: '/avatar.jpg' },
+  { id: '47938c35-a307-4191-84a8-bf798d599505', name: '廖潇然', className: '龙老师班', avatar_url: '/avatar.jpg' },
+  { id: '83147758-d2d7-4541-a7c1-5892b809ccc8', name: '彭斯晟', className: '龙老师班', avatar_url: '/avatar.jpg' },
+  { id: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb', name: '曾欣媛', className: '龙老师班', avatar_url: '/avatar.jpg' },
+  { id: 'a3a72793-7c76-4f14-b18c-d786db55ff26', name: '樊牧宸', className: '龙老师班', avatar_url: '/avatar.jpg' },
+  { id: 'b043aea7-874b-4505-8274-50526192fde8', name: '肖浩轩', className: '龙老师班', avatar_url: '/avatar.jpg' },
+  { id: 'bb61ac5c-9bee-4ff9-95ef-1d9e25728f76', name: '肖雨虹', className: '龙老师班', avatar_url: '/avatar.jpg' }
 ]
 
 const mockPKMatches = [
   {
     id: '1',
-    studentA: { id: '1', name: '张小明', className: '三年级一班', avatar_url: 'https://api.dicebear.com/7.x/notionists/svg?seed=张小明&backgroundColor=ffffff' },
-    studentB: { id: '2', name: '李小红', className: '三年级二班', avatar_url: 'https://api.dicebear.com/7.x/notionists/svg?seed=李小红&backgroundColor=ffffff' },
+    studentA: { id: '65697759-b4ba-49ae-9f18-101730f7bf47', name: '刘梓萌', className: '龙老师班', avatar_url: '/avatar.jpg' },
+    studentB: { id: '1896c410-1a91-4281-ac02-797756c638cc', name: '宁可歆', className: '龙老师班', avatar_url: '/avatar.jpg' },
     topic: '数学速算竞赛',
     status: 'ONGOING',
     createdAt: new Date().toISOString(),
@@ -25,8 +27,8 @@ const mockPKMatches = [
   },
   {
     id: '2',
-    studentA: { id: '3', name: '王小强', className: '三年级一班', avatar_url: 'https://api.dicebear.com/7.x/notionists/svg?seed=王小强&backgroundColor=ffffff' },
-    studentB: { id: '4', name: '陈小美', className: '三年级二班', avatar_url: 'https://api.dicebear.com/7.x/notionists/svg?seed=陈小美&backgroundColor=ffffff' },
+    studentA: { id: '47938c35-a307-4191-84a8-bf798d599505', name: '廖潇然', className: '龙老师班', avatar_url: '/avatar.jpg' },
+    studentB: { id: '83147758-d2d7-4541-a7c1-5892b809ccc8', name: '彭斯晟', className: '龙老师班', avatar_url: '/avatar.jpg' },
     topic: '古诗词背诵',
     status: 'ONGOING',
     createdAt: new Date(Date.now() - 3600000).toISOString(),
@@ -34,12 +36,12 @@ const mockPKMatches = [
   },
   {
     id: '3',
-    studentA: { id: '5', name: '刘小军', className: '三年级三班', avatar_url: 'https://api.dicebear.com/7.x/notionists/svg?seed=刘小军&backgroundColor=ffffff' },
-    studentB: { id: '6', name: '赵小丽', className: '三年级三班', avatar_url: 'https://api.dicebear.com/7.x/notionists/svg?seed=赵小丽&backgroundColor=ffffff' },
+    studentA: { id: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb', name: '曾欣媛', className: '龙老师班', avatar_url: '/avatar.jpg' },
+    studentB: { id: 'a3a72793-7c76-4f14-b18c-d786db55ff26', name: '樊牧宸', className: '龙老师班', avatar_url: '/avatar.jpg' },
     topic: '英语单词PK',
     status: 'COMPLETED',
     createdAt: new Date(Date.now() - 7200000).toISOString(),
-    winnerId: '5'
+    winnerId: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb'
   }
 ]
 
@@ -140,7 +142,7 @@ const PKPage: React.FC = () => {
           id: student.id,
           name: student.name,
           className: student.className,
-          avatar_url: student.avatarUrl || `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(student.name)}&backgroundColor=ffffff`
+          avatar_url: student.avatarUrl || '/avatar.jpg'
         }));
         setStudents(formattedStudents);
       }
@@ -304,7 +306,7 @@ const PKPage: React.FC = () => {
               alt={pk.studentA.name}
               className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
               onError={(e) => {
-                e.currentTarget.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="%23e5e7eb"/><circle cx="32" cy="24" r="12" fill="%23cbd5e1"/><rect x="16" y="40" width="32" height="16" rx="8" fill="%23cbd5e1"/></svg>`
+                e.currentTarget.src = `/avatar.jpg`
               }}
             />
             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white">
@@ -330,7 +332,7 @@ const PKPage: React.FC = () => {
               alt={pk.studentB.name}
               className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
               onError={(e) => {
-                e.currentTarget.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="%23e5e7eb"/><circle cx="32" cy="24" r="12" fill="%23cbd5e1"/><rect x="16" y="40" width="32" height="16" rx="8" fill="%23cbd5e1"/></svg>`
+                e.currentTarget.src = `/avatar.jpg`
               }}
             />
             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-red-400 rounded-full flex items-center justify-center border-2 border-white">
@@ -390,7 +392,7 @@ const PKPage: React.FC = () => {
                 alt={pk.studentA.name}
                 className="w-6 h-6 rounded-full object-cover"
                 onError={(e) => {
-                  e.currentTarget.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="%23e5e7eb"/><circle cx="32" cy="24" r="12" fill="%23cbd5e1"/><rect x="16" y="40" width="32" height="16" rx="8" fill="%23cbd5e1"/></svg>`
+                  e.currentTarget.src = `/avatar.jpg`
                 }}
               />
               <span className="text-xs font-medium text-gray-700">{pk.studentA.name}</span>
@@ -402,7 +404,7 @@ const PKPage: React.FC = () => {
                 alt={pk.studentB.name}
                 className="w-6 h-6 rounded-full object-cover"
                 onError={(e) => {
-                  e.currentTarget.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="%23e5e7eb"/><circle cx="32" cy="24" r="12" fill="%23cbd5e1"/><rect x="16" y="40" width="32" height="16" rx="8" fill="%23cbd5e1"/></svg>`
+                  e.currentTarget.src = `/avatar.jpg`
                 }}
               />
               <span className="text-xs font-medium text-gray-700">{pk.studentB.name}</span>
@@ -605,7 +607,7 @@ const PKPage: React.FC = () => {
                   alt={selectedPK.studentA.name}
                   className="w-12 h-12 rounded-full object-cover mx-auto mb-2"
                   onError={(e) => {
-                    e.currentTarget.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="%23e5e7eb"/><circle cx="32" cy="24" r="12" fill="%23cbd5e1"/><rect x="16" y="40" width="32" height="16" rx="8" fill="%23cbd5e1"/></svg>`
+                    e.currentTarget.src = `/avatar.jpg`
                   }}
                 />
                 <div className="font-bold text-gray-800 text-sm">{selectedPK.studentA.name}</div>
@@ -630,7 +632,7 @@ const PKPage: React.FC = () => {
                   alt={selectedPK.studentB.name}
                   className="w-12 h-12 rounded-full object-cover mx-auto mb-2"
                   onError={(e) => {
-                    e.currentTarget.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="%23e5e7eb"/><circle cx="32" cy="24" r="12" fill="%23cbd5e1"/><rect x="16" y="40" width="32" height="16" rx="8" fill="%23cbd5e1"/></svg>`
+                    e.currentTarget.src = `/avatar.jpg`
                   }}
                 />
                 <div className="font-bold text-gray-800 text-sm">{selectedPK.studentB.name}</div>

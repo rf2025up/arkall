@@ -1,10 +1,15 @@
 // 标准API响应接口 - 遵循TypeScript类型安全宪法
 export interface ApiResponse<T = any> {
   success: boolean;           // 请求是否成功
-  data: T;                    // 实际数据载荷，类型安全
+  data?: T;                   // 实际数据载荷，类型安全（错误时可选）
   message?: string;           // 可选的错误或成功消息
   token?: string;             // 认证响应中的JWT令牌
   user?: any;                 // 认证响应中的用户信息
+  error?: {                   // 错误信息（仅在失败时存在）
+    code: string;
+    message: string;
+    details?: any[];
+  };
 }
 
 // 分页响应接口
@@ -70,7 +75,7 @@ export class ResponseBuilder {
     return response;
   }
 
-  static error(code: string, message: string, details?: any[]): ErrorResponse {
+  static error(code: string, message: string, details?: any[]): ApiResponse<never> {
     return {
       success: false,
       error: {

@@ -1,0 +1,40 @@
+2025-12-17T14:51:45: Get student by id error: Error: 学生不存在
+    at StudentService.getStudentById (/home/devbox/project/arkok-v2/server/dist/services/student.service.js:111:19)
+    at StudentRoutes.getStudentById (/home/devbox/project/arkok-v2/server/dist/routes/student.routes.js:584:29)
+2025-12-17T15:28:15: Get student by id error: Error: 学生不存在
+    at StudentService.getStudentById (/home/devbox/project/arkok-v2/server/dist/services/student.service.js:111:19)
+    at StudentRoutes.getStudentById (/home/devbox/project/arkok-v2/server/dist/routes/student.routes.js:584:29)
+2025-12-17T16:06:01: Get student by id error: Error: 学生不存在
+    at StudentService.getStudentById (/home/devbox/project/arkok-v2/server/dist/services/student.service.js:111:19)
+    at StudentRoutes.getStudentById (/home/devbox/project/arkok-v2/server/dist/routes/student.routes.js:584:29)
+2025-12-17T16:06:05: Get student by id error: Error: 学生不存在
+    at StudentService.getStudentById (/home/devbox/project/arkok-v2/server/dist/services/student.service.js:111:19)
+    at StudentRoutes.getStudentById (/home/devbox/project/arkok-v2/server/dist/routes/student.routes.js:584:29)
+2025-12-17T16:21:25: Check in habit error: Error: 习惯不存在或已停用
+    at HabitService.checkInHabit (/home/devbox/project/arkok-v2/server/dist/services/habit.service.js:202:19)
+    at HabitRoutes.checkInHabit (/home/devbox/project/arkok-v2/server/dist/routes/habit.routes.js:511:28)
+2025-12-17T16:28:26: Token verification error: JsonWebTokenError: jwt malformed
+    at Object.module.exports (/home/devbox/project/arkok-v2/server/node_modules/jsonwebtoken/verify.js:70:17)
+    at AuthService.verifyToken (/home/devbox/project/arkok-v2/server/dist/services/auth.service.js:197:33)
+    at /home/devbox/project/arkok-v2/server/dist/middleware/auth.middleware.js:23:34
+    at Layer.handle [as handle_request] (/home/devbox/project/arkok-v2/server/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/devbox/project/arkok-v2/server/node_modules/express/lib/router/index.js:328:13)
+    at /home/devbox/project/arkok-v2/server/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/devbox/project/arkok-v2/server/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/devbox/project/arkok-v2/server/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/home/devbox/project/arkok-v2/server/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/devbox/project/arkok-v2/server/node_modules/express/lib/router/index.js:47:12)
+2025-12-17T16:28:31: Token verification error: JsonWebTokenError: jwt malformed
+    at Object.module.exports (/home/devbox/project/arkok-v2/server/node_modules/jsonwebtoken/verify.js:70:17)
+    at AuthService.verifyToken (/home/devbox/project/arkok-v2/server/dist/services/auth.service.js:197:33)
+    at /home/devbox/project/arkok-v2/server/dist/middleware/auth.middleware.js:23:34
+    at Layer.handle [as handle_request] (/home/devbox/project/arkok-v2/server/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/devbox/project/arkok-v2/server/node_modules/express/lib/router/index.js:328:13)
+    at /home/devbox/project/arkok-v2/server/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/devbox/project/arkok-v2/server/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/devbox/project/arkok-v2/server/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/home/devbox/project/arkok-v2/server/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/devbox/project/arkok-v2/server/node_modules/express/lib/router/index.js:47:12)
+2025-12-17T18:10:57: Get student by id error: Error: 学生不存在
+    at StudentService.getStudentById (/home/devbox/project/arkok-v2/server/dist/services/student.service.js:111:19)
+    at StudentRoutes.getStudentById (/home/devbox/project/arkok-v2/server/dist/routes/student.routes.js:584:29)

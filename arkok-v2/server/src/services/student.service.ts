@@ -3,7 +3,7 @@ import { Server as SocketIOServer } from 'socket.io';
 
 export interface StudentQuery {
   schoolId: string;
-  classRoom?: string;  // 保留兼容性
+  className?: string;  // 数据库字段名，移除className违宪用法
   search?: string;
   page?: number;
   limit?: number;
@@ -34,7 +34,7 @@ export interface UpdateStudentRequest {
   id: string;
   schoolId: string;
   name?: string;
-  classRoom?: string;
+  className?: string;
   avatar?: string;
   score?: number;
   exp?: number;
@@ -87,7 +87,7 @@ export class StudentService {
 
       // 🚨 临时调试：检查现有学生的teacherId分布
       console.log(`[DEBUG] 🔍 Checking teacherId distribution before query...`);
-      const allStudents = await this.prisma.student.findMany({
+      const allStudents = await this.prisma.students.findMany({
         where: { schoolId, isActive: true },
         select: { id: true, name: true, teacherId: true, className: true }
       });
@@ -105,7 +105,7 @@ export class StudentService {
       if (scope === 'MY_STUDENTS' && teacherId) {
         // 老师查看自己的学生
         whereCondition.teacherId = teacherId;
-        console.log(`[TEACHER BINDING] Querying MY_STUDENTS for teacher: ${teacherId}`);
+        console.log(`[TEACHER BINDING] Querying MY_STUDENTS for teachers: ${teacherId}`);
       } else if (scope === 'ALL_SCHOOL' && userRole === 'ADMIN') {
         // 管理员查看全校学生 - 无需额外条件
         console.log(`[TEACHER BINDING] Querying ALL_SCHOOL for ADMIN`);
@@ -119,11 +119,21 @@ export class StudentService {
         whereCondition.teacherId = teacherId;
         console.log(`[TEACHER BINDING] Querying SPECIFIC_TEACHER: ${teacherId}, requester: ${query.requesterId}`);
       } else {
-        // 默认情况：如果指定了teacherId，查询该老师的学生
-        if (teacherId) {
+        // 默认情况：如果指定了teacherId且不是ALL_SCHOOL模式，查询该老师的学生
+        if (teacherId && scope !== 'ALL_SCHOOL') {
           whereCondition.teacherId = teacherId;
-          console.log(`[TEACHER BINDING] Default: querying students for teacher: ${teacherId}`);
+          console.log(`[TEACHER BINDING] Default: querying students for teachers: ${teacherId}`);
+        } else if (scope === 'ALL_SCHOOL') {
+          console.log(`[TEACHER BINDING] ALL_SCHOOL mode: ignoring teacherId to show all students`);
         }
+      }
+
+      // 🆕 添加班级过滤功能
+      if (query.className) {
+        whereCondition.className = query.className;
+        console.log(`[TEACHER BINDING] 🔍 Filtering by className: ${query.className}`);
+      } else {
+        console.log(`[TEACHER BINDING] ⚠️ No className filter provided - will return all students for scope: ${scope}`);
       }
 
       // 保留搜索功能
@@ -134,10 +144,10 @@ export class StudentService {
         };
       }
 
-      const students = await this.prisma.student.findMany({
+      const students = await this.prisma.students.findMany({
         where: whereCondition,
         orderBy: [
-          { exp: 'desc' }, // 按经验值排序
+          { exp: 'desc' },
           { name: 'asc' },
         ],
       });
@@ -163,14 +173,14 @@ export class StudentService {
    * 根据ID获取单个学生
    */
   async getStudentById(id: string, schoolId: string): Promise<any> {
-    const student = await this.prisma.student.findFirst({
+    const student = await this.prisma.students.findFirst({
       where: {
         id,
         schoolId,
         isActive: true
       },
       include: {
-        taskRecords: {
+        task_records: {
           orderBy: { createdAt: 'desc' },
           take: 10
         }
@@ -187,84 +197,86 @@ export class StudentService {
   /**
    * 获取学生完整档案（聚合所有相关数据）
    */
-  public async getStudentProfile(studentId: string, schoolId: string): Promise<any> {
+  public async getStudentProfile(studentId: string, schoolId: string, userRole?: 'ADMIN' | 'TEACHER', userId?: string): Promise<any> {
     try {
       console.log(`🔍 获取学生档案: ${studentId}, 学校: ${schoolId}`);
 
       // 使用 Promise.all 并行查询所有相关数据
       const [
         student,
-        taskRecords,
+        task_records,
         pkMatchesAsPlayerA,
         pkMatchesAsPlayerB,
         allPkMatches,
         taskStats
       ] = await Promise.all([
         // 1. 学生基础信息
-        this.prisma.student.findFirst({
+        this.prisma.students.findFirst({
           where: {
             id: studentId,
             schoolId,
-            isActive: true
+            isActive: true,
+            // 权限过滤：如果是老师，只能查看自己名下的学生；如果是管理员，可以查看所有学生
+            ...(userRole === 'TEACHER' && userId ? { teacherId: userId } : {})
           }
         }),
 
         // 2. 任务记录（全部，按时间倒序）
-        this.prisma.taskRecord.findMany({
+        this.prisma.task_records.findMany({
           where: {
             studentId,
             schoolId
           },
           orderBy: { createdAt: 'desc' },
           include: {
-            lessonPlan: {
+            lesson_plans: {
               select: { id: true, title: true, date: true }
             }
           }
         }),
 
         // 3. PK记录（作为PlayerA）
-        this.prisma.pKMatch.findMany({
+        this.prisma.pk_matches.findMany({
           where: {
             studentA: studentId,
             schoolId
           },
           orderBy: { createdAt: 'desc' },
           include: {
-            playerA: {
+            students_pk_matches_studentATostudents: {
               select: { id: true, name: true, className: true }
             },
-            playerB: {
+            students_pk_matches_studentBTostudents: {
               select: { id: true, name: true, className: true }
             },
-            winner: {
+            students_pk_matches_winnerIdTostudents: {
               select: { id: true, name: true }
             }
           }
         }),
 
         // 4. PK记录（作为PlayerB）
-        this.prisma.pKMatch.findMany({
+        this.prisma.pk_matches.findMany({
           where: {
             studentB: studentId,
             schoolId
           },
           orderBy: { createdAt: 'desc' },
           include: {
-            playerA: {
+            students_pk_matches_studentATostudents: {
               select: { id: true, name: true, className: true }
             },
-            playerB: {
+            students_pk_matches_studentBTostudents: {
               select: { id: true, name: true, className: true }
             },
-            winner: {
+            students_pk_matches_winnerIdTostudents: {
               select: { id: true, name: true }
             }
           }
         }),
 
         // 5. 所有PK记录（用于统计）
-        this.prisma.pKMatch.findMany({
+        this.prisma.pk_matches.findMany({
           where: {
             schoolId,
             OR: [
@@ -275,7 +287,7 @@ export class StudentService {
         }),
 
         // 6. 任务统计数据
-        this.prisma.taskRecord.groupBy({
+        this.prisma.task_records.groupBy({
           by: ['status', 'type'],
           where: {
             studentId,
@@ -295,14 +307,39 @@ export class StudentService {
         throw new Error('学生不存在');
       }
 
-      // 处理PK记录 - 合并playerA和playerB的记录，并按时间排序
+      // 🆕 注入过关地图聚合逻辑：按单元/课时分组
+      const semesterMap = task_records
+        .filter(t => t.type === 'QC')
+        .reduce((acc: any, task: any) => {
+          const content = task.content || {};
+          const unit = content.unit || '0';
+          const lesson = content.lesson || '0';
+          const key = `${unit}-${lesson}`;
+
+          if (!acc[key]) {
+            acc[key] = { unit, lesson, title: content.lessonPlanTitle || `第${lesson}课`, tasks: [] };
+          }
+          acc[key].tasks.push({
+            id: task.id,
+            title: task.title,
+            status: task.status,
+            exp: task.expAwarded
+          });
+          return acc;
+        }, {});
+
+      // 处理PK记录 - 合并studentA和studentB的记录，并按时间排序
       const allPkRecordsWithDetails = [...pkMatchesAsPlayerA, ...pkMatchesAsPlayerB]
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .map(match => ({
           ...match,
           isPlayerA: match.studentA === studentId,
-          opponent: match.studentA === studentId ? match.playerB : match.playerA,
-          isWinner: match.winnerId === studentId
+          opponent: match.studentA === studentId ? match.studentB : match.studentA,
+          isWinner: match.winnerId === studentId,
+          // 添加关系字段数据用于前端显示
+          playerA: match.students_pk_matches_studentATostudents,
+          playerB: match.students_pk_matches_studentBTostudents,
+          winner: match.students_pk_matches_winnerIdTostudents
         }));
 
       // 计算PK统计数据
@@ -318,22 +355,22 @@ export class StudentService {
 
       // 处理任务统计数据
       const processedTaskStats = {
-        totalTasks: taskRecords.length,
-        completedTasks: taskRecords.filter(task => task.status === 'COMPLETED').length,
-        pendingTasks: taskRecords.filter(task => task.status === 'PENDING').length,
-        submittedTasks: taskRecords.filter(task => task.status === 'SUBMITTED').length,
-        reviewedTasks: taskRecords.filter(task => task.status === 'REVIEWED').length,
-        exp: taskRecords.reduce((sum, task) => sum + task.expAwarded, 0),
-        qcTasks: taskRecords.filter(task => task.type === 'QC').length,
-        specialTasks: taskRecords.filter(task => task.type === 'SPECIAL').length,
-        challengeTasks: taskRecords.filter(task => task.type === 'CHALLENGE').length
+        totalTasks: task_records.length,
+        completedTasks: task_records.filter(task => task.status === 'COMPLETED').length,
+        pendingTasks: task_records.filter(task => task.status === 'PENDING').length,
+        submittedTasks: task_records.filter(task => task.status === 'SUBMITTED').length,
+        reviewedTasks: task_records.filter(task => task.status === 'REVIEWED').length,
+        exp: task_records.reduce((sum, task) => sum + task.expAwarded, 0),
+        qcTasks: task_records.filter(task => task.type === 'QC').length,
+        specialTasks: task_records.filter(task => task.type === 'SPECIAL').length,
+        challengeTasks: task_records.filter(task => task.type === 'CHALLENGE').length
       };
 
       // 计算学生等级（基于经验值）
       const level = this.calculateLevel(student.exp);
 
       // 构建时间轴数据（按日期分组的任务和PK记录）
-      const timelineData = this.buildTimelineData(taskRecords, allPkRecordsWithDetails);
+      const timelineData = this.buildTimelineData(task_records, allPkRecordsWithDetails);
 
       const profile = {
         // 学生基础信息
@@ -343,7 +380,7 @@ export class StudentService {
         },
 
         // 任务记录（最近50条）
-        taskRecords: taskRecords.slice(0, 50),
+        task_records: task_records.slice(0, 50),
 
         // PK记录
         pkRecords: allPkRecordsWithDetails.slice(0, 20),
@@ -355,15 +392,18 @@ export class StudentService {
         // 时间轴数据
         timelineData,
 
+        // 🆕 过关地图数据
+        semesterMap: Object.values(semesterMap),
+
         // 综合数据
         summary: {
           joinDate: student.createdAt,
           totalActiveDays: Math.ceil((new Date().getTime() - new Date(student.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
-          lastActiveDate: taskRecords.length > 0 ? taskRecords[0].createdAt : student.createdAt
+          lastActiveDate: task_records.length > 0 ? task_records[0].createdAt : student.createdAt
         }
       };
 
-      console.log(`✅ 学生档案获取成功: ${student.name}, 包含 ${taskRecords.length} 条任务记录, ${allPkRecordsWithDetails.length} 条PK记录`);
+      console.log(`✅ 学生档案获取成功: ${student.name}, 包含 ${task_records.length} 条任务记录, ${allPkRecordsWithDetails.length} 条PK记录`);
 
       return profile;
 
@@ -376,9 +416,9 @@ export class StudentService {
   /**
    * 构建时间轴数据
    */
-  private buildTimelineData(taskRecords: any[], pkRecords: any[]): any[] {
+  private buildTimelineData(task_records: any[], pkRecords: any[]): any[] {
     // 将任务记录转换为时间轴项目
-    const taskTimelineItems = taskRecords.map(record => ({
+    const taskTimelineItems = task_records.map(record => ({
       id: `task-${record.id}`,
       date: record.createdAt,
       type: 'task',
@@ -388,7 +428,7 @@ export class StudentService {
       exp: record.expAwarded,
       metadata: {
         taskType: record.type,
-        lessonPlan: record.lessonPlan
+        lesson_plans: record.lessonPlan
       }
     }));
 
@@ -458,16 +498,20 @@ export class StudentService {
     }
 
     try {
-      const newStudent = await this.prisma.student.create({
+      const newStudent = await this.prisma.students.create({
         data: {
+          id: require('crypto').randomUUID(),
           name: studentData.name,
           className: studentData.className,  // 可选，仅作为显示标签
-          teacherId: studentData.teacherId, // 🆕 核心变更：直接绑定到老师
-          school: {
+          teachers: {
+            connect: { id: studentData.teacherId }
+          },
+          schools: {
             connect: { id: studentData.schoolId }
           },
           avatarUrl: `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(studentData.name)}`,
-          isActive: true
+          isActive: true,
+          updatedAt: new Date()
         },
       });
       console.log('[TEACHER BINDING] Successfully created student with teacher binding:', newStudent);
@@ -489,7 +533,7 @@ export class StudentService {
    * 更新学生信息
    */
   async updateStudent(data: UpdateStudentRequest): Promise<any> {
-    const { id, schoolId, name, classRoom, avatar, score, exp } = data;
+    const { id, schoolId, name, className, avatar, score, exp } = data;
 
     // 计算新的等级
     let level: number | undefined;
@@ -497,7 +541,7 @@ export class StudentService {
       level = this.calculateLevel(exp);
     }
 
-    const student = await this.prisma.student.update({
+    const student = await this.prisma.students.update({
       where: {
         id,
         schoolId,
@@ -505,11 +549,12 @@ export class StudentService {
       },
       data: {
         ...(name && { name }),
-        ...(classRoom && { classRoom }),
+        ...(className && { className }),
         ...(avatar && { avatar }),
         ...(score !== undefined && { score }),
         ...(exp !== undefined && { exp }),
-        ...(level !== undefined && { level })
+        ...(level !== undefined && { level }),
+        updatedAt: new Date()
       }
     });
 
@@ -529,14 +574,15 @@ export class StudentService {
    * 删除学生（软删除）
    */
   async deleteStudent(id: string, schoolId: string): Promise<void> {
-    await this.prisma.student.update({
+    await this.prisma.students.update({
       where: {
         id,
         schoolId,
         isActive: true
       },
       data: {
-        isActive: false
+        isActive: false,
+        updatedAt: new Date()
       }
     });
 
@@ -557,7 +603,7 @@ export class StudentService {
     const { studentIds, points, exp, reason, schoolId, metadata = {} } = data;
 
     // 验证学生是否属于该学校
-    const students = await this.prisma.student.findMany({
+    const students = await this.prisma.students.findMany({
       where: {
         id: { in: studentIds },
         schoolId,
@@ -572,11 +618,12 @@ export class StudentService {
     // 批量更新学生积分和经验
     const updatedStudents = await this.prisma.$transaction(
       studentIds.map(studentId =>
-        this.prisma.student.update({
+        this.prisma.students.update({
           where: { id: studentId, schoolId },
           data: {
             points: { increment: points },
-            exp: { increment: exp }
+            exp: { increment: exp },
+            updatedAt: new Date()
           }
         })
       )
@@ -586,9 +633,9 @@ export class StudentService {
     const studentsWithLevel = await this.prisma.$transaction(
       updatedStudents.map(student => {
         const newLevel = this.calculateLevel(student.exp);
-        return this.prisma.student.update({
+        return this.prisma.students.update({
           where: { id: student.id },
-          data: { level: newLevel }
+          data: { level: newLevel, updatedAt: new Date() }
         });
       })
     );
@@ -596,8 +643,9 @@ export class StudentService {
     // 创建任务记录
     await this.prisma.$transaction(
       studentIds.map(studentId =>
-        this.prisma.taskRecord.create({
+        this.prisma.task_records.create({
           data: {
+            id: require('crypto').randomUUID(),
             studentId,
             schoolId,
             type: points > 0 ? 'SPECIAL' : 'CHALLENGE', // 使用 TaskType 枚举值
@@ -613,7 +661,8 @@ export class StudentService {
               }
             },
             status: 'COMPLETED',
-            expAwarded: exp
+            expAwarded: exp,
+            updatedAt: new Date()
           }
         })
       )
@@ -629,8 +678,7 @@ export class StudentService {
         reason,
         timestamp: new Date().toISOString(),
         updatedBy,
-        metadata,
-        updatedStudents: studentsWithLevel
+        metadata
       }
     };
 
@@ -644,14 +692,14 @@ export class StudentService {
    * 获取学生排行榜
    */
   async getLeaderboard(schoolId: string, limit: number = 10): Promise<any[]> {
-    const students = await this.prisma.student.findMany({
+    const students = await this.prisma.students.findMany({
       where: {
         schoolId,
-        deletedAt: null
+        isActive: true
       },
       orderBy: [
         { exp: 'desc' },
-        { score: 'desc' },
+        { points: 'desc' },
         { name: 'asc' }
       ],
       take: limit,
@@ -670,7 +718,7 @@ export class StudentService {
     return students.map((student, index) => ({
       rank: index + 1,
       ...student,
-      classRoom: student.className,
+      className: student.className,
       avatar: student.avatarUrl,
       score: student.points,
       exp: student.exp
@@ -681,7 +729,7 @@ export class StudentService {
    * 获取班级统计
    */
   async getClassStats(schoolId: string): Promise<any> {
-    const classStats = await this.prisma.student.groupBy({
+    const classStats = await this.prisma.students.groupBy({
       by: ['className'],
       where: {
         schoolId,
@@ -701,7 +749,7 @@ export class StudentService {
     });
 
     return classStats.map(stat => ({
-      classRoom: stat.className,
+      className: stat.className,
       studentCount: stat._count.id,
       totalScore: stat._sum.points || 0,
       exp: stat._sum.exp || 0,
@@ -716,7 +764,7 @@ export class StudentService {
    */
   async getClasses(schoolId: string): Promise<any[]> {
     // 🆕 按老师分组获取学生统计
-    const teacherGroups = await this.prisma.student.groupBy({
+    const teacherGroups = await this.prisma.students.groupBy({
       by: ['teacherId'],
       where: {
         schoolId,
@@ -730,7 +778,7 @@ export class StudentService {
 
     // 获取对应的老师信息
     const teacherIds = teacherGroups.map(g => g.teacherId!);
-    const teachers = await this.prisma.user.findMany({
+    const teachers = await this.prisma.teachers.findMany({
       where: {
         id: { in: teacherIds },
         schoolId,
@@ -754,7 +802,7 @@ export class StudentService {
     });
 
     // 添加"全校"选项
-    const totalStudents = await this.prisma.student.count({
+    const totalStudents = await this.prisma.students.count({
       where: {
         schoolId,
         isActive: true
@@ -776,10 +824,10 @@ export class StudentService {
    * 将学生划归到指定老师名下
    */
   async transferStudents(studentIds: string[], targetTeacherId: string, schoolId: string, updatedBy: string): Promise<any[]> {
-    console.log(`[TEACHER BINDING] Transferring ${studentIds.length} students to teacher: ${targetTeacherId}`);
+    console.log(`[TEACHER BINDING] Transferring ${studentIds.length} students to teachers: ${targetTeacherId}`);
 
     // 验证学生是否属于该学校
-    const students = await this.prisma.student.findMany({
+    const students = await this.prisma.students.findMany({
       where: {
         id: { in: studentIds },
         schoolId,
@@ -792,7 +840,7 @@ export class StudentService {
     }
 
     // 🆕 验证目标老师是否存在且属于同一学校
-    const targetTeacher = await this.prisma.teacher.findFirst({
+    const targetTeacher = await this.prisma.teachers.findFirst({
       where: {
         id: targetTeacherId,
         schoolId: schoolId
@@ -806,7 +854,7 @@ export class StudentService {
     // 批量更新学生的老师归属
     const updatedStudents = await this.prisma.$transaction(
       studentIds.map(studentId =>
-        this.prisma.student.update({
+        this.prisma.students.update({
           where: { id: studentId, schoolId },
           data: {
             teacherId: targetTeacherId,  // 🆕 核心变更：更新老师归属
@@ -819,8 +867,9 @@ export class StudentService {
     // 🆕 创建师生关系转移记录
     await this.prisma.$transaction(
       studentIds.map(studentId =>
-        this.prisma.taskRecord.create({
+        this.prisma.task_records.create({
           data: {
+            id: require('crypto').randomUUID(),
             studentId,
             schoolId,
             type: 'SPECIAL',
@@ -834,7 +883,8 @@ export class StudentService {
               transferType: 'STUDENT_MOVED_TO_TEACHER'
             },
             status: 'COMPLETED',
-            expAwarded: 0
+            expAwarded: 0,
+            updatedAt: new Date()
           }
         })
       )

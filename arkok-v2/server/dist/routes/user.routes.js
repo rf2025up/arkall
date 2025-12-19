@@ -66,3 +66,4 @@ class UserRoutes {
 }
 exports.UserRoutes = UserRoutes;
 exports.default = UserRoutes;
+//# sourceMappingURL=user.routes.js.map

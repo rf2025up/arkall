@@ -189,7 +189,6 @@ export interface Badge {
 
 export interface UserBadge {
   id: string;
-  userId: string;
   badgeId: string;
   earnedAt: string;
 }

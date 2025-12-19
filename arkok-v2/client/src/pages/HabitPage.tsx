@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Check, Settings, Plus, Trash2, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useClass } from '../context/ClassContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import apiService from '../services/api.service';
 import { ApiResponse } from '../types/api';
@@ -56,6 +57,7 @@ interface CheckinFeedback {
 
 const HabitPage: React.FC = () => {
   const { user } = useAuth();
+  const { currentClass, viewMode, selectedTeacherId } = useClass();
 
   // --- 状态管理 ---
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -79,15 +81,20 @@ const HabitPage: React.FC = () => {
     // 1. 优先加载学生数据（必须成功）
     const fetchStudents = async () => {
       try {
-        console.log('[HABIT_PAGE] 正在加载学生数据...');
-        const studentsResponse = await apiService.get('/students');
+        console.log('[HABIT_PAGE] 正在加载学生数据...', '当前班级:', currentClass, '视图模式:', viewMode);
+
+        // 🔒 习惯页安全锁定：始终只显示当前老师的学生，不允许全校视图
+        // 因为习惯打卡是针对本班学生的教学活动，不应该涉及全校学生或抢人功能
+        const url = `/students?scope=MY_STUDENTS&teacherId=${user?.id || ''}`;
+        console.log('🔒 [HABIT_SECURITY] 习惯页只显示本班学生，URL:', url);
+        const studentsResponse = await apiService.get(url);
 
         if (isApiResponse(studentsResponse) && studentsResponse.data) {
           const studentsData = extractStudentsData(studentsResponse.data);
           // 为所有学生设置默认头像，使用过关页相同的格式
           const studentsWithAvatar = studentsData.map((student: Student) => ({
             ...student,
-            avatarUrl: student.avatarUrl || '/1024.jpg'
+            avatarUrl: student.avatarUrl || '/avatar.jpg'
           }));
           console.log('✅ [HABIT_PAGE] 学生数据加载成功:', studentsWithAvatar.length, '名学生');
           setStudents(studentsWithAvatar);
@@ -114,7 +121,7 @@ const HabitPage: React.FC = () => {
           setTimeout(() => reject(new Error('习惯数据请求超时')), 5000)
         );
 
-        const habitsResponse = await Promise.race([apiService.get('/habits'), timeoutPromise]);
+        const habitsResponse = await Promise.race([apiService.get(`/habits?schoolId=${user?.schoolId || ''}`), timeoutPromise]);
 
         if (isApiResponse(habitsResponse) && habitsResponse.data) {
           const habitsData = extractHabitsData(habitsResponse.data);
@@ -160,7 +167,7 @@ const HabitPage: React.FC = () => {
       setLoading(false);
     }, 3000);
 
-  }, [selectedHabitId]);
+  }, [selectedHabitId, currentClass]); // 习惯页不需要依赖视图模式，始终只显示本班学生
 
   // --- 计算属性 ---
   const selectedHabit = habits.find(h => h.id === selectedHabitId);
@@ -180,8 +187,9 @@ const HabitPage: React.FC = () => {
       try {
         // 尝试调用API进行打卡 - V1降级处理
         const response = await apiService.post('/habits/checkin', {
-          studentIds: Array.from(selectedStudentIds),
-          habitId: selectedHabitId
+          studentId: Array.from(selectedStudentIds)[0], // API只支持单个学生
+          habitId: selectedHabitId,
+          schoolId: user?.schoolId || ''
         });
 
         if (response.success) {
@@ -261,7 +269,9 @@ const HabitPage: React.FC = () => {
       if (isAddMode) {
         const response = await apiService.post('/habits', {
           name: editForm.name,
-          icon: editForm.icon
+          icon: editForm.icon,
+          schoolId: user?.schoolId || '',
+          expReward: 10 // 默认经验奖励
         });
         if (response.success && response.data) {
           const newHabit: Habit = {
@@ -382,8 +392,8 @@ const HabitPage: React.FC = () => {
                   >
                     <div className={`relative w-14 h-14 rounded-full transition-all duration-200 ${isSelected ? 'ring-4 ring-primary ring-offset-2' : 'ring-2 ring-gray-100'}`}>
                       <img
-                        src={student.avatarUrl}
-                        onError={(e)=>{ e.currentTarget.src = '/1024.jpg'; }}
+                        src={student.avatarUrl || '/avatar.jpg'}
+                        onError={(e)=>{ e.currentTarget.src = '/avatar.jpg'; }}
                         className={`w-full h-full rounded-full bg-gray-200 object-cover select-none pointer-events-none ${isSelected ? 'opacity-100' : 'opacity-70 grayscale'}`}
                         alt={student.name}
                         draggable={false}

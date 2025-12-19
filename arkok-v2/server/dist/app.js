@@ -33,6 +33,7 @@ const mistakes_routes_1 = __importDefault(require("./routes/mistakes.routes"));
 const records_routes_1 = __importDefault(require("./routes/records.routes"));
 const user_routes_1 = require("./routes/user.routes");
 const report_routes_1 = __importDefault(require("./routes/report.routes"));
+const personalized_tutoring_routes_1 = __importDefault(require("./routes/personalized-tutoring.routes"));
 const path_1 = __importDefault(require("path"));
 // 加载环境变量
 dotenv_1.default.config();
@@ -44,12 +45,12 @@ class App {
         this.io = new socket_io_1.Server(this.server, {
             cors: {
                 origin: "*", // 开发环境允许所有来源
-                methods: ["GET", "POST"],
+                methods: ["GET", "POST", "PATCH"],
                 credentials: true
             }
         });
         // 初始化服务
-        this.authService = new auth_service_1.default(this.prisma);
+        this.authService = new auth_service_1.default();
         this.studentService = new student_service_1.default(this.io);
         this.socketService = new socket_service_1.default(this.io, this.authService);
         this.habitService = new habit_service_1.default(this.io);
@@ -65,7 +66,7 @@ class App {
         // CORS配置
         this.app.use((0, cors_1.default)({
             origin: "*", // 开发环境允许所有来源
-            methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
             allowedHeaders: ["Content-Type", "Authorization"],
             credentials: true
         }));
@@ -114,14 +115,18 @@ class App {
         this.app.use('/api/users', userRoutes.getRoutes());
         // 报告和AI提示词路由
         this.app.use('/api/reports', report_routes_1.default);
-        // 旧版API路由（保持兼容性）
-        this.app.use('/api/schools', school_routes_1.schoolRoutes);
+        // 1v1个性化讲解路由
+        this.app.use('/api/personalized-tutoring', personalized_tutoring_routes_1.default);
+        // 🚩 核心修复：提升 lmsRoutes 优先级，防止 recordsRoutes 拦截 /api/lms/records 请求
         this.app.use('/api/lms', lms_routes_1.lmsRoutes);
-        this.app.use('/api/score', studentRoutes.getRoutes());
-        this.app.use('/api/dashboard', dashboard_routes_1.dashboardRoutes);
         // 错题和记录API路由
         this.app.use('/api/mistakes', mistakes_routes_1.default);
         this.app.use('/api/records', records_routes_1.default);
+        // 旧版API路由（保持兼容性）
+        this.app.use('/api/schools', school_routes_1.schoolRoutes);
+        // this.app.use('/api/lms', lmsRoutes); // 移动到上方
+        this.app.use('/api/score', studentRoutes.getRoutes());
+        this.app.use('/api/dashboard', dashboard_routes_1.dashboardRoutes);
         // 静态文件服务 - 提供前端应用
         const clientPath = path_1.default.resolve(__dirname, '../../client/dist');
         console.log('🔍 Static files being served from:', clientPath);
@@ -219,3 +224,4 @@ class App {
     }
 }
 exports.App = App;
+//# sourceMappingURL=app.js.map

@@ -438,3 +438,4 @@ class AuthRoutes {
 }
 exports.AuthRoutes = AuthRoutes;
 exports.default = AuthRoutes;
+//# sourceMappingURL=auth.routes.js.map

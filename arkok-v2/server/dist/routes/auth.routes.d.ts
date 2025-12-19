@@ -6,10 +6,13 @@ export interface AuthResponse {
     user?: {
         userId: string;
         username: string;
+        name: string;
+        displayName?: string;
         email?: string;
         role: string;
         schoolId: string;
         schoolName?: string;
+        primaryClassName?: string;
     };
     token?: string;
     expiresIn?: number;

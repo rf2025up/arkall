@@ -1,21 +1,22 @@
-# 🌐 ArkOK V2 公网部署文档
+# 🌐 ArkOK V2 公网部署文档（无PM2 - 云原生最佳实践）
 
-> **BigScreen Public Deployment Documentation**
-> *Last Updated: 2025-12-12*
+> **BigScreen Public Deployment Documentation (No PM2 - Cloud Native Best Practice)**
+> *Last Updated: 2025-12-18*
 
 ## 📋 部署概览 | Deployment Overview
 
 ### 🌟 部署状态 | Deployment Status
 
-⚠️ **公网服务状态检查中**
+✅ **公网服务正常**
 🌐 **Public URL**: https://esboimzbkure.sealosbja.site/screen
-🔍 **Status**: 需要验证服务可用性
-📋 **最后检查**: 2025-12-16 00:43
+🔍 **Status**: 服务正常运行
+📋 **最后检查**: 2025-12-18
+🚀 **部署方式**: 无PM2云原生部署
 
-**🚨 当前状态说明**：
-- 配置文件显示公网部署已就绪
-- 可能需要重新部署或检查服务状态
-- 建议执行健康检查验证
+**🎯 当前部署特点**：
+- 采用云原生最佳实践，直接使用 `node dist/index.js`
+- 无PM2进程管理器包装，符合Sealos K8s环境
+- 标准化4阶段部署流程，自动化执行
 
 ---
 
@@ -179,14 +180,26 @@ kubectl scale deployment arkok-v2-bigscreen --replicas=3 -n ns-bg6fgs6y
 
 ---
 
-## 🎯 故障排查 | Troubleshooting
+## 🎯 故障排查与部署 QA | Troubleshooting & Deployment QA
 
 ### 🔍 常见问题 | Common Issues
 
-1. **大屏页面无法加载** | BigScreen page not loading
+1. **Prisma 报错: "The generator at `prisma-client-js` could not be found"**
+   - **原因**: V2 修改了模型名（复数化），未生成新的客户端。
+   - **修复**: 在 `server` 目录执行 `npx prisma generate`。
+
+2. **启动报错: "MODULE_NOT_FOUND 'exceljs' or others"**
+   - **原因**: 某些后端工具类引入了新依赖。
+   - **修复**: 在 `server` 目录执行 `npm install exceljs`。
+
+3. **运行脚本报错或目录错误**
+   - **原因**: 脚本执行上下文不正确，或入口文件路径未对齐。
+   - **注意**: 必须在 `arkok-v2` 根目录下运行 `deploy-public.sh`，且确保 `server/dist/index.js` 已编译。
+
+4. **大屏页面无法加载**
    - 检查服务状态 | Check service status
    - 查看应用日志 | Check application logs
-   - 验证Ingress配置 | Verify Ingress configuration
+   - 验证 Ingress 配置 | Verify Ingress configuration
 
 2. **数据不同步** | Data not syncing
    - 检查WebSocket连接 | Check WebSocket connection

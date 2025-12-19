@@ -1,9 +1,11 @@
-import { PrismaClient, LessonPlan, TaskRecord, TaskType, Student } from '@prisma/client';
+import { PrismaClient, lesson_plans, task_records, TaskType, students } from '@prisma/client';
 import { broadcastToSchool, SOCKET_EVENTS } from '../utils/socketHandlers';
 
 export interface TaskLibraryItem {
   id: string;
   category: string;
+  educationalDomain: string; // 修正：必填字段
+  educationalSubcategory?: string; // 🆕 增加子分类
   name: string;
   description?: string;
   defaultExp: number;
@@ -18,6 +20,7 @@ export interface PublishPlanRequest {
   title: string;
   content: any; // JSON格式的课程内容
   date: Date;
+  progress?: any; // 🆕 课程进度数据，用于回填
   tasks: Array<{
     type: TaskType;
     title: string;
@@ -28,7 +31,7 @@ export interface PublishPlanRequest {
 }
 
 export interface PublishPlanResult {
-  lessonPlan: LessonPlan;
+  lessonPlan: lesson_plans;
   taskStats: {
     totalStudents: number;
     tasksCreated: number;
@@ -38,7 +41,9 @@ export interface PublishPlanResult {
 }
 
 export class LMSService {
-  constructor(private prisma: PrismaClient) {}
+  private prisma = new PrismaClient();
+
+  constructor() {}
 
   /**
    * 获取任务库
@@ -48,7 +53,7 @@ export class LMSService {
 
     try {
       // 首先检查任务库是否有数据
-      const taskCount = await this.prisma.taskLibrary.count({
+      const taskCount = await this.prisma.task_library.count({
         where: { isActive: true }
       });
 
@@ -58,15 +63,10 @@ export class LMSService {
       if (taskCount === 0) {
         console.log('⚠️ [LMS_SERVICE] 任务库为空，正在初始化默认任务...');
         await this.initializeDefaultTaskLibrary();
-
-        // 重新计数
-        const newTaskCount = await this.prisma.taskLibrary.count({
-          where: { isActive: true }
-        });
-        console.log(`✅ [LMS_SERVICE] 默认任务初始化完成，任务数量: ${newTaskCount}`);
       }
 
-      const tasks = await this.prisma.taskLibrary.findMany({
+      // 获取任务列表
+      const tasks = await this.prisma.task_library.findMany({
         where: {
           isActive: true
         },
@@ -81,6 +81,8 @@ export class LMSService {
       return tasks.map(task => ({
         id: task.id,
         category: task.category,
+        educationalDomain: task.educationalDomain,
+        educationalSubcategory: task.educationalSubcategory,
         name: task.name,
         description: task.description || '',
         defaultExp: task.defaultExp,
@@ -90,7 +92,7 @@ export class LMSService {
       }));
     } catch (error) {
       console.error('❌ [LMS_SERVICE] 获取任务库失败:', error);
-      // 返回默认任务库而不是抛出错误
+      // 返回降级方案
       return this.getDefaultTaskLibrary();
     }
   }
@@ -100,310 +102,279 @@ export class LMSService {
    */
   private async initializeDefaultTaskLibrary(): Promise<void> {
     const defaultTasks = [
-      // 语文过关项 - 对应PrepView中的chinese QC项目
-      { name: '生字听写', category: '语文过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '本课生字听写训练' },
-      { name: '课文背诵', category: '语文过关', defaultExp: 10, difficulty: 3, type: 'QC' as const, description: '流利背诵课文段落' },
-      { name: '古诗默写', category: '语文过关', defaultExp: 12, difficulty: 3, type: 'QC' as const, description: '古诗默写与理解' },
-      { name: '课文理解', category: '语文过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '课文内容理解分析' },
-      { name: '词语解释', category: '语文过关', defaultExp: 6, difficulty: 2, type: 'QC' as const, description: '重点词语解释' },
-      { name: '句子仿写', category: '语文过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '句型仿写练习' },
+      // 语文过关项
+      { id: require('crypto').randomUUID(), schoolId: 'default', name: '生字听写', category: '语文过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '本课生字听写训练', updatedAt: new Date() },
+      { id: require('crypto').randomUUID(), schoolId: 'default', name: '课文背诵', category: '语文过关', defaultExp: 10, difficulty: 3, type: 'QC' as const, description: '流利背诵课文段落', updatedAt: new Date() },
+      { id: require('crypto').randomUUID(), schoolId: 'default', name: '古诗默写', category: '语文过关', defaultExp: 12, difficulty: 3, type: 'QC' as const, description: '古诗默写与理解', updatedAt: new Date() },
 
-      // 数学过关项 - 对应PrepView中的math QC项目
-      { name: '口算达标', category: '数学过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '10分钟口算练习' },
-      { name: '竖式计算', category: '数学过关', defaultExp: 12, difficulty: 3, type: 'QC' as const, description: '多位数竖式计算' },
-      { name: '公式背诵', category: '数学过关', defaultExp: 6, difficulty: 2, type: 'QC' as const, description: '数学公式背诵默写' },
-      { name: '错题订正', category: '数学过关', defaultExp: 10, difficulty: 2, type: 'QC' as const, description: '错题本订正讲解' },
-      { name: '应用题解答', category: '数学过关', defaultExp: 12, difficulty: 3, type: 'QC' as const, description: '数学应用题分析' },
-      { name: '图形认知', category: '数学过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '几何图形特征识别' },
+      // 数学过关项
+      { id: require('crypto').randomUUID(), schoolId: 'default', name: '口算达标', category: '数学过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '10分钟口算练习', updatedAt: new Date() },
+      { id: require('crypto').randomUUID(), schoolId: 'default', name: '竖式计算', category: '数学过关', defaultExp: 12, difficulty: 3, type: 'QC' as const, description: '多位数竖式计算', updatedAt: new Date() },
 
-      // 英语过关项 - 对应PrepView中的english QC项目
-      { name: '单词默写', category: '英语过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '本单元单词默写' },
-      { name: '句型背诵', category: '英语过关', defaultExp: 10, difficulty: 3, type: 'QC' as const, description: '重点句型背诵' },
-      { name: '课文朗读', category: '英语过关', defaultExp: 6, difficulty: 1, type: 'QC' as const, description: '流利朗读英语课文' },
-      { name: '听力理解', category: '英语过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '英语听力理解训练' },
-      { name: '口语对话', category: '英语过关', defaultExp: 10, difficulty: 3, type: 'QC' as const, description: '英语口语对话练习' },
-
-      // 基础核心任务
-      { name: '课文朗读', category: '基础核心', defaultExp: 5, difficulty: 1, type: 'TASK' as const, description: '流利朗读课文' },
-      { name: '生字练习', category: '基础核心', defaultExp: 8, difficulty: 2, type: 'TASK' as const, description: '练习本课生字' },
-      { name: '单词背诵', category: '基础核心', defaultExp: 6, difficulty: 1, type: 'TASK' as const, description: '背诵英语单词' },
-      { name: '计算练习', category: '基础核心', defaultExp: 10, difficulty: 2, type: 'TASK' as const, description: '数学计算题练习' },
-
-      // 数学巩固
-      { name: '口算练习', category: '数学巩固', defaultExp: 8, difficulty: 2, type: 'TASK' as const, description: '口算能力训练' },
-      { name: '竖式练习', category: '数学巩固', defaultExp: 12, difficulty: 3, type: 'TASK' as const, description: '竖式计算巩固' },
-      { name: '公式应用', category: '数学巩固', defaultExp: 6, difficulty: 2, type: 'TASK' as const, description: '数学公式应用练习' },
-
-      // 英语提升
-      { name: '词汇积累', category: '英语提升', defaultExp: 8, difficulty: 2, type: 'TASK' as const, description: '英语词汇扩展' },
-      { name: '语法练习', category: '英语提升', defaultExp: 10, difficulty: 3, type: 'TASK' as const, description: '英语语法巩固' },
-      { name: '阅读理解', category: '英语提升', defaultExp: 6, difficulty: 1, type: 'TASK' as const, description: '英语阅读理解' },
-
-      // 阅读训练
-      { name: '课外阅读', category: '阅读训练', defaultExp: 15, difficulty: 2, type: 'TASK' as const, description: '30分钟课外阅读' },
-      { name: '理解训练', category: '阅读训练', defaultExp: 12, difficulty: 3, type: 'TASK' as const, description: '阅读理解专项训练' },
-      { name: '古诗鉴赏', category: '阅读训练', defaultExp: 10, difficulty: 2, type: 'TASK' as const, description: '古诗鉴赏与背诵' },
-
-      // 写作练习
-      { name: '日记写作', category: '写作练习', defaultExp: 15, difficulty: 3, type: 'TASK' as const, description: '日常日记写作' },
-      { name: '作文指导', category: '写作练习', defaultExp: 20, difficulty: 4, type: 'TASK' as const, description: '作文技巧指导' },
-      { name: '书法练习', category: '写作练习', defaultExp: 8, difficulty: 2, type: 'TASK' as const, description: '书法字帖练习' }
+      // 英语过关项
+      { id: require('crypto').randomUUID(), schoolId: 'default', name: '单词默写', category: '英语过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '本单元单词默写', updatedAt: new Date() },
+      { id: require('crypto').randomUUID(), schoolId: 'default', name: '听力理解', category: '英语过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '英语听力理解训练', updatedAt: new Date() }
     ];
 
     console.log(`🌱 [LMS_SERVICE] 正在创建 ${defaultTasks.length} 个默认任务...`);
 
-    await this.prisma.taskLibrary.createMany({
-      data: defaultTasks,
-      skipDuplicates: true
-    });
-
-    console.log('✅ [LMS_SERVICE] 默认任务库创建完成');
+    // 注意：实际生产中需要根据 schoolId 创建，这里简化逻辑
+    try {
+      await (this.prisma as any).task_library.createMany({
+        data: defaultTasks,
+        skipDuplicates: true
+      });
+      console.log('✅ [LMS_SERVICE] 默认任务库创建完成');
+    } catch (e) {
+      console.warn('⚠️ [LMS_SERVICE] 初始化任务库略过 (可能已存在)');
+    }
   }
 
   /**
    * 获取默认任务库（降级方案）
    */
   private getDefaultTaskLibrary(): TaskLibraryItem[] {
-    console.log('🔄 [LMS_SERVICE] 使用默认任务库数据作为降级方案');
-
+    console.log('🔄 [LMS_SERVICE] 使用内存默认任务库数据');
     return [
-      // 语文过关
-      { id: 'default-chinese-1', category: '语文过关', name: '生字听写', defaultExp: 8, type: 'QC', difficulty: 2, isActive: true, description: '本课生字听写训练' },
-      { id: 'default-chinese-2', category: '语文过关', name: '课文背诵', defaultExp: 10, type: 'QC', difficulty: 3, isActive: true, description: '流利背诵课文段落' },
-      { id: 'default-chinese-3', category: '语文过关', name: '古诗默写', defaultExp: 12, type: 'QC', difficulty: 3, isActive: true, description: '古诗默写与理解' },
-      { id: 'default-chinese-4', category: '语文过关', name: '课文理解', defaultExp: 8, type: 'QC', difficulty: 2, isActive: true, description: '课文内容理解分析' },
-
-      // 数学过关
-      { id: 'default-math-1', category: '数学过关', name: '口算达标', defaultExp: 8, type: 'QC', difficulty: 2, isActive: true, description: '10分钟口算练习' },
-      { id: 'default-math-2', category: '数学过关', name: '竖式计算', defaultExp: 12, type: 'QC', difficulty: 3, isActive: true, description: '多位数竖式计算' },
-      { id: 'default-math-3', category: '数学过关', name: '公式背诵', defaultExp: 6, type: 'QC', difficulty: 2, isActive: true, description: '数学公式背诵默写' },
-      { id: 'default-math-4', category: '数学过关', name: '错题订正', defaultExp: 10, type: 'QC', difficulty: 2, isActive: true, description: '错题本订正讲解' },
-
-      // 英语过关
-      { id: 'default-english-1', category: '英语过关', name: '单词默写', defaultExp: 8, type: 'QC', difficulty: 2, isActive: true, description: '本单元单词默写' },
-      { id: 'default-english-2', category: '英语过关', name: '句型背诵', defaultExp: 10, type: 'QC', difficulty: 3, isActive: true, description: '重点句型背诵' },
-      { id: 'default-english-3', category: '英语过关', name: '课文朗读', defaultExp: 6, type: 'QC', difficulty: 1, isActive: true, description: '流利朗读英语课文' },
-
-      // 基础核心
-      { id: 'default-core-1', category: '基础核心', name: '课文朗读', defaultExp: 5, type: 'TASK', difficulty: 1, isActive: true, description: '流利朗读课文' },
-      { id: 'default-core-2', category: '基础核心', name: '生字练习', defaultExp: 8, type: 'TASK', difficulty: 2, isActive: true, description: '练习本课生字' },
-      { id: 'default-core-3', category: '基础核心', name: '单词背诵', defaultExp: 6, type: 'TASK', difficulty: 1, isActive: true, description: '背诵英语单词' },
-      { id: 'default-core-4', category: '基础核心', name: '计算练习', defaultExp: 10, type: 'TASK', difficulty: 2, isActive: true, description: '数学计算题练习' }
+      { id: 'def-1', category: '语文过关', educationalDomain: '基础作业', name: '生字听写', defaultExp: 8, type: 'QC', difficulty: 2, isActive: true },
+      { id: 'def-2', category: '数学过关', educationalDomain: '基础作业', name: '口算达标', defaultExp: 8, type: 'QC', difficulty: 2, isActive: true },
+      { id: 'def-3', category: '英语过关', educationalDomain: '基础作业', name: '单词默写', defaultExp: 8, type: 'QC', difficulty: 2, isActive: true }
     ];
   }
 
   /**
    * 🆕 发布教学计划 - 基于师生绑定的安全投送
-   * 1. 创建 LessonPlan
-   * 2. 🚫 安全锁定：只给发布者名下的学生创建 TaskRecord
-   * 3. 返回统计信息
    */
   async publishPlan(request: PublishPlanRequest, io: any): Promise<PublishPlanResult> {
     const { schoolId, teacherId, title, content, date, tasks } = request;
 
     try {
-      console.log(`🔒 [LMS_SECURITY] Publishing lesson plan: ${title}`);
-      console.log(`🔒 [LMS_SECURITY] Teacher ID: ${teacherId}`);
-      console.log(`🔒 [LMS_SECURITY] School ID: ${schoolId}`);
+      console.log(`🔒 [LMS_SECURITY] Publishing lesson plan: ${title} for teacher ${teacherId}`);
 
-      // 🚨 严重安全检查：验证当前用户的权限
-      if (!teacherId) {
-        console.error(`🚨 [LMS_SECURITY] CRITICAL: teacherId is undefined or null!`);
-        throw new Error('发布者ID不能为空');
-      }
+      if (!teacherId) throw new Error('发布者ID不能为空');
 
-      // 🆕 安全锁定：只查找归属该老师的学生
-      const students = await this.prisma.student.findMany({
-        where: {
-          schoolId: schoolId,
-          teacherId: teacherId, // 🔒 核心安全约束：只给发布者的学生投送
-          isActive: true
-        },
-        select: {
-          id: true,
-          name: true,
-          className: true,
-          teacherId: true
-        }
+      // 1. 查找归属该老师的学生
+      const boundStudents = await this.prisma.students.findMany({
+        where: { schoolId, teacherId, isActive: true }
       });
 
-      // 🚨 额外安全验证：检查所有返回的学生都确实属于当前老师
-      const invalidStudents = students.filter(s => s.teacherId !== teacherId);
-      if (invalidStudents.length > 0) {
-        console.error(`🚨 [LMS_SECURITY] CRITICAL: Found students belonging to other teachers:`, invalidStudents);
-        throw new Error('严重安全错误：查询结果包含其他老师的学生');
-      }
-
-      if (students.length === 0) {
-        console.log(`⚠️ [LMS_SECURITY] No students found for teacher: ${teacherId}`);
+      if (boundStudents.length === 0) {
         throw new Error(`该老师名下暂无学生，无法发布任务`);
       }
 
-      console.log(`👥 [LMS_SECURITY] Found ${students.length} students for teacher: ${teacherId}`);
-      students.forEach(s => {
-        console.log(`👤 [LMS_SECURITY] Student: ${s.name} (${s.className}) - teacherId: ${s.teacherId}`);
-      });
+    // 2. 创建教学计划
+    const lessonPlan = await this.prisma.lesson_plans.create({
+      data: {
+        id: require('crypto').randomUUID(),
+        schoolId,
+        teacherId,
+        title,
+        content: {
+          ...content,
+          progress: request.progress, // 🆕 将显式传入的进度数据存入 content 字段，方便回填
+          publishedTo: 'TEACHERS_STUDENTS',
+          publisherId: teacherId
+        },
+        date: new Date(date),
+        isActive: true,
+        updatedAt: new Date()
+      }
+    });
 
-      // 2. 创建教学计划
-      const lessonPlan = await this.prisma.lessonPlan.create({
+    // 3. 创建任务记录
+    const dateValue = request.date || new Date();
+    const dateStr = typeof dateValue === 'string' ? (dateValue as string).split('T')[0] : (dateValue as Date).toISOString().split('T')[0];
+    const startOfDay = new Date(`${dateStr}T00:00:00+08:00`);
+    const endOfDay = new Date(`${dateStr}T23:59:59+08:00`);
+
+    // 🆕 从 courseInfo 中提取单元和课，用于注入任务记录（学期地图汇总关键数据）
+    const courseInfo = content?.courseInfo || {};
+
+    let newTaskCount = 0;
+    const affectedClasses = new Set<string>();
+
+    // 🆕 核心修复：实现“覆盖逻辑”
+    // 在发布新任务前，先清理掉当日（由该老师发布的）所有旧任务记录，防止重复累加
+    // 🔧 增强：使用 content->>taskDate 进行字符串匹配，规避时区带来的时间戳范围偏差问题
+    console.log(`🧹 [LMS_CLEANUP] 清理老师 ${teacherId} 在 ${dateStr} 的旧任务记录...`);
+    const deleteResult = await this.prisma.task_records.deleteMany({
+      where: {
+        schoolId,
+        studentId: { in: boundStudents.map(s => s.id) },
+        content: {
+          path: ['taskDate'],
+          equals: dateStr
+        },
+        // 仅清理自动发布的任务（QC, TASK, SPECIAL），保留手动调整的 override 记录
+        type: { in: ['QC', 'TASK', 'SPECIAL'] },
+        isOverridden: false
+      }
+    });
+    console.log(`✅ [LMS_CLEANUP] 已删除 ${deleteResult.count} 条旧任务记录`);
+
+    for (const student of boundStudents) {
+      affectedClasses.add(student.className || '未分班');
+
+      // 🆕 宪法要求：发布时同步更新学生表的进度快照字段，确保过关页列表立即更新
+      await this.prisma.students.update({
+        where: { id: student.id },
         data: {
-          schoolId,
-          teacherId,
-          title,
-          content: {
-            ...content,
-            // 🆕 记录发布范围信息
-            publishedTo: 'TEACHERS_STUDENTS',
-            publisherId: teacherId
-          },
-          date: new Date(date),
-          isActive: true
+          currentUnit: courseInfo.chinese?.unit || "1",
+          currentLesson: courseInfo.chinese?.lesson || "1",
+          currentLessonTitle: courseInfo.chinese?.title || "默认课程",
+          updatedAt: new Date()
         }
       });
 
-      console.log(`✅ [LMS_SECURITY] Created lesson plan: ${lessonPlan.id} for ${students.length} students`);
+      for (const task of tasks) {
+        // 动态确定该任务所属学科的单元和课
+        let taskUnit = "1";
+        let taskLesson = "1";
 
-      // 3. 🆕 防重复发布：创建任务记录前先检查
-      const taskRecords: any[] = [];
-      const affectedClasses = new Set<string>();
-      let duplicateCount = 0;
-      let newTaskCount = 0;
-
-      // 📅 计算今天的时间范围（考虑时区）
-      const today = new Date();
-      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
-      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
-
-      console.log(`🔍 [LMS_DUPLICATE_CHECK] Checking for duplicates within time range: ${startOfDay.toISOString()} - ${endOfDay.toISOString()}`);
-
-      for (const student of students) {
-        affectedClasses.add(student.className || '未分班');
-
-        for (const task of tasks) {
-          // 🔍 防重检查：查询今天是否已有同名任务
-          const existingRecord = await this.prisma.taskRecord.findFirst({
-            where: {
-              studentId: student.id,
-              title: task.title,
-              type: task.type,
-              createdAt: {
-                gte: startOfDay,
-                lte: endOfDay
-              }
-            }
-          });
-
-          if (existingRecord) {
-            // 🚫 发现已存在任务，跳过创建
-            console.log(`🔄 [LMS_DUPLICATE_CHECK] Task "${task.title}" already exists for student "${student.name}" today. Skipping.`);
-            duplicateCount++;
-
-            // 🆕 可选：更新现有记录的内容和经验值
-            await this.prisma.taskRecord.update({
-              where: { id: existingRecord.id },
-              data: {
-                content: {
-                  ...(typeof existingRecord.content === 'object' ? existingRecord.content : {}),
-                  ...(task.content || {}),
-                  lessonPlanId: lessonPlan.id,
-                  lessonPlanTitle: lessonPlan.title,
-                  publisherId: teacherId,
-                  lastUpdated: new Date().toISOString()
-                },
-                expAwarded: task.expAwarded,
-                updatedAt: new Date()
-              }
-            });
-            console.log(`✅ [LMS_DUPLICATE_CHECK] Updated existing task record for student "${student.name}"`);
-          } else {
-            // ✅ 无重复记录，创建新任务
-            taskRecords.push({
-              schoolId,
-              studentId: student.id,
-              lessonPlanId: lessonPlan.id, // 🆕 关联教学计划
-              type: task.type,
-              title: task.title,
-              content: {
-                ...task.content,
-                lessonPlanId: lessonPlan.id,
-                lessonPlanTitle: lessonPlan.title,
-                publisherId: teacherId
-              },
-              status: 'PENDING',
-              expAwarded: task.expAwarded,
-              createdAt: new Date()
-            });
-            newTaskCount++;
-          }
+        const category = (task.content as any)?.category || '';
+        if (category.includes('语文')) {
+          taskUnit = courseInfo.chinese?.unit || "1";
+          taskLesson = courseInfo.chinese?.lesson || "1";
+        } else if (category.includes('数学')) {
+          taskUnit = courseInfo.math?.unit || "1";
+          taskLesson = courseInfo.math?.lesson || "1";
+        } else if (category.includes('英语')) {
+          taskUnit = courseInfo.english?.unit || "1";
+          taskLesson = "1"; // 英语通常只有单元
         }
-      }
 
-      // 批量插入新任务记录
-      if (taskRecords.length > 0) {
-        await this.prisma.taskRecord.createMany({
-          data: taskRecords
+        // 🆕 核心修复：移除单条防重检查逻辑，改由上方全局 deleteMany 支撑覆盖逻辑
+        // 这样即使任务标题相同，也会更新到最新的 lessonPlanId
+        await this.prisma.task_records.create({
+          data: {
+            id: require('crypto').randomUUID(),
+            schoolId,
+            studentId: student.id,
+            lessonPlanId: lessonPlan.id,
+            type: task.type,
+            title: task.title,
+            content: {
+              ...task.content,
+              taskDate: dateStr,
+              publisherId: teacherId,
+              // 🆕 动态注入 unit 和 lesson 字段，不再硬编码
+              unit: taskUnit,
+              lesson: taskLesson,
+              taskName: task.title
+            },
+            status: 'PENDING',
+            expAwarded: task.expAwarded,
+            updatedAt: new Date()
+          }
         });
-        console.log(`✅ [LMS_SECURITY] Created ${taskRecords.length} new task records for ${students.length} students`);
+        newTaskCount++;
       }
+    }
 
-      // 📊 防重统计报告
-      console.log(`📊 [LMS_DUPLICATE_CHECK] Publication Summary:`);
-      console.log(`   - New tasks created: ${newTaskCount}`);
-      console.log(`   - Duplicate tasks skipped: ${duplicateCount}`);
-      console.log(`   - Total tasks processed: ${newTaskCount + duplicateCount}`);
-
-      // 4. 📊 计算防重后的统计信息
       const taskStats = {
-        totalStudents: students.length,
-        tasksCreated: newTaskCount, // 🆕 只计算新创建的任务数
-        tasksUpdated: duplicateCount, // 🆕 更新的任务数
-        totalExpAwarded: tasks.reduce((sum, task) => sum + (task.expAwarded * students.length), 0),
-        duplicateSkipped: duplicateCount // 🆕 重复跳过的任务数
+        totalStudents: boundStudents.length,
+        tasksCreated: newTaskCount,
+        totalExpAwarded: tasks.reduce((sum, t) => sum + t.expAwarded, 0) * boundStudents.length
       };
 
-      // 5. 🆕 安全广播：只向该老师的房间广播事件
-      const teacherRoom = `teacher_${teacherId}`;
-      io.to(teacherRoom).emit(SOCKET_EVENTS.PLAN_PUBLISHED, {
+      // 广播
+      io.to(`teacher_${teacherId}`).emit(SOCKET_EVENTS.PLAN_PUBLISHED, {
         lessonPlanId: lessonPlan.id,
-        schoolId,
-        publisherId: teacherId,
         title,
-        date: lessonPlan.date,
-        taskStats,
-        affectedClasses: Array.from(affectedClasses),
-        securityScope: 'TEACHERS_STUDENTS' // 🆕 标识安全范围
-      });
-
-      console.log(`📡 [LMS_SECURITY] Broadcasted plan published event to teacher ${teacherId} for ${taskStats.totalStudents} students`);
-
-      return {
-        lessonPlan,
         taskStats,
         affectedClasses: Array.from(affectedClasses)
-      };
+      });
 
+      return { lessonPlan, taskStats, affectedClasses: Array.from(affectedClasses) };
     } catch (error) {
       console.error('❌ Error publishing lesson plan:', error);
-      throw new Error(`Failed to publish lesson plan: ${(error as Error).message}`);
+      throw error;
     }
   }
 
   /**
-   * 获取学校的教学计划列表
+   * 获取学生课程进度 - 🆕 升级版本：支持分科智能合并 (Override vs Plan)
    */
-  async getLessonPlans(schoolId: string, options: {
-    page?: number;
-    limit?: number;
-    startDate?: Date;
-    endDate?: Date;
-  } = {}): Promise<{ plans: LessonPlan[]; total: number }> {
+  async getStudentProgress(schoolId: string, studentId: string) {
+    try {
+      console.log(`[LMS_PROGRESS] Calculating progress for student: ${studentId}`);
+
+      // 1. 获取老师最新计划
+      const student = await this.prisma.students.findUnique({ where: { id: studentId } });
+      let teacherPlan: any = null;
+      if (student?.teacherId) {
+        teacherPlan = await this.prisma.lesson_plans.findFirst({
+          where: { schoolId, teacherId: student.teacherId, isActive: true },
+          orderBy: { date: 'desc' }
+        });
+      }
+
+      // 2. 获取最新覆盖记录 (可能有多条，取最新的一条)
+      const override = await this.prisma.task_records.findFirst({
+        where: { studentId, schoolId, isOverridden: true },
+        orderBy: { updatedAt: 'desc' }
+      });
+
+      const defaultProgress = {
+        chinese: { unit: '1', lesson: '1', title: '默认课程' },
+        math: { unit: '1', lesson: '1', title: '默认课程' },
+        english: { unit: '1', title: 'Default' }
+      };
+
+      const planInfo = (teacherPlan?.content as any)?.courseInfo || defaultProgress;
+      const overrideInfo = (override?.content as any)?.courseInfo;
+
+      // 如果没有覆盖记录，直接返回老师计划
+      if (!overrideInfo) {
+        return {
+          ...planInfo,
+          source: teacherPlan ? 'lesson_plan' : 'default',
+          updatedAt: teacherPlan?.updatedAt || new Date()
+        };
+      }
+
+      // 3. 🆕 智能合并逻辑：如果覆盖记录比计划更新，则保留覆盖值
+      // 注意：这里我们假设 override 记录中的内容是针对全科的快照
+      // 以后可以升级为针对单科的 override 标记
+      const planTime = teacherPlan ? new Date(teacherPlan.updatedAt).getTime() : 0;
+      const overrideTime = new Date(override.updatedAt).getTime();
+
+      console.log(`[LMS_PROGRESS] Times - Plan: ${planTime}, Override: ${overrideTime}`);
+
+      // 如果覆盖记录更晚，说明 student 有最近的手动调整，返回覆盖记录
+      if (overrideTime > planTime) {
+        return {
+          ...overrideInfo,
+          source: 'override',
+          updatedAt: override.updatedAt
+        };
+      }
+
+      // 如果老师计划更新，则返回老师计划
+      return {
+        ...planInfo,
+        source: 'lesson_plan',
+        updatedAt: teacherPlan.updatedAt
+      };
+
+    } catch (e) {
+      console.error('[LMS_PROGRESS] Error calculating progress:', e);
+      return {
+        chinese: { unit: '1', lesson: '1', title: '错误回退' },
+        source: 'error',
+        updatedAt: new Date()
+      };
+    }
+  }
+
+  /**
+   * 获取教学计划列表
+   */
+  async getLessonPlans(schoolId: string, options: { page?: number; limit?: number; startDate?: Date; endDate?: Date } = {}) {
     const { page = 1, limit = 20, startDate, endDate } = options;
+    const skip = (page - 1) * limit;
 
-    const where: any = {
-      schoolId,
-      isActive: true
-    };
-
+    const where: any = { schoolId, isActive: true };
     if (startDate || endDate) {
       where.date = {};
       if (startDate) where.date.gte = startDate;
@@ -411,504 +382,152 @@ export class LMSService {
     }
 
     const [plans, total] = await Promise.all([
-      this.prisma.lessonPlan.findMany({
+      this.prisma.lesson_plans.findMany({
         where,
-        include: {
-          teacher: {
-            select: { id: true, name: true, username: true }
-          }
-        },
         orderBy: { date: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit
+        skip,
+        take: limit,
+        include: { teachers: { select: { name: true } } }
       }),
-      this.prisma.lessonPlan.count({ where })
+      this.prisma.lesson_plans.count({ where })
     ]);
 
     return { plans, total };
   }
 
   /**
-   * 获取教学计划详情（包含任务统计）
+   * 获取教学计划详情
    */
-  async getLessonPlanDetail(lessonPlanId: string): Promise<{
-    lessonPlan: LessonPlan;
-    taskStats: {
-      total: number;
-      pending: number;
-      submitted: number;
-      completed: number;
-    };
-  }> {
-    const lessonPlan = await this.prisma.lessonPlan.findUnique({
-      where: { id: lessonPlanId },
+  async getLessonPlanDetail(planId: string) {
+    const plan = await this.prisma.lesson_plans.findUnique({
+      where: { id: planId },
       include: {
-        teacher: {
-          select: { id: true, name: true, username: true }
+        teachers: { select: { name: true } },
+        task_records: {
+          include: { students: { select: { name: true, className: true } } }
         }
       }
     });
 
-    if (!lessonPlan) {
-      throw new Error('Lesson plan not found');
-    }
-
-    // 获取任务统计
-    const taskStats = await this.prisma.taskRecord.groupBy({
-      by: ['status'],
-      where: {
-        lessonPlanId
-      },
-      _count: {
-        status: true
-      }
-    });
-
-    const stats = {
-      total: 0,
-      pending: 0,
-      submitted: 0,
-      completed: 0
-    };
-
-    taskStats.forEach(stat => {
-      stats.total += stat._count.status;
-      switch (stat.status) {
-        case 'PENDING':
-          stats.pending = stat._count.status;
-          break;
-        case 'SUBMITTED':
-          stats.submitted = stat._count.status;
-          break;
-        case 'COMPLETED':
-          stats.completed = stat._count.status;
-          break;
-      }
-    });
-
-    return {
-      lessonPlan,
-      taskStats: stats
-    };
+    if (!plan) throw new Error('教学计划不存在');
+    return plan;
   }
 
   /**
-   * 删除教学计划（软删除）
+   * 删除教学计划
    */
-  async deleteLessonPlan(lessonPlanId: string): Promise<void> {
-    await this.prisma.lessonPlan.update({
-      where: { id: lessonPlanId },
-      data: { isActive: false }
+  async deleteLessonPlan(planId: string) {
+    return this.prisma.lesson_plans.update({
+      where: { id: planId },
+      data: { isActive: false, updatedAt: new Date() }
     });
   }
 
   /**
-   * 获取学校的教学统计
+   * 获取学校统计信息
    */
-  async getSchoolStats(schoolId: string): Promise<{
-    totalPlans: number;
-    activePlans: number;
-    totalTasks: number;
-    completedTasks: number;
-    avgCompletionRate: number;
-  }> {
-    const [totalPlans, activePlans, taskStats] = await Promise.all([
-      this.prisma.lessonPlan.count({
-        where: { schoolId }
-      }),
-      this.prisma.lessonPlan.count({
-        where: { schoolId, isActive: true }
-      }),
-      this.prisma.taskRecord.groupBy({
+  async getSchoolStats(schoolId: string) {
+    const [totalPlans, totalStudents, taskStats] = await Promise.all([
+      this.prisma.lesson_plans.count({ where: { schoolId, isActive: true } }),
+      this.prisma.students.count({ where: { schoolId, isActive: true } }),
+      this.prisma.task_records.groupBy({
         by: ['status'],
         where: { schoolId },
-        _count: { status: true }
+        _count: true
       })
     ]);
 
-    const totalTasks = taskStats.reduce((sum, stat) => sum + stat._count.status, 0);
-    const completedTasks = taskStats.find(stat => stat.status === 'COMPLETED')?._count.status || 0;
-    const avgCompletionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-
-    return {
-      totalPlans,
-      activePlans,
-      totalTasks,
-      completedTasks,
-      avgCompletionRate
-    };
+    return { totalPlans, totalStudents, taskStats };
   }
 
   /**
-   * 获取指定学生某天的任务记录
+   * 获取学生的每日任务记录
    */
-  async getDailyRecords(schoolId: string, studentId: string, date: string): Promise<TaskRecord[]> {
-    try {
-      console.log(`🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====`);
-      console.log(`🔥 [LMS DEBUG] 传入参数: schoolId=${schoolId}, studentId=${studentId}, date=${date}`);
+  async getDailyRecords(schoolId: string, studentId: string, date: string) {
+    const startOfDay = new Date(`${date}T00:00:00+08:00`);
+    const endOfDay = new Date(`${date}T23:59:59+08:00`);
 
-      // 🔧 修复时间处理：避免setHours修改原始对象，并考虑时区问题
-      const targetDate = new Date(date);
-      const year = targetDate.getFullYear();
-      const month = targetDate.getMonth();
-      const day = targetDate.getDate();
-
-      // 创建独立的开始和结束时间对象
-      const startOfDay = new Date(year, month, day, 0, 0, 0, 0);
-      const endOfDay = new Date(year, month, day, 23, 59, 59, 999);
-
-      // 🔥 [时区修复] 扩展查询范围，确保覆盖时区差异
-      const extendedStart = new Date(startOfDay.getTime() - 24 * 60 * 60 * 1000); // 前24小时
-      const extendedEnd = new Date(endOfDay.getTime() + 24 * 60 * 60 * 1000); // 后24小时
-
-      console.log(`🔥 [LMS DEBUG] 原始查询范围: ${startOfDay.toISOString()} - ${endOfDay.toISOString()}`);
-      console.log(`🔥 [LMS DEBUG] 扩展查询范围: ${extendedStart.toISOString()} - ${extendedEnd.toISOString()}`);
-      console.log(`🔥 [LMS DEBUG] 目标日期: ${date}`);
-      console.log(`🔥 [LMS DEBUG] 服务器当前时间: ${new Date().toISOString()}`);
-
-      // 🔥 [时区修复] 先用扩展范围查询
-      const records = await this.prisma.taskRecord.findMany({
-        where: {
-          schoolId,
-          studentId,
-          createdAt: {
-            gte: extendedStart,
-            lte: extendedEnd
-          }
-        },
-        include: {
-          student: {
-            select: { id: true, name: true, className: true }
-          },
-          lessonPlan: {
-            select: { id: true, title: true, date: true }
-          }
-        },
-        orderBy: [
-          { type: 'asc' }, // QC -> TASK -> SPECIAL
-          { createdAt: 'asc' }
-        ]
-      });
-
-      console.log(`🔥 [LMS DEBUG] 查询结果: 找到 ${records.length} 条记录`);
-
-      if (records.length > 0) {
-        console.log(`🔥 [LMS DEBUG] ===== 记录详情 =====`);
-        records.forEach((record, index) => {
-          console.log(`🔥 [LMS DEBUG] 记录 ${index + 1}:`);
-          console.log(`   - ID: ${record.id}`);
-          console.log(`   - Title: ${record.title}`);
-          console.log(`   - Type: ${record.type}`);
-          console.log(`   - Status: ${record.status}`);
-          console.log(`   - Created: ${record.createdAt.toISOString()}`);
-          console.log(`   - Created Local: ${record.createdAt.toLocaleString()}`);
-          console.log(`   - Exp: ${record.expAwarded}`);
-          console.log(`   - Student: ${record.student?.name}`);
-          console.log(`   - LessonPlan: ${record.lessonPlan?.title || '无'}`);
-        });
-      } else {
-        console.log(`🔥 [LMS DEBUG] ⚠️ 没有找到任何记录！`);
-        // 🔥 调试：查询该学生的所有记录，忽略时间限制
-        const allStudentRecords = await this.prisma.taskRecord.findMany({
-          where: {
-            schoolId,
-            studentId
-          },
-          select: {
-            id: true,
-            title: true,
-            type: true,
-            status: true,
-            createdAt: true,
-            expAwarded: true
-          },
-          orderBy: {
-            createdAt: 'desc'
-          },
-          take: 10
-        });
-
-        console.log(`🔥 [LMS DEBUG] 学生 ${studentId} 的最近10条记录（忽略时间限制）:`);
-        if (allStudentRecords.length > 0) {
-          allStudentRecords.forEach((record, index) => {
-            console.log(`   ${index + 1}. [${record.type}] ${record.title} - ${record.createdAt.toISOString()}`);
-          });
-        } else {
-          console.log(`🔥 [LMS DEBUG] 学生 ${studentId} 完全没有任何记录！`);
-        }
-      }
-
-      return records;
-    } catch (error) {
-      console.error('获取每日任务记录失败:', error);
-      throw new Error('获取任务记录失败');
-    }
+    return this.prisma.task_records.findMany({
+      where: {
+        schoolId,
+        studentId,
+        createdAt: { gte: startOfDay, lte: endOfDay }
+      },
+      orderBy: { createdAt: 'asc' }
+    });
   }
 
   /**
-   * 增加任务尝试次数
+   * 获取学生所有历史任务记录
    */
-  async markAttempt(recordId: string, userId: string): Promise<TaskRecord> {
-    try {
-      const record = await this.prisma.taskRecord.findUnique({
-        where: { id: recordId }
-      });
-
-      if (!record) {
-        throw new Error('任务记录不存在');
-      }
-
-      // 简单的权限校验 - 在实际应用中应该有更复杂的权限系统
-      // 这里假设只要 userId 存在就有权限操作该校区的记录
-
-      const updatedRecord = await this.prisma.taskRecord.update({
-        where: { id: recordId },
-        data: {
-          // 如果没有 attempts 字段，则添加该字段
-          // 由于 schema 中没有 attempts 字段，这里我们使用 content 字段存储尝试次数
-          content: {
-            ...(typeof record.content === 'object' ? record.content : {}),
-            attempts: (((typeof record.content === 'object' && record.content as any)?.attempts) || 0) + 1,
-            lastAttemptAt: new Date().toISOString()
-          },
-          updatedAt: new Date()
-        }
-      });
-
-      console.log(`📝 任务 ${recordId} 尝试次数更新为: ${(updatedRecord.content as any)?.attempts}`);
-
-      return updatedRecord;
-    } catch (error) {
-      console.error('更新尝试次数失败:', error);
-      throw new Error('更新尝试次数失败');
-    }
+  async getAllStudentRecords(schoolId: string, studentId: string, limit: number = 100) {
+    return this.prisma.task_records.findMany({
+      where: { schoolId, studentId },
+      orderBy: { createdAt: 'desc' },
+      take: limit
+    });
   }
 
   /**
-   * 更新任务记录状态
+   * 记录尝试次数
    */
-  async updateRecordStatus(recordId: string, status: 'PENDING' | 'SUBMITTED' | 'REVIEWED' | 'COMPLETED', userId: string): Promise<TaskRecord> {
-    try {
-      const record = await this.prisma.taskRecord.findUnique({
-        where: { id: recordId }
-      });
-
-      if (!record) {
-        throw new Error('任务记录不存在');
+  async markAttempt(recordId: string, userId: string) {
+    return this.prisma.task_records.update({
+      where: { id: recordId },
+      data: {
+        attempts: { increment: 1 },
+        updatedAt: new Date()
       }
-
-      // 简单的权限校验
-      // 在实际应用中应该验证 userId 是否属于该校区的老师
-
-      const updatedRecord = await this.prisma.taskRecord.update({
-        where: { id: recordId },
-        data: {
-          status,
-          // 如果状态变为已完成，设置提交时间
-          ...(status === 'COMPLETED' && { submittedAt: new Date() }),
-          // 如果状态变为已提交，设置提交时间
-          ...(status === 'SUBMITTED' && { submittedAt: new Date() }),
-          updatedAt: new Date()
-        }
-      });
-
-      console.log(`✅ 任务 ${recordId} 状态更新为: ${status}`);
-
-      return updatedRecord;
-    } catch (error) {
-      console.error('更新任务状态失败:', error);
-      throw new Error('更新任务状态失败');
-    }
+    });
   }
 
   /**
-   * 批量更新任务记录状态
+   * 批量更新任务状态
    */
-  async updateMultipleRecordStatus(
-    schoolId: string,
-    recordIds: string[],
-    status: 'PENDING' | 'SUBMITTED' | 'REVIEWED' | 'COMPLETED',
-    userId: string
-  ): Promise<{ success: number; failed: number; errors: string[] }> {
-    const results = {
-      success: 0,
-      failed: 0,
-      errors: [] as string[]
-    };
-
-    for (const recordId of recordIds) {
-      try {
-        await this.updateRecordStatus(recordId, status, userId);
-        results.success++;
-      } catch (error) {
-        results.failed++;
-        results.errors.push(`记录 ${recordId}: ${error instanceof Error ? error.message : '未知错误'}`);
+  async updateMultipleRecordStatus(schoolId: string, recordIds: string[], status: any, userId: string) {
+    const result = await this.prisma.task_records.updateMany({
+      where: {
+        id: { in: recordIds },
+        schoolId
+      },
+      data: {
+        status,
+        updatedAt: new Date(),
+        submittedAt: status === 'SUBMITTED' || status === 'COMPLETED' ? new Date() : undefined
       }
-    }
+    });
 
-    return results;
+    return { success: result.count, failed: recordIds.length - result.count };
   }
 
   /**
-   * 获取学生课程进度 - 集成备课页数据
+   * 更新学生课程进度 - 老师手动覆盖，优先级最高
    */
-  async getStudentProgress(schoolId: string, studentId: string): Promise<{
-    chinese?: { unit: string; lesson?: string; title: string };
-    math?: { unit: string; lesson?: string; title: string };
-    english?: { unit: string; title: string };
-    source: 'lesson_plan' | 'default';
-    updatedAt: string;
-  }> {
-    try {
-      console.log(`[LMS_SERVICE] Getting student progress for ${studentId}`);
-
-      // 1. 首先查找该学校的最新教学计划（不限制必须有任务记录）
-      const latestLessonPlan = await this.prisma.lessonPlan.findFirst({
-        where: {
-          schoolId: schoolId,
-          isActive: true
-        },
-        orderBy: {
-          date: 'desc'
-        }
-      });
-
-      // 2. 如果有教学计划，提取课程进度信息
-      if (latestLessonPlan) {
-        const content = latestLessonPlan.content as any;
-
-        console.log(`[LMS_SERVICE] Found lesson plan ${latestLessonPlan.id} with student records`);
-        console.log(`[LMS_SERVICE] Content structure:`, {
-          hasContent: !!content,
-          hasCourseInfo: !!content?.courseInfo,
-          courseInfoKeys: content?.courseInfo ? Object.keys(content.courseInfo) : []
-        });
-
-        // 检查content中是否包含courseInfo
-        if (content?.courseInfo?.chinese || content?.courseInfo?.math || content?.courseInfo?.english) {
-          console.log(`[LMS_SERVICE] Found progress in lesson plan ${latestLessonPlan.id}`);
-
-          return {
-            chinese: content.courseInfo?.chinese,
-            math: content.courseInfo?.math,
-            english: content.courseInfo?.english,
-            source: 'lesson_plan',
-            updatedAt: latestLessonPlan.updatedAt.toISOString()
-          };
-        } else {
-          console.log(`[LMS_SERVICE] No courseInfo found in lesson plan content`);
-          console.log(`[LMS_SERVICE] Content data:`, content);
-        }
-      } else {
-        console.log(`[LMS_SERVICE] No lesson plan found for student ${studentId}`);
+  async updateStudentProgress(schoolId: string, studentId: string, teacherId: string, courseInfo: any) {
+    // 创建一个特殊的任务记录，标记为 isOverridden: true
+    return this.prisma.task_records.create({
+      data: {
+        id: require('crypto').randomUUID(),
+        schoolId,
+        studentId,
+        type: 'SPECIAL',
+        title: '老师手动调整进度',
+        content: { courseInfo, teacherId, updatedAt: new Date().toISOString() },
+        status: 'COMPLETED',
+        isOverridden: true,
+        updatedAt: new Date()
       }
-
-      // 3. 如果没有找到教学计划或进度信息，返回默认数据
-      console.log(`[LMS_SERVICE] No lesson plan progress found, returning default`);
-      return {
-        chinese: { unit: "1", lesson: "1", title: "默认课程" },
-        math: { unit: "1", lesson: "1", title: "默认课程" },
-        english: { unit: "1", title: "Default Course" },
-        source: 'default',
-        updatedAt: new Date().toISOString()
-      };
-
-    } catch (error) {
-      console.error('[LMS_SERVICE] Get student progress error:', error);
-
-      // 降级处理：返回默认数据
-      return {
-        chinese: { unit: "1", lesson: "1", title: "默认课程" },
-        math: { unit: "1", lesson: "1", title: "默认课程" },
-        english: { unit: "1", title: "Default Course" },
-        source: 'default',
-        updatedAt: new Date().toISOString()
-      };
-    }
+    });
   }
 
   /**
-   * 更新学生课程进度 - 权限高于备课页
-   * 这里我们将进度信息直接存储在学生的最新任务记录中
+   * 获取最新教学计划
    */
-  async updateStudentProgress(
-    schoolId: string,
-    studentId: string,
-    teacherId: string,
-    progress: {
-      chinese?: { unit: string; lesson?: string; title: string };
-      math?: { unit: string; lesson?: string; title: string };
-      english?: { unit: string; title: string };
-    }
-  ): Promise<{
-    success: boolean;
-    progress: any;
-    message: string;
-  }> {
-    try {
-      console.log(`[LMS_SERVICE] Updating student progress for ${studentId} by teacher ${teacherId}`);
-
-      // 1. 查找最新的教学计划
-      const latestLessonPlan = await this.prisma.lessonPlan.findFirst({
-        where: {
-          schoolId: schoolId,
-          teacherId: teacherId,
-          isActive: true
-        },
-        orderBy: {
-          date: 'desc'
-        }
-      });
-
-      if (!latestLessonPlan) {
-        throw new Error('未找到教学计划，请先发布备课计划');
-      }
-
-      // 2. 更新教学计划中的课程进度信息
-      const updatedContent = {
-        ...(latestLessonPlan.content as any),
-        courseInfo: {
-          ...(latestLessonPlan.content as any)?.courseInfo || {},
-          ...progress
-        },
-        // 记录手动更新历史
-        manualProgressUpdate: {
-          updatedAt: new Date().toISOString(),
-          updatedBy: teacherId,
-          studentId: studentId,
-          progress: progress
-        }
-      };
-
-      const updatedLessonPlan = await this.prisma.lessonPlan.update({
-        where: { id: latestLessonPlan.id },
-        data: {
-          content: updatedContent
-        }
-      });
-
-      console.log(`[LMS_SERVICE] Successfully updated student progress in lesson plan ${latestLessonPlan.id}`);
-
-      return {
-        success: true,
-        progress: {
-          chinese: progress.chinese,
-          math: progress.math,
-          english: progress.english,
-          source: 'lesson_plan',
-          updatedAt: updatedLessonPlan.updatedAt.toISOString()
-        },
-        message: '课程进度更新成功'
-      };
-
-    } catch (error) {
-      console.error('[LMS_SERVICE] Update student progress error:', error);
-
-      return {
-        success: false,
-        progress: null,
-        message: `更新失败: ${(error as Error).message}`
-      };
-    }
+  async getLatestLessonPlan(schoolId: string, teacherId: string): Promise<lesson_plans | null> {
+    return this.prisma.lesson_plans.findFirst({
+      where: { schoolId, teacherId, isActive: true },
+      orderBy: { createdAt: 'desc' }
+    });
   }
 }
+

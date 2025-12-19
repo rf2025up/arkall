@@ -132,9 +132,10 @@ const PKBoardCard: React.FC<PKBoardCardProps> = ({ pks, teamsMap, students = [] 
                       {/* A 学生 */}
                       <div className="flex items-center gap-2 flex-1">
                         <img
-                          src={studentA?.avatar_url || `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(studentA?.name || '')}&backgroundColor=ffffff`}
+                          src={studentA?.avatar_url || '/avatar.jpg'}
                           alt={studentA?.name || '未知'}
                           className="w-10 h-10 rounded-full border-2 border-slate-500 object-cover"
+                          onError={(e) => { e.currentTarget.src = '/avatar.jpg'; }}
                         />
                         <div className="flex-grow">
                           <div className="font-medium text-white truncate">{studentA?.name || '未知'}</div>
@@ -170,9 +171,10 @@ const PKBoardCard: React.FC<PKBoardCardProps> = ({ pks, teamsMap, students = [] 
                           <div className="font-medium text-white truncate">{studentB?.name || '未知'}</div>
                         </div>
                         <img
-                          src={studentB?.avatar_url || `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(studentB?.name || '')}&backgroundColor=ffffff`}
+                          src={studentB?.avatar_url || '/avatar.jpg'}
                           alt={studentB?.name || '未知'}
                           className="w-10 h-10 rounded-full border-2 border-slate-500 object-cover"
+                          onError={(e) => { e.currentTarget.src = '/avatar.jpg'; }}
                         />
                       </div>
 

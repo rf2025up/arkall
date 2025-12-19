@@ -8,7 +8,7 @@ export function Layout() {
   const { user, logout } = useAuth();
 
   return (
-    <div className="min-h-screen w-full bg-background overflow-x-hidden">
+    <div className="min-h-screen w-full bg-background">
       {/* 可滚动的主要内容区域 */}
       <main className="min-h-screen">
         <Outlet />

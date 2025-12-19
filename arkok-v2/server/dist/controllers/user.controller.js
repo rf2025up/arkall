@@ -1,11 +1,41 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserController = void 0;
 const client_1 = require("@prisma/client");
-const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const bcrypt = __importStar(require("bcryptjs"));
 class UserController {
     constructor() {
         this.prisma = new client_1.PrismaClient();
@@ -27,7 +57,7 @@ class UserController {
                     });
                 }
                 // 检查用户名是否已存在
-                const existingUser = await this.prisma.teacher.findFirst({
+                const existingUser = await this.prisma.teachers.findFirst({
                     where: { username }
                 });
                 if (existingUser) {
@@ -41,7 +71,7 @@ class UserController {
                 }
                 // 检查邮箱是否已存在（如果提供）
                 if (email) {
-                    const existingEmail = await this.prisma.teacher.findFirst({
+                    const existingEmail = await this.prisma.teachers.findFirst({
                         where: { email }
                     });
                     if (existingEmail) {
@@ -56,9 +86,9 @@ class UserController {
                 }
                 // 默认密码设置为 "0000" 并加密
                 const defaultPassword = '0000';
-                const hashedPassword = await bcryptjs_1.default.hash(defaultPassword, 10);
+                const hashedPassword = await bcrypt.hash(defaultPassword, 10);
                 // 创建教师账号
-                const newTeacher = await this.prisma.teacher.create({
+                const newTeacher = await this.prisma.teachers.create({
                     data: {
                         username,
                         password: hashedPassword,
@@ -115,9 +145,9 @@ class UserController {
                     ];
                 }
                 // 获取总数
-                const total = await this.prisma.teacher.count({ where });
+                const total = await this.prisma.teachers.count({ where });
                 // 获取教师列表
-                const teachers = await this.prisma.teacher.findMany({
+                const teachers = await this.prisma.teachers.findMany({
                     where,
                     select: {
                         id: true,
@@ -159,7 +189,7 @@ class UserController {
                 const { id } = req.params;
                 const { displayName, primaryClassName, email, name } = req.body;
                 // 验证教师是否存在且属于同一学校
-                const teacher = await this.prisma.teacher.findFirst({
+                const teacher = await this.prisma.teachers.findFirst({
                     where: {
                         id,
                         schoolId: user.schoolId
@@ -176,7 +206,7 @@ class UserController {
                 }
                 // 如果要更新邮箱，检查是否已存在
                 if (email && email !== teacher.email) {
-                    const existingEmail = await this.prisma.teacher.findFirst({
+                    const existingEmail = await this.prisma.teachers.findFirst({
                         where: { email }
                     });
                     if (existingEmail) {
@@ -190,7 +220,7 @@ class UserController {
                     }
                 }
                 // 更新教师信息
-                const updatedTeacher = await this.prisma.teacher.update({
+                const updatedTeacher = await this.prisma.teachers.update({
                     where: { id },
                     data: {
                         displayName: displayName || undefined,
@@ -228,7 +258,7 @@ class UserController {
                 const user = req.user;
                 const { id } = req.params;
                 // 验证教师是否存在且属于同一学校
-                const teacher = await this.prisma.teacher.findFirst({
+                const teacher = await this.prisma.teachers.findFirst({
                     where: {
                         id,
                         schoolId: user.schoolId
@@ -244,8 +274,8 @@ class UserController {
                     });
                 }
                 // 重置密码为 "0000"
-                const hashedPassword = await bcryptjs_1.default.hash('0000', 10);
-                await this.prisma.teacher.update({
+                const hashedPassword = await bcrypt.hash('0000', 10);
+                await this.prisma.teachers.update({
                     where: { id },
                     data: { password: hashedPassword }
                 });
@@ -266,7 +296,7 @@ class UserController {
                 const user = req.user;
                 const { id } = req.params;
                 // 验证教师是否存在且属于同一学校
-                const teacher = await this.prisma.teacher.findFirst({
+                const teacher = await this.prisma.teachers.findFirst({
                     where: {
                         id,
                         schoolId: user.schoolId
@@ -292,7 +322,7 @@ class UserController {
                     });
                 }
                 // 删除教师（级联删除相关数据）
-                await this.prisma.teacher.delete({
+                await this.prisma.teachers.delete({
                     where: { id }
                 });
                 res.json({
@@ -308,3 +338,4 @@ class UserController {
 }
 exports.UserController = UserController;
 exports.default = UserController;
+//# sourceMappingURL=user.controller.js.map

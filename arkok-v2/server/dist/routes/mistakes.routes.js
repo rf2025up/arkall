@@ -21,3 +21,4 @@ router.get('/', async (req, res) => {
     }
 });
 exports.default = router;
+//# sourceMappingURL=mistakes.routes.js.map

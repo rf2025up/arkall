@@ -185,6 +185,18 @@ const StudentDetail: React.FC = () => {
     content?: Record<string, unknown>;
   }>>([]);
 
+  // 🆕 所有历史任务记录（用于动态学期地图）
+  const [allTaskRecords, setAllTaskRecords] = useState<Array<{
+    id: string;
+    title: string;
+    type: string;
+    status: string;
+    expAwarded: number;
+    createdAt: string;
+    content?: Record<string, unknown>;
+    lessonPlan?: Record<string, unknown>;
+  }>>([]);
+
   // V1 兼容状态
   const [habitStats, setHabitStats] = useState<Record<string, number>>({
     '早起': 15, '阅读': 23, '运动': 8, '思考': 12, '卫生': 20, '助人': 18,
@@ -198,9 +210,9 @@ const StudentDetail: React.FC = () => {
     opponent: string;
     date: string;
   }>>([
-    { id: 1, result: 'win', topic: '数学计算', opponent: '张小明', date: '2025-12-11' },
-    { id: 2, result: 'lose', topic: '语文背诵', opponent: '李小红', date: '2025-12-10' },
-    { id: 3, result: 'win', topic: '英语单词', opponent: '王小刚', date: '2025-12-09' }
+    { id: 1, result: 'win', topic: '数学计算', opponent: '刘梓萌', date: '2025-12-11' },
+    { id: 2, result: 'lose', topic: '语文背诵', opponent: '宁可歆', date: '2025-12-10' },
+    { id: 3, result: 'win', topic: '英语单词', opponent: '廖潇然', date: '2025-12-09' }
   ]);
   // 🚀 基于任务记录的挑战数据 - 使用SPECIAL类型任务
   const [studentChallenges, setStudentChallenges] = useState<Array<{
@@ -243,7 +255,22 @@ const StudentDetail: React.FC = () => {
     }
   };
 
-  // --- 获取学生任务记录 ---
+  // --- 获取学生所有历史任务记录（用于动态学期地图）---
+  const fetchAllStudentRecords = async (studentId: string) => {
+    try {
+      const response = await apiService.get(`/lms/all-records?studentId=${studentId}&limit=200`);
+
+      if (response.success && response.data) {
+        const allRecords: TaskRecord[] = response.data as TaskRecord[];
+        setAllTaskRecords(allRecords);
+        console.log('[StudentDetail] 获取到历史任务记录:', allRecords.length);
+      }
+    } catch (error) {
+      console.error('[StudentDetail] 获取历史任务记录失败:', error);
+    }
+  };
+
+  // --- 获取学生当日任务记录 ---
   const fetchStudentTaskRecords = async (studentId: string) => {
     try {
       const today = new Date();
@@ -314,7 +341,8 @@ const StudentDetail: React.FC = () => {
             // 🚀 获取实时任务记录数据和课程进度数据
             await Promise.all([
               fetchStudentTaskRecords(studentId),
-              fetchStudentProgressData(studentId)
+              fetchStudentProgressData(studentId),
+              fetchAllStudentRecords(studentId)
             ]);
           } else {
             setError(response.message || '获取学生数据失败');
@@ -328,8 +356,8 @@ const StudentDetail: React.FC = () => {
           const mockStudent = {
             student: {
               id: studentId,
-              name: '张小明',
-              className: '黄老师班',
+              name: '刘梓萌',
+              className: '龙老师班',
               level: 15,
               points: 1250,
               exp: 3500,
@@ -360,28 +388,28 @@ const StudentDetail: React.FC = () => {
   };
 
   // 🚀 实时任务状态更新
-  const handlePassTask = async (lessonId: number, taskId: number) => {
+  const handlePassTask = async (lessonId: number, taskRecordId: string) => {
     try {
       // 找到对应的任务记录
-      const taskRecord = taskRecords.find(record => record.id === taskId.toString());
+      const taskRecord = taskRecords.find(record => record.id === taskRecordId);
       if (!taskRecord) {
-        console.error('[StudentDetail] 未找到任务记录:', taskId);
+        console.error('[StudentDetail] 未找到任务记录:', taskRecordId);
         return;
       }
 
-      // 调用API更新任务状态
-      const response = await apiService.patch(`/lms/records/${taskId}/status`, {
+      // 调用API更新任务状态 - 修复API路径使用recordId
+      const response = await apiService.patch(`/lms/records/${taskRecordId}/status`, {
         status: 'COMPLETED'
       });
 
       if (response.success) {
         // 更新本地状态
         setTaskRecords(prev => prev.map(record =>
-          record.id === taskId.toString() ? { ...record, status: 'COMPLETED' } : record
+          record.id === taskRecordId ? { ...record, status: 'COMPLETED' } : record
         ));
 
         // UI反馈动画
-        const btn = document.getElementById(`btn-pass-${taskId}`);
+        const btn = document.getElementById(`btn-pass-${taskRecordId}`);
         if(btn) {
           btn.innerHTML = '<span class="text-green-600 font-bold text-xs">刚补过</span>';
           btn.parentElement!.style.opacity = '0.5';
@@ -397,6 +425,60 @@ const StudentDetail: React.FC = () => {
     } catch (error) {
       console.error('[StudentDetail] 更新任务状态异常:', error);
       alert('更新任务状态失败，请重试');
+    }
+  };
+
+  // 🆕 一键补过整个课程
+  const handlePassLesson = async (lessonId: number, lesson: any) => {
+    try {
+      // 找到该课程的所有未完成任务
+      const incompleteTasks = lesson.tasks.filter((task: TimelineTask) => task.status !== 'passed');
+
+      if (incompleteTasks.length === 0) {
+        alert('该课程的所有任务已完成！');
+        return;
+      }
+
+      // 确认对话框
+      const confirmed = window.confirm(`确定要补过「${lesson.title}」的 ${incompleteTasks.length} 个未完成任务吗？`);
+      if (!confirmed) return;
+
+      console.log(`[StudentDetail] 开始一键补过课程 ${lessonId}, 共 ${incompleteTasks.length} 个任务`);
+
+      // 批量更新任务状态
+      const taskIds = incompleteTasks.map((task: TimelineTask) => task.id.toString());
+      const response = await apiService.patch('/lms/records/batch/status', {
+        recordIds: taskIds,
+        status: 'COMPLETED'
+      });
+
+      if (response.success) {
+        // 更新本地状态
+        setTaskRecords(prev => prev.map(record =>
+          taskIds.includes(record.id) ? { ...record, status: 'COMPLETED' } : record
+        ));
+
+        // UI反馈 - 更新所有相关按钮
+        incompleteTasks.forEach((task: TimelineTask) => {
+          const btn = document.getElementById(`btn-pass-${task.id}`);
+          if(btn) {
+            btn.innerHTML = '<span class="text-green-600 font-bold text-xs">刚补过</span>';
+            btn.parentElement!.style.opacity = '0.5';
+            btn.parentElement!.style.backgroundColor = '#F9FAFB';
+          }
+        });
+
+        // 震动反馈
+        if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+
+        alert(`✅ 成功补过 ${incompleteTasks.length} 个任务！`);
+      } else {
+        console.error('[StudentDetail] 批量更新任务状态失败:', response.message);
+        alert(`批量补过失败: ${response.message}`);
+      }
+    } catch (error) {
+      console.error('[StudentDetail] 批量补过异常:', error);
+      alert('批量补过失败，请重试');
     }
   };
 
@@ -591,87 +673,116 @@ const StudentDetail: React.FC = () => {
   const academicData = {
     aiComment: `通过对${studentName}的学情分析，该生整体学习态度端正，知识点掌握较为扎实。建议继续保持良好的学习习惯，同时在薄弱环节加强练习。`,
     pendingTasks: taskRecords
-      .filter(record => record.type.toUpperCase() === 'QC' && record.status === 'PENDING')
+      .filter(record => record.type.toUpperCase() === 'QC' && record.status === 'COMPLETED')
       .map(record => ({
         id: parseInt(record.id),
         title: record.title,
         attempts: record.content?.attempts || 0
       })),
-    // 🚀 基于真实课程进度数据生成学期地图
+    // 🚀 基于教学计划数据生成动态学期地图
     timeline: (() => {
-      // 使用从API获取的真实课程进度数据
-      const currentProgress = studentProfile?.student?.progress || {
-        chinese: { unit: "1", lesson: "1", title: "默认课程" },
-        math: { unit: "1", lesson: "1", title: "默认课程" },
-        english: { unit: "1", title: "Default Course" }
+      const timeline = {
+        chinese: [] as TimelineLesson[],
+        math: [] as TimelineLesson[],
+        english: [] as TimelineLesson[]
       };
 
-      // 基于当前进度生成学期课程数据
-      const generateTimeline = (subject: 'chinese' | 'math' | 'english', current: any): TimelineLesson[] => {
-        const lessons: TimelineLesson[] = [];
-        const currentUnit = parseInt(current?.unit || '1');
-        const currentLesson = parseInt(current?.lesson || '1');
-        const totalUnits = 8; // 假设8个单元
-        const lessonsPerUnit = subject === 'english' ? 2 : 4; // 英语每单元2课，语文数学每单元4课
+      // 🆕 核心重构：从所有历史任务记录中动态聚合过关地图
+      // 只处理 QC 类型的任务，按学科、单元、课时进行分组
+      const qcRecords = allTaskRecords.filter(r => r.type.toUpperCase() === 'QC');
 
-        for (let unit = 1; unit <= totalUnits; unit++) {
-          for (let lesson = 1; lesson <= lessonsPerUnit; lesson++) {
-            const lessonId = unit * 100 + lesson;
-            const isCurrentUnit = unit === currentUnit;
-            const isCurrentLesson = isCurrentUnit && lesson === currentLesson;
-            const isCompleted = unit < currentUnit || (unit === currentUnit && lesson <= currentLesson);
+      const groupBySubject = (records: typeof qcRecords, subjectKey: string) => {
+        const groups: Record<string, TimelineLesson> = {};
 
-            lessons.push({
-              id: lessonId,
-              unit: unit,
-              lesson: subject === 'english' ? undefined : lesson,
-              title: `${subject === 'chinese' ? '语文' : subject === 'math' ? '数学' : '英语'} - 第${unit}单元第${lesson}课`,
-              status: isCompleted ? 'done' : isCurrentLesson ? 'pending' : 'locked',
-              tasks: taskRecords
-                .filter(record => {
-                  // 根据任务类型和学科匹配到对应课程
-                  const subjectCategory = record.type.toUpperCase() === 'QC' ?
-                    (record.title.includes('语文') ? 'chinese' :
-                     record.title.includes('数学') ? 'math' : 'english') : '';
+        records.forEach(record => {
+          const content = (record.content || {}) as any;
+          const unit = parseInt(content.unit) || 0;
+          const lesson = parseInt(content.lesson) || 0;
+          const title = content.lessonPlanTitle || record.title.split('-')[0] || '未命名课程';
 
-                  return subjectCategory === subject && isCompleted;
-                })
-                .slice(0, 3) // 每课最多显示3个任务
-                .map((record, index) => ({
-                  id: parseInt(record.id) + index,
-                  name: record.title,
-                  status: record.status === 'COMPLETED' ? 'passed' : 'pending',
-                  attempts: (record.content?.attempts as number) || 0,
-                  date: new Date(record.createdAt).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
-                }))
-            });
+          // 判定学科 (修复：使用content.category和标题关键词判定)
+          const isMatch = content.subject === subjectKey ||
+                         (subjectKey === 'chinese' && (
+                           content.category === '基础核心' ||
+                           record.title.includes('语文') ||
+                           record.title.includes('生字') ||
+                           record.title.includes('课文') ||
+                           record.title.includes('古诗')
+                         )) ||
+                         (subjectKey === 'math' && (
+                           content.category === '数学巩固' ||
+                           record.title.includes('数学') ||
+                           record.title.includes('口算') ||
+                           record.title.includes('计算') ||
+                           record.title.includes('应用题')
+                         )) ||
+                         (subjectKey === 'english' && (
+                           content.category === '英语提升' ||
+                           record.title.includes('英语') ||
+                           record.title.includes('单词') ||
+                           record.title.includes('句型')
+                         ));
+
+          if (!isMatch) return;
+
+          const key = `${unit}-${lesson}`;
+          if (!groups[key]) {
+            groups[key] = {
+              id: Math.random(), // 临时ID
+              unit,
+              lesson,
+              title,
+              status: 'done',
+              tasks: []
+            };
           }
-        }
 
-        return lessons;
+          groups[key].tasks.push({
+            id: parseInt(record.id) || Math.random(),
+            name: record.title,
+            status: record.status === 'COMPLETED' ? 'passed' : 'pending',
+            attempts: (content.attempts as number) || 0,
+            date: new Date(record.createdAt).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+          });
+        });
+
+        return Object.values(groups).sort((a, b) => {
+          if (a.unit !== b.unit) return a.unit - b.unit;
+          return a.lesson - b.lesson;
+        });
       };
 
-      return {
-        chinese: generateTimeline('chinese', currentProgress?.chinese),
-        math: generateTimeline('math', currentProgress?.math),
-        english: generateTimeline('english', currentProgress?.english)
-      };
+      timeline.chinese = groupBySubject(qcRecords, 'chinese');
+      timeline.math = groupBySubject(qcRecords, 'math');
+      timeline.english = groupBySubject(qcRecords, 'english');
+
+      console.log('[StudentDetail] 动态学期地图聚合完成:', {
+        chinese: timeline.chinese.length,
+        math: timeline.math.length,
+        english: timeline.english.length
+      });
+
+      return timeline;
     })()
   };
 
-  // 🚀 基于任务记录的过程任务数据
-  const processTasks = taskRecords
-    .filter(record => record.type.toUpperCase() === 'TASK') // 只显示TASK类型
+  // 🚀 基于任务记录的过程任务数据 - 修复为只显示当周已完成
+  const processTasks = allTaskRecords
+    .filter(record => {
+      // 只显示TASK和METHODOLOGY类型（核心教法和综合成长）
+      const taskType = record.type.toUpperCase();
+      return (taskType === 'TASK' || taskType === 'METHODOLOGY') &&
+             record.status === 'COMPLETED'; // 只显示已完成的任务
+    })
     .map(record => ({
       id: record.id,
       name: record.title,
-      category: '课堂任务', // 可以根据需要从content中提取
+      category: record.type.toUpperCase() === 'METHODOLOGY' ? '核心教法' : '综合成长',
       default_exp: record.expAwarded,
-      status: record.status === 'COMPLETED' ? 'completed' :
-              record.status === 'PENDING' ? 'pending' : 'in_progress',
+      status: 'completed', // 已完成的任务
       created_at: record.createdAt
     }));
-  const thisWeekProcessTasks = filterThisWeek(processTasks);
+  const thisWeekProcessTasks = filterThisWeek(processTasks); // 过滤本周数据
 
   // 个性化加餐数据 (模拟备课中的个性化加餐) - 使用真实学生姓名
   const personalizedTasks = [
@@ -759,10 +870,10 @@ const StudentDetail: React.FC = () => {
             <div className="relative shrink-0">
               <div className="w-16 h-16 rounded-full p-0.5 bg-gradient-to-tr from-orange-400 to-purple-400">
                 <img
-                  src="/1024.jpg"
+                  src="/avatar.jpg"
                   className="w-full h-full rounded-full bg-white border-2 border-white object-cover"
                   alt={studentName}
-                  onError={(e)=>{ e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 fill=%22%23e5e7eb%22/><circle cx=%2232%22 cy=%2224%22 r=%2212%22 fill=%22%23cbd5e1%22/><rect x=%2216%22 y=%2240%22 width=%2232%22 height=%2216%22 rx=%228%22 fill=%22%23cbd5e1%22/></svg>'; }}
+                  onError={(e)=>{ e.currentTarget.src = '/avatar.jpg'; }}
                 />
               </div>
               {/* 等级胶囊 (悬浮在头像下方) */}
@@ -1152,7 +1263,7 @@ const StudentDetail: React.FC = () => {
                   <h3 className="font-bold text-gray-700 mb-2 flex justify-between items-center px-1">
                     今日过关
                     <span className="text-xs font-normal text-gray-400">
-                      进行中 {academicData.pendingTasks.length}
+                      已完成 {academicData.pendingTasks.length}
                     </span>
                   </h3>
                   <div className="space-y-2">
@@ -1164,7 +1275,7 @@ const StudentDetail: React.FC = () => {
                         </div>
                         <div className="flex gap-2">
                           <button className="w-8 h-8 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center active:bg-orange-200"><Plus size={16} /></button>
-                          <button id={`btn-pass-${task.id}`} onClick={() => handlePassTask(0, task.id)} className="w-8 h-8 rounded-full bg-green-50 text-green-600 flex items-center justify-center active:bg-green-200"><Check size={16} /></button>
+                          <button id={`btn-pass-${task.id}`} onClick={() => handlePassTask(0, task.id.toString())} className="w-8 h-8 rounded-full bg-green-50 text-green-600 flex items-center justify-center active:bg-green-200"><Check size={16} /></button>
                         </div>
                       </div>
                     ))}
@@ -1269,13 +1380,28 @@ const StudentDetail: React.FC = () => {
                                 className={`p-3 flex justify-between items-center cursor-pointer ${!isDone ? 'bg-orange-50/50' : ''}`}
                                 onClick={() => toggleLessonExpand(lesson.id)}
                               >
-                                <div>
+                                <div className="flex-1">
                                   <div className={`text-[10px] font-bold mb-0.5 ${isDone ? 'text-gray-400' : 'text-orange-600'}`}>
-                                    第{lesson.lesson}课 {isDone ? '' : '· 待补过'}
+                                    第{lesson.unit}单元 第{lesson.lesson}课 {isDone ? '' : '· 待补过'}
                                   </div>
                                   <div className={`font-bold text-sm ${isDone ? 'text-gray-600' : 'text-gray-800'}`}>{lesson.title}</div>
                                 </div>
-                                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                <div className="flex items-center gap-2">
+                                  {/* 🆕 一键补过按钮 - 只在未完成课程显示 */}
+                                  {!isDone && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation(); // 防止触发展开/收起
+                                        handlePassLesson(lesson.id, lesson);
+                                      }}
+                                      className="px-2 py-1 bg-green-500 text-white text-[10px] font-medium rounded-full hover:bg-green-600 active:bg-green-700 transition-colors"
+                                      title="一键补过本课程所有未完成任务"
+                                    >
+                                      全部补过
+                                    </button>
+                                  )}
+                                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                </div>
                               </div>
 
                               {/* Card Content (Tasks) */}
@@ -1297,7 +1423,7 @@ const StudentDetail: React.FC = () => {
                                             {!isTaskDone && (
                                               <button
                                                 id={`btn-pass-${task.id}`}
-                                                onClick={() => handlePassTask(lesson.id, task.id)}
+                                                onClick={() => handlePassTask(lesson.id, task.id.toString())}
                                                 className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs"
                                               >
                                                 ✓

@@ -51,7 +51,7 @@ export class ReportController {
       });
 
       // 获取学校教育理念
-      const school = await this.prisma.school.findUnique({
+      const school = await this.prisma.schools.findUnique({
         where: { id: schoolId },
         select: { educationalPhilosophy: true }
       });
@@ -218,7 +218,7 @@ export class ReportController {
         } as ApiResponse<never>);
       }
 
-      const school = await this.prisma.school.findUnique({
+      const school = await this.prisma.schools.findUnique({
         where: { id: schoolId },
         select: {
           name: true,

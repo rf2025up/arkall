@@ -103,10 +103,10 @@ export class HabitService {
     }
 
     // 获取总数 - 简单计数，很快
-    const total = await this.prisma.habit.count({ where });
+    const total = await this.prisma.habits.count({ where });
 
     // 获取习惯列表 - 性能优化：移除昂贵的 include 查询
-    const habits = await this.prisma.habit.findMany({
+    const habits = await this.prisma.habits.findMany({
       where,
       orderBy: [
         { createdAt: 'desc' },
@@ -127,7 +127,7 @@ export class HabitService {
         name: habit.name,
         description: habit.description,
         icon: habit.icon,
-        defaultExp: habit.defaultExp,
+        defaultExp: habit.expReward,
         isActive: habit.isActive,
         schoolId: habit.schoolId,
         createdAt: habit.createdAt,
@@ -147,7 +147,7 @@ export class HabitService {
    * 根据ID获取单个习惯
    */
   async getHabitById(id: string, schoolId: string): Promise<any> {
-    const habit = await this.prisma.habit.findFirst({
+    const habit = await this.prisma.habits.findFirst({
       where: {
         id,
         schoolId
@@ -178,7 +178,7 @@ export class HabitService {
     const { name, description, icon, expReward, pointsReward, schoolId } = data;
 
     // 检查习惯名称是否已存在
-    const existingHabit = await this.prisma.habit.findFirst({
+    const existingHabit = await this.prisma.habits.findFirst({
       where: {
         name,
         schoolId
@@ -189,7 +189,7 @@ export class HabitService {
       throw new Error('习惯名称已存在');
     }
 
-    const habit = await this.prisma.habit.create({
+    const habit = await this.prisma.habits.create({
       data: {
         name,
         description,
@@ -220,7 +220,7 @@ export class HabitService {
 
     // 如果要更新名称，检查是否与其他习惯重复
     if (name) {
-      const existingHabit = await this.prisma.habit.findFirst({
+      const existingHabit = await this.prisma.habits.findFirst({
         where: {
           name,
           schoolId,
@@ -233,7 +233,7 @@ export class HabitService {
       }
     }
 
-    const habit = await this.prisma.habit.update({
+    const habit = await this.prisma.habits.update({
       where: {
         id,
         schoolId
@@ -264,7 +264,7 @@ export class HabitService {
    * 删除习惯（软删除）
    */
   async deleteHabit(id: string, schoolId: string): Promise<void> {
-    await this.prisma.habit.update({
+    await this.prisma.habits.update({
       where: {
         id,
         schoolId
@@ -291,7 +291,7 @@ export class HabitService {
     const { habitId, studentId, schoolId, notes } = data;
 
     // 验证习惯是否存在且属于该学校
-    const habit = await this.prisma.habit.findFirst({
+    const habit = await this.prisma.habits.findFirst({
       where: {
         id: habitId,
         schoolId,
@@ -304,7 +304,7 @@ export class HabitService {
     }
 
     // 验证学生是否存在且属于该学校
-    const student = await this.prisma.student.findFirst({
+    const student = await this.prisma.students.findFirst({
       where: {
         id: studentId,
         schoolId,
@@ -322,7 +322,7 @@ export class HabitService {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const existingCheckIn = await this.prisma.habitLog.findFirst({
+    const existingCheckIn = await this.prisma.habits_logs.findFirst({
       where: {
         habitId,
         studentId,
@@ -342,7 +342,7 @@ export class HabitService {
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    const yesterdayCheckIn = await this.prisma.habitLog.findFirst({
+    const yesterdayCheckIn = await this.prisma.habits_logs.findFirst({
       where: {
         habitId,
         studentId,
@@ -358,7 +358,7 @@ export class HabitService {
     const streakDays = yesterdayCheckIn ? yesterdayCheckIn.streakDays + 1 : 1;
 
     // 创建打卡记录
-    const habitLog = await this.prisma.habitLog.create({
+    const habitLog = await this.prisma.habits_logs.create({
       data: {
         habitId,
         studentId,
@@ -370,7 +370,7 @@ export class HabitService {
     });
 
     // 更新学生积分和经验
-    const updatedStudent = await this.prisma.student.update({
+    const updatedStudent = await this.prisma.students.update({
       where: { id: studentId },
       data: {
         points: { increment: habit.pointsReward || 0 },
@@ -381,7 +381,7 @@ export class HabitService {
     // 重新计算等级
     const newLevel = Math.floor(updatedStudent.exp / 100) + 1;
     if (newLevel > updatedStudent.level) {
-      await this.prisma.student.update({
+      await this.prisma.students.update({
         where: { id: studentId },
         data: { level: newLevel }
       });
@@ -464,10 +464,10 @@ export class HabitService {
     }
 
     // 获取总数
-    const total = await this.prisma.habitLog.count({ where });
+    const total = await this.prisma.habits_logs.count({ where });
 
     // 获取打卡记录列表
-    const habitLogs = await this.prisma.habitLog.findMany({
+    const habitLogs = await this.prisma.habits_logs.findMany({
       where,
       orderBy: { checkedAt: 'desc' },
       skip,
@@ -512,7 +512,7 @@ export class HabitService {
    */
   async getStudentHabitStats(studentId: string, schoolId: string): Promise<any> {
     // 验证学生是否存在且属于该学校
-    const student = await this.prisma.student.findFirst({
+    const student = await this.prisma.students.findFirst({
       where: {
         id: studentId,
         schoolId,
@@ -525,7 +525,7 @@ export class HabitService {
     }
 
     // 获取所有活跃习惯
-    const habits = await this.prisma.habit.findMany({
+    const habits = await this.prisma.habits.findMany({
       where: {
         schoolId,
         isActive: true
@@ -533,7 +533,7 @@ export class HabitService {
     });
 
     // 获取学生的打卡记录
-    const habitLogs = await this.prisma.habitLog.findMany({
+    const habitLogs = await this.prisma.habits_logs.findMany({
       where: {
         studentId,
         schoolId
@@ -618,21 +618,21 @@ export class HabitService {
   async getHabitStats(schoolId: string): Promise<HabitStatsResponse> {
     // 获取习惯总数和活跃习惯数
     const [totalHabits, activeHabits] = await Promise.all([
-      this.prisma.habit.count({
+      this.prisma.habits.count({
         where: { schoolId }
       }),
-      this.prisma.habit.count({
+      this.prisma.habits.count({
         where: { schoolId, isActive: true }
       })
     ]);
 
     // 获取打卡总数
-    const totalCheckIns = await this.prisma.habitLog.count({
+    const totalCheckIns = await this.prisma.habits_logs.count({
       where: { schoolId }
     });
 
     // 获取每个习惯的平均连续打卡天数
-    const habitStreakRates = await this.prisma.habitLog.groupBy({
+    const habitStreakRates = await this.prisma.habits_logs.groupBy({
       by: ['habitId'],
       where: { schoolId },
       _avg: {
@@ -644,7 +644,7 @@ export class HabitService {
     });
 
     // 获取习惯名称
-    const habits = await this.prisma.habit.findMany({
+    const habits = await this.prisma.habits.findMany({
       where: { schoolId },
       select: { id: true, name: true }
     });
@@ -657,7 +657,7 @@ export class HabitService {
     }));
 
     // 获取参与度最高的学生
-    const topParticipants = await this.prisma.habitLog.groupBy({
+    const topParticipants = await this.prisma.habits_logs.groupBy({
       by: ['studentId'],
       where: { schoolId },
       _count: {
@@ -672,7 +672,7 @@ export class HabitService {
     });
 
     // 获取学生信息和总经验值
-    const students = await this.prisma.student.findMany({
+    const students = await this.prisma.students.findMany({
       where: {
         id: { in: topParticipants.map(p => p.studentId) },
         schoolId
