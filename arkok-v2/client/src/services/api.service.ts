@@ -94,9 +94,9 @@ export class ApiService {
 
           // 检查是否是真正的认证失败，而不是其他404或服务错误
           if (errorMessage.includes('unauthorized') ||
-              errorMessage.includes('token') ||
-              errorMessage.includes('authentication') ||
-              error.response.data?.error?.toLowerCase().includes('unauthorized')) {
+            errorMessage.includes('token') ||
+            errorMessage.includes('authentication') ||
+            error.response.data?.error?.toLowerCase().includes('unauthorized')) {
 
             console.warn(`[AUTH FIX] 401 Authentication error, clearing tokens`);
 
@@ -253,6 +253,23 @@ export class ApiService {
     };
   }
 
+  // 🆕 记录相关API
+  public get records() {
+    return {
+      create: (data: {
+        studentId: string;
+        title: string;
+        category: string;
+        subcategory?: string;  // 🆕 分类标题
+        exp: number;
+        type?: string;
+      }) => this.post<any>('/records', data),
+
+      passAll: (studentId: string, expBonus: number = 0) =>
+        this.patch<any>(`/records/student/${studentId}/pass-all`, { expBonus }),
+    };
+  }
+
   public async getHabits(): Promise<ApiResponse<HabitsResponse>> {
     return this.get<HabitsResponse>('/habits');
   }
@@ -370,6 +387,36 @@ export const API = {
     deleteLessonPlan: (lessonPlanId: string) => apiService.delete(`/lms/plans/${lessonPlanId}`),
 
     getSchoolStats: (schoolId: string) => apiService.get(`/lms/stats/${schoolId}`),
+  },
+
+  // 任务记录 (Records) 相关
+  records: {
+    create: (data: {
+      studentId: string;
+      title: string;
+      category: string;
+      subcategory?: string;  // 🆕 分类标题
+      exp: number;
+      type?: string;
+    }) => apiService.post('/records', data),
+
+    passAll: (studentId: string, expBonus: number = 0) =>
+      apiService.patch(`/records/student/${studentId}/pass-all`, { expBonus }),
+  },
+
+  // 1v1 个性化辅导相关
+  tutoring: {
+    list: (params?: {
+      studentId?: string;
+      status?: string;
+      dateRange?: { start: string; end: string };
+      limit?: number;
+    }) => apiService.get<any[]>('/personalized-tutoring', params),
+
+    updateStatus: (id: string, data: {
+      status: 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
+      completionNotes?: string;
+    }) => apiService.patch<any>(`/personalized-tutoring/${id}/status`, data),
   },
 
   // --- [AUTH FIX] 强制重写：大屏数据，使用新的认证机制 ---

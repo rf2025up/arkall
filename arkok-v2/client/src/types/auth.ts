@@ -2,6 +2,7 @@
 
 export interface User {
   id: string;
+  userId?: string; // 🚀 添加兼容字段以匹配后端
   username: string;
   name: string;
   displayName?: string;

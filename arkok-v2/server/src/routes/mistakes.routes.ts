@@ -1,23 +1,33 @@
 import { Router } from 'express';
+import AuthService from '../services/auth.service';
+import { authenticateToken } from '../middleware/auth.middleware';
 
-const router = Router();
+/**
+ * 错题管理路由 (V5.0)
+ */
+export class MistakesRoutes {
+  private router: Router;
 
-// 临时处理mistakes端点 - 返回空数据
-router.get('/', async (req, res) => {
-  try {
-    // 返回空的错题数据
-    res.json({
-      success: true,
-      data: [],
-      message: '错题数据获取成功'
-    });
-  } catch (error) {
-    console.error('获取错题数据失败:', error);
-    res.status(500).json({
-      success: false,
-      message: '获取错题数据失败'
+  constructor(private authService: AuthService) {
+    this.router = Router();
+    this.initializeRoutes();
+  }
+
+  private initializeRoutes(): void {
+    // 应用认证中间件
+    this.router.use(authenticateToken(this.authService));
+
+    // 获取错题 (目前返回空)
+    this.router.get('/', async (req, res) => {
+      res.json({
+        success: true,
+        data: [],
+        message: '错题数据获取成功'
+      });
     });
   }
-});
 
-export default router;
+  public getRoutes(): Router {
+    return this.router;
+  }
+}

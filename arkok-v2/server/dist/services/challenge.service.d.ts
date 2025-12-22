@@ -1,3 +1,4 @@
+import { PrismaClient } from '@prisma/client';
 import { Server as SocketIOServer } from 'socket.io';
 export interface ChallengeQuery {
     schoolId: string;
@@ -74,7 +75,7 @@ export interface ChallengeStatsResponse {
 export declare class ChallengeService {
     private prisma;
     private io;
-    constructor(io: SocketIOServer);
+    constructor(prisma: PrismaClient, io: SocketIOServer);
     /**
      * 获取挑战列表
      */
@@ -103,6 +104,14 @@ export declare class ChallengeService {
      * 更新挑战参与者状态
      */
     updateChallengeParticipant(data: UpdateChallengeParticipantRequest): Promise<any>;
+    /**
+     * 批量更新挑战参与者结果
+     */
+    batchUpdateParticipants(challengeId: string, schoolId: string, updates: {
+        studentId: string;
+        result: 'COMPLETED' | 'FAILED';
+        notes?: string;
+    }[]): Promise<any>;
     /**
      * 获取挑战参与者列表
      */

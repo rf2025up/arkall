@@ -570,7 +570,7 @@ class StudentRoutes {
          *       401:
          *         description: 用户未认证
          */
-          }
+    }
     /**
      * 获取学生列表 - 强制重写修复
      */
@@ -611,7 +611,8 @@ class StudentRoutes {
             res.status(200).json({
                 success: true,
                 message: '获取学生列表成功',
-                data: result
+                data: result.students,
+                pagination: result.pagination
             });
             console.log(`[DEBUG] Response sent to frontend successfully`);
             // --- 日志结束 ---

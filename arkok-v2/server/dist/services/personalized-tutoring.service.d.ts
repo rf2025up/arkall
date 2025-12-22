@@ -1,3 +1,4 @@
+import { PrismaClient } from '@prisma/client';
 export interface PersonalizedTutoringPlanRequest {
     teacherId: string;
     schoolId: string;
@@ -77,7 +78,7 @@ export interface TutoringQueryOptions {
 }
 export declare class PersonalizedTutoringService {
     private prisma;
-    constructor();
+    constructor(prisma: PrismaClient);
     /**
      * 创建1v1教学计划
      */

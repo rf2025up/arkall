@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { StudentService } from '../services/student.service';
-import AuthService from '../services/auth.service';
+import { AuthService } from '../services/auth.service';
 /**
  * 学生管理路由
  */

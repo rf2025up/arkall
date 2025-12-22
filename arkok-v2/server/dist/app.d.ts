@@ -3,11 +3,16 @@ import { Server as SocketIOServer } from 'socket.io';
 import { PrismaClient } from '@prisma/client';
 import AuthService from './services/auth.service';
 import StudentService from './services/student.service';
+import { LMSService } from './services/lms.service';
 import SocketService from './services/socket.service';
 import HabitService from './services/habit.service';
 import ChallengeService from './services/challenge.service';
 import PKMatchService from './services/pkmatch.service';
 import BadgeService from './services/badge.service';
+import { ReportService } from './services/report.service';
+import SchoolService from './services/school.service';
+import DashboardService from './services/dashboard.service';
+import { PersonalizedTutoringService } from './services/personalized-tutoring.service';
 export declare class App {
     app: express.Application;
     server: any;
@@ -20,18 +25,21 @@ export declare class App {
     challengeService: ChallengeService;
     pkMatchService: PKMatchService;
     badgeService: BadgeService;
+    lmsService: LMSService;
+    reportService: ReportService;
+    schoolService: SchoolService;
+    dashboardService: DashboardService;
+    tutoringService: PersonalizedTutoringService;
     constructor();
     private initializeMiddlewares;
     private initializeRoutes;
     private initializeErrorHandling;
     private initializeSocketIO;
-    broadcast(event: string, data: any): void;
-    broadcastToRoom(room: string, event: string, data: any): void;
-    getConnectionStats(): {
-        connected: number;
-        rooms: string[];
-    };
     start(port?: number): Promise<void>;
+    /**
+     * 停止服务（用于安全退出）
+     */
     stop(): Promise<void>;
 }
+export default App;
 //# sourceMappingURL=app.d.ts.map

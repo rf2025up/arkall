@@ -64,10 +64,11 @@ export interface ScoreUpdateEvent {
 }
 
 export class StudentService {
-  private prisma = new PrismaClient();
+  private prisma: PrismaClient;
   private io: SocketIOServer;
 
-  constructor(io: SocketIOServer) {
+  constructor(prisma: PrismaClient, io: SocketIOServer) {
+    this.prisma = prisma;
     this.io = io;
   }
 
@@ -128,13 +129,9 @@ export class StudentService {
         }
       }
 
-      // 🆕 添加班级过滤功能
-      if (query.className) {
-        whereCondition.className = query.className;
-        console.log(`[TEACHER BINDING] 🔍 Filtering by className: ${query.className}`);
-      } else {
-        console.log(`[TEACHER BINDING] ⚠️ No className filter provided - will return all students for scope: ${scope}`);
-      }
+      // 🆕 只根据 teacherId 分班，不使用 className 过滤
+      // className 仅作为显示标签，不参与查询过滤
+      console.log(`[TEACHER BINDING] ⚠️ Using teacherId only for student filtering (className filter removed)`);
 
       // 保留搜索功能
       if (query.search) {
@@ -201,14 +198,17 @@ export class StudentService {
     try {
       console.log(`🔍 获取学生档案: ${studentId}, 学校: ${schoolId}`);
 
-      // 使用 Promise.all 并行查询所有相关数据
       const [
         student,
         task_records,
         pkMatchesAsPlayerA,
         pkMatchesAsPlayerB,
         allPkMatches,
-        taskStats
+        taskStats,
+        allHabits,
+        studentHabitLogs,
+        latestLessonPlan,
+        latestOverride
       ] = await Promise.all([
         // 1. 学生基础信息
         this.prisma.students.findFirst({
@@ -243,13 +243,13 @@ export class StudentService {
           },
           orderBy: { createdAt: 'desc' },
           include: {
-            students_pk_matches_studentATostudents: {
+            playerA: {
               select: { id: true, name: true, className: true }
             },
-            students_pk_matches_studentBTostudents: {
+            playerB: {
               select: { id: true, name: true, className: true }
             },
-            students_pk_matches_winnerIdTostudents: {
+            winner: {
               select: { id: true, name: true }
             }
           }
@@ -263,13 +263,13 @@ export class StudentService {
           },
           orderBy: { createdAt: 'desc' },
           include: {
-            students_pk_matches_studentATostudents: {
+            playerA: {
               select: { id: true, name: true, className: true }
             },
-            students_pk_matches_studentBTostudents: {
+            playerB: {
               select: { id: true, name: true, className: true }
             },
-            students_pk_matches_winnerIdTostudents: {
+            winner: {
               select: { id: true, name: true }
             }
           }
@@ -299,6 +299,34 @@ export class StudentService {
           _sum: {
             expAwarded: true
           }
+        }),
+
+        // 7. 习惯数据
+        this.prisma.habits.findMany({
+          where: { schoolId, isActive: true }
+        }),
+
+        // 8. 学生习惯记录
+        this.prisma.habit_logs.findMany({
+          where: { studentId, schoolId },
+          orderBy: { checkedAt: 'desc' }
+        }),
+
+        // 9. 🆕 最新教学计划 (用于计算进度)
+        this.prisma.lesson_plans.findFirst({
+          where: {
+            schoolId,
+            isActive: true,
+            // 如果学生有归属老师，取该老师的计划
+            ...(studentId ? { teachers: { students: { some: { id: studentId } } } } : {})
+          },
+          orderBy: { date: 'desc' }
+        }),
+
+        // 10. 🆕 最新覆盖记录
+        this.prisma.task_records.findFirst({
+          where: { studentId, schoolId, isOverridden: true },
+          orderBy: { updatedAt: 'desc' }
         })
       ]);
 
@@ -337,9 +365,9 @@ export class StudentService {
           opponent: match.studentA === studentId ? match.studentB : match.studentA,
           isWinner: match.winnerId === studentId,
           // 添加关系字段数据用于前端显示
-          playerA: match.students_pk_matches_studentATostudents,
-          playerB: match.students_pk_matches_studentBTostudents,
-          winner: match.students_pk_matches_winnerIdTostudents
+          playerA: match.playerA,
+          playerB: match.playerB,
+          winner: match.winner
         }));
 
       // 计算PK统计数据
@@ -351,6 +379,65 @@ export class StudentService {
         winRate: allPkMatches.length > 0
           ? (allPkMatches.filter(match => match.winnerId === studentId).length / allPkMatches.length * 100).toFixed(1)
           : '0.0'
+      };
+
+      // 🆕 处理习惯统计数据 (SSOT)
+      console.log(`🎯 [HABIT_DEBUG] allHabits 数量: ${allHabits.length}, studentHabitLogs 数量: ${studentHabitLogs.length}`);
+      const habitStats = allHabits.map(habit => {
+        const logs = studentHabitLogs.filter(log => log.habitId === habit.id);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        return {
+          habit: {
+            id: habit.id,
+            name: habit.name,
+            icon: habit.icon,
+            expReward: habit.expReward
+          },
+          stats: {
+            totalCheckIns: logs.length,
+            currentStreak: logs.length > 0 ? logs[0].streakDays : 0, // 简化版连续打卡
+            checkedToday: logs.some(log => {
+              const checkDate = new Date(log.checkedAt);
+              return checkDate >= today && checkDate < tomorrow;
+            })
+          }
+        };
+      });
+      console.log(`🎯 [HABIT_DEBUG] 生成的 habitStats 数量: ${habitStats.length}, 有打卡记录的习惯: ${habitStats.filter(h => h.stats.totalCheckIns > 0).length}`);
+
+      // 🆕 计算课程进度 (对齐 LMS Service 逻辑)
+      const defaultProgress = {
+        chinese: { unit: '1', lesson: '1', title: '默认课程' },
+        math: { unit: '1', lesson: '1', title: '默认课程' },
+        english: { unit: '1', title: 'Default' }
+      };
+
+      const planInfo = (latestLessonPlan?.content as any)?.courseInfo || defaultProgress;
+      const overrideInfo = (latestOverride?.content as any)?.courseInfo;
+
+      let studentProgress = planInfo;
+      let progressSource = latestLessonPlan ? 'lesson_plan' : 'default';
+      let progressUpdatedAt = latestLessonPlan?.updatedAt || (student ? student.createdAt : new Date());
+
+      if (overrideInfo && student) {
+        const planTime = latestLessonPlan ? new Date(latestLessonPlan.updatedAt).getTime() : 0;
+        const overrideTime = new Date(latestOverride.updatedAt).getTime();
+
+        if (overrideTime > planTime) {
+          studentProgress = overrideInfo;
+          progressSource = 'override';
+          progressUpdatedAt = latestOverride.updatedAt;
+        }
+      }
+
+      const processedProgress = {
+        ...studentProgress,
+        source: progressSource,
+        updatedAt: progressUpdatedAt
       };
 
       // 处理任务统计数据
@@ -376,7 +463,8 @@ export class StudentService {
         // 学生基础信息
         student: {
           ...student,
-          level
+          level,
+          progress: processedProgress
         },
 
         // 任务记录（最近50条）
@@ -391,6 +479,9 @@ export class StudentService {
 
         // 时间轴数据
         timelineData,
+
+        // 🆕 习惯统计数据
+        habitStats,
 
         // 🆕 过关地图数据
         semesterMap: Object.values(semesterMap),

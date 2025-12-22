@@ -1,11 +1,13 @@
 import { Router, Request, Response } from 'express';
-import { BadgeService,
+import {
+  BadgeService,
   BadgeQuery,
   CreateBadgeRequest,
   UpdateBadgeRequest,
   AwardBadgeRequest
 } from '../services/badge.service';
-import { authenticateToken, AuthRequest } from '../middleware/auth.middleware';
+import { authenticateToken, AuthRequest, validateUser } from '../middleware/auth.middleware';
+import { AuthService } from '../services/auth.service';
 
 export interface BadgeResponse {
   success: boolean;
@@ -25,7 +27,7 @@ export interface BadgeResponse {
 export class BadgeRoutes {
   private router: Router;
 
-  constructor(private badgeService: BadgeService) {
+  constructor(private badgeService: BadgeService, private authService: AuthService) {
     this.router = Router();
     this.initializeRoutes();
   }
@@ -77,298 +79,16 @@ export class BadgeRoutes {
      *       200:
      *         description: 获取勋章列表成功
      */
-    this.router.get('/', authenticateToken, this.getBadges.bind(this));
-
-    /**
-     * @swagger
-     * /api/badges/{id}:
-     *   get:
-     *     summary: 获取单个勋章详情
-     *     tags: [Badges]
-     *     security:
-     *       - bearerAuth: []
-     *     parameters:
-     *       - in: path
-     *         name: id
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: 勋章ID
-     *       - in: query
-     *         name: schoolId
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: 学校ID
-     *     responses:
-     *       200:
-     *         description: 获取勋章详情成功
-     */
-    this.router.get('/:id', authenticateToken, this.getBadgeById.bind(this));
-
-    /**
-     * @swagger
-     * /api/badges:
-     *   post:
-     *     summary: 创建新勋章
-     *     tags: [Badges]
-     *     security:
-     *       - bearerAuth: []
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
-     *             required: [name, category, schoolId]
-     *             properties:
-     *               name:
-     *                 type: string
-     *                 description: 勋章名称
-     *               description:
-     *                 type: string
-     *                 description: 勋章描述
-     *               icon:
-     *                 type: string
-     *                 description: 勋章图标
-     *               category:
-     *                 type: string
-     *                 description: 勋章类别
-     *               requirement:
-     *                 type: object
-     *                 description: 获得条件
-     *               schoolId:
-     *                 type: string
-     *                 description: 学校ID
-     *     responses:
-     *       201:
-     *         description: 创建勋章成功
-     */
-    this.router.post('/', authenticateToken, this.createBadge.bind(this));
-
-    /**
-     * @swagger
-     * /api/badges/{id}:
-     *   put:
-     *     summary: 更新勋章信息
-     *     tags: [Badges]
-     *     security:
-     *       - bearerAuth: []
-     *     parameters:
-     *       - in: path
-     *         name: id
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: 勋章ID
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
-     *             properties:
-     *               name:
-     *                 type: string
-     *                 description: 勋章名称
-     *               description:
-     *                 type: string
-     *                 description: 勋章描述
-     *               icon:
-     *                 type: string
-     *                 description: 勋章图标
-     *               category:
-     *                 type: string
-     *                 description: 勋章类别
-     *               requirement:
-     *                 type: object
-     *                 description: 获得条件
-     *               isActive:
-     *                 type: boolean
-     *                 description: 是否启用
-     *               schoolId:
-     *                 type: string
-     *                 description: 学校ID
-     *     responses:
-     *       200:
-     *         description: 更新勋章成功
-     */
-    this.router.put('/:id', authenticateToken, this.updateBadge.bind(this));
-
-    /**
-     * @swagger
-     * /api/badges/{id}:
-     *   delete:
-     *     summary: 删除勋章（软删除）
-     *     tags: [Badges]
-     *     security:
-     *       - bearerAuth: []
-     *     parameters:
-     *       - in: path
-     *         name: id
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: 勋章ID
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
-     *             required: [schoolId]
-     *             properties:
-     *               schoolId:
-     *                 type: string
-     *                 description: 学校ID
-     *     responses:
-     *       200:
-     *         description: 删除勋章成功
-     */
-    this.router.delete('/:id', authenticateToken, this.deleteBadge.bind(this));
-
-    /**
-     * @swagger
-     * /api/badges/award:
-     *   post:
-     *     summary: 授予学生勋章
-     *     tags: [Badges]
-     *     security:
-     *       - bearerAuth: []
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
-     *             required: [studentId, badgeId, schoolId]
-     *             properties:
-     *               studentId:
-     *                 type: string
-     *                 description: 学生ID
-     *               badgeId:
-     *                 type: string
-     *                 description: 勋章ID
-     *               schoolId:
-     *                 type: string
-     *                 description: 学校ID
-     *               reason:
-     *                 type: string
-     *                 description: 授予原因
-     *               awardedBy:
-     *                 type: string
-     *                 description: 授予者ID
-     *     responses:
-     *       201:
-     *         description: 授予勋章成功
-     */
-    this.router.post('/award', authenticateToken, this.awardBadge.bind(this));
-
-    /**
-     * @swagger
-     * /api/badges/revoke:
-     *   delete:
-     *     summary: 取消学生勋章
-     *     tags: [Badges]
-     *     security:
-     *       - bearerAuth: []
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
-     *             required: [studentId, badgeId, schoolId]
-     *             properties:
-     *               studentId:
-     *                 type: string
-     *                 description: 学生ID
-     *               badgeId:
-     *                 type: string
-     *                 description: 勋章ID
-     *               schoolId:
-     *                 type: string
-     *                 description: 学校ID
-     *     responses:
-     *       200:
-     *         description: 取消勋章成功
-     */
-    this.router.delete('/revoke', authenticateToken, this.revokeBadge.bind(this));
-
-    /**
-     * @swagger
-     * /api/badges/student/{studentId}:
-     *   get:
-     *     summary: 获取学生勋章列表
-     *     tags: [Badges]
-     *     security:
-     *       - bearerAuth: []
-     *     parameters:
-     *       - in: path
-     *         name: studentId
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: 学生ID
-     *       - in: query
-     *         name: schoolId
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: 学校ID
-     *     responses:
-     *       200:
-     *         description: 获取学生勋章列表成功
-     */
-    this.router.get('/student/:studentId', authenticateToken, this.getStudentBadges.bind(this));
-
-    /**
-     * @swagger
-     * /api/badges/available/{studentId}:
-     *   get:
-     *     summary: 获取可获得的勋章
-     *     tags: [Badges]
-     *     security:
-     *       - bearerAuth: []
-     *     parameters:
-     *       - in: path
-     *         name: studentId
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: 学生ID
-     *       - in: query
-     *         name: schoolId
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: 学校ID
-     *     responses:
-     *       200:
-     *         description: 获取可获得的勋章成功
-     */
-    this.router.get('/available/:studentId', authenticateToken, this.getAvailableBadges.bind(this));
-
-    /**
-     * @swagger
-     * /api/badges/stats:
-     *   get:
-     *     summary: 获取勋章统计信息
-     *     tags: [Badges]
-     *     security:
-     *       - bearerAuth: []
-     *     parameters:
-     *       - in: query
-     *         name: schoolId
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: 学校ID
-     *     responses:
-     *       200:
-     *         description: 获取勋章统计成功
-     */
-    this.router.get('/stats', authenticateToken, this.getBadgeStats.bind(this));
+    this.router.get('/', authenticateToken(this.authService), validateUser, this.getBadges.bind(this));
+    this.router.get('/:id', authenticateToken(this.authService), validateUser, this.getBadgeById.bind(this));
+    this.router.post('/', authenticateToken(this.authService), validateUser, this.createBadge.bind(this));
+    this.router.put('/:id', authenticateToken(this.authService), validateUser, this.updateBadge.bind(this));
+    this.router.delete('/:id', authenticateToken(this.authService), validateUser, this.deleteBadge.bind(this));
+    this.router.post('/award', authenticateToken(this.authService), validateUser, this.awardBadge.bind(this));
+    this.router.delete('/revoke', authenticateToken(this.authService), validateUser, this.revokeBadge.bind(this));
+    this.router.get('/student/:studentId', authenticateToken(this.authService), validateUser, this.getStudentBadges.bind(this));
+    this.router.get('/available/:studentId', authenticateToken(this.authService), validateUser, this.getAvailableBadges.bind(this));
+    this.router.get('/stats', authenticateToken(this.authService), validateUser, this.getBadgeStats.bind(this));
   }
 
   /**
@@ -376,9 +96,17 @@ export class BadgeRoutes {
    */
   private async getBadges(req: Request, res: Response): Promise<void> {
     try {
-      const query: BadgeQuery = req.query as any;
+      const { schoolId, search, category, isActive, page, limit } = req.query;
+      const query: BadgeQuery = {
+        schoolId: schoolId as string,
+        search: search as string,
+        category: category as string,
+        isActive: isActive === 'true',
+        page: page ? parseInt(page as string) : undefined,
+        limit: limit ? parseInt(limit as string) : undefined,
+      };
 
-      if (!query.schoolId) {
+      if (!schoolId) {
         const response: BadgeResponse = {
           success: false,
           message: '学校ID不能为空'

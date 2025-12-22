@@ -50,6 +50,10 @@ export declare class ChallengeRoutes {
      */
     private updateChallengeParticipant;
     /**
+     * 批量更新挑战参与者结果
+     */
+    private batchUpdateParticipants;
+    /**
      * 获取挑战参与者列表
      */
     private getChallengeParticipants;

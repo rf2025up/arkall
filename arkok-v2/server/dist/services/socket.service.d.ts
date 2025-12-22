@@ -1,6 +1,6 @@
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import { AuthService, AuthUser } from './auth.service';
-export interface AuthenticatedSocket extends Socket {
+export interface AuthenticatedSocket extends Socket<any, any, any, any> {
     user?: AuthUser;
     schoolId?: string;
     isAuthenticated?: boolean;
@@ -53,13 +53,7 @@ export declare class SocketService {
      * 向指定学校广播消息
      */
     broadcastToSchool(schoolId: string, event: string, data: any): void;
-    /**
-     * 向指定用户发送消息
-     */
     sendToUser(userId: string, event: string, data: any): void;
-    /**
-     * 向指定角色用户广播消息
-     */
     broadcastToRole(schoolId: string, role: string, event: string, data: any): void;
     /**
      * 获取学校房间信息

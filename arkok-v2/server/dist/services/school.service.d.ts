@@ -1,3 +1,4 @@
+import { PrismaClient } from '@prisma/client';
 export interface SchoolStats {
     teacherCount: number;
     studentCount: number;
@@ -55,6 +56,7 @@ export interface GetStudentsOptions {
 }
 export declare class SchoolService {
     private prisma;
+    constructor(prisma: PrismaClient);
     /**
      * 获取学校列表（包含教师和学生统计）
      */

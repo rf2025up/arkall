@@ -339,8 +339,15 @@ class HabitRoutes {
      */
     async getHabits(req, res) {
         try {
-            const query = req.query;
-            if (!query.schoolId) {
+            const { schoolId, search, isActive, page, limit } = req.query;
+            const query = {
+                schoolId: schoolId,
+                search: search,
+                isActive: isActive === 'true',
+                page: page ? parseInt(page) : undefined,
+                limit: limit ? parseInt(limit) : undefined,
+            };
+            if (!schoolId) {
                 const response = {
                     success: false,
                     message: '学校ID不能为空'

@@ -2,58 +2,17 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { UserController } from '../controllers/user.controller';
 import { AuthService, AuthUser } from '../services/auth.service';
 import { PrismaClient } from '@prisma/client';
+import { authenticateToken, requireAdmin } from '../middleware/auth.middleware';
 
 export class UserRoutes {
-  constructor(private authService: AuthService, private prisma: PrismaClient) {}
+  constructor(private authService: AuthService, private prisma: PrismaClient) { }
 
   getRoutes(): Router {
     const router = Router();
-    const userController = new UserController();
-
-    // 认证中间件
-    const authenticateToken = (req: Request, res: Response, next: NextFunction): void => {
-      const authHeader = req.headers.authorization;
-      const token = authHeader && authHeader.split(' ')[1];
-
-      if (!token) {
-        res.status(401).json({
-          success: false,
-          message: '访问令牌缺失',
-          code: 'TOKEN_MISSING'
-        });
-        return;
-      }
-
-      const user = this.authService.verifyToken(token);
-      if (!user) {
-        res.status(401).json({
-          success: false,
-          message: '无效的访问令牌',
-          code: 'TOKEN_INVALID'
-        });
-        return;
-      }
-
-      req.user = user;
-      next();
-    };
-
-    // 管理员权限检查中间件
-    const requireAdmin = (req: Request, res: Response, next: NextFunction): void => {
-      const user = req.user as AuthUser;
-      if (!user || user.role !== 'ADMIN') {
-        res.status(403).json({
-          success: false,
-          message: '权限不足，需要管理员权限',
-          code: 'INSUFFICIENT_PERMISSIONS'
-        });
-        return;
-      }
-      next();
-    };
+    const userController = new UserController(this.prisma);
 
     // 所有用户路由都需要认证和管理员权限
-    router.use(authenticateToken);
+    router.use(authenticateToken(this.authService));
     router.use(requireAdmin);
 
     // POST /api/users - 创建教师账号 (仅 Admin)

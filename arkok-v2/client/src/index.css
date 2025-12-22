@@ -27,6 +27,29 @@
     margin: 0;
     padding: 0;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    /* 🔴 iOS 触控滑动支持 */
+    touch-action: pan-y;
+    /* 🔴 允许垂直拖动 */
+  }
+
+  /* 🔴 确保主应用容器允许触控滚动 */
+  #root {
+    min-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  /* 🔴 确保所有可滚动容器支持触控 */
+  .overflow-y-auto,
+  .overflow-auto,
+  [style*="overflow"] {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
   }
 }
 

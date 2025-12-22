@@ -2,32 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useClass } from '../context/ClassContext';
-import { Check, CheckSquare, ListChecks, BookOpen, AlertCircle, User, UserPlus, Trophy, Medal, Swords, Flag, ChevronDown, Users } from 'lucide-react';
-import { Student, PointPreset, StudentListResponse, ScoreUpdateEvent } from '../types/student';
+import { Check, CheckSquare, ListChecks, BookOpen, AlertCircle, User, UserPlus, Trophy, Medal, Swords, Flag, ChevronDown, Users, Calendar, Bell } from 'lucide-react';
+import { Student, StudentListResponse, ScoreUpdateEvent } from '../types/student';
 import ActionSheet from '../components/ActionSheet';
 import { AddStudentModal } from '../components/AddStudentModal';
 import apiService from '../services/api.service';
 
-// 积分类别名称映射（从旧代码移植）
-const categoryNames: Record<string, string> = {
-  'I': 'I. 学习成果与高价值奖励',
-  'II': 'II. 自主管理与习惯养成 (午托篇)',
-  'III': 'III. 自主管理与学习过程 (晚辅篇)',
-  'IV': 'IV. 学习效率与时间管理',
-  'V': 'V. 质量、进步与整理',
-  'VI': 'VI. 纪律与惩罚细则',
-  'CUSTOM': '自定义类别'
-};
-
-// 积分预设（简化版本）
-const scorePresets: PointPreset[] = [
-  { label: '优秀作业', value: 5, category: 'I' },
-  { label: '积极回答', value: 3, category: 'I' },
-  { label: '遵守纪律', value: 2, category: 'II' },
-  { label: '迟到', value: -2, category: 'VI' },
-  { label: '作业未完成', value: -3, category: 'VI' },
-];
-
+// 积分已支持手动输入，不再需要预制列表。
 const Home = () => {
   const navigate = useNavigate();
   const { token, user } = useAuth();
@@ -67,11 +48,9 @@ const Home = () => {
 
     // 🆕 优化：只取消真正过时的请求，而不是所有请求
     if (abortControllerRef.current) {
-      // 延迟取消，避免取消刚刚发起的有效请求
+      const controllerToAbort = abortControllerRef.current;
       setTimeout(() => {
-        if (abortControllerRef.current && abortControllerRef.current !== abortControllerRef.current) {
-          abortControllerRef.current.abort();
-        }
+        controllerToAbort.abort();
       }, 100);
     }
 
@@ -128,39 +107,46 @@ const Home = () => {
       console.log('🔍 [DEBUG] success 状态:', studentsData?.success);
       console.log('🔍 [DEBUG] 调用的完整 URL:', url);
 
-      if (studentsData && studentsData.success && studentsData.data && (studentsData.data as any).students) {
-        const students = (studentsData.data as any).students;
-        console.log(`[${requestId}] [TEACHER BINDING] Successfully loaded ${students.length} students for viewMode: ${viewMode}`);
+      // 🆕 增强版解析逻辑：尝试从多个层级提取学生数组
+      let finalStudents: any[] = [];
+      if (Array.isArray(studentsData?.data)) {
+        finalStudents = studentsData.data;
+      } else if (studentsData?.data && Array.isArray((studentsData.data as any).students)) {
+        finalStudents = (studentsData.data as any).students;
+      } else if (Array.isArray(studentsData)) {
+        finalStudents = studentsData as any[];
+      }
 
-        // 🆕 优化：检查请求是否被取消，但增加容错机制
+      const hasData = finalStudents && finalStudents.length >= 0 && (studentsData?.success !== false);
+
+      if (hasData) {
+        console.log(`[${requestId}] [SUCCESS] Extracted ${finalStudents.length} students`);
+
+        // 🆕 检查是否被中止
         if (abortController.signal.aborted) {
-          console.log(`[${requestId}] [WARNING] Request was aborted, but data is available. Checking if we should still update...`);
-
-          // 🆕 容错机制：即使被取消，如果当前没有数据或数据更完整，仍然更新
-          if (students.length > 0 && students.length !== students.length) {
-            console.log(`[${requestId}] [RECOVERY] Updating state despite abort due to better data quality`);
-            const studentsWithAvatar = students.map((student: any) => ({
-              ...student,
-              avatarUrl: student.avatarUrl || '/avatar.jpg'
-            }));
-            setStudents(studentsWithAvatar);
+          console.log(`[${requestId}] [ABORTED] Request was aborted, checking recovery...`);
+          // 🆕 容错：即使被中止，如果当前没数据也强制更新一次
+          if (students.length === 0 && finalStudents.length > 0) {
+            console.log(`[${requestId}] [RECOVERY] Updating despite abort to avoid empty screen`);
+          } else {
+            console.log(`[${requestId}] [ABORTED] Skipping state update to prevent race conditions`);
             return;
           }
-
-          console.log(`[${requestId}] [TEACHER BINDING] Request aborted, skipping state update`);
-          return;
         }
 
-        // 为所有学生设置默认头像
-        const studentsWithAvatar = students.map((student: any) => ({
-          ...student,
-          avatarUrl: student.avatarUrl || '/avatar.jpg'
+        // 统一添加头像
+        const studentsWithAvatar = finalStudents.map((s: any) => ({
+          ...s,
+          avatarUrl: s.avatarUrl || '/avatar.jpg'
         }));
-        console.log(`[${requestId}] [SUCCESS] Updating state with ${studentsWithAvatar.length} students`);
+
         setStudents(studentsWithAvatar);
       } else {
-        console.warn("[TEACHER BINDING] No students data returned");
-        // 🆕 只有在非abort状态下才更新错误
+        console.warn("[TEACHER BINDING] No students data could be extracted", {
+          hasData,
+          studentsLength: finalStudents?.length,
+          success: studentsData?.success
+        });
         if (!abortController.signal.aborted) {
           setError('获取学生数据失败');
           setStudents([]);
@@ -443,6 +429,38 @@ const Home = () => {
     }
   };
 
+  // 🆕 处理批量签到
+  const handleBatchCheckin = async (studentIds: string[]) => {
+    if (!user?.schoolId) {
+      setToastMsg('学校信息缺失');
+      return;
+    }
+
+    try {
+      const data = await apiService.post('/checkins/batch', {
+        studentIds,
+        schoolId: user.schoolId
+      });
+
+      if (data.success) {
+        const result = data.data as any;
+        setToastMsg(`批量签到成功！(${result.success?.length || 0}人)`);
+        setTimeout(() => setToastMsg(null), 2000);
+
+        // 清除多选状态
+        setSelectedIds(new Set());
+        setIsMultiSelectMode(false);
+      } else {
+        setToastMsg(data.message || '签到失败');
+        setTimeout(() => setToastMsg(null), 2000);
+      }
+    } catch (error) {
+      console.error('Batch checkin error:', error);
+      setToastMsg('网络错误，签到失败');
+      setTimeout(() => setToastMsg(null), 2000);
+    }
+  };
+
   // 辅助组件：Header 上的功能胶囊按钮
   interface HeaderActionBtnProps {
     icon: React.ReactNode;
@@ -454,189 +472,213 @@ const Home = () => {
 
   const HeaderActionBtn = ({ icon, label, colorClass, bgClass, onClick }: HeaderActionBtnProps) => (
     <button onClick={onClick} className="flex flex-col items-center gap-1 group active:scale-95 transition-transform">
-        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${bgClass} ${colorClass}`}>
-            {icon}
-        </div>
-        <span className="text-xs text-white/90 font-medium">{label}</span>
+      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${bgClass} ${colorClass}`}>
+        {icon}
+      </div>
+      <span className="text-xs text-white/90 font-medium">{label}</span>
     </button>
   );
 
-  
+
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-orange-500 to-orange-600 pb-24">
-      {/* Header - v11.0 风格改造 */}
-      <header className="bg-primary px-6 py-6 pb-20 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
-        {/* 背景装饰 */}
-        <div className="absolute top-0 right-0 p-4 opacity-10">
-            <Check size={120} className="text-white" />
-        </div>
+    <div className="min-h-screen w-full bg-[#F5F7FA] pb-24">
+      {/* 🆕 头部区域 - 参考设计风格 */}
+      <header
+        className="pt-14 pb-24 px-6 rounded-b-[40px] relative overflow-hidden"
+        style={{ background: 'linear-gradient(160deg, #FF8C00 0%, #FF5500 100%)' }}
+      >
+        {/* 背景纹理装饰 */}
+        <div className="absolute -top-1/2 -left-1/5 w-[200%] h-[200%] pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 60%)' }}
+        />
 
-        {/* 🆕 第一行：标题与多选开关 - 基于视图模式 */}
+        {/* 顶栏 */}
         <div className="relative z-10 flex justify-between items-center mb-6">
-            <div>
-                <button
-                    onClick={() => setIsClassDrawerOpen(true)}
-                    className="flex items-center gap-2 text-white text-2xl font-bold mb-1 active:scale-95 transition-transform"
-                >
-                    {viewMode === 'MY_STUDENTS' ? (
-                        <>
-                            <User size={24} />
-                            {user?.name}的班级
-                        </>
-                    ) : viewMode === 'ALL_SCHOOL' ? (
-                        <>
-                            <Users size={24} />
-                            全校大名单
-                        </>
-                    ) : (
-                        <>
-                            <User size={24} />
-                            {availableClasses.find(cls => cls.teacherId === selectedTeacherId)?.teacherName}的班级
-                        </>
-                    )}
-                    <ChevronDown size={20} className="text-white/80" />
-                </button>
-                <p className="text-orange-100 text-sm opacity-90">
-                    {visibleStudents.length} 位学生
-                    {viewMode === 'MY_STUDENTS' && ` · ${user?.name}老师名下的学生`}
-                    {viewMode === 'ALL_SCHOOL' && ' · 可从中选择学生移入您的班级'}
-                    {viewMode === 'SPECIFIC_CLASS' && ` · 可从中选择学生移入您的班级`}
-                </p>
-            </div>
-            <div className="flex items-center space-x-2">
-                <button
-                    onClick={toggleMultiSelectMode}
-                    className={`p-2 rounded-xl backdrop-blur-sm transition-all ${isMultiSelectMode ? 'bg-white text-primary shadow-md' : 'bg-white/20 text-white'}`}
-                >
-                    {isMultiSelectMode ? <CheckSquare size={20} /> : <ListChecks size={20} />}
-                </button>
-            </div>
-        </div>
+          {/* 班级切换器 - 玻璃胶囊 */}
+          <button
+            onClick={() => setIsClassDrawerOpen(true)}
+            className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full backdrop-blur-md active:bg-white/30 transition-colors border border-white/10"
+          >
+            <span className="font-bold text-lg text-white tracking-wide">
+              {viewMode === 'MY_STUDENTS' ? `${user?.name}班` :
+                viewMode === 'ALL_SCHOOL' ? '全校大名单' :
+                  `${availableClasses.find(cls => cls.teacherId === selectedTeacherId)?.teacherName}班`}
+            </span>
+            <ChevronDown size={16} className="text-white/80" />
+          </button>
 
-        {/* 第二行：快捷功能入口 (v11.0 风格) */}
-        {!isMultiSelectMode && (
-            <div className="relative z-10 flex justify-between px-2 animate-in slide-in-from-top-4 fade-in duration-500">
-                <HeaderActionBtn
-                    icon={<Check size={22} />}
-                    label="习惯"
-                    bgClass="bg-green-100"
-                    colorClass="text-green-600"
-                    onClick={() => navigate('/habits')}
-                />
-                <HeaderActionBtn
-                    icon={<Medal size={22} />}
-                    label="发勋章"
-                    bgClass="bg-blue-100"
-                    colorClass="text-blue-600"
-                    onClick={() => navigate('/badges')}
-                />
-                <HeaderActionBtn
-                    icon={<Swords size={22} />}
-                    label="PK对决"
-                    bgClass="bg-red-100"
-                    colorClass="text-red-600"
-                    onClick={() => navigate('/pk')}
-                />
-                <HeaderActionBtn
-                    icon={<Flag size={22} />}
-                    label="挑战"
-                    bgClass="bg-purple-100"
-                    colorClass="text-purple-600"
-                    onClick={() => navigate('/challenges')}
-                />
-            </div>
-        )}
+          {/* 🆕 通知铃铛 */}
+          <button
+            onClick={() => navigate('/parent-messages')}
+            className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md hover:bg-white/30 transition-colors border border-white/10 relative"
+          >
+            <Bell size={18} className="text-white" />
+            {/* 红点提示 */}
+            <div className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-white/50"></div>
+          </button>
+        </div>
       </header>
 
-      {/* Student Grid - 调整margin适配新Header高度 */}
-      <div className="px-4 -mt-12 relative z-20">
-        <div className="bg-white rounded-3xl shadow-xl p-5 min-h-[60vh]">
-          {/* --- 条件渲染逻辑 --- */}
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
-            {visibleStudents.map((student) => {
-                const isSelected = selectedIds.has(student.id);
-                const hasMistakes = false; // 简化版本，暂不实现状态指示器
-                const hasPendingTasks = false; // 简化版本，暂不实现状态指示器
+      {/* 🆕 悬浮快捷岛 */}
+      <div className="px-5 -mt-16 relative z-10">
+        <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-4 flex justify-between items-center shadow-xl shadow-orange-100/30 border border-white/80">
+          {/* 习惯 */}
+          <button onClick={() => navigate('/habits')} className="flex-1 flex flex-col items-center gap-2 active:scale-95 transition-transform">
+            <div className="w-14 h-14 rounded-2xl bg-orange-50 text-orange-500 border border-orange-100 flex items-center justify-center shadow-sm">
+              <Check size={22} />
+            </div>
+            <span className="text-[11px] font-bold text-gray-500">习惯</span>
+          </button>
 
-                return (
-                    <div
-                        key={student.id}
-                        // 移除 onClick，完全由 Touch 事件接管
-                        onTouchStart={(e) => handleTouchStart(e, student)}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={(e) => handleTouchEnd(e, student)}
-                        className={`flex flex-col items-center p-2 rounded-xl transition-all duration-200 cursor-pointer select-none ${
-                            isSelected ? 'bg-orange-50 scale-95 ring-2 ring-primary' : 'active:scale-95 hover:bg-gray-50'
-                        }`}
-                        title={isMultiSelectMode ? "点击选择/取消选择" : "单击查看学情详情，长按积分操作"}
-                    >
-                        <div className="relative">
-                            <img
-                                src={student.avatarUrl || '/avatar.jpg'}
-                                alt={student.name}
-                                onError={(e)=>{ e.currentTarget.src = '/avatar.jpg'; }}
-                                className={`w-14 h-14 rounded-full object-cover border-2 transition-all select-none pointer-events-none ${
-                                    isSelected ? 'border-primary opacity-100' : 'border-gray-100'
-                                }`}
-                                draggable={false}
-                                onContextMenu={(e) => e.preventDefault()}
-                            />
+          {/* 勋章 */}
+          <button onClick={() => navigate('/badges')} className="flex-1 flex flex-col items-center gap-2 active:scale-95 transition-transform">
+            <div className="w-14 h-14 rounded-2xl bg-orange-50 text-orange-500 border border-orange-100 flex items-center justify-center shadow-sm">
+              <Medal size={22} />
+            </div>
+            <span className="text-[11px] font-bold text-gray-500">勋章</span>
+          </button>
 
-                            {/* 优化后的状态指示器 - v11.0 风格 */}
-                            {!isMultiSelectMode && (hasMistakes || hasPendingTasks) && (
-                                <>
-                                    {hasMistakes && (
-                                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center shadow-md border border-white" title="有待处理错题">
-                                            <AlertCircle className="w-2.5 h-2.5 text-white" />
-                                        </div>
-                                    )}
-                                    {hasPendingTasks && !hasMistakes && (
-                                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full border-2 border-white shadow-md" title="有待完成任务"></div>
-                                    )}
-                                </>
-                            )}
+          {/* PK对决 */}
+          <button onClick={() => navigate('/pk')} className="flex-1 flex flex-col items-center gap-2 active:scale-95 transition-transform">
+            <div className="w-14 h-14 rounded-2xl bg-orange-50 text-orange-500 border border-orange-100 flex items-center justify-center shadow-sm">
+              <Swords size={22} />
+            </div>
+            <span className="text-[11px] font-bold text-gray-500">PK对决</span>
+          </button>
 
-                            {isMultiSelectMode && (
-                                <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center shadow-sm transition-colors ${
-                                    isSelected ? 'bg-primary' : 'bg-gray-200'
-                                }`}>
-                                    {isSelected && <Check size={12} className="text-white" strokeWidth={3} />}
-                                </div>
-                            )}
-                        </div>
-                        <span className={`mt-2 text-xs font-bold truncate w-full text-center ${isSelected ? 'text-primary' : 'text-gray-700'}`}>
-                            {student.name}
-                        </span>
-                        <span className="text-[10px] text-gray-400 font-medium">{student.points} 积分</span>
-                    </div>
-                );
-            })}
-          </div>
-
-          {/* 新增学生按钮 - 放在学生头像网格下方 */}
-          <div className="mt-4 flex justify-center">
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="px-4 py-3 rounded-xl bg-primary text-white text-sm font-bold flex items-center shadow-lg shadow-primary/200 active:scale-95 transition-transform"
-            >
-              <UserPlus size={18} className="mr-2" />
-              新增学生
-            </button>
-          </div>
+          {/* 挑战 */}
+          <button onClick={() => navigate('/challenges')} className="flex-1 flex flex-col items-center gap-2 active:scale-95 transition-transform">
+            <div className="w-14 h-14 rounded-2xl bg-orange-50 text-orange-500 border border-orange-100 flex items-center justify-center shadow-sm">
+              <Flag size={22} />
+            </div>
+            <span className="text-[11px] font-bold text-gray-500">挑战</span>
+          </button>
         </div>
       </div>
 
-          {/* Batch Action Bar */}
-      {isMultiSelectMode && selectedIds.size > 0 && (
-          <div className="fixed bottom-24 left-0 right-0 px-8 z-30 animate-in slide-in-from-bottom-10">
-              <button
-                onClick={handleBatchScoreClick}
-                className="w-full bg-gray-900 text-white font-bold py-4 rounded-2xl shadow-2xl flex items-center justify-center space-x-2 active:scale-95 transition-transform"
+      {/* 学生列表区域 */}
+      <div className="px-5 pt-6 pb-28">
+        {/* 标题栏 */}
+        <div className="flex justify-between items-center mb-4 px-1">
+          <h3 className="font-bold text-gray-800 text-sm">学生名册</h3>
+          <button
+            onClick={toggleMultiSelectMode}
+            className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${isMultiSelectMode
+              ? 'bg-orange-500 text-white'
+              : 'text-orange-500 bg-orange-50 active:bg-orange-100'
+              }`}
+          >
+            <CheckSquare size={12} className="inline mr-1" />
+            {isMultiSelectMode ? '取消' : '批量管理'}
+          </button>
+        </div>
+
+        {/* 学生网格 */}
+        <div className="grid grid-cols-3 gap-3">
+          {visibleStudents.map((student) => {
+            const isSelected = selectedIds.has(student.id);
+            const hasMistakes = false; // 简化版本，暂不实现状态指示器
+            const hasPendingTasks = false; // 简化版本，暂不实现状态指示器
+
+            return (
+              <div
+                key={student.id}
+                // 🆕 修复：添加 onClick 支持 PC 浏览器鼠标点击
+                onClick={() => {
+                  if (!isMultiSelectMode) {
+                    console.log('[DEBUG] PC Click - Navigate to student detail:', student.name);
+                    navigate(`/student/${student.id}`);
+                  } else {
+                    toggleSelection(student.id);
+                  }
+                }}
+                onTouchStart={(e) => handleTouchStart(e, student)}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={(e) => {
+                  handleTouchEnd(e, student);
+                  e.preventDefault(); // 阻止 Touch 事件触发 onClick
+                }}
+                className={`flex flex-col items-center p-2 rounded-xl transition-all duration-200 cursor-pointer select-none ${isSelected ? 'bg-orange-50 scale-95 ring-2 ring-primary' : 'active:scale-95 hover:bg-gray-50'
+                  }`}
+                title={isMultiSelectMode ? "点击选择/取消选择" : "单击查看学情详情，长按积分操作"}
               >
-                  <CheckSquare size={20} />
-                  <span>为 {selectedIds.size} 位学生评分</span>
-              </button>
+                <div className="relative">
+                  <img
+                    src={student.avatarUrl || '/avatar.jpg'}
+                    alt={student.name}
+                    onError={(e) => { e.currentTarget.src = '/avatar.jpg'; }}
+                    className={`w-14 h-14 rounded-full object-cover border-2 transition-all select-none pointer-events-none ${isSelected ? 'border-primary opacity-100' : 'border-gray-100'
+                      }`}
+                    draggable={false}
+                    onContextMenu={(e) => e.preventDefault()}
+                  />
+
+                  {/* 优化后的状态指示器 - v11.0 风格 */}
+                  {!isMultiSelectMode && (hasMistakes || hasPendingTasks) && (
+                    <>
+                      {hasMistakes && (
+                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center shadow-md border border-white" title="有待处理错题">
+                          <AlertCircle className="w-2.5 h-2.5 text-white" />
+                        </div>
+                      )}
+                      {hasPendingTasks && !hasMistakes && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full border-2 border-white shadow-md" title="有待完成任务"></div>
+                      )}
+                    </>
+                  )}
+
+                  {isMultiSelectMode && (
+                    <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center shadow-sm transition-colors ${isSelected ? 'bg-primary' : 'bg-gray-200'
+                      }`}>
+                      {isSelected && <Check size={12} className="text-white" strokeWidth={3} />}
+                    </div>
+                  )}
+                </div>
+                <span className={`mt-2 text-xs font-bold truncate w-full text-center ${isSelected ? 'text-primary' : 'text-gray-700'}`}>
+                  {student.name}
+                </span>
+                <span className="text-[10px] text-gray-400 font-medium">{student.points} 积分</span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* 新增学生按钮 - 放在学生头像网格下方 */}
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-4 py-3 rounded-xl bg-primary text-white text-sm font-bold flex items-center shadow-lg shadow-primary/200 active:scale-95 transition-transform"
+          >
+            <UserPlus size={18} className="mr-2" />
+            新增学生
+          </button>
+        </div>
+      </div>
+
+      {/* Batch Action Bar - 🆕 两个独立按钮 */}
+      {isMultiSelectMode && selectedIds.size > 0 && (
+        <div className="fixed bottom-24 left-0 right-0 px-4 z-30 animate-in slide-in-from-bottom-10">
+          <div className="flex gap-3">
+            {/* 批量签到按钮 */}
+            <button
+              onClick={() => {
+                handleBatchCheckin(Array.from(selectedIds));
+              }}
+              className="flex-1 bg-green-500 text-white font-bold py-4 rounded-2xl shadow-2xl flex items-center justify-center space-x-2 active:scale-95 transition-transform"
+            >
+              <Calendar size={20} />
+              <span>签到 ({selectedIds.size})</span>
+            </button>
+            {/* 批量评分按钮 */}
+            <button
+              onClick={handleBatchScoreClick}
+              className="flex-1 bg-gray-900 text-white font-bold py-4 rounded-2xl shadow-2xl flex items-center justify-center space-x-2 active:scale-95 transition-transform"
+            >
+              <CheckSquare size={20} />
+              <span>评分 ({selectedIds.size})</span>
+            </button>
           </div>
+        </div>
       )}
 
       <ActionSheet
@@ -646,22 +688,23 @@ const Home = () => {
           setScoringStudent(null);
           // 如果是长按触发的单人操作，关闭后不清除多选状态；如果是批量操作，可选清除
           if (isMultiSelectMode) {
-             // 保持多选状态，方便继续操作
+            // 保持多选状态，方便继续操作
           }
         }}
         selectedStudents={scoringStudent ? [scoringStudent] : visibleStudents.filter(s => selectedIds.has(s.id))}
         onConfirm={handleConfirmScore}
         onTransfer={user?.role === 'TEACHER' ? handleTransferStudents : undefined}
-        scorePresets={scorePresets}
-        categoryNames={categoryNames}
+        onCheckin={user?.role === 'TEACHER' ? handleBatchCheckin : undefined}
       />
 
 
-      {toastMsg && (
-        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-6 py-3 rounded-xl shadow-lg text-sm z-[70] font-bold">
-          {toastMsg}
-        </div>
-      )}
+      {
+        toastMsg && (
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-6 py-3 rounded-xl shadow-lg text-sm z-[70] font-bold">
+            {toastMsg}
+          </div>
+        )
+      }
 
       {/* AddStudentModal - 标准新增学生模态框 */}
       <AddStudentModal
@@ -671,9 +714,8 @@ const Home = () => {
       />
 
       {/* 班级切换底部抽屉 */}
-      <div className={`fixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 ease-in-out ${
-        isClassDrawerOpen ? 'translate-y-0' : 'translate-y-full'
-      }`}>
+      <div className={`fixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 ease-in-out ${isClassDrawerOpen ? 'translate-y-0' : 'translate-y-full'
+        }`}>
         {/* 遮罩层 */}
         {isClassDrawerOpen && (
           <div
@@ -719,11 +761,10 @@ const Home = () => {
                 }
                 setIsClassDrawerOpen(false);
               }}
-              className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors ${
-                viewMode === 'MY_STUDENTS'
-                  ? 'bg-blue-100 border-2 border-blue-500 text-blue-700'
-                  : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
-              }`}
+              className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors ${viewMode === 'MY_STUDENTS'
+                ? 'bg-blue-100 border-2 border-blue-500 text-blue-700'
+                : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <User size={20} className={viewMode === 'MY_STUDENTS' ? 'text-blue-600' : 'text-gray-600'} />
@@ -747,11 +788,10 @@ const Home = () => {
                 switchClass('ALL');
                 setIsClassDrawerOpen(false);
               }}
-              className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors ${
-                viewMode === 'ALL_SCHOOL'
-                  ? 'bg-orange-100 border-2 border-orange-500 text-orange-700'
-                  : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
-              }`}
+              className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors ${viewMode === 'ALL_SCHOOL'
+                ? 'bg-orange-100 border-2 border-orange-500 text-orange-700'
+                : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Users size={20} className={viewMode === 'ALL_SCHOOL' ? 'text-orange-600' : 'text-gray-600'} />
@@ -779,11 +819,10 @@ const Home = () => {
                     setIsClassDrawerOpen(false);
                     setToastMsg(`正在查看${cls.teacherName}的班级`);
                   }}
-                  className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors ${
-                    viewMode === 'SPECIFIC_CLASS' && selectedTeacherId === cls.teacherId
-                      ? 'bg-purple-100 border-2 border-purple-500 text-purple-700'
-                      : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
-                  }`}
+                  className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors ${viewMode === 'SPECIFIC_CLASS' && selectedTeacherId === cls.teacherId
+                    ? 'bg-purple-100 border-2 border-purple-500 text-purple-700'
+                    : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <User size={20} className={viewMode === 'SPECIFIC_CLASS' && selectedTeacherId === cls.teacherId ? "text-purple-600" : "text-gray-600"} />
@@ -801,13 +840,12 @@ const Home = () => {
 
           {/* 🆕 功能提示 - 根据视图模式显示不同提示 */}
           {user?.role === 'TEACHER' && (
-            <div className={`mt-4 p-3 border rounded-xl ${
-              viewMode === 'ALL_SCHOOL'
-                ? 'bg-blue-50 border-blue-200'
-                : viewMode === 'SPECIFIC_CLASS'
+            <div className={`mt-4 p-3 border rounded-xl ${viewMode === 'ALL_SCHOOL'
+              ? 'bg-blue-50 border-blue-200'
+              : viewMode === 'SPECIFIC_CLASS'
                 ? 'bg-purple-50 border-purple-200'
                 : 'bg-green-50 border-green-200'
-            }`}>
+              }`}>
               <div className="flex items-center gap-2">
                 {viewMode === 'ALL_SCHOOL' ? (
                   <>
@@ -826,13 +864,12 @@ const Home = () => {
                   </>
                 )}
               </div>
-              <p className={`text-xs mt-1 ${
-                viewMode === 'ALL_SCHOOL'
-                  ? 'text-blue-600'
-                  : viewMode === 'SPECIFIC_CLASS'
+              <p className={`text-xs mt-1 ${viewMode === 'ALL_SCHOOL'
+                ? 'text-blue-600'
+                : viewMode === 'SPECIFIC_CLASS'
                   ? 'text-purple-600'
                   : 'text-green-600'
-              }`}>
+                }`}>
                 {viewMode === 'ALL_SCHOOL' || viewMode === 'SPECIFIC_CLASS'
                   ? '长按学生头像，选择"移入我的班级"即可将学生划归到您名下'
                   : '长按学生头像，可调整积分和经验值'

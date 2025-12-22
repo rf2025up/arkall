@@ -1,3 +1,4 @@
+import { PrismaClient } from '@prisma/client';
 export interface SchoolStats {
     totalStudents: number;
     totalPoints: number;
@@ -68,6 +69,7 @@ export interface DashboardData {
 }
 export declare class DashboardService {
     private prisma;
+    constructor(prisma: PrismaClient);
     /**
      * 获取仪表板数据
      */

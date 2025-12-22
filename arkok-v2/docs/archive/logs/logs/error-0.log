@@ -1,0 +1,202 @@
+2025-12-16 14:42:22 +00:00: 2025-12-16 14:42:48 +00:00: 2025-12-16 14:42:53 +00:00: 2025-12-16 14:42:57 +00:00: 2025-12-16 14:43:02 +00:00: 2025-12-16 14:43:06 +00:00: 2025-12-16 14:43:10 +00:00: 2025-12-16 14:43:15 +00:00: 2025-12-16 14:43:19 +00:00: 2025-12-16 14:43:23 +00:00: 2025-12-16 14:43:28 +00:00: 2025-12-16 14:43:32 +00:00: 2025-12-16 14:43:37 +00:00: 2025-12-16 14:43:41 +00:00: 2025-12-16 14:43:45 +00:00: 2025-12-16 14:43:50 +00:00: 2025-12-16 14:43:54 +00:00: 2025-12-16 14:43:58 +00:00: 2025-12-16 14:44:03 +00:00: 2025-12-16 14:44:07 +00:00: 2025-12-16 14:44:12 +00:00: 2025-12-16 14:44:16 +00:00: 2025-12-17 00:29:18 +00:00: 2025-12-17 00:29:22 +00:00: 2025-12-17 00:29:27 +00:00: 2025-12-17 00:29:31 +00:00: 2025-12-17 00:29:36 +00:00: 2025-12-17 00:29:40 +00:00: 2025-12-17 00:29:44 +00:00: 2025-12-17 00:29:49 +00:00: 2025-12-17 00:29:53 +00:00: 2025-12-17 00:29:57 +00:00: 2025-12-17 08:13:52 +00:00: 2025-12-17 12:12:10 +00:00: 2025-12-17 12:12:56 +00:00: 2025-12-17T12:30:01: 2025-12-17T13:01:08: 2025-12-17T13:01:13: 2025-12-17T13:01:17: 2025-12-17T13:01:22: 2025-12-17T13:01:26: 2025-12-17T14:24:00: 2025-12-17T14:24:04: 2025-12-17T14:24:09: 2025-12-17T14:24:13: 2025-12-17T14:24:18: 2025-12-17T14:35:33: 2025-12-17T14:35:37: 2025-12-17T14:35:42: 2025-12-17T14:35:46: 2025-12-17T14:35:51: 2025-12-17T15:16:51: Get student by id error: Error: 学生不存在
+    at StudentService.getStudentById (/home/devbox/project/arkok-v2/server/dist/services/student.service.js:111:19)
+    at StudentRoutes.getStudentById (/home/devbox/project/arkok-v2/server/dist/routes/student.routes.js:584:29)
+2025-12-17T15:22:57: Get student by id error: Error: 学生不存在
+    at StudentService.getStudentById (/home/devbox/project/arkok-v2/server/dist/services/student.service.js:111:19)
+    at StudentRoutes.getStudentById (/home/devbox/project/arkok-v2/server/dist/routes/student.routes.js:584:29)
+2025-12-17T16:28:21: Get student by id error: Error: 学生不存在
+    at StudentService.getStudentById (/home/devbox/project/arkok-v2/server/dist/services/student.service.js:111:19)
+    at StudentRoutes.getStudentById (/home/devbox/project/arkok-v2/server/dist/routes/student.routes.js:584:29)
+2025-12-17T16:40:25: Get student by id error: Error: 学生不存在
+    at StudentService.getStudentById (/home/devbox/project/arkok-v2/server/dist/services/student.service.js:111:19)
+    at StudentRoutes.getStudentById (/home/devbox/project/arkok-v2/server/dist/routes/student.routes.js:584:29)
+2025-12-18 02:51:07 +00:00: 2025-12-18 02:51:46 +00:00: 2025-12-18 03:05:46 +00:00: 2025-12-18 05:21:16 +00:00: 2025-12-18 05:21:20 +00:00: 2025-12-18 05:21:24 +00:00: 2025-12-18 05:21:29 +00:00: 2025-12-18 05:21:33 +00:00: 2025-12-18 05:21:37 +00:00: 2025-12-18 05:21:41 +00:00: 2025-12-18 05:21:45 +00:00: 2025-12-18 05:21:50 +00:00: 2025-12-18 05:21:54 +00:00: 2025-12-18 05:24:30 +00:00: 2025-12-18 05:24:34 +00:00: 2025-12-18 05:24:38 +00:00: 2025-12-18 05:24:42 +00:00: 2025-12-18 05:24:47 +00:00: 2025-12-18T05:30:26: /home/devbox/project/arkok-v2/server/node_modules/arg/index.js:90
+2025-12-18T05:30:26: 						throw err;
+2025-12-18T05:30:26: 						^
+2025-12-18T05:30:26: 
+2025-12-18T05:30:26: Error: Unknown or unexpected option: --skipLibCheck
+2025-12-18T05:30:26:     at arg (/home/devbox/project/arkok-v2/server/node_modules/arg/index.js:88:19)
+2025-12-18T05:30:26:     at parseArgv (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:69:12)
+2025-12-18T05:30:26:     at main (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:25:18)
+2025-12-18T05:30:26:     at Object.<anonymous> (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:579:5)
+2025-12-18T05:30:26:     at Module._compile (node:internal/modules/cjs/loader:1529:14)
+2025-12-18T05:30:26:     at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+2025-12-18T05:30:26:     at Module.load (node:internal/modules/cjs/loader:1275:32)
+2025-12-18T05:30:26:     at Module._load (node:internal/modules/cjs/loader:1096:12)
+2025-12-18T05:30:26:     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+2025-12-18T05:30:26:     at node:internal/main/run_main_module:28:49 {
+2025-12-18T05:30:26:   code: 'ARG_UNKNOWN_OPTION'
+2025-12-18T05:30:26: }
+2025-12-18T05:30:26: 
+2025-12-18T05:30:26: Node.js v20.19.3
+2025-12-18T05:30:27: /home/devbox/project/arkok-v2/server/node_modules/arg/index.js:90
+2025-12-18T05:30:27: 						throw err;
+2025-12-18T05:30:27: 						^
+2025-12-18T05:30:27: 
+2025-12-18T05:30:27: Error: Unknown or unexpected option: --skipLibCheck
+2025-12-18T05:30:27:     at arg (/home/devbox/project/arkok-v2/server/node_modules/arg/index.js:88:19)
+2025-12-18T05:30:27:     at parseArgv (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:69:12)
+2025-12-18T05:30:27:     at main (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:25:18)
+2025-12-18T05:30:27:     at Object.<anonymous> (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:579:5)
+2025-12-18T05:30:27:     at Module._compile (node:internal/modules/cjs/loader:1529:14)
+2025-12-18T05:30:27:     at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+2025-12-18T05:30:27:     at Module.load (node:internal/modules/cjs/loader:1275:32)
+2025-12-18T05:30:27:     at Module._load (node:internal/modules/cjs/loader:1096:12)
+2025-12-18T05:30:27:     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+2025-12-18T05:30:27:     at node:internal/main/run_main_module:28:49 {
+2025-12-18T05:30:27:   code: 'ARG_UNKNOWN_OPTION'
+2025-12-18T05:30:27: }
+2025-12-18T05:30:27: 
+2025-12-18T05:30:27: Node.js v20.19.3
+2025-12-18T05:30:27: /home/devbox/project/arkok-v2/server/node_modules/arg/index.js:90
+2025-12-18T05:30:27: 						throw err;
+2025-12-18T05:30:27: 						^
+2025-12-18T05:30:27: 
+2025-12-18T05:30:27: Error: Unknown or unexpected option: --skipLibCheck
+2025-12-18T05:30:27:     at arg (/home/devbox/project/arkok-v2/server/node_modules/arg/index.js:88:19)
+2025-12-18T05:30:27:     at parseArgv (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:69:12)
+2025-12-18T05:30:27:     at main (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:25:18)
+2025-12-18T05:30:27:     at Object.<anonymous> (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:579:5)
+2025-12-18T05:30:27:     at Module._compile (node:internal/modules/cjs/loader:1529:14)
+2025-12-18T05:30:27:     at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+2025-12-18T05:30:27:     at Module.load (node:internal/modules/cjs/loader:1275:32)
+2025-12-18T05:30:27:     at Module._load (node:internal/modules/cjs/loader:1096:12)
+2025-12-18T05:30:27:     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+2025-12-18T05:30:27:     at node:internal/main/run_main_module:28:49 {
+2025-12-18T05:30:27:   code: 'ARG_UNKNOWN_OPTION'
+2025-12-18T05:30:27: }
+2025-12-18T05:30:27: 
+2025-12-18T05:30:27: Node.js v20.19.3
+2025-12-18T05:30:28: /home/devbox/project/arkok-v2/server/node_modules/arg/index.js:90
+2025-12-18T05:30:28: 						throw err;
+2025-12-18T05:30:28: 						^
+2025-12-18T05:30:28: 
+2025-12-18T05:30:28: Error: Unknown or unexpected option: --skipLibCheck
+2025-12-18T05:30:28:     at arg (/home/devbox/project/arkok-v2/server/node_modules/arg/index.js:88:19)
+2025-12-18T05:30:28:     at parseArgv (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:69:12)
+2025-12-18T05:30:28:     at main (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:25:18)
+2025-12-18T05:30:28:     at Object.<anonymous> (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:579:5)
+2025-12-18T05:30:28:     at Module._compile (node:internal/modules/cjs/loader:1529:14)
+2025-12-18T05:30:28:     at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+2025-12-18T05:30:28:     at Module.load (node:internal/modules/cjs/loader:1275:32)
+2025-12-18T05:30:28:     at Module._load (node:internal/modules/cjs/loader:1096:12)
+2025-12-18T05:30:28:     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+2025-12-18T05:30:28:     at node:internal/main/run_main_module:28:49 {
+2025-12-18T05:30:28:   code: 'ARG_UNKNOWN_OPTION'
+2025-12-18T05:30:28: }
+2025-12-18T05:30:28: 
+2025-12-18T05:30:28: Node.js v20.19.3
+2025-12-18T05:30:28: /home/devbox/project/arkok-v2/server/node_modules/arg/index.js:90
+2025-12-18T05:30:28: 						throw err;
+2025-12-18T05:30:28: 						^
+2025-12-18T05:30:28: 
+2025-12-18T05:30:28: Error: Unknown or unexpected option: --skipLibCheck
+2025-12-18T05:30:28:     at arg (/home/devbox/project/arkok-v2/server/node_modules/arg/index.js:88:19)
+2025-12-18T05:30:28:     at parseArgv (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:69:12)
+2025-12-18T05:30:28:     at main (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:25:18)
+2025-12-18T05:30:28:     at Object.<anonymous> (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:579:5)
+2025-12-18T05:30:28:     at Module._compile (node:internal/modules/cjs/loader:1529:14)
+2025-12-18T05:30:28:     at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+2025-12-18T05:30:28:     at Module.load (node:internal/modules/cjs/loader:1275:32)
+2025-12-18T05:30:28:     at Module._load (node:internal/modules/cjs/loader:1096:12)
+2025-12-18T05:30:28:     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+2025-12-18T05:30:28:     at node:internal/main/run_main_module:28:49 {
+2025-12-18T05:30:28:   code: 'ARG_UNKNOWN_OPTION'
+2025-12-18T05:30:28: }
+2025-12-18T05:30:28: 
+2025-12-18T05:30:28: Node.js v20.19.3
+2025-12-18T05:30:29: /home/devbox/project/arkok-v2/server/node_modules/arg/index.js:90
+2025-12-18T05:30:29: 						throw err;
+2025-12-18T05:30:29: 						^
+2025-12-18T05:30:29: 
+2025-12-18T05:30:29: Error: Unknown or unexpected option: --skipLibCheck
+2025-12-18T05:30:29:     at arg (/home/devbox/project/arkok-v2/server/node_modules/arg/index.js:88:19)
+2025-12-18T05:30:29:     at parseArgv (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:69:12)
+2025-12-18T05:30:29:     at main (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:25:18)
+2025-12-18T05:30:29:     at Object.<anonymous> (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:579:5)
+2025-12-18T05:30:29:     at Module._compile (node:internal/modules/cjs/loader:1529:14)
+2025-12-18T05:30:29:     at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+2025-12-18T05:30:29:     at Module.load (node:internal/modules/cjs/loader:1275:32)
+2025-12-18T05:30:29:     at Module._load (node:internal/modules/cjs/loader:1096:12)
+2025-12-18T05:30:29:     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+2025-12-18T05:30:29:     at node:internal/main/run_main_module:28:49 {
+2025-12-18T05:30:29:   code: 'ARG_UNKNOWN_OPTION'
+2025-12-18T05:30:29: }
+2025-12-18T05:30:29: 
+2025-12-18T05:30:29: Node.js v20.19.3
+2025-12-18T05:30:29: /home/devbox/project/arkok-v2/server/node_modules/arg/index.js:90
+2025-12-18T05:30:29: 						throw err;
+2025-12-18T05:30:29: 						^
+2025-12-18T05:30:29: 
+2025-12-18T05:30:29: Error: Unknown or unexpected option: --skipLibCheck
+2025-12-18T05:30:29:     at arg (/home/devbox/project/arkok-v2/server/node_modules/arg/index.js:88:19)
+2025-12-18T05:30:29:     at parseArgv (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:69:12)
+2025-12-18T05:30:29:     at main (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:25:18)
+2025-12-18T05:30:29:     at Object.<anonymous> (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:579:5)
+2025-12-18T05:30:29:     at Module._compile (node:internal/modules/cjs/loader:1529:14)
+2025-12-18T05:30:29:     at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+2025-12-18T05:30:29:     at Module.load (node:internal/modules/cjs/loader:1275:32)
+2025-12-18T05:30:29:     at Module._load (node:internal/modules/cjs/loader:1096:12)
+2025-12-18T05:30:29:     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+2025-12-18T05:30:29:     at node:internal/main/run_main_module:28:49 {
+2025-12-18T05:30:29:   code: 'ARG_UNKNOWN_OPTION'
+2025-12-18T05:30:29: }
+2025-12-18T05:30:29: 
+2025-12-18T05:30:29: Node.js v20.19.3
+2025-12-18T05:30:29: /home/devbox/project/arkok-v2/server/node_modules/arg/index.js:90
+2025-12-18T05:30:29: 						throw err;
+2025-12-18T05:30:29: 						^
+2025-12-18T05:30:29: 
+2025-12-18T05:30:29: Error: Unknown or unexpected option: --skipLibCheck
+2025-12-18T05:30:29:     at arg (/home/devbox/project/arkok-v2/server/node_modules/arg/index.js:88:19)
+2025-12-18T05:30:29:     at parseArgv (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:69:12)
+2025-12-18T05:30:29:     at main (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:25:18)
+2025-12-18T05:30:29:     at Object.<anonymous> (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:579:5)
+2025-12-18T05:30:29:     at Module._compile (node:internal/modules/cjs/loader:1529:14)
+2025-12-18T05:30:29:     at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+2025-12-18T05:30:29:     at Module.load (node:internal/modules/cjs/loader:1275:32)
+2025-12-18T05:30:29:     at Module._load (node:internal/modules/cjs/loader:1096:12)
+2025-12-18T05:30:29:     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+2025-12-18T05:30:29:     at node:internal/main/run_main_module:28:49 {
+2025-12-18T05:30:29:   code: 'ARG_UNKNOWN_OPTION'
+2025-12-18T05:30:29: }
+2025-12-18T05:30:29: 
+2025-12-18T05:30:29: Node.js v20.19.3
+2025-12-18T05:30:30: /home/devbox/project/arkok-v2/server/node_modules/arg/index.js:90
+2025-12-18T05:30:30: 						throw err;
+2025-12-18T05:30:30: 						^
+2025-12-18T05:30:30: 
+2025-12-18T05:30:30: Error: Unknown or unexpected option: --skipLibCheck
+2025-12-18T05:30:30:     at arg (/home/devbox/project/arkok-v2/server/node_modules/arg/index.js:88:19)
+2025-12-18T05:30:30:     at parseArgv (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:69:12)
+2025-12-18T05:30:30:     at main (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:25:18)
+2025-12-18T05:30:30:     at Object.<anonymous> (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:579:5)
+2025-12-18T05:30:30:     at Module._compile (node:internal/modules/cjs/loader:1529:14)
+2025-12-18T05:30:30:     at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+2025-12-18T05:30:30:     at Module.load (node:internal/modules/cjs/loader:1275:32)
+2025-12-18T05:30:30:     at Module._load (node:internal/modules/cjs/loader:1096:12)
+2025-12-18T05:30:30:     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+2025-12-18T05:30:30:     at node:internal/main/run_main_module:28:49 {
+2025-12-18T05:30:30:   code: 'ARG_UNKNOWN_OPTION'
+2025-12-18T05:30:30: }
+2025-12-18T05:30:30: 
+2025-12-18T05:30:30: Node.js v20.19.3
+2025-12-18T05:30:30: /home/devbox/project/arkok-v2/server/node_modules/arg/index.js:90
+2025-12-18T05:30:30: 						throw err;
+2025-12-18T05:30:30: 						^
+2025-12-18T05:30:30: 
+2025-12-18T05:30:30: Error: Unknown or unexpected option: --skipLibCheck
+2025-12-18T05:30:30:     at arg (/home/devbox/project/arkok-v2/server/node_modules/arg/index.js:88:19)
+2025-12-18T05:30:30:     at parseArgv (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:69:12)
+2025-12-18T05:30:30:     at main (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:25:18)
+2025-12-18T05:30:30:     at Object.<anonymous> (/home/devbox/project/arkok-v2/server/node_modules/ts-node/dist/bin.js:579:5)
+2025-12-18T05:30:30:     at Module._compile (node:internal/modules/cjs/loader:1529:14)
+2025-12-18T05:30:30:     at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+2025-12-18T05:30:30:     at Module.load (node:internal/modules/cjs/loader:1275:32)
+2025-12-18T05:30:30:     at Module._load (node:internal/modules/cjs/loader:1096:12)
+2025-12-18T05:30:30:     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+2025-12-18T05:30:30:     at node:internal/main/run_main_module:28:49 {
+2025-12-18T05:30:30:   code: 'ARG_UNKNOWN_OPTION'
+2025-12-18T05:30:30: }
+2025-12-18T05:30:30: 
+2025-12-18T05:30:30: Node.js v20.19.3

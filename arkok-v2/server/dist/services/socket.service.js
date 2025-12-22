@@ -179,9 +179,6 @@ class SocketService {
         this.io.to(roomName).emit(event, data);
         console.log(`📡 向学校 ${schoolId} 广播事件: ${event}`);
     }
-    /**
-     * 向指定用户发送消息
-     */
     sendToUser(userId, event, data) {
         // 查找属于该用户的所有 socket 连接
         const sockets = Array.from(this.io.sockets.sockets.values())
@@ -191,9 +188,6 @@ class SocketService {
         });
         console.log(`📤 向用户 ${userId} 发送事件: ${event} (${sockets.length} 个连接)`);
     }
-    /**
-     * 向指定角色用户广播消息
-     */
     broadcastToRole(schoolId, role, event, data) {
         const roomName = `school_${schoolId}`;
         const sockets = Array.from(this.io.sockets.adapter.rooms.get(roomName) || [])
@@ -263,7 +257,7 @@ class SocketService {
         const sockets = Array.from(this.io.sockets.adapter.rooms.get(roomName) || [])
             .map(socketId => this.io.sockets.sockets.get(socketId))
             .filter((socket) => socket?.schoolId === schoolId);
-        sockets.forEach(socket => {
+        sockets.forEach((socket) => {
             socket.emit('FORCE_DISCONNECT', {
                 reason,
                 timestamp: new Date().toISOString()

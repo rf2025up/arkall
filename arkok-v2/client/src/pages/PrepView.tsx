@@ -117,26 +117,25 @@ const PrepView: React.FC = () => {
   });
 
   // 🆕 最新教学计划响应类型
-interface LatestLessonPlanResponse {
-  id: string | null;
-  date: string | null;
-  content: any;
-  courseInfo: CourseInfo;
-  updatedAt: string;
-}
+  interface LatestLessonPlanResponse {
+    id: string | null;
+    date: string | null;
+    content: any;
+    courseInfo: CourseInfo;
+    updatedAt: string;
+  }
 
-// 课程进度 - 🆕 将从服务器加载最新教学计划数据
+  // 课程进度 - 🆕 将从服务器加载最新教学计划数据
   const [courseInfo, setCourseInfo] = useState<CourseInfo>({
     chinese: { unit: "1", lesson: "1", title: "加载中..." },
     math: { unit: "1", lesson: "1", title: "加载中..." },
     english: { unit: "1", title: "Loading..." } // 英语没有 lesson
   });
 
-  // 过关项 (QC) - 动态从TaskLibrary获取，提供默认值
   const [qcItems, setQcItems] = useState<Record<string, string[]>>({
-    chinese: ['古诗背诵', '生字听写', '词语解释'],
-    math: ['口算练习', '应用题', '几何图形'],
-    english: ['单词背诵', '句型练习', '听力理解']
+    chinese: ['生字听写', '课文背诵', '古诗/日积月累默写', '课文理解问答'],
+    math: ['口算计时', '竖式/脱式', '概念/公式背默'],
+    english: ['单词默写', '中英互译', '句型背诵', '课文背诵']
   });
   const [selectedQC, setSelectedQC] = useState<Record<string, string[]>>({
     chinese: [],
@@ -147,7 +146,7 @@ interface LatestLessonPlanResponse {
   // 任务 (Tasks)
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
 
-  // 个性化加餐 (Special)
+  // 定制加餐 (Special)
   const [specialTasks, setSpecialTasks] = useState<SpecialTaskItem[]>([]);
   const [specialHistory, setSpecialHistory] = useState<string[]>(["罚抄错题", "朗读课文", "背诵古诗", "整理错题本"]);
 
@@ -157,6 +156,48 @@ interface LatestLessonPlanResponse {
   const [showOnlyMethodology, setShowOnlyMethodology] = useState(false); // 🆕 控制是否只显示特色教学法任务
   const [showOnlyGrowth, setShowOnlyGrowth] = useState(false); // 🆕 控制是否只显示综合成长任务
 
+  // 🆕 核心教学法/综合成长动态管理状态 - 使用 localStorage 同步
+  const [methodologyCategories, setMethodologyCategories] = useState<{ name: string; items: string[] }[]>(() => {
+    try {
+      const stored = localStorage.getItem('arkok_methodology_categories');
+      return stored ? JSON.parse(stored) : [
+        { name: '基础学习方法论', items: ['作业的自主检查', '错题的红笔订正', '错题的摘抄与归因', '用"三色笔法"整理作业', '自评当日作业质量'] },
+        { name: '数学思维与解题策略', items: ['用"分步法"讲解数学题', '用"画图法"理解应用题', '口算限时挑战', '错题归类与规律发现'] },
+        { name: '语文学科能力深化', items: ['课文朗读与背诵', '生字词听写', '阅读理解策略练习', '作文提纲与修改'] },
+        { name: '英语应用与输出', items: ['单词听写与默写', '课文朗读与背诵', '口语对话练习', '听力理解训练'] },
+        { name: '阅读深度与分享', items: ['阅读记录卡填写', '好词好句摘抄', '读后感分享', '阅读推荐'] },
+        { name: '自主学习与规划', items: ['制定学习计划', '时间管理练习', '目标设定与回顾', '自主预习'] },
+        { name: '课堂互动与深度参与', items: ['主动举手发言', '小组讨论参与', '提出有价值的问题', '帮助同学讲解'] },
+        { name: '家庭联结与知识迁移', items: ['与家长分享学习内容', '生活中的知识应用', '家校沟通反馈', '家庭作业展示'] },
+        { name: '高阶输出与创新', items: ['创意写作', '项目展示', '知识总结思维导图', '跨学科应用'] }
+      ];
+    } catch { return []; }
+  });
+  const [growthCategories, setGrowthCategories] = useState<{ name: string; items: string[] }[]>(() => {
+    try {
+      const stored = localStorage.getItem('arkok_growth_categories');
+      return stored ? JSON.parse(stored) : [
+        { name: '阅读广度类', items: ['年级同步阅读', '课外阅读30分钟', '填写阅读记录单', '阅读一个成语故事，并积累掌握3个成语'] },
+        { name: '整理与贡献类', items: ['离校前的个人卫生清理（桌面/抽屉/地面）', '离校前的书包整理', '一项集体贡献任务（浇花/整理书架/打扫等）', '吃饭时帮助维护秩序，确认光盘，地面保持干净', '为班级图书角推荐一本书，并写一句推荐语'] },
+        { name: '互助与创新类', items: ['帮助同学（讲解/拍视频/打印等）', '一项创意表达任务（画画/写日记/做手工等）', '一项健康活力任务（眼保健操/拉伸/深呼吸/跳绳等）'] },
+        { name: '家庭联结类', items: ['与家人共读30分钟（可亲子读、兄弟姐妹读、给长辈读）', '帮家里完成一项力所及的家务（摆碗筷、倒垃圾/整理鞋柜等）'] }
+      ];
+    } catch { return []; }
+  });
+  // 🆕 管理模式状态
+  const [isManageMode, setIsManageMode] = useState(false);
+  const [editingCategoryName, setEditingCategoryName] = useState<string | null>(null);
+  const [newItemInput, setNewItemInput] = useState<{ category: string; value: string } | null>(null);
+  const [newCategoryInput, setNewCategoryInput] = useState('');
+
+  // 🆕 保存到 localStorage
+  useEffect(() => {
+    localStorage.setItem('arkok_methodology_categories', JSON.stringify(methodologyCategories));
+  }, [methodologyCategories]);
+  useEffect(() => {
+    localStorage.setItem('arkok_growth_categories', JSON.stringify(growthCategories));
+  }, [growthCategories]);
+
   // 模态框临时数据
   const [tempSpecialStudents, setTempSpecialStudents] = useState<string[]>([]);
   const [tempSpecialTags, setTempSpecialTags] = useState<string[]>([]);
@@ -164,7 +205,7 @@ interface LatestLessonPlanResponse {
 
   // 日期格式化
   const today = new Date();
-  const dateStr = `${today.getMonth() + 1}月${today.getDate()}日 · 星期${['日','一','二','三','四','五','六'][today.getDay()]}`;
+  const dateStr = `${today.getMonth() + 1}月${today.getDate()}日 · 星期${['日', '一', '二', '三', '四', '五', '六'][today.getDay()]}`;
 
   // --- 5. 数据获取 useEffect ---
 
@@ -211,9 +252,9 @@ interface LatestLessonPlanResponse {
           content.qcTasks.forEach((task: any) => {
             const taskName = task.taskName;
             // 根据后端存储的 category 映射回前端的学科 key
-            if (task.category === '基础核心') newSelectedQC.chinese.push(taskName);
-            else if (task.category === '数学巩固') newSelectedQC.math.push(taskName);
-            else if (task.category === '英语提升') newSelectedQC.english.push(taskName);
+            if (task.category === '语文基础过关' || task.category === '基础核心') newSelectedQC.chinese.push(taskName);
+            else if (task.category === '数学基础过关' || task.category === '数学巩固') newSelectedQC.math.push(taskName);
+            else if (task.category === '英语基础过关' || task.category === '英语提升') newSelectedQC.english.push(taskName);
           });
 
           console.log('🎯 [PREP_VIEW] 回填选中的 QC 项:', newSelectedQC);
@@ -227,14 +268,14 @@ interface LatestLessonPlanResponse {
           setSelectedTasks(newSelectedTasks);
         }
 
-        // 4. 回填个性化加餐
+        // 4. 回填定制加餐
         if (content?.specialTasks && Array.isArray(content.specialTasks)) {
           const newSpecialTasks = content.specialTasks.map((t: any, index: number) => ({
             id: Date.now() + index,
             students: t.description?.replace('学生: ', '').split(', ') || [],
             tasks: t.taskName.split(' + ')
           }));
-          console.log('🎯 [PREP_VIEW] 回填个性化加餐:', newSpecialTasks);
+          console.log('🎯 [PREP_VIEW] 回填定制加餐:', newSpecialTasks);
           setSpecialTasks(newSpecialTasks);
         }
 
@@ -255,9 +296,9 @@ interface LatestLessonPlanResponse {
 
     // 从默认值开始，确保总有基础标签
     const defaultQcItems: Record<string, string[]> = {
-      chinese: ['古诗背诵', '生字听写', '词语解释'],
-      math: ['口算练习', '应用题', '几何图形'],
-      english: ['单词背诵', '句型练习', '听力理解']
+      chinese: ['生字听写', '课文背诵', '古诗/日积月累默写', '课文理解问答'],
+      math: ['口算计时', '竖式/脱式', '概念/公式背默'],
+      english: ['单词默写', '中英互译', '句型背诵', '课文背诵']
     };
 
     const newQcItems: Record<string, string[]> = {
@@ -381,14 +422,31 @@ interface LatestLessonPlanResponse {
       const url = `/students?scope=MY_STUDENTS&teacherId=${user?.id || ''}`;
       console.log('🔒 [PREPVIEW_SECURITY] 备课页只显示本班学生，URL:', url);
       const response = await apiService.get(url);
-      console.log('[PREPVIEW] 学生数据响应:', response.success ? `成功，${(response.data as any)?.students?.length || 0}名学生` : '失败');
 
       if (response.success && response.data) {
-        const studentsData = (response.data as { students: any[] }).students;
+        // 🔴 修复：与 QCView/Home 保持一致的数据提取逻辑
+        let studentsData: any[] = [];
+        const data = response.data as any;
+
+        if (Array.isArray(data)) {
+          studentsData = data;
+        } else if (data.students && Array.isArray(data.students)) {
+          studentsData = data.students;
+        } else if (data.data && Array.isArray(data.data)) {
+          studentsData = data.data;
+        }
+
+        console.log('[PREPVIEW] 学生数据响应:', response.success ? `成功，${studentsData.length}名学生` : '失败');
+
+        if (studentsData.length === 0) {
+          console.warn('[PREPVIEW] 未获取到学生数据，可能是数据格式问题');
+          return;
+        }
+
         setStudents(studentsData);
 
         // 提取班级信息
-        const uniqueClasses = Array.from(new Set(studentsData.map(s => s.className).filter(Boolean)));
+        const uniqueClasses = Array.from(new Set(studentsData.map((s: any) => s.className).filter(Boolean)));
         setClasses(uniqueClasses);
 
         // 如果没有选中班级，默认选择第一个班级
@@ -404,8 +462,8 @@ interface LatestLessonPlanResponse {
 
         // 根据选中的班级筛选学生
         if (selectedClass) {
-          const classStudents = studentsData.filter(s => s.className === selectedClass);
-          setSelectedStudents(classStudents.map(s => s.name));
+          const classStudents = studentsData.filter((s: any) => s.className === selectedClass);
+          setSelectedStudents(classStudents.map((s: any) => s.name));
         }
       }
     } catch (err) {
@@ -479,7 +537,7 @@ interface LatestLessonPlanResponse {
     }
   };
 
-  // 个性化加餐逻辑
+  // 定制加餐逻辑
   const toggleSpecialStudent = (stu: string) => {
     setTempSpecialStudents(prev => prev.includes(stu) ? prev.filter(s => s !== stu) : [...prev, stu]);
   };
@@ -565,19 +623,41 @@ interface LatestLessonPlanResponse {
         items.map(item => ({
           taskId: `qc_${subject}_${item}`,
           taskName: item,
-          category: subject === 'chinese' ? '基础核心' : subject === 'math' ? '数学巩固' : '英语提升',
+          category: subject === 'chinese' ? '语文基础过关' : subject === 'math' ? '数学基础过关' : '英语基础过关',
           defaultExp: 5,
           difficulty: 1
         }))
       );
 
       const normalTasks = selectedTasks.map(taskName => {
-        const task = taskLibrary.find(t => t.name === taskName);
+        // 🆕 查找任务所属分类标题
+        let domain = '核心教学法';
+        let subcategory = '';
+
+        // 在核心教学法分类中查找
+        for (const cat of methodologyCategories) {
+          if (cat.items.includes(taskName)) {
+            domain = '核心教学法';
+            subcategory = cat.name; // 如"基础学习方法论"
+            break;
+          }
+        }
+        // 如果没找到，在综合成长分类中查找
+        if (!subcategory) {
+          for (const cat of growthCategories) {
+            if (cat.items.includes(taskName)) {
+              domain = '综合成长';
+              subcategory = cat.name; // 如"阅读广度类"
+              break;
+            }
+          }
+        }
+
         return {
-          taskId: task?.id || '',
           taskName,
-          category: task?.category || '基础核心',
-          defaultExp: task?.defaultExp || 10
+          category: domain,       // 大类：核心教学法/综合成长
+          subcategory: subcategory, // 分类标题
+          defaultExp: 10
         };
       });
 
@@ -585,7 +665,8 @@ interface LatestLessonPlanResponse {
         taskName: item.tasks.join(' + '),
         category: '特殊',
         defaultExp: 30,
-        description: `学生: ${item.students.join(', ')}`
+        description: `学生: ${item.students.join(', ')}`,
+        targetStudentNames: item.students // 🆕 增加独立字段供后端精准分发
       }));
 
       const planData = {
@@ -683,11 +764,10 @@ interface LatestLessonPlanResponse {
           <button
             onClick={publishPlan}
             disabled={publishStatus.isPublishing || isLoading || !isPublishingAllowed()}
-            className={`px-5 py-2.5 rounded-2xl text-sm font-bold shadow-lg transition-all active:scale-95 ${
-              publishStatus.isPublishing || isLoading || !isPublishingAllowed()
-                ? 'bg-slate-400 text-gray-200 cursor-not-allowed'
-                : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200/50'
-            }`}
+            className={`px-5 py-2.5 rounded-2xl text-sm font-bold shadow-lg transition-all active:scale-95 ${publishStatus.isPublishing || isLoading || !isPublishingAllowed()
+              ? 'bg-slate-400 text-gray-200 cursor-not-allowed'
+              : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200/50'
+              }`}
             title={!isPublishingAllowed() ? '请切换回【我的学生】视图进行发布' : undefined}
           >
             {publishStatus.isPublishing ? (
@@ -811,11 +891,10 @@ interface LatestLessonPlanResponse {
                       <button
                         key={item}
                         onClick={() => toggleQC(sub, item)}
-                        className={`py-2 px-3.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ${
-                          isSelected
-                            ? QC_CONFIG[sub].activeClass
-                            : 'bg-slate-100 text-slate-500 border-transparent hover:bg-slate-200'
-                        }`}
+                        className={`py-2 px-3.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ${isSelected
+                          ? QC_CONFIG[sub].activeClass
+                          : 'bg-slate-100 text-slate-500 border-transparent hover:bg-slate-200'
+                          }`}
                       >
                         {item}
                       </button>
@@ -875,7 +954,7 @@ interface LatestLessonPlanResponse {
           </button>
         </div>
 
-        {/* 4. 个性化加餐 (底部光感) */}
+        {/* 4. 定制加餐 (底部光感) */}
         <div className="relative rounded-[24px] p-6 overflow-hidden text-slate-800 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
           <div className="absolute inset-0 bg-gradient-to-br from-[#FFF7ED] via-[#FFF1F2] to-[#FFF7ED]"></div>
           <div className="absolute top-0 right-0 w-32 h-32 bg-orange-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
@@ -886,14 +965,14 @@ interface LatestLessonPlanResponse {
                 <div className="w-8 h-8 rounded-full bg-white/80 backdrop-blur text-orange-500 flex items-center justify-center shadow-sm">
                   <Sparkles size={14} fill="currentColor" />
                 </div>
-                <span className="font-bold text-slate-800 text-sm">个性化加餐</span>
+                <span className="font-bold text-slate-800 text-sm">定制加餐</span>
               </div>
               <span className="text-[10px] text-orange-700 bg-white/60 backdrop-blur px-2 py-1 rounded-md font-bold shadow-sm">+30 EXP</span>
             </div>
 
             <div className="space-y-2 mb-5">
               {specialTasks.length === 0 ? (
-                 <div className="text-xs text-orange-800/40 text-center py-4 italic">暂无个性化任务</div>
+                <div className="text-xs text-orange-800/40 text-center py-4 italic">暂无个性化任务</div>
               ) : (
                 specialTasks.map(item => (
                   <div key={item.id} className="bg-white/60 backdrop-blur border border-white/50 p-3 rounded-2xl shadow-sm flex justify-between items-center">
@@ -931,12 +1010,25 @@ interface LatestLessonPlanResponse {
                 {showOnlyMethodology ? '核心教学法任务' : showOnlyGrowth ? '综合成长任务' : '任务库'}
               </h3>
               <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-md">
-                  任务 {selectedTasks.length}
-                </span>
-                <span className="text-xs font-bold text-orange-400 bg-orange-50 px-2 py-1 rounded-md">
-                  QC {Object.values(selectedQC).flat().length}
-                </span>
+                {(showOnlyMethodology || showOnlyGrowth) && (
+                  <button
+                    onClick={() => setIsManageMode(!isManageMode)}
+                    className={`text-[10px] font-bold px-2 py-1 rounded ${isManageMode ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                  >
+                    {isManageMode ? '✓ 完成' : '⚙ 管理'}
+                  </button>
+                )}
+                {/* 任务和QC计数标签 - 仅在普通任务库模式下显示 */}
+                {!showOnlyMethodology && !showOnlyGrowth && (
+                  <>
+                    <span className="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-md">
+                      任务 {selectedTasks.length}
+                    </span>
+                    <span className="text-xs font-bold text-orange-400 bg-orange-50 px-2 py-1 rounded-md">
+                      QC {Object.values(selectedQC).flat().length}
+                    </span>
+                  </>
+                )}
                 <button onClick={() => {
                   setIsTaskModalOpen(false);
                   setShowOnlyMethodology(false); // 重置筛选状态
@@ -966,6 +1058,180 @@ interface LatestLessonPlanResponse {
                   >
                     重试
                   </button>
+                </div>
+              ) : (showOnlyMethodology || showOnlyGrowth) ? (
+                // 🆕 使用本地配置显示核心教学法/综合成长
+                <div>
+                  {(showOnlyMethodology ? methodologyCategories : growthCategories).map((cat, catIdx) => (
+                    <div key={catIdx} className="mb-6">
+                      {/* 大标题 - 双击修改 */}
+                      <div className="sticky top-0 bg-[#F8FAFC] py-2 z-10 flex items-center gap-2 mb-2">
+                        <div className={`w-1 h-4 rounded-full ${showOnlyMethodology ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                        {editingCategoryName === cat.name ? (
+                          <input
+                            type="text"
+                            defaultValue={cat.name}
+                            autoFocus
+                            className="text-sm font-extrabold text-slate-800 bg-white px-2 py-1 border border-blue-300 rounded outline-none"
+                            onBlur={(e) => {
+                              const newName = e.target.value.trim();
+                              if (newName && newName !== cat.name) {
+                                if (showOnlyMethodology) {
+                                  setMethodologyCategories(prev => prev.map((c, i) => i === catIdx ? { ...c, name: newName } : c));
+                                } else {
+                                  setGrowthCategories(prev => prev.map((c, i) => i === catIdx ? { ...c, name: newName } : c));
+                                }
+                              }
+                              setEditingCategoryName(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                              if (e.key === 'Escape') setEditingCategoryName(null);
+                            }}
+                          />
+                        ) : (
+                          <h4
+                            className={`text-sm font-extrabold text-slate-800 ${isManageMode ? 'cursor-pointer hover:text-blue-600' : ''}`}
+                            onDoubleClick={() => isManageMode && setEditingCategoryName(cat.name)}
+                          >
+                            {cat.name}
+                          </h4>
+                        )}
+                        <span className="text-xs text-slate-400">({cat.items.length})</span>
+                        {/* 管理模式下显示添加细项按钮 */}
+                        {isManageMode && (
+                          <button
+                            onClick={() => setNewItemInput({ category: cat.name, value: '' })}
+                            className="ml-auto text-[10px] bg-green-100 text-green-600 px-2 py-0.5 rounded hover:bg-green-200"
+                          >
+                            + 添加
+                          </button>
+                        )}
+                      </div>
+                      {/* 添加新细项输入框 */}
+                      {newItemInput?.category === cat.name && (
+                        <div className="flex items-center gap-2 mb-3 p-3 bg-white rounded-xl border border-slate-200">
+                          <input
+                            type="text"
+                            value={newItemInput.value}
+                            onChange={(e) => setNewItemInput({ ...newItemInput, value: e.target.value })}
+                            placeholder="输入新任务名称"
+                            autoFocus
+                            className="flex-1 py-2 px-3 rounded-lg text-sm border border-slate-200 focus:border-blue-400 outline-none"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && newItemInput.value.trim()) {
+                                if (showOnlyMethodology) {
+                                  setMethodologyCategories(prev => prev.map((c, i) => i === catIdx ? { ...c, items: [...c.items, newItemInput.value.trim()] } : c));
+                                } else {
+                                  setGrowthCategories(prev => prev.map((c, i) => i === catIdx ? { ...c, items: [...c.items, newItemInput.value.trim()] } : c));
+                                }
+                                setNewItemInput(null);
+                              }
+                              if (e.key === 'Escape') setNewItemInput(null);
+                            }}
+                          />
+                          <button
+                            onClick={() => {
+                              if (newItemInput.value.trim()) {
+                                if (showOnlyMethodology) {
+                                  setMethodologyCategories(prev => prev.map((c, i) => i === catIdx ? { ...c, items: [...c.items, newItemInput.value.trim()] } : c));
+                                } else {
+                                  setGrowthCategories(prev => prev.map((c, i) => i === catIdx ? { ...c, items: [...c.items, newItemInput.value.trim()] } : c));
+                                }
+                                setNewItemInput(null);
+                              }
+                            }}
+                            className="py-2 px-4 rounded-lg text-sm font-bold bg-green-500 text-white hover:bg-green-600"
+                          >
+                            确认
+                          </button>
+                          <button onClick={() => setNewItemInput(null)} className="py-2 px-3 rounded-lg text-sm text-slate-500 hover:bg-slate-100">
+                            取消
+                          </button>
+                        </div>
+                      )}
+                      {/* 细项列表 */}
+                      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-50">
+                        {cat.items.map((item, itemIdx) => {
+                          const isSelected = selectedTasks.includes(item);
+                          return (
+                            <div
+                              key={itemIdx}
+                              className={`px-4 py-3 flex items-center justify-between transition-colors ${isSelected ? 'bg-blue-50' : 'hover:bg-slate-50'} cursor-pointer`}
+                              onClick={() => {
+                                if (!isManageMode) {
+                                  setSelectedTasks(prev => prev.includes(item) ? prev.filter(t => t !== item) : [...prev, item]);
+                                }
+                              }}
+                            >
+                              <span className={`text-sm ${isSelected ? 'text-blue-600 font-bold' : 'text-gray-700'}`}>{item}</span>
+                              {isManageMode ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (showOnlyMethodology) {
+                                      setMethodologyCategories(prev => prev.map((c, i) => i === catIdx ? { ...c, items: c.items.filter((_, ii) => ii !== itemIdx) } : c));
+                                    } else {
+                                      setGrowthCategories(prev => prev.map((c, i) => i === catIdx ? { ...c, items: c.items.filter((_, ii) => ii !== itemIdx) } : c));
+                                    }
+                                  }}
+                                  className="w-6 h-6 rounded-full bg-red-100 text-red-500 flex items-center justify-center hover:bg-red-200"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              ) : (
+                                <div className={`w-5 h-5 rounded-full border-2 ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'} flex items-center justify-center`}>
+                                  {isSelected && <Check size={12} className="text-white" />}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                  {/* 添加新大类按钮 */}
+                  {isManageMode && (
+                    <div className="mt-4">
+                      {newCategoryInput !== '' ? (
+                        <div className="flex items-center gap-2 p-3 bg-white rounded-xl border border-slate-200">
+                          <input
+                            type="text"
+                            value={newCategoryInput}
+                            onChange={(e) => setNewCategoryInput(e.target.value)}
+                            placeholder="输入新分类名称"
+                            autoFocus
+                            className="flex-1 py-2 px-3 rounded-lg text-sm border border-slate-200 focus:border-blue-400 outline-none"
+                          />
+                          <button
+                            onClick={() => {
+                              if (newCategoryInput.trim()) {
+                                if (showOnlyMethodology) {
+                                  setMethodologyCategories(prev => [...prev, { name: newCategoryInput.trim(), items: [] }]);
+                                } else {
+                                  setGrowthCategories(prev => [...prev, { name: newCategoryInput.trim(), items: [] }]);
+                                }
+                                setNewCategoryInput('');
+                              }
+                            }}
+                            className="py-2 px-4 rounded-lg text-sm font-bold bg-blue-500 text-white hover:bg-blue-600"
+                          >
+                            确认
+                          </button>
+                          <button onClick={() => setNewCategoryInput('')} className="py-2 px-3 rounded-lg text-sm text-slate-500 hover:bg-slate-100">
+                            取消
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setNewCategoryInput(' ')}
+                          className="w-full py-3 border-2 border-dashed border-slate-300 text-slate-500 rounded-xl hover:border-blue-400 hover:text-blue-500"
+                        >
+                          + 添加新分类
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               ) : (
                 // 🆕 根据showOnlyMethodology或showOnlyGrowth筛选任务并按category分组
@@ -1175,7 +1441,7 @@ interface LatestLessonPlanResponse {
         </div>
       )}
 
-      {/* === Modal 2: 个性化加餐 === */}
+      {/* === Modal 2: 定制加餐 === */}
       {isSpecialModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white w-full rounded-t-[24px] p-6 flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[85vh]">
@@ -1198,11 +1464,10 @@ interface LatestLessonPlanResponse {
                     <button
                       key={stu.id || studentName}
                       onClick={() => toggleSpecialStudent(studentName)}
-                      className={`py-2.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ${
-                        isSelected
-                          ? 'bg-slate-800 text-white border-slate-800 shadow-lg'
-                          : 'bg-slate-50 text-slate-500 border-transparent'
-                      }`}
+                      className={`py-2.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ${isSelected
+                        ? 'bg-slate-800 text-white border-slate-800 shadow-lg'
+                        : 'bg-slate-50 text-slate-500 border-transparent'
+                        }`}
                     >
                       {studentName}
                     </button>
@@ -1219,11 +1484,10 @@ interface LatestLessonPlanResponse {
                     <button
                       key={tag}
                       onClick={() => toggleSpecialTag(tag)}
-                      className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95 ${
-                        isSelected
-                          ? 'bg-orange-500 text-white border-orange-500 shadow-md'
-                          : 'bg-slate-50 text-slate-500 border-transparent'
-                      }`}
+                      className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95 ${isSelected
+                        ? 'bg-orange-500 text-white border-orange-500 shadow-md'
+                        : 'bg-slate-50 text-slate-500 border-transparent'
+                        }`}
                     >
                       {tag}
                     </button>

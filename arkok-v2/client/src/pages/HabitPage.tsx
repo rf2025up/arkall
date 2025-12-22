@@ -23,6 +23,12 @@ function isApiResponse(response: any): response is ApiResponse<any> {
 }
 
 function extractHabitsData(data: any): Habit[] {
+  // 兼容两种返回格式：
+  // 1. 直接数组: data = [...]
+  // 2. 包装对象: data = { habits: [...] }
+  if (Array.isArray(data)) {
+    return data;
+  }
   if (data && typeof data === 'object' && 'habits' in data && Array.isArray(data.habits)) {
     return data.habits;
   }
@@ -30,6 +36,9 @@ function extractHabitsData(data: any): Habit[] {
 }
 
 function extractStudentsData(data: any): Student[] {
+  if (Array.isArray(data)) {
+    return data;
+  }
   if (data && typeof data === 'object' && 'students' in data && Array.isArray(data.students)) {
     return data.students;
   }
@@ -70,7 +79,7 @@ const HabitPage: React.FC = () => {
   // Modal States
   const [isManageOpen, setIsManageOpen] = useState(false);
   const [isAddMode, setIsAddMode] = useState(false);
-  const [editForm, setEditForm] = useState<{id?: string, name: string, icon: string}>({ name: '', icon: HABIT_ICONS[0] });
+  const [editForm, setEditForm] = useState<{ id?: string, name: string, icon: string }>({ name: '', icon: HABIT_ICONS[0] });
 
   // --- 数据获取 - 分离加载，学生数据优先 ---
   useEffect(() => {
@@ -127,7 +136,9 @@ const HabitPage: React.FC = () => {
           const habitsData = extractHabitsData(habitsResponse.data);
           setHabits(habitsData);
           if (habitsData.length > 0) {
-            setSelectedHabitId(habitsData[0].id);
+            if (!selectedHabitId) {
+              setSelectedHabitId(habitsData[0].id);
+            }
             console.log('✅ [HABIT_PAGE] 习惯数据加载成功:', habitsData.length, '个习惯');
           } else {
             console.log('ℹ️ [HABIT_PAGE] 习惯数据为空，使用默认习惯');
@@ -142,6 +153,7 @@ const HabitPage: React.FC = () => {
         loadDefaultHabits();
       }
     };
+
 
     // 3. 默认习惯数据
     const loadDefaultHabits = () => {
@@ -167,7 +179,7 @@ const HabitPage: React.FC = () => {
       setLoading(false);
     }, 3000);
 
-  }, [selectedHabitId, currentClass]); // 习惯页不需要依赖视图模式，始终只显示本班学生
+  }, [currentClass, user?.schoolId]); // 不依赖 selectedHabitId，避免选择习惯时触发重新加载
 
   // --- 计算属性 ---
   const selectedHabit = habits.find(h => h.id === selectedHabitId);
@@ -393,7 +405,7 @@ const HabitPage: React.FC = () => {
                     <div className={`relative w-14 h-14 rounded-full transition-all duration-200 ${isSelected ? 'ring-4 ring-primary ring-offset-2' : 'ring-2 ring-gray-100'}`}>
                       <img
                         src={student.avatarUrl || '/avatar.jpg'}
-                        onError={(e)=>{ e.currentTarget.src = '/avatar.jpg'; }}
+                        onError={(e) => { e.currentTarget.src = '/avatar.jpg'; }}
                         className={`w-full h-full rounded-full bg-gray-200 object-cover select-none pointer-events-none ${isSelected ? 'opacity-100' : 'opacity-70 grayscale'}`}
                         alt={student.name}
                         draggable={false}
@@ -401,7 +413,7 @@ const HabitPage: React.FC = () => {
                       />
                       {isSelected && (
                         <div className="absolute -top-1 -right-1 bg-primary rounded-full p-0.5 border-2 border-white shadow-sm">
-                          <Check size={10} className="text-white" strokeWidth={4}/>
+                          <Check size={10} className="text-white" strokeWidth={4} />
                         </div>
                       )}
                     </div>
@@ -415,7 +427,7 @@ const HabitPage: React.FC = () => {
             <div className="mt-3 flex justify-between items-center">
               <span className="text-xs text-gray-500">本班学生：{students.length} 位</span>
               <button
-                onClick={() => { if (allSelected) { setSelectedStudentIds(new Set()); } else { setSelectedStudentIds(new Set(students.map(s=>s.id))); } }}
+                onClick={() => { if (allSelected) { setSelectedStudentIds(new Set()); } else { setSelectedStudentIds(new Set(students.map(s => s.id))); } }}
                 className={`px-3 py-1 rounded-xl text-xs font-bold ${allSelected ? 'bg-gray-100 text-gray-700' : 'bg-primary/10 text-primary'}`}
               >
                 {allSelected ? '取消全选' : '一键全选'}
@@ -429,11 +441,10 @@ const HabitPage: React.FC = () => {
           <button
             onClick={handleConfirm}
             disabled={selectedStudentIds.size === 0}
-            className={`px-6 py-2.5 rounded-xl font-bold text-white shadow-lg transition-all flex items-center justify-center text-sm ${
-              selectedStudentIds.size > 0
-                ? 'bg-gray-900 hover:bg-gray-800 active:scale-95'
-                : 'bg-gray-300 cursor-not-allowed'
-            }`}
+            className={`px-6 py-2.5 rounded-xl font-bold text-white shadow-lg transition-all flex items-center justify-center text-sm ${selectedStudentIds.size > 0
+              ? 'bg-gray-900 hover:bg-gray-800 active:scale-95'
+              : 'bg-gray-300 cursor-not-allowed'
+              }`}
           >
             确认打卡 ({selectedStudentIds.size})
           </button>
@@ -446,7 +457,7 @@ const HabitPage: React.FC = () => {
               <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                 <h3 className="font-bold text-gray-800">管理习惯</h3>
                 <button onClick={() => setIsManageOpen(false)}>
-                  <X size={20} className="text-gray-400"/>
+                  <X size={20} className="text-gray-400" />
                 </button>
               </div>
 
@@ -460,7 +471,7 @@ const HabitPage: React.FC = () => {
                     </div>
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => { setEditForm({id: h.id, name: h.name, icon: h.icon}); setIsAddMode(false); }}
+                        onClick={() => { setEditForm({ id: h.id, name: h.name, icon: h.icon }); setIsAddMode(false); }}
                         className="p-1.5 bg-blue-50 text-blue-500 rounded-lg"
                       >
                         <Settings size={14} />
@@ -484,12 +495,12 @@ const HabitPage: React.FC = () => {
                     type="text"
                     placeholder="习惯名称"
                     value={editForm.name}
-                    onChange={e => setEditForm({...editForm, name: e.target.value})}
+                    onChange={e => setEditForm({ ...editForm, name: e.target.value })}
                     className="flex-1 p-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-primary"
                   />
                   <select
                     value={editForm.icon}
-                    onChange={e => setEditForm({...editForm, icon: e.target.value})}
+                    onChange={e => setEditForm({ ...editForm, icon: e.target.value })}
                     className="w-16 p-2 rounded-lg border border-gray-200 text-lg outline-none"
                   >
                     {HABIT_ICONS.map(ic => <option key={ic} value={ic}>{ic}</option>)}
@@ -497,12 +508,12 @@ const HabitPage: React.FC = () => {
                 </div>
                 <div className="flex space-x-2">
                   {!isAddMode && !editForm.id ? (
-                    <button onClick={() => { setIsAddMode(true); setEditForm({name: '', icon: HABIT_ICONS[0]}); }} className="w-full py-2 bg-white border border-gray-200 text-gray-600 font-bold rounded-lg text-sm">
+                    <button onClick={() => { setIsAddMode(true); setEditForm({ name: '', icon: HABIT_ICONS[0] }); }} className="w-full py-2 bg-white border border-gray-200 text-gray-600 font-bold rounded-lg text-sm">
                       + 新增模式
                     </button>
                   ) : (
                     <>
-                      <button onClick={() => { setIsAddMode(false); setEditForm({name: '', icon: HABIT_ICONS[0], id: undefined}) }} className="flex-1 py-2 bg-white border border-gray-200 text-gray-500 font-bold rounded-lg text-sm">取消</button>
+                      <button onClick={() => { setIsAddMode(false); setEditForm({ name: '', icon: HABIT_ICONS[0], id: undefined }) }} className="flex-1 py-2 bg-white border border-gray-200 text-gray-500 font-bold rounded-lg text-sm">取消</button>
                       <button onClick={handleSaveHabit} className="flex-1 py-2 bg-primary text-white font-bold rounded-lg text-sm">保存</button>
                     </>
                   )}

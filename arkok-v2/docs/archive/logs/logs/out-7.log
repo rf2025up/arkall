@@ -1,0 +1,2578 @@
+2025-12-17T14:40:51: 🚀 Starting ArkOK V2 Server...
+2025-12-17T14:40:51: 🌍 Environment: production
+2025-12-17T14:40:51: 🔌 Port: 3000
+2025-12-17T14:40:51: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T14:40:51: 📁 Static path exists: true
+2025-12-17T14:40:51: 🔧 Setting up Socket.IO handlers...
+2025-12-17T14:40:51: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T14:40:51: ✅ Database connected successfully
+2025-12-17T14:40:51: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T14:40:51: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T14:40:51: 🔌 WebSocket server ready
+2025-12-17T14:40:51: 🌐 Environment: production
+2025-12-17T14:41:40: 
+🛑 SIGTERM received, shutting down gracefully...
+2025-12-17T14:41:40: 🛑 Shutting down server...
+2025-12-17T14:41:40: ✅ Database disconnected
+2025-12-17T14:41:41: 🚀 Starting ArkOK V2 Server...
+2025-12-17T14:41:41: 🌍 Environment: production
+2025-12-17T14:41:41: 🔌 Port: 3000
+2025-12-17T14:41:42: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T14:41:42: 📁 Static path exists: true
+2025-12-17T14:41:42: 🔧 Setting up Socket.IO handlers...
+2025-12-17T14:41:42: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T14:41:42: ✅ Database connected successfully
+2025-12-17T14:41:42: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T14:41:42: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T14:41:42: 🔌 WebSocket server ready
+2025-12-17T14:41:42: 🌐 Environment: production
+2025-12-17T14:41:53: 
+🛑 SIGTERM received, shutting down gracefully...
+2025-12-17T14:41:53: 🛑 Shutting down server...
+2025-12-17T14:41:53: ✅ Database disconnected
+2025-12-17T14:41:55: 🚀 Starting ArkOK V2 Server...
+2025-12-17T14:41:55: 🌍 Environment: production
+2025-12-17T14:41:55: 🔌 Port: 3000
+2025-12-17T14:41:55: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T14:41:55: 📁 Static path exists: true
+2025-12-17T14:41:55: 🔧 Setting up Socket.IO handlers...
+2025-12-17T14:41:55: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T14:41:55: ✅ Database connected successfully
+2025-12-17T14:41:55: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T14:41:55: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T14:41:55: 🔌 WebSocket server ready
+2025-12-17T14:41:55: 🌐 Environment: production
+2025-12-17T14:43:45: 2025-12-17T14:43:45.048Z - GET /vite.svg
+2025-12-17T14:44:36: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T14:44:36: 🛑 Shutting down server...
+2025-12-17T14:44:36: ✅ Database disconnected
+2025-12-17T14:44:37: 🚀 Starting ArkOK V2 Server...
+2025-12-17T14:44:37: 🌍 Environment: production
+2025-12-17T14:44:37: 🔌 Port: 3000
+2025-12-17T14:44:37: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T14:44:37: 📁 Static path exists: true
+2025-12-17T14:44:37: 🔧 Setting up Socket.IO handlers...
+2025-12-17T14:44:37: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T14:44:37: ✅ Database connected successfully
+2025-12-17T14:44:37: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T14:44:37: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T14:44:37: 🔌 WebSocket server ready
+2025-12-17T14:44:37: 🌐 Environment: production
+2025-12-17T14:48:10: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T14:48:10: 🛑 Shutting down server...
+2025-12-17T14:48:10: ✅ Database disconnected
+2025-12-17T14:48:10: 🚀 Starting ArkOK V2 Server...
+2025-12-17T14:48:10: 🌍 Environment: production
+2025-12-17T14:48:10: 🔌 Port: 3000
+2025-12-17T14:48:10: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T14:48:10: 📁 Static path exists: true
+2025-12-17T14:48:10: 🔧 Setting up Socket.IO handlers...
+2025-12-17T14:48:10: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T14:48:10: ✅ Database connected successfully
+2025-12-17T14:48:10: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T14:48:10: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T14:48:10: 🔌 WebSocket server ready
+2025-12-17T14:48:10: 🌐 Environment: production
+2025-12-17T14:52:36: 2025-12-17T14:52:36.787Z - GET /assets/index-DGGpHUud.css
+2025-12-17T14:52:36: 2025-12-17T14:52:36.808Z - GET /api/auth/me
+2025-12-17T14:52:36: 🔐 [AUTH_MIDDLEWARE] Processing GET /me
+2025-12-17T14:52:36: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 451
+2025-12-17T14:52:36: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T14:52:36: ✅ [AUTH_MIDDLEWARE] User authenticated: testteacher2 (TEACHER)
+2025-12-17T14:52:36: 2025-12-17T14:52:36.820Z - GET /api/students/classes
+2025-12-17T14:52:36: 🔐 [AUTH_MIDDLEWARE] Processing GET /classes
+2025-12-17T14:52:36: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 451
+2025-12-17T14:52:36: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T14:52:36: ✅ [AUTH_MIDDLEWARE] User authenticated: testteacher2 (TEACHER)
+2025-12-17T15:06:39: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T15:06:39: 🛑 Shutting down server...
+2025-12-17T15:06:39: ✅ Database disconnected
+2025-12-17T15:06:39: 🚀 Starting ArkOK V2 Server...
+2025-12-17T15:06:39: 🌍 Environment: production
+2025-12-17T15:06:39: 🔌 Port: 3000
+2025-12-17T15:06:39: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T15:06:39: 📁 Static path exists: true
+2025-12-17T15:06:39: 🔧 Setting up Socket.IO handlers...
+2025-12-17T15:06:39: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T15:06:39: ✅ Database connected successfully
+2025-12-17T15:06:39: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T15:06:39: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T15:06:39: 🔌 WebSocket server ready
+2025-12-17T15:06:39: 🌐 Environment: production
+2025-12-17T15:08:45: 2025-12-17T15:08:45.883Z - GET /api/lms/daily-records
+2025-12-17T15:08:45: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T15:08:45: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:08:45: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:08:45: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=65697759-b4ba-49ae-9f18-101730f7bf47, date=2025-12-17
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T15:08:45.888Z
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 查询结果: 找到 15 条记录
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] ===== 记录详情 =====
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 记录 1:
+2025-12-17T15:08:45:    - ID: 6382be1c-e537-468d-9b37-e6c112148d52
+2025-12-17T15:08:45:    - Title: 单词背诵
+2025-12-17T15:08:45:    - Type: QC
+2025-12-17T15:08:45:    - Status: PENDING
+2025-12-17T15:08:45:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:08:45:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:08:45:    - Exp: 5
+2025-12-17T15:08:45:    - Student: 刘梓萌
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 记录 2:
+2025-12-17T15:08:45:    - ID: a977d6a1-bcb9-4c14-bd1d-1591e4e2980d
+2025-12-17T15:08:45:    - Title: 句型练习
+2025-12-17T15:08:45:    - Type: QC
+2025-12-17T15:08:45:    - Status: PENDING
+2025-12-17T15:08:45:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:08:45:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:08:45:    - Exp: 5
+2025-12-17T15:08:45:    - Student: 刘梓萌
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 记录 3:
+2025-12-17T15:08:45:    - ID: 6f16919c-e52c-4dad-8d6b-9715545bf257
+2025-12-17T15:08:45:    - Title: 口算练习
+2025-12-17T15:08:45:    - Type: QC
+2025-12-17T15:08:45:    - Status: PENDING
+2025-12-17T15:08:45:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:08:45:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:08:45:    - Exp: 5
+2025-12-17T15:08:45:    - Student: 刘梓萌
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 记录 4:
+2025-12-17T15:08:45:    - ID: 4ed60092-e532-43a3-97ce-caac940628b1
+2025-12-17T15:08:45:    - Title: 古诗背诵
+2025-12-17T15:08:45:    - Type: QC
+2025-12-17T15:08:45:    - Status: PENDING
+2025-12-17T15:08:45:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:08:45:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:08:45:    - Exp: 5
+2025-12-17T15:08:45:    - Student: 刘梓萌
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 记录 5:
+2025-12-17T15:08:45:    - ID: e1198d1d-d5d3-4d5f-88e3-f164b68bf8b0
+2025-12-17T15:08:45:    - Title: 生字听写
+2025-12-17T15:08:45:    - Type: QC
+2025-12-17T15:08:45:    - Status: PENDING
+2025-12-17T15:08:45:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:08:45:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:08:45:    - Exp: 5
+2025-12-17T15:08:45:    - Student: 刘梓萌
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 记录 6:
+2025-12-17T15:08:45:    - ID: 4a0e95ac-27ab-4878-a332-125ad12fa7b9
+2025-12-17T15:08:45:    - Title: 应用题
+2025-12-17T15:08:45:    - Type: QC
+2025-12-17T15:08:45:    - Status: PENDING
+2025-12-17T15:08:45:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:08:45:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:08:45:    - Exp: 5
+2025-12-17T15:08:45:    - Student: 刘梓萌
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 记录 7:
+2025-12-17T15:08:45:    - ID: 41bbc481-ba67-45dc-ae39-997da2722efb
+2025-12-17T15:08:45:    - Title: 句型练习
+2025-12-17T15:08:45:    - Type: QC
+2025-12-17T15:08:45:    - Status: PENDING
+2025-12-17T15:08:45:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:08:45:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:08:45:    - Exp: 5
+2025-12-17T15:08:45:    - Student: 刘梓萌
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 记录 8:
+2025-12-17T15:08:45:    - ID: 76e29ad7-19fc-4f8c-8a5c-7415f27b06a5
+2025-12-17T15:08:45:    - Title: 古诗背诵
+2025-12-17T15:08:45:    - Type: QC
+2025-12-17T15:08:45:    - Status: PENDING
+2025-12-17T15:08:45:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:08:45:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:08:45:    - Exp: 5
+2025-12-17T15:08:45:    - Student: 刘梓萌
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 记录 9:
+2025-12-17T15:08:45:    - ID: 2e9f619d-e135-4815-9a44-6ed407e59c67
+2025-12-17T15:08:45:    - Title: 生字听写
+2025-12-17T15:08:45:    - Type: QC
+2025-12-17T15:08:45:    - Status: PENDING
+2025-12-17T15:08:45:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:08:45:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:08:45:    - Exp: 5
+2025-12-17T15:08:45:    - Student: 刘梓萌
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 记录 10:
+2025-12-17T15:08:45:    - ID: 83c0a77d-fac9-454a-b928-fb6271a16ee0
+2025-12-17T15:08:45:    - Title: 口算练习
+2025-12-17T15:08:45:    - Type: QC
+2025-12-17T15:08:45:    - Status: PENDING
+2025-12-17T15:08:45:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:08:45:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:08:45:    - Exp: 5
+2025-12-17T15:08:45:    - Student: 刘梓萌
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 记录 11:
+2025-12-17T15:08:45:    - ID: dc7c5b45-6f9f-4c5c-84c4-2498ff1955e2
+2025-12-17T15:08:45:    - Title: 应用题
+2025-12-17T15:08:45:    - Type: QC
+2025-12-17T15:08:45:    - Status: PENDING
+2025-12-17T15:08:45:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:08:45:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:08:45:    - Exp: 5
+2025-12-17T15:08:45:    - Student: 刘梓萌
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 记录 12:
+2025-12-17T15:08:45:    - ID: 9a129ec6-f47d-4a56-a5bd-dff70471dd71
+2025-12-17T15:08:45:    - Title: 单词背诵
+2025-12-17T15:08:45:    - Type: QC
+2025-12-17T15:08:45:    - Status: PENDING
+2025-12-17T15:08:45:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:08:45:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:08:45:    - Exp: 5
+2025-12-17T15:08:45:    - Student: 刘梓萌
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 记录 13:
+2025-12-17T15:08:45:    - ID: 6f867552-5b09-4fd4-a06f-5e2f9b463cd7
+2025-12-17T15:08:45:    - Title: 5道旧错题的重做练习
+2025-12-17T15:08:45:    - Type: TASK
+2025-12-17T15:08:45:    - Status: PENDING
+2025-12-17T15:08:45:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:08:45:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:08:45:    - Exp: 10
+2025-12-17T15:08:45:    - Student: 刘梓萌
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 记录 14:
+2025-12-17T15:08:45:    - ID: 3cd16a68-4950-47ee-adcd-662c508052ee
+2025-12-17T15:08:45:    - Title: 错题的红笔订正
+2025-12-17T15:08:45:    - Type: TASK
+2025-12-17T15:08:45:    - Status: PENDING
+2025-12-17T15:08:45:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:08:45:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:08:45:    - Exp: 10
+2025-12-17T15:08:45:    - Student: 刘梓萌
+2025-12-17T15:08:45: 🔥 [LMS DEBUG] 记录 15:
+2025-12-17T15:08:45:    - ID: 5bcda488-bd21-4fc1-bfa7-71e18652126d
+2025-12-17T15:08:45:    - Title: 错题的摘抄与归因
+2025-12-17T15:08:45:    - Type: TASK
+2025-12-17T15:08:45:    - Status: PENDING
+2025-12-17T15:08:45:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:08:45:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:08:45:    - Exp: 10
+2025-12-17T15:08:45:    - Student: 刘梓萌
+2025-12-17T15:12:21: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T15:12:21: 🛑 Shutting down server...
+2025-12-17T15:12:21: ✅ Database disconnected
+2025-12-17T15:12:22: 🚀 Starting ArkOK V2 Server...
+2025-12-17T15:12:22: 🌍 Environment: production
+2025-12-17T15:12:22: 🔌 Port: 3000
+2025-12-17T15:12:22: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T15:12:22: 📁 Static path exists: true
+2025-12-17T15:12:22: 🔧 Setting up Socket.IO handlers...
+2025-12-17T15:12:22: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T15:12:22: ✅ Database connected successfully
+2025-12-17T15:12:22: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T15:12:22: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T15:12:22: 🔌 WebSocket server ready
+2025-12-17T15:12:22: 🌐 Environment: production
+2025-12-17T15:14:56: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T15:14:56: 🛑 Shutting down server...
+2025-12-17T15:14:56: ✅ Database disconnected
+2025-12-17T15:14:57: 🚀 Starting ArkOK V2 Server...
+2025-12-17T15:14:57: 🌍 Environment: production
+2025-12-17T15:14:57: 🔌 Port: 3000
+2025-12-17T15:14:57: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T15:14:57: 📁 Static path exists: true
+2025-12-17T15:14:57: 🔧 Setting up Socket.IO handlers...
+2025-12-17T15:14:57: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T15:14:57: ✅ Database connected successfully
+2025-12-17T15:14:57: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T15:14:57: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T15:14:57: 🔌 WebSocket server ready
+2025-12-17T15:14:57: 🌐 Environment: production
+2025-12-17T15:19:38: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T15:19:38: 🛑 Shutting down server...
+2025-12-17T15:19:38: ✅ Database disconnected
+2025-12-17T15:19:39: 🚀 Starting ArkOK V2 Server...
+2025-12-17T15:19:39: 🌍 Environment: production
+2025-12-17T15:19:39: 🔌 Port: 3000
+2025-12-17T15:19:39: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T15:19:39: 📁 Static path exists: true
+2025-12-17T15:19:39: 🔧 Setting up Socket.IO handlers...
+2025-12-17T15:19:39: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T15:19:39: ✅ Database connected successfully
+2025-12-17T15:19:39: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T15:19:39: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T15:19:39: 🔌 WebSocket server ready
+2025-12-17T15:19:39: 🌐 Environment: production
+2025-12-17T15:31:01: 2025-12-17T15:31:01.729Z - GET /api/students
+2025-12-17T15:31:01: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T15:31:01: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T15:31:01: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:31:01: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:31:01: --- [DEBUG] GET /api/students endpoint hit ---
+2025-12-17T15:31:01: Authenticated User: {
+  userId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  username: 'long',
+  name: '龙老师',
+  displayName: '龙老师',
+  email: null,
+  role: 'TEACHER',
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  schoolName: 'Default Migration School',
+  primaryClassName: '六年级1班'
+}
+2025-12-17T15:31:01: School ID from user: 625e503b-aa7e-44fe-9982-237d828af717
+2025-12-17T15:31:01: Request query params: {
+  scope: 'MY_STUDENTS',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  userRole: 'TEACHER',
+  classRoom: '龙老师的班级'
+}
+2025-12-17T15:31:01: [DEBUG] Query object sent to service: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  classRoom: '龙老师的班级',
+  search: undefined,
+  page: undefined,
+  limit: undefined,
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: 'TEACHER',
+  requesterId: undefined
+}
+2025-12-17T15:31:01: [DEBUG] ✅ teacherId is present: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:31:01: [TEACHER BINDING] Fetching students with query: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: 'TEACHER'
+}
+2025-12-17T15:31:01: [DEBUG] 🔍 Checking teacherId distribution before query...
+2025-12-17T15:31:01: [DEBUG] 📊 TeacherId distribution: { null: 46 }
+2025-12-17T15:31:01: [DEBUG] 📊 Total students in DB: 46
+2025-12-17T15:31:01: [TEACHER BINDING] Querying MY_STUDENTS for teacher: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T15:31:01: [TEACHER BINDING] ✅ Found 0 students for scope: MY_STUDENTS
+2025-12-17T15:31:01: [DEBUG] Service returned: {
+  students: [],
+  pagination: { page: 1, limit: 0, total: 0, totalPages: 1 }
+}
+2025-12-17T15:31:01: [DEBUG] Number of students in result: 0
+2025-12-17T15:31:01: [DEBUG] Students data preview: []
+2025-12-17T15:31:01: [DEBUG] Response sent to frontend successfully
+2025-12-17T15:38:16: 2025-12-17T15:38:16.580Z - GET /api/lms/daily-records
+2025-12-17T15:38:16: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T15:38:16: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T15:38:16: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:38:16: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=65697759-b4ba-49ae-9f18-101730f7bf47, date=2025-12-17
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T15:38:16.582Z
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 查询结果: 找到 16 条记录
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] ===== 记录详情 =====
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 记录 1:
+2025-12-17T15:38:16:    - ID: 6382be1c-e537-468d-9b37-e6c112148d52
+2025-12-17T15:38:16:    - Title: 单词背诵
+2025-12-17T15:38:16:    - Type: QC
+2025-12-17T15:38:16:    - Status: PENDING
+2025-12-17T15:38:16:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:38:16:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:38:16:    - Exp: 5
+2025-12-17T15:38:16:    - Student: 刘梓萌
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 记录 2:
+2025-12-17T15:38:16:    - ID: a977d6a1-bcb9-4c14-bd1d-1591e4e2980d
+2025-12-17T15:38:16:    - Title: 句型练习
+2025-12-17T15:38:16:    - Type: QC
+2025-12-17T15:38:16:    - Status: PENDING
+2025-12-17T15:38:16:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:38:16:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:38:16:    - Exp: 5
+2025-12-17T15:38:16:    - Student: 刘梓萌
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 记录 3:
+2025-12-17T15:38:16:    - ID: 6f16919c-e52c-4dad-8d6b-9715545bf257
+2025-12-17T15:38:16:    - Title: 口算练习
+2025-12-17T15:38:16:    - Type: QC
+2025-12-17T15:38:16:    - Status: PENDING
+2025-12-17T15:38:16:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:38:16:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:38:16:    - Exp: 5
+2025-12-17T15:38:16:    - Student: 刘梓萌
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 记录 4:
+2025-12-17T15:38:16:    - ID: 4ed60092-e532-43a3-97ce-caac940628b1
+2025-12-17T15:38:16:    - Title: 古诗背诵
+2025-12-17T15:38:16:    - Type: QC
+2025-12-17T15:38:16:    - Status: PENDING
+2025-12-17T15:38:16:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:38:16:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:38:16:    - Exp: 5
+2025-12-17T15:38:16:    - Student: 刘梓萌
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 记录 5:
+2025-12-17T15:38:16:    - ID: e1198d1d-d5d3-4d5f-88e3-f164b68bf8b0
+2025-12-17T15:38:16:    - Title: 生字听写
+2025-12-17T15:38:16:    - Type: QC
+2025-12-17T15:38:16:    - Status: PENDING
+2025-12-17T15:38:16:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:38:16:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:38:16:    - Exp: 5
+2025-12-17T15:38:16:    - Student: 刘梓萌
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 记录 6:
+2025-12-17T15:38:16:    - ID: 4a0e95ac-27ab-4878-a332-125ad12fa7b9
+2025-12-17T15:38:16:    - Title: 应用题
+2025-12-17T15:38:16:    - Type: QC
+2025-12-17T15:38:16:    - Status: PENDING
+2025-12-17T15:38:16:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:38:16:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:38:16:    - Exp: 5
+2025-12-17T15:38:16:    - Student: 刘梓萌
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 记录 7:
+2025-12-17T15:38:16:    - ID: 41bbc481-ba67-45dc-ae39-997da2722efb
+2025-12-17T15:38:16:    - Title: 句型练习
+2025-12-17T15:38:16:    - Type: QC
+2025-12-17T15:38:16:    - Status: PENDING
+2025-12-17T15:38:16:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:38:16:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:38:16:    - Exp: 5
+2025-12-17T15:38:16:    - Student: 刘梓萌
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 记录 8:
+2025-12-17T15:38:16:    - ID: 76e29ad7-19fc-4f8c-8a5c-7415f27b06a5
+2025-12-17T15:38:16:    - Title: 古诗背诵
+2025-12-17T15:38:16:    - Type: QC
+2025-12-17T15:38:16:    - Status: PENDING
+2025-12-17T15:38:16:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:38:16:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:38:16:    - Exp: 5
+2025-12-17T15:38:16:    - Student: 刘梓萌
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 记录 9:
+2025-12-17T15:38:16:    - ID: 2e9f619d-e135-4815-9a44-6ed407e59c67
+2025-12-17T15:38:16:    - Title: 生字听写
+2025-12-17T15:38:16:    - Type: QC
+2025-12-17T15:38:16:    - Status: PENDING
+2025-12-17T15:38:16:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:38:16:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:38:16:    - Exp: 5
+2025-12-17T15:38:16:    - Student: 刘梓萌
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 记录 10:
+2025-12-17T15:38:16:    - ID: 83c0a77d-fac9-454a-b928-fb6271a16ee0
+2025-12-17T15:38:16:    - Title: 口算练习
+2025-12-17T15:38:16:    - Type: QC
+2025-12-17T15:38:16:    - Status: PENDING
+2025-12-17T15:38:16:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:38:16:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:38:16:    - Exp: 5
+2025-12-17T15:38:16:    - Student: 刘梓萌
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 记录 11:
+2025-12-17T15:38:16:    - ID: dc7c5b45-6f9f-4c5c-84c4-2498ff1955e2
+2025-12-17T15:38:16:    - Title: 应用题
+2025-12-17T15:38:16:    - Type: QC
+2025-12-17T15:38:16:    - Status: PENDING
+2025-12-17T15:38:16:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:38:16:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:38:16:    - Exp: 5
+2025-12-17T15:38:16:    - Student: 刘梓萌
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 记录 12:
+2025-12-17T15:38:16:    - ID: 9a129ec6-f47d-4a56-a5bd-dff70471dd71
+2025-12-17T15:38:16:    - Title: 单词背诵
+2025-12-17T15:38:16:    - Type: QC
+2025-12-17T15:38:16:    - Status: PENDING
+2025-12-17T15:38:16:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:38:16:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:38:16:    - Exp: 5
+2025-12-17T15:38:16:    - Student: 刘梓萌
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 记录 13:
+2025-12-17T15:38:16:    - ID: 5bcda488-bd21-4fc1-bfa7-71e18652126d
+2025-12-17T15:38:16:    - Title: 错题的摘抄与归因
+2025-12-17T15:38:16:    - Type: TASK
+2025-12-17T15:38:16:    - Status: PENDING
+2025-12-17T15:38:16:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:38:16:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:38:16:    - Exp: 10
+2025-12-17T15:38:16:    - Student: 刘梓萌
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 记录 14:
+2025-12-17T15:38:16:    - ID: 3cd16a68-4950-47ee-adcd-662c508052ee
+2025-12-17T15:38:16:    - Title: 错题的红笔订正
+2025-12-17T15:38:16:    - Type: TASK
+2025-12-17T15:38:16:    - Status: PENDING
+2025-12-17T15:38:16:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:38:16:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:38:16:    - Exp: 10
+2025-12-17T15:38:16:    - Student: 刘梓萌
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 记录 15:
+2025-12-17T15:38:16:    - ID: 6f867552-5b09-4fd4-a06f-5e2f9b463cd7
+2025-12-17T15:38:16:    - Title: 5道旧错题的重做练习
+2025-12-17T15:38:16:    - Type: TASK
+2025-12-17T15:38:16:    - Status: PENDING
+2025-12-17T15:38:16:    - Created: 2025-12-17T15:07:16.796Z
+2025-12-17T15:38:16:    - Created Local: 12/17/2025, 3:07:16 PM
+2025-12-17T15:38:16:    - Exp: 10
+2025-12-17T15:38:16:    - Student: 刘梓萌
+2025-12-17T15:38:16: 🔥 [LMS DEBUG] 记录 16:
+2025-12-17T15:38:16:    - ID: aed6c033-fc89-42a4-a5d6-12a034c87086
+2025-12-17T15:38:16:    - Title: 移入班级
+2025-12-17T15:38:16:    - Type: SPECIAL
+2025-12-17T15:38:16:    - Status: COMPLETED
+2025-12-17T15:38:16:    - Created: 2025-12-17T15:32:48.646Z
+2025-12-17T15:38:16:    - Created Local: 12/17/2025, 3:32:48 PM
+2025-12-17T15:38:16:    - Exp: 0
+2025-12-17T15:38:16:    - Student: 刘梓萌
+2025-12-17T15:42:04: 2025-12-17T15:42:04.223Z - GET /api/lms/daily-records
+2025-12-17T15:42:04: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T15:42:04: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T15:42:04: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:42:04: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=b043aea7-874b-4505-8274-50526192fde8, date=2025-12-17
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T15:42:04.225Z
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] 查询结果: 找到 12 条记录
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] ===== 记录详情 =====
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] 记录 1:
+2025-12-17T15:42:04:    - ID: 5bceb7d6-3b65-4287-8e53-0a8a91525b86
+2025-12-17T15:42:04:    - Title: 句型练习
+2025-12-17T15:42:04:    - Type: QC
+2025-12-17T15:42:04:    - Status: PENDING
+2025-12-17T15:42:04:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:42:04:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:42:04:    - Exp: 5
+2025-12-17T15:42:04:    - Student: 肖浩轩
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] 记录 2:
+2025-12-17T15:42:04:    - ID: 2590639b-564b-4962-b43d-71828523a17c
+2025-12-17T15:42:04:    - Title: 古诗背诵
+2025-12-17T15:42:04:    - Type: QC
+2025-12-17T15:42:04:    - Status: PENDING
+2025-12-17T15:42:04:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:42:04:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:42:04:    - Exp: 5
+2025-12-17T15:42:04:    - Student: 肖浩轩
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] 记录 3:
+2025-12-17T15:42:04:    - ID: ff4a54a9-5e87-4703-8712-535296575177
+2025-12-17T15:42:04:    - Title: 生字听写
+2025-12-17T15:42:04:    - Type: QC
+2025-12-17T15:42:04:    - Status: PENDING
+2025-12-17T15:42:04:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:42:04:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:42:04:    - Exp: 5
+2025-12-17T15:42:04:    - Student: 肖浩轩
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] 记录 4:
+2025-12-17T15:42:04:    - ID: ae26c012-0737-4766-a345-21237850901e
+2025-12-17T15:42:04:    - Title: 口算练习
+2025-12-17T15:42:04:    - Type: QC
+2025-12-17T15:42:04:    - Status: PENDING
+2025-12-17T15:42:04:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:42:04:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:42:04:    - Exp: 5
+2025-12-17T15:42:04:    - Student: 肖浩轩
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] 记录 5:
+2025-12-17T15:42:04:    - ID: e31e8163-15f9-4a65-9185-bd4c0cbc5b97
+2025-12-17T15:42:04:    - Title: 应用题
+2025-12-17T15:42:04:    - Type: QC
+2025-12-17T15:42:04:    - Status: PENDING
+2025-12-17T15:42:04:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:42:04:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:42:04:    - Exp: 5
+2025-12-17T15:42:04:    - Student: 肖浩轩
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] 记录 6:
+2025-12-17T15:42:04:    - ID: 1811dd86-87e8-4280-8fed-7de41aabf640
+2025-12-17T15:42:04:    - Title: 单词背诵
+2025-12-17T15:42:04:    - Type: QC
+2025-12-17T15:42:04:    - Status: PENDING
+2025-12-17T15:42:04:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:42:04:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:42:04:    - Exp: 5
+2025-12-17T15:42:04:    - Student: 肖浩轩
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] 记录 7:
+2025-12-17T15:42:04:    - ID: a1f2ec53-1788-48aa-abcd-6d4e2963c253
+2025-12-17T15:42:04:    - Title: 古诗背诵
+2025-12-17T15:42:04:    - Type: QC
+2025-12-17T15:42:04:    - Status: PENDING
+2025-12-17T15:42:04:    - Created: 2025-12-17T15:39:56.139Z
+2025-12-17T15:42:04:    - Created Local: 12/17/2025, 3:39:56 PM
+2025-12-17T15:42:04:    - Exp: 5
+2025-12-17T15:42:04:    - Student: 肖浩轩
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] 记录 8:
+2025-12-17T15:42:04:    - ID: 846d4306-f55c-4085-adeb-33939e5313b1
+2025-12-17T15:42:04:    - Title: 生字听写
+2025-12-17T15:42:04:    - Type: QC
+2025-12-17T15:42:04:    - Status: PENDING
+2025-12-17T15:42:04:    - Created: 2025-12-17T15:39:56.139Z
+2025-12-17T15:42:04:    - Created Local: 12/17/2025, 3:39:56 PM
+2025-12-17T15:42:04:    - Exp: 5
+2025-12-17T15:42:04:    - Student: 肖浩轩
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] 记录 9:
+2025-12-17T15:42:04:    - ID: d1fa50d0-79d8-4349-90d2-a69b47983d40
+2025-12-17T15:42:04:    - Title: 口算练习
+2025-12-17T15:42:04:    - Type: QC
+2025-12-17T15:42:04:    - Status: PENDING
+2025-12-17T15:42:04:    - Created: 2025-12-17T15:39:56.139Z
+2025-12-17T15:42:04:    - Created Local: 12/17/2025, 3:39:56 PM
+2025-12-17T15:42:04:    - Exp: 5
+2025-12-17T15:42:04:    - Student: 肖浩轩
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] 记录 10:
+2025-12-17T15:42:04:    - ID: 13cda31e-9f7a-497a-b051-6c105088dda8
+2025-12-17T15:42:04:    - Title: 应用题
+2025-12-17T15:42:04:    - Type: QC
+2025-12-17T15:42:04:    - Status: PENDING
+2025-12-17T15:42:04:    - Created: 2025-12-17T15:39:56.139Z
+2025-12-17T15:42:04:    - Created Local: 12/17/2025, 3:39:56 PM
+2025-12-17T15:42:04:    - Exp: 5
+2025-12-17T15:42:04:    - Student: 肖浩轩
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] 记录 11:
+2025-12-17T15:42:04:    - ID: d923d9fb-e039-4fd4-83f4-2bb5f50c4f58
+2025-12-17T15:42:04:    - Title: 单词背诵
+2025-12-17T15:42:04:    - Type: QC
+2025-12-17T15:42:04:    - Status: PENDING
+2025-12-17T15:42:04:    - Created: 2025-12-17T15:39:56.139Z
+2025-12-17T15:42:04:    - Created Local: 12/17/2025, 3:39:56 PM
+2025-12-17T15:42:04:    - Exp: 5
+2025-12-17T15:42:04:    - Student: 肖浩轩
+2025-12-17T15:42:04: 🔥 [LMS DEBUG] 记录 12:
+2025-12-17T15:42:04:    - ID: 4fa79662-4fdd-4954-94c7-9144ef56fe9b
+2025-12-17T15:42:04:    - Title: 句型练习
+2025-12-17T15:42:04:    - Type: QC
+2025-12-17T15:42:04:    - Status: PENDING
+2025-12-17T15:42:04:    - Created: 2025-12-17T15:39:56.139Z
+2025-12-17T15:42:04:    - Created Local: 12/17/2025, 3:39:56 PM
+2025-12-17T15:42:04:    - Exp: 5
+2025-12-17T15:42:04:    - Student: 肖浩轩
+2025-12-17T15:42:04: 2025-12-17T15:42:04.901Z - GET /api/lms/task-library
+2025-12-17T15:42:04: 🔐 [AUTH_MIDDLEWARE] Processing GET /task-library
+2025-12-17T15:42:04: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T15:42:04: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:42:04: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:42:04: 🔍 [LMS_SERVICE] 开始获取任务库数据...
+2025-12-17T15:42:04: 🔍 [LMS_SERVICE] 任务库活跃任务数量: 82
+2025-12-17T15:42:04: ✅ [LMS_SERVICE] 成功获取任务库，任务数量: 82
+2025-12-17T15:42:07: 2025-12-17T15:42:07.504Z - GET /api/lms/task-library
+2025-12-17T15:42:07: 🔐 [AUTH_MIDDLEWARE] Processing GET /task-library
+2025-12-17T15:42:07: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T15:42:07: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:42:07: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:42:07: 🔍 [LMS_SERVICE] 开始获取任务库数据...
+2025-12-17T15:42:07: 🔍 [LMS_SERVICE] 任务库活跃任务数量: 82
+2025-12-17T15:42:07: ✅ [LMS_SERVICE] 成功获取任务库，任务数量: 82
+2025-12-17T15:42:07: 2025-12-17T15:42:07.667Z - GET /api/lms/daily-records
+2025-12-17T15:42:07: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T15:42:07: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T15:42:07: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T15:42:07: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=1896c410-1a91-4281-ac02-797756c638cc, date=2025-12-17
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T15:42:07.668Z
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] 查询结果: 找到 12 条记录
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] ===== 记录详情 =====
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] 记录 1:
+2025-12-17T15:42:07:    - ID: af3d8a20-eee4-4d59-aa58-0a2d92ec0972
+2025-12-17T15:42:07:    - Title: 古诗背诵
+2025-12-17T15:42:07:    - Type: QC
+2025-12-17T15:42:07:    - Status: COMPLETED
+2025-12-17T15:42:07:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:42:07:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:42:07:    - Exp: 5
+2025-12-17T15:42:07:    - Student: 宁可歆
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] 记录 2:
+2025-12-17T15:42:07:    - ID: 0e264478-a72a-4d61-b8ea-350e06100b6d
+2025-12-17T15:42:07:    - Title: 口算练习
+2025-12-17T15:42:07:    - Type: QC
+2025-12-17T15:42:07:    - Status: COMPLETED
+2025-12-17T15:42:07:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:42:07:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:42:07:    - Exp: 5
+2025-12-17T15:42:07:    - Student: 宁可歆
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] 记录 3:
+2025-12-17T15:42:07:    - ID: 4d7037ca-da99-4e17-9530-bed21a6c50e9
+2025-12-17T15:42:07:    - Title: 生字听写
+2025-12-17T15:42:07:    - Type: QC
+2025-12-17T15:42:07:    - Status: COMPLETED
+2025-12-17T15:42:07:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:42:07:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:42:07:    - Exp: 5
+2025-12-17T15:42:07:    - Student: 宁可歆
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] 记录 4:
+2025-12-17T15:42:07:    - ID: fd7fc7b9-47f4-41b5-80bb-cd5a1fb91a6e
+2025-12-17T15:42:07:    - Title: 单词背诵
+2025-12-17T15:42:07:    - Type: QC
+2025-12-17T15:42:07:    - Status: PENDING
+2025-12-17T15:42:07:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:42:07:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:42:07:    - Exp: 5
+2025-12-17T15:42:07:    - Student: 宁可歆
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] 记录 5:
+2025-12-17T15:42:07:    - ID: ec32514a-e9e5-4948-bda2-95e6a10d9fba
+2025-12-17T15:42:07:    - Title: 句型练习
+2025-12-17T15:42:07:    - Type: QC
+2025-12-17T15:42:07:    - Status: PENDING
+2025-12-17T15:42:07:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:42:07:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:42:07:    - Exp: 5
+2025-12-17T15:42:07:    - Student: 宁可歆
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] 记录 6:
+2025-12-17T15:42:07:    - ID: 144f50f6-f291-426d-821c-b43ea05077b6
+2025-12-17T15:42:07:    - Title: 应用题
+2025-12-17T15:42:07:    - Type: QC
+2025-12-17T15:42:07:    - Status: COMPLETED
+2025-12-17T15:42:07:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T15:42:07:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T15:42:07:    - Exp: 5
+2025-12-17T15:42:07:    - Student: 宁可歆
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] 记录 7:
+2025-12-17T15:42:07:    - ID: c6abe057-bac6-4b45-9ecb-46fe04e60c80
+2025-12-17T15:42:07:    - Title: 句型练习
+2025-12-17T15:42:07:    - Type: QC
+2025-12-17T15:42:07:    - Status: PENDING
+2025-12-17T15:42:07:    - Created: 2025-12-17T15:42:05.636Z
+2025-12-17T15:42:07:    - Created Local: 12/17/2025, 3:42:05 PM
+2025-12-17T15:42:07:    - Exp: 5
+2025-12-17T15:42:07:    - Student: 宁可歆
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] 记录 8:
+2025-12-17T15:42:07:    - ID: 1e0d9db1-fa33-401a-baf9-884726a2a653
+2025-12-17T15:42:07:    - Title: 古诗背诵
+2025-12-17T15:42:07:    - Type: QC
+2025-12-17T15:42:07:    - Status: PENDING
+2025-12-17T15:42:07:    - Created: 2025-12-17T15:42:05.636Z
+2025-12-17T15:42:07:    - Created Local: 12/17/2025, 3:42:05 PM
+2025-12-17T15:42:07:    - Exp: 5
+2025-12-17T15:42:07:    - Student: 宁可歆
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] 记录 9:
+2025-12-17T15:42:07:    - ID: 4d3dc89a-16b3-4f45-8841-b42f28204d95
+2025-12-17T15:42:07:    - Title: 生字听写
+2025-12-17T15:42:07:    - Type: QC
+2025-12-17T15:42:07:    - Status: PENDING
+2025-12-17T15:42:07:    - Created: 2025-12-17T15:42:05.636Z
+2025-12-17T15:42:07:    - Created Local: 12/17/2025, 3:42:05 PM
+2025-12-17T15:42:07:    - Exp: 5
+2025-12-17T15:42:07:    - Student: 宁可歆
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] 记录 10:
+2025-12-17T15:42:07:    - ID: ae58e50e-4692-481a-a728-432f2811b485
+2025-12-17T15:42:07:    - Title: 口算练习
+2025-12-17T15:42:07:    - Type: QC
+2025-12-17T15:42:07:    - Status: PENDING
+2025-12-17T15:42:07:    - Created: 2025-12-17T15:42:05.636Z
+2025-12-17T15:42:07:    - Created Local: 12/17/2025, 3:42:05 PM
+2025-12-17T15:42:07:    - Exp: 5
+2025-12-17T15:42:07:    - Student: 宁可歆
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] 记录 11:
+2025-12-17T15:42:07:    - ID: 163d330e-fc21-4fbd-9f28-4b94232483a6
+2025-12-17T15:42:07:    - Title: 应用题
+2025-12-17T15:42:07:    - Type: QC
+2025-12-17T15:42:07:    - Status: PENDING
+2025-12-17T15:42:07:    - Created: 2025-12-17T15:42:05.636Z
+2025-12-17T15:42:07:    - Created Local: 12/17/2025, 3:42:05 PM
+2025-12-17T15:42:07:    - Exp: 5
+2025-12-17T15:42:07:    - Student: 宁可歆
+2025-12-17T15:42:07: 🔥 [LMS DEBUG] 记录 12:
+2025-12-17T15:42:07:    - ID: 0cc04cc8-bdbb-451b-9927-e8699564ab49
+2025-12-17T15:42:07:    - Title: 单词背诵
+2025-12-17T15:42:07:    - Type: QC
+2025-12-17T15:42:07:    - Status: PENDING
+2025-12-17T15:42:07:    - Created: 2025-12-17T15:42:05.636Z
+2025-12-17T15:42:07:    - Created Local: 12/17/2025, 3:42:05 PM
+2025-12-17T15:42:07:    - Exp: 5
+2025-12-17T15:42:07:    - Student: 宁可歆
+2025-12-17T15:48:13: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T15:48:13: 🛑 Shutting down server...
+2025-12-17T15:48:13: ✅ Database disconnected
+2025-12-17T15:48:13: 🚀 Starting ArkOK V2 Server...
+2025-12-17T15:48:13: 🌍 Environment: production
+2025-12-17T15:48:13: 🔌 Port: 3000
+2025-12-17T15:48:13: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T15:48:13: 📁 Static path exists: true
+2025-12-17T15:48:13: 🔧 Setting up Socket.IO handlers...
+2025-12-17T15:48:13: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T15:48:13: ✅ Database connected successfully
+2025-12-17T15:48:13: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T15:48:13: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T15:48:13: 🔌 WebSocket server ready
+2025-12-17T15:48:13: 🌐 Environment: production
+2025-12-17T16:00:25: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T16:00:25: 🛑 Shutting down server...
+2025-12-17T16:00:25: ✅ Database disconnected
+2025-12-17T16:00:25: 🚀 Starting ArkOK V2 Server...
+2025-12-17T16:00:25: 🌍 Environment: production
+2025-12-17T16:00:25: 🔌 Port: 3000
+2025-12-17T16:00:25: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T16:00:25: 📁 Static path exists: true
+2025-12-17T16:00:25: 🔧 Setting up Socket.IO handlers...
+2025-12-17T16:00:25: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T16:00:25: ✅ Database connected successfully
+2025-12-17T16:00:25: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T16:00:25: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T16:00:25: 🔌 WebSocket server ready
+2025-12-17T16:00:25: 🌐 Environment: production
+2025-12-17T16:06:19: 2025-12-17T16:06:19.417Z - GET /api/students
+2025-12-17T16:06:19: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T16:06:19: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T16:06:19: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:06:19: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:06:19: --- [DEBUG] GET /api/students endpoint hit ---
+2025-12-17T16:06:19: Authenticated User: {
+  userId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  username: 'long',
+  name: '龙老师',
+  displayName: '龙老师',
+  email: null,
+  role: 'TEACHER',
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  schoolName: '星途与伴',
+  primaryClassName: '六年级1班'
+}
+2025-12-17T16:06:19: School ID from user: 625e503b-aa7e-44fe-9982-237d828af717
+2025-12-17T16:06:19: Request query params: {
+  scope: 'MY_STUDENTS',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  userRole: 'TEACHER',
+  className: '龙老师的班级'
+}
+2025-12-17T16:06:19: [DEBUG] Query object sent to service: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  classRoom: undefined,
+  search: undefined,
+  page: undefined,
+  limit: undefined,
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: 'TEACHER',
+  requesterId: undefined
+}
+2025-12-17T16:06:19: [DEBUG] ✅ teacherId is present: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T16:06:19: [TEACHER BINDING] Fetching students with query: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: 'TEACHER'
+}
+2025-12-17T16:06:19: [DEBUG] 🔍 Checking teacherId distribution before query...
+2025-12-17T16:06:19: [DEBUG] 📊 TeacherId distribution: { null: 38, '5ca64703-c978-4d01-bf44-a7568f34f556': 8 }
+2025-12-17T16:06:19: [DEBUG] 📊 Total students in DB: 46
+2025-12-17T16:06:19: [TEACHER BINDING] Querying MY_STUDENTS for teacher: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T16:06:19: [TEACHER BINDING] ✅ Found 8 students for scope: MY_STUDENTS
+2025-12-17T16:06:19: [DEBUG] Service returned: {
+  students: [
+    {
+      id: '1896c410-1a91-4281-ac02-797756c638cc',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '宁可歆',
+      className: null,
+      level: 1,
+      points: 6632,
+      exp: 87,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.188Z,
+      updatedAt: 2025-12-17T15:32:53.182Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '樊牧宸',
+      className: null,
+      level: 1,
+      points: 219,
+      exp: 78,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.157Z,
+      updatedAt: 2025-12-17T15:33:02.635Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '曾欣媛',
+      className: null,
+      level: 1,
+      points: 202,
+      exp: 70,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.163Z,
+      updatedAt: 2025-12-17T15:33:06.985Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '65697759-b4ba-49ae-9f18-101730f7bf47',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘梓萌',
+      className: null,
+      level: 1,
+      points: 671,
+      exp: 51,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.175Z,
+      updatedAt: 2025-12-17T15:32:48.644Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '83147758-d2d7-4541-a7c1-5892b809ccc8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '彭斯晟',
+      className: null,
+      level: 1,
+      points: 553,
+      exp: 47,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.165Z,
+      updatedAt: 2025-12-17T15:32:43.481Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'bb61ac5c-9bee-4ff9-95ef-1d9e25728f76',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖雨虹',
+      className: null,
+      level: 1,
+      points: 1496,
+      exp: 46,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.146Z,
+      updatedAt: 2025-12-17T15:32:39.656Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '47938c35-a307-4191-84a8-bf798d599505',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '廖潇然',
+      className: null,
+      level: 1,
+      points: 1201,
+      exp: 40,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.150Z,
+      updatedAt: 2025-12-17T15:32:29.198Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'b043aea7-874b-4505-8274-50526192fde8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖浩轩',
+      className: null,
+      level: 1,
+      points: 148,
+      exp: 33,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.189Z,
+      updatedAt: 2025-12-17T15:32:34.372Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    }
+  ],
+  pagination: { page: 1, limit: 8, total: 8, totalPages: 1 }
+}
+2025-12-17T16:06:19: [DEBUG] Number of students in result: 8
+2025-12-17T16:06:19: [DEBUG] Students data preview: [
+  {
+    id: '1896c410-1a91-4281-ac02-797756c638cc',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '宁可歆',
+    className: null,
+    level: 1,
+    points: 6632,
+    exp: 87,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.188Z,
+    updatedAt: 2025-12-17T15:32:53.182Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  },
+  {
+    id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '樊牧宸',
+    className: null,
+    level: 1,
+    points: 219,
+    exp: 78,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.157Z,
+    updatedAt: 2025-12-17T15:33:02.635Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  }
+]
+2025-12-17T16:06:19: [DEBUG] Response sent to frontend successfully
+2025-12-17T16:06:19: 2025-12-17T16:06:19.543Z - GET /api/lms/daily-records
+2025-12-17T16:06:19: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T16:06:19: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T16:06:19: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:06:19: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=b043aea7-874b-4505-8274-50526192fde8, date=2025-12-17
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T16:06:19.546Z
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] 查询结果: 找到 12 条记录
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] ===== 记录详情 =====
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] 记录 1:
+2025-12-17T16:06:19:    - ID: 5bceb7d6-3b65-4287-8e53-0a8a91525b86
+2025-12-17T16:06:19:    - Title: 句型练习
+2025-12-17T16:06:19:    - Type: QC
+2025-12-17T16:06:19:    - Status: PENDING
+2025-12-17T16:06:19:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:06:19:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:06:19:    - Exp: 5
+2025-12-17T16:06:19:    - Student: 肖浩轩
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] 记录 2:
+2025-12-17T16:06:19:    - ID: 2590639b-564b-4962-b43d-71828523a17c
+2025-12-17T16:06:19:    - Title: 古诗背诵
+2025-12-17T16:06:19:    - Type: QC
+2025-12-17T16:06:19:    - Status: PENDING
+2025-12-17T16:06:19:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:06:19:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:06:19:    - Exp: 5
+2025-12-17T16:06:19:    - Student: 肖浩轩
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] 记录 3:
+2025-12-17T16:06:19:    - ID: ff4a54a9-5e87-4703-8712-535296575177
+2025-12-17T16:06:19:    - Title: 生字听写
+2025-12-17T16:06:19:    - Type: QC
+2025-12-17T16:06:19:    - Status: PENDING
+2025-12-17T16:06:19:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:06:19:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:06:19:    - Exp: 5
+2025-12-17T16:06:19:    - Student: 肖浩轩
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] 记录 4:
+2025-12-17T16:06:19:    - ID: ae26c012-0737-4766-a345-21237850901e
+2025-12-17T16:06:19:    - Title: 口算练习
+2025-12-17T16:06:19:    - Type: QC
+2025-12-17T16:06:19:    - Status: PENDING
+2025-12-17T16:06:19:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:06:19:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:06:19:    - Exp: 5
+2025-12-17T16:06:19:    - Student: 肖浩轩
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] 记录 5:
+2025-12-17T16:06:19:    - ID: e31e8163-15f9-4a65-9185-bd4c0cbc5b97
+2025-12-17T16:06:19:    - Title: 应用题
+2025-12-17T16:06:19:    - Type: QC
+2025-12-17T16:06:19:    - Status: PENDING
+2025-12-17T16:06:19:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:06:19:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:06:19:    - Exp: 5
+2025-12-17T16:06:19:    - Student: 肖浩轩
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] 记录 6:
+2025-12-17T16:06:19:    - ID: 1811dd86-87e8-4280-8fed-7de41aabf640
+2025-12-17T16:06:19:    - Title: 单词背诵
+2025-12-17T16:06:19:    - Type: QC
+2025-12-17T16:06:19:    - Status: PENDING
+2025-12-17T16:06:19:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:06:19:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:06:19:    - Exp: 5
+2025-12-17T16:06:19:    - Student: 肖浩轩
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] 记录 7:
+2025-12-17T16:06:19:    - ID: 676a9f59-c5f0-4750-8296-382829637206
+2025-12-17T16:06:19:    - Title: 古诗背诵
+2025-12-17T16:06:19:    - Type: QC
+2025-12-17T16:06:19:    - Status: PENDING
+2025-12-17T16:06:19:    - Created: 2025-12-17T15:42:05.636Z
+2025-12-17T16:06:19:    - Created Local: 12/17/2025, 3:42:05 PM
+2025-12-17T16:06:19:    - Exp: 5
+2025-12-17T16:06:19:    - Student: 肖浩轩
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] 记录 8:
+2025-12-17T16:06:19:    - ID: 9e88f309-36ff-48c0-ae86-c406b64f0a6d
+2025-12-17T16:06:19:    - Title: 生字听写
+2025-12-17T16:06:19:    - Type: QC
+2025-12-17T16:06:19:    - Status: PENDING
+2025-12-17T16:06:19:    - Created: 2025-12-17T15:42:05.636Z
+2025-12-17T16:06:19:    - Created Local: 12/17/2025, 3:42:05 PM
+2025-12-17T16:06:19:    - Exp: 5
+2025-12-17T16:06:19:    - Student: 肖浩轩
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] 记录 9:
+2025-12-17T16:06:19:    - ID: 09527915-1cd9-4407-a207-60a22c016997
+2025-12-17T16:06:19:    - Title: 口算练习
+2025-12-17T16:06:19:    - Type: QC
+2025-12-17T16:06:19:    - Status: PENDING
+2025-12-17T16:06:19:    - Created: 2025-12-17T15:42:05.636Z
+2025-12-17T16:06:19:    - Created Local: 12/17/2025, 3:42:05 PM
+2025-12-17T16:06:19:    - Exp: 5
+2025-12-17T16:06:19:    - Student: 肖浩轩
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] 记录 10:
+2025-12-17T16:06:19:    - ID: 21bbf950-3ab4-4616-9832-32ca4bd4a81d
+2025-12-17T16:06:19:    - Title: 应用题
+2025-12-17T16:06:19:    - Type: QC
+2025-12-17T16:06:19:    - Status: PENDING
+2025-12-17T16:06:19:    - Created: 2025-12-17T15:42:05.636Z
+2025-12-17T16:06:19:    - Created Local: 12/17/2025, 3:42:05 PM
+2025-12-17T16:06:19:    - Exp: 5
+2025-12-17T16:06:19:    - Student: 肖浩轩
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] 记录 11:
+2025-12-17T16:06:19:    - ID: 9d0ecd12-4a8d-4f7c-9b58-7175c4f678ec
+2025-12-17T16:06:19:    - Title: 单词背诵
+2025-12-17T16:06:19:    - Type: QC
+2025-12-17T16:06:19:    - Status: PENDING
+2025-12-17T16:06:19:    - Created: 2025-12-17T15:42:05.636Z
+2025-12-17T16:06:19:    - Created Local: 12/17/2025, 3:42:05 PM
+2025-12-17T16:06:19:    - Exp: 5
+2025-12-17T16:06:19:    - Student: 肖浩轩
+2025-12-17T16:06:19: 🔥 [LMS DEBUG] 记录 12:
+2025-12-17T16:06:19:    - ID: fc535079-51de-4d3b-9af6-b94aa0f3d9d9
+2025-12-17T16:06:19:    - Title: 句型练习
+2025-12-17T16:06:19:    - Type: QC
+2025-12-17T16:06:19:    - Status: PENDING
+2025-12-17T16:06:19:    - Created: 2025-12-17T15:42:05.636Z
+2025-12-17T16:06:19:    - Created Local: 12/17/2025, 3:42:05 PM
+2025-12-17T16:06:19:    - Exp: 5
+2025-12-17T16:06:19:    - Student: 肖浩轩
+2025-12-17T16:08:15: 2025-12-17T16:08:15.899Z - GET /
+2025-12-17T16:08:15: 2025-12-17T16:08:15.905Z - GET /assets/index-C9F24PNM.js
+2025-12-17T16:08:15: 2025-12-17T16:08:15.928Z - GET /api/students
+2025-12-17T16:08:15: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T16:08:15: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T16:08:15: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:08:15: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:08:15: --- [DEBUG] GET /api/students endpoint hit ---
+2025-12-17T16:08:15: Authenticated User: {
+  userId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  username: 'long',
+  name: '龙老师',
+  displayName: '龙老师',
+  email: null,
+  role: 'TEACHER',
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  schoolName: 'Default Migration School',
+  primaryClassName: '六年级1班'
+}
+2025-12-17T16:08:15: School ID from user: 625e503b-aa7e-44fe-9982-237d828af717
+2025-12-17T16:08:15: Request query params: {
+  scope: 'MY_STUDENTS',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  userRole: 'TEACHER'
+}
+2025-12-17T16:08:15: [DEBUG] Query object sent to service: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  classRoom: undefined,
+  search: undefined,
+  page: undefined,
+  limit: undefined,
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: 'TEACHER',
+  requesterId: undefined
+}
+2025-12-17T16:08:15: [DEBUG] ✅ teacherId is present: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T16:08:15: [TEACHER BINDING] Fetching students with query: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: 'TEACHER'
+}
+2025-12-17T16:08:15: [DEBUG] 🔍 Checking teacherId distribution before query...
+2025-12-17T16:08:15: [DEBUG] 📊 TeacherId distribution: { null: 38, '5ca64703-c978-4d01-bf44-a7568f34f556': 8 }
+2025-12-17T16:08:15: [DEBUG] 📊 Total students in DB: 46
+2025-12-17T16:08:15: [TEACHER BINDING] Querying MY_STUDENTS for teacher: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T16:08:15: [TEACHER BINDING] ✅ Found 8 students for scope: MY_STUDENTS
+2025-12-17T16:08:15: [DEBUG] Service returned: {
+  students: [
+    {
+      id: '1896c410-1a91-4281-ac02-797756c638cc',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '宁可歆',
+      className: null,
+      level: 1,
+      points: 6632,
+      exp: 87,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.188Z,
+      updatedAt: 2025-12-17T15:32:53.182Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '樊牧宸',
+      className: null,
+      level: 1,
+      points: 219,
+      exp: 78,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.157Z,
+      updatedAt: 2025-12-17T15:33:02.635Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '曾欣媛',
+      className: null,
+      level: 1,
+      points: 202,
+      exp: 70,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.163Z,
+      updatedAt: 2025-12-17T15:33:06.985Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '65697759-b4ba-49ae-9f18-101730f7bf47',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘梓萌',
+      className: null,
+      level: 1,
+      points: 671,
+      exp: 51,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.175Z,
+      updatedAt: 2025-12-17T15:32:48.644Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '83147758-d2d7-4541-a7c1-5892b809ccc8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '彭斯晟',
+      className: null,
+      level: 1,
+      points: 553,
+      exp: 47,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.165Z,
+      updatedAt: 2025-12-17T15:32:43.481Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'bb61ac5c-9bee-4ff9-95ef-1d9e25728f76',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖雨虹',
+      className: null,
+      level: 1,
+      points: 1496,
+      exp: 46,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.146Z,
+      updatedAt: 2025-12-17T15:32:39.656Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '47938c35-a307-4191-84a8-bf798d599505',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '廖潇然',
+      className: null,
+      level: 1,
+      points: 1201,
+      exp: 40,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.150Z,
+      updatedAt: 2025-12-17T15:32:29.198Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'b043aea7-874b-4505-8274-50526192fde8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖浩轩',
+      className: null,
+      level: 1,
+      points: 148,
+      exp: 33,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.189Z,
+      updatedAt: 2025-12-17T15:32:34.372Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    }
+  ],
+  pagination: { page: 1, limit: 8, total: 8, totalPages: 1 }
+}
+2025-12-17T16:08:15: [DEBUG] Number of students in result: 8
+2025-12-17T16:08:15: [DEBUG] Students data preview: [
+  {
+    id: '1896c410-1a91-4281-ac02-797756c638cc',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '宁可歆',
+    className: null,
+    level: 1,
+    points: 6632,
+    exp: 87,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.188Z,
+    updatedAt: 2025-12-17T15:32:53.182Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  },
+  {
+    id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '樊牧宸',
+    className: null,
+    level: 1,
+    points: 219,
+    exp: 78,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.157Z,
+    updatedAt: 2025-12-17T15:33:02.635Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  }
+]
+2025-12-17T16:08:15: [DEBUG] Response sent to frontend successfully
+2025-12-17T16:08:15: 2025-12-17T16:08:15.935Z - GET /api/students
+2025-12-17T16:08:15: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T16:08:15: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T16:08:15: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:08:15: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:08:15: --- [DEBUG] GET /api/students endpoint hit ---
+2025-12-17T16:08:15: Authenticated User: {
+  userId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  username: 'long',
+  name: '龙老师',
+  displayName: '龙老师',
+  email: null,
+  role: 'TEACHER',
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  schoolName: 'Default Migration School',
+  primaryClassName: '六年级1班'
+}
+2025-12-17T16:08:15: School ID from user: 625e503b-aa7e-44fe-9982-237d828af717
+2025-12-17T16:08:15: Request query params: {
+  scope: 'MY_STUDENTS',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  userRole: 'TEACHER'
+}
+2025-12-17T16:08:15: [DEBUG] Query object sent to service: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  classRoom: undefined,
+  search: undefined,
+  page: undefined,
+  limit: undefined,
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: 'TEACHER',
+  requesterId: undefined
+}
+2025-12-17T16:08:15: [DEBUG] ✅ teacherId is present: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T16:08:15: [TEACHER BINDING] Fetching students with query: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: 'TEACHER'
+}
+2025-12-17T16:08:15: [DEBUG] 🔍 Checking teacherId distribution before query...
+2025-12-17T16:08:15: [DEBUG] 📊 TeacherId distribution: { null: 38, '5ca64703-c978-4d01-bf44-a7568f34f556': 8 }
+2025-12-17T16:08:15: [DEBUG] 📊 Total students in DB: 46
+2025-12-17T16:08:15: [TEACHER BINDING] Querying MY_STUDENTS for teacher: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T16:08:15: [TEACHER BINDING] ✅ Found 8 students for scope: MY_STUDENTS
+2025-12-17T16:08:15: [DEBUG] Service returned: {
+  students: [
+    {
+      id: '1896c410-1a91-4281-ac02-797756c638cc',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '宁可歆',
+      className: null,
+      level: 1,
+      points: 6632,
+      exp: 87,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.188Z,
+      updatedAt: 2025-12-17T15:32:53.182Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '樊牧宸',
+      className: null,
+      level: 1,
+      points: 219,
+      exp: 78,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.157Z,
+      updatedAt: 2025-12-17T15:33:02.635Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '曾欣媛',
+      className: null,
+      level: 1,
+      points: 202,
+      exp: 70,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.163Z,
+      updatedAt: 2025-12-17T15:33:06.985Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '65697759-b4ba-49ae-9f18-101730f7bf47',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '刘梓萌',
+      className: null,
+      level: 1,
+      points: 671,
+      exp: 51,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.175Z,
+      updatedAt: 2025-12-17T15:32:48.644Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '83147758-d2d7-4541-a7c1-5892b809ccc8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '彭斯晟',
+      className: null,
+      level: 1,
+      points: 553,
+      exp: 47,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.165Z,
+      updatedAt: 2025-12-17T15:32:43.481Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'bb61ac5c-9bee-4ff9-95ef-1d9e25728f76',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖雨虹',
+      className: null,
+      level: 1,
+      points: 1496,
+      exp: 46,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.146Z,
+      updatedAt: 2025-12-17T15:32:39.656Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '47938c35-a307-4191-84a8-bf798d599505',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '廖潇然',
+      className: null,
+      level: 1,
+      points: 1201,
+      exp: 40,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.150Z,
+      updatedAt: 2025-12-17T15:32:29.198Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: 'b043aea7-874b-4505-8274-50526192fde8',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '肖浩轩',
+      className: null,
+      level: 1,
+      points: 148,
+      exp: 33,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.189Z,
+      updatedAt: 2025-12-17T15:32:34.372Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    }
+  ],
+  pagination: { page: 1, limit: 8, total: 8, totalPages: 1 }
+}
+2025-12-17T16:08:15: [DEBUG] Number of students in result: 8
+2025-12-17T16:08:15: [DEBUG] Students data preview: [
+  {
+    id: '1896c410-1a91-4281-ac02-797756c638cc',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '宁可歆',
+    className: null,
+    level: 1,
+    points: 6632,
+    exp: 87,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.188Z,
+    updatedAt: 2025-12-17T15:32:53.182Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  },
+  {
+    id: 'a3a72793-7c76-4f14-b18c-d786db55ff26',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '樊牧宸',
+    className: null,
+    level: 1,
+    points: 219,
+    exp: 78,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.157Z,
+    updatedAt: 2025-12-17T15:33:02.635Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  }
+]
+2025-12-17T16:08:15: [DEBUG] Response sent to frontend successfully
+2025-12-17T16:08:15: 2025-12-17T16:08:15.943Z - GET /avatar.jpg
+2025-12-17T16:08:20: 2025-12-17T16:08:20.260Z - GET /api/lms/daily-records
+2025-12-17T16:08:20: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T16:08:20: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T16:08:20: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:08:20: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=35018b04-4b1d-4a39-8411-09d55fd8aba4, date=2025-12-17
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T16:08:20.262Z
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 查询结果: 找到 0 条记录
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] ⚠️ 没有找到任何记录！
+2025-12-17T16:08:20: 2025-12-17T16:08:20.272Z - GET /api/lms/daily-records
+2025-12-17T16:08:20: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T16:08:20: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T16:08:20: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:08:20: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=56451443-918f-4784-a759-7a010457312f, date=2025-12-17
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T16:08:20.274Z
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 查询结果: 找到 0 条记录
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] ⚠️ 没有找到任何记录！
+2025-12-17T16:08:20: 2025-12-17T16:08:20.281Z - GET /api/lms/daily-records
+2025-12-17T16:08:20: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T16:08:20: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T16:08:20: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:08:20: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=6fcc0c5f-912b-48e4-ba1b-c17e7f226d6a, date=2025-12-17
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T16:08:20.283Z
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 查询结果: 找到 0 条记录
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] ⚠️ 没有找到任何记录！
+2025-12-17T16:08:20: 2025-12-17T16:08:20.290Z - GET /api/lms/daily-records
+2025-12-17T16:08:20: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T16:08:20: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T16:08:20: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:08:20: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=f35c8b56-4200-4dcf-8950-eb72832214fe, date=2025-12-17
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T16:08:20.291Z
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 查询结果: 找到 0 条记录
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] ⚠️ 没有找到任何记录！
+2025-12-17T16:08:20: 2025-12-17T16:08:20.335Z - GET /api/lms/daily-records
+2025-12-17T16:08:20: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T16:08:20: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T16:08:20: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:08:20: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=777b75ac-9cdc-4709-ac3d-c289078803d6, date=2025-12-17
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T16:08:20.336Z
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 查询结果: 找到 0 条记录
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] ⚠️ 没有找到任何记录！
+2025-12-17T16:08:20: 2025-12-17T16:08:20.344Z - GET /api/lms/daily-records
+2025-12-17T16:08:20: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T16:08:20: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T16:08:20: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:08:20: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=b0f71df3-b899-4cb9-bf1f-20d753618586, date=2025-12-17
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T16:08:20.345Z
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] 查询结果: 找到 0 条记录
+2025-12-17T16:08:20: 🔥 [LMS DEBUG] ⚠️ 没有找到任何记录！
+2025-12-17T16:12:10: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T16:12:10: 🛑 Shutting down server...
+2025-12-17T16:12:10: ✅ Database disconnected
+2025-12-17T16:13:25: 🚀 Starting ArkOK V2 Server...
+2025-12-17T16:13:25: 🌍 Environment: production
+2025-12-17T16:13:25: 🔌 Port: 3000
+2025-12-17T16:13:25: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T16:13:25: 📁 Static path exists: true
+2025-12-17T16:13:25: 🔧 Setting up Socket.IO handlers...
+2025-12-17T16:13:25: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T16:13:25: ✅ Database connected successfully
+2025-12-17T16:13:25: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T16:13:25: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T16:13:25: 🔌 WebSocket server ready
+2025-12-17T16:13:25: 🌐 Environment: production
+2025-12-17T16:15:50: 2025-12-17T16:15:50.760Z - GET /api/lms/daily-records
+2025-12-17T16:15:50: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T16:15:50: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T16:15:50: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:15:50: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=4e1ce33f-1081-4d32-98c0-b0ef2a8feccd, date=2025-12-17
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T16:15:50.764Z
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 查询结果: 找到 0 条记录
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] ⚠️ 没有找到任何记录！
+2025-12-17T16:15:50: 2025-12-17T16:15:50.851Z - GET /api/lms/daily-records
+2025-12-17T16:15:50: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T16:15:50: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T16:15:50: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:15:50: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=a151595d-26a6-42a4-97fc-0988220b0e65, date=2025-12-17
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T16:15:50.853Z
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 查询结果: 找到 0 条记录
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] ⚠️ 没有找到任何记录！
+2025-12-17T16:15:50: 2025-12-17T16:15:50.856Z - GET /api/lms/daily-records
+2025-12-17T16:15:50: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T16:15:50: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T16:15:50: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:15:50: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=f35c8b56-4200-4dcf-8950-eb72832214fe, date=2025-12-17
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T16:15:50.857Z
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 查询结果: 找到 0 条记录
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] ⚠️ 没有找到任何记录！
+2025-12-17T16:15:50: 2025-12-17T16:15:50.860Z - GET /api/lms/daily-records
+2025-12-17T16:15:50: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T16:15:50: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T16:15:50: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:15:50: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=98aef396-f106-4627-b8a0-9a019b27e88c, date=2025-12-17
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T16:15:50.933Z
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 查询结果: 找到 0 条记录
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] ⚠️ 没有找到任何记录！
+2025-12-17T16:15:50: 2025-12-17T16:15:50.936Z - GET /api/lms/daily-records
+2025-12-17T16:15:50: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T16:15:50: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T16:15:50: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:15:50: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=00752949-2494-48e7-9211-c019e4fd5db4, date=2025-12-17
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T16:15:50.937Z
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] 查询结果: 找到 0 条记录
+2025-12-17T16:15:50: 🔥 [LMS DEBUG] ⚠️ 没有找到任何记录！
+2025-12-17T16:19:43: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T16:19:43: 🛑 Shutting down server...
+2025-12-17T16:19:43: ✅ Database disconnected
+2025-12-17T16:19:43: 🚀 Starting ArkOK V2 Server...
+2025-12-17T16:19:43: 🌍 Environment: production
+2025-12-17T16:19:43: 🔌 Port: 3000
+2025-12-17T16:19:43: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T16:19:43: 📁 Static path exists: true
+2025-12-17T16:19:43: 🔧 Setting up Socket.IO handlers...
+2025-12-17T16:19:43: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T16:19:43: ✅ Database connected successfully
+2025-12-17T16:19:43: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T16:19:43: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T16:19:43: 🔌 WebSocket server ready
+2025-12-17T16:19:43: 🌐 Environment: production
+2025-12-17T16:21:39: 2025-12-17T16:21:39.953Z - GET /api/lms/daily-records
+2025-12-17T16:21:39: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T16:21:39: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T16:21:39: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:21:39: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:21:39: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T16:21:39: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb, date=2025-12-17
+2025-12-17T16:21:39: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T16:21:39: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T16:21:39: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T16:21:39.957Z
+2025-12-17T16:21:39: 🔥 [LMS DEBUG] 查询结果: 找到 12 条记录
+2025-12-17T16:21:39: 🔥 [LMS DEBUG] ===== 记录详情 =====
+2025-12-17T16:21:39: 🔥 [LMS DEBUG] 记录 1:
+2025-12-17T16:21:39:    - ID: 4b7a8e3b-5fd4-4679-97a9-a7badc30bd94
+2025-12-17T16:21:39:    - Title: 古诗背诵
+2025-12-17T16:21:39:    - Type: QC
+2025-12-17T16:21:39:    - Status: PENDING
+2025-12-17T16:21:39:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:21:40:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:21:40:    - Exp: 5
+2025-12-17T16:21:40:    - Student: 曾欣媛
+2025-12-17T16:21:40: 🔥 [LMS DEBUG] 记录 2:
+2025-12-17T16:21:40:    - ID: 77729489-a528-4bdd-879c-e3a6ab617430
+2025-12-17T16:21:40:    - Title: 生字听写
+2025-12-17T16:21:40:    - Type: QC
+2025-12-17T16:21:40:    - Status: PENDING
+2025-12-17T16:21:40:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:21:40:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:21:40:    - Exp: 5
+2025-12-17T16:21:40:    - Student: 曾欣媛
+2025-12-17T16:21:40: 🔥 [LMS DEBUG] 记录 3:
+2025-12-17T16:21:40:    - ID: 1af9b5d3-4c7e-4dc1-9530-aa1027fc5e76
+2025-12-17T16:21:40:    - Title: 口算练习
+2025-12-17T16:21:40:    - Type: QC
+2025-12-17T16:21:40:    - Status: PENDING
+2025-12-17T16:21:40:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:21:40:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:21:40:    - Exp: 5
+2025-12-17T16:21:40:    - Student: 曾欣媛
+2025-12-17T16:21:40: 🔥 [LMS DEBUG] 记录 4:
+2025-12-17T16:21:40:    - ID: 1d2bebeb-08a1-4e4d-8343-9868aace8e20
+2025-12-17T16:21:40:    - Title: 应用题
+2025-12-17T16:21:40:    - Type: QC
+2025-12-17T16:21:40:    - Status: PENDING
+2025-12-17T16:21:40:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:21:40:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:21:40:    - Exp: 5
+2025-12-17T16:21:40:    - Student: 曾欣媛
+2025-12-17T16:21:40: 🔥 [LMS DEBUG] 记录 5:
+2025-12-17T16:21:40:    - ID: 4dc54d41-f6c9-4da1-a290-321253c1c7b0
+2025-12-17T16:21:40:    - Title: 单词背诵
+2025-12-17T16:21:40:    - Type: QC
+2025-12-17T16:21:40:    - Status: PENDING
+2025-12-17T16:21:40:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:21:40:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:21:40:    - Exp: 5
+2025-12-17T16:21:40:    - Student: 曾欣媛
+2025-12-17T16:21:40: 🔥 [LMS DEBUG] 记录 6:
+2025-12-17T16:21:40:    - ID: 52739d99-0e05-40d9-b5ec-4c3a596d2668
+2025-12-17T16:21:40:    - Title: 句型练习
+2025-12-17T16:21:40:    - Type: QC
+2025-12-17T16:21:40:    - Status: PENDING
+2025-12-17T16:21:40:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:21:40:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:21:40:    - Exp: 5
+2025-12-17T16:21:40:    - Student: 曾欣媛
+2025-12-17T16:21:40: 🔥 [LMS DEBUG] 记录 7:
+2025-12-17T16:21:40:    - ID: 6de46e6c-3f37-416c-afab-711e42f7504d
+2025-12-17T16:21:40:    - Title: 古诗背诵
+2025-12-17T16:21:40:    - Type: QC
+2025-12-17T16:21:40:    - Status: PENDING
+2025-12-17T16:21:40:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:21:40:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:21:40:    - Exp: 5
+2025-12-17T16:21:40:    - Student: 曾欣媛
+2025-12-17T16:21:40: 🔥 [LMS DEBUG] 记录 8:
+2025-12-17T16:21:40:    - ID: 4d360a3a-82e8-457b-a4a3-deea1e571b90
+2025-12-17T16:21:40:    - Title: 生字听写
+2025-12-17T16:21:40:    - Type: QC
+2025-12-17T16:21:40:    - Status: PENDING
+2025-12-17T16:21:40:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:21:40:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:21:40:    - Exp: 5
+2025-12-17T16:21:40:    - Student: 曾欣媛
+2025-12-17T16:21:40: 🔥 [LMS DEBUG] 记录 9:
+2025-12-17T16:21:40:    - ID: 6aa1cd2a-21d8-4e3f-a98d-1cc70124514b
+2025-12-17T16:21:40:    - Title: 口算练习
+2025-12-17T16:21:40:    - Type: QC
+2025-12-17T16:21:40:    - Status: PENDING
+2025-12-17T16:21:40:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:21:40:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:21:40:    - Exp: 5
+2025-12-17T16:21:40:    - Student: 曾欣媛
+2025-12-17T16:21:40: 🔥 [LMS DEBUG] 记录 10:
+2025-12-17T16:21:40:    - ID: 356f6f97-db8b-4433-acff-11b8f5dc823c
+2025-12-17T16:21:40:    - Title: 应用题
+2025-12-17T16:21:40:    - Type: QC
+2025-12-17T16:21:40:    - Status: PENDING
+2025-12-17T16:21:40:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:21:40:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:21:40:    - Exp: 5
+2025-12-17T16:21:40:    - Student: 曾欣媛
+2025-12-17T16:21:40: 🔥 [LMS DEBUG] 记录 11:
+2025-12-17T16:21:40:    - ID: 1edde580-215d-40c2-8616-78c458560704
+2025-12-17T16:21:40:    - Title: 单词背诵
+2025-12-17T16:21:40:    - Type: QC
+2025-12-17T16:21:40:    - Status: PENDING
+2025-12-17T16:21:40:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:21:40:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:21:40:    - Exp: 5
+2025-12-17T16:21:40:    - Student: 曾欣媛
+2025-12-17T16:21:40: 🔥 [LMS DEBUG] 记录 12:
+2025-12-17T16:21:40:    - ID: bd8b02ca-88eb-4e3d-90d3-1f1a777bc911
+2025-12-17T16:21:40:    - Title: 句型练习
+2025-12-17T16:21:40:    - Type: QC
+2025-12-17T16:21:40:    - Status: PENDING
+2025-12-17T16:21:40:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:21:40:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:21:40:    - Exp: 5
+2025-12-17T16:21:40:    - Student: 曾欣媛
+2025-12-17T16:23:37: 2025-12-17T16:23:37.928Z - GET /api/lms/daily-records
+2025-12-17T16:23:37: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T16:23:37: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T16:23:37: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:23:37: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=bb61ac5c-9bee-4ff9-95ef-1d9e25728f76, date=2025-12-17
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T16:23:37.930Z
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] 查询结果: 找到 12 条记录
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] ===== 记录详情 =====
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] 记录 1:
+2025-12-17T16:23:37:    - ID: d281f9ae-75a6-4f25-8123-15f22ec4e5ee
+2025-12-17T16:23:37:    - Title: 生字听写
+2025-12-17T16:23:37:    - Type: QC
+2025-12-17T16:23:37:    - Status: PENDING
+2025-12-17T16:23:37:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:23:37:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:23:37:    - Exp: 5
+2025-12-17T16:23:37:    - Student: 肖雨虹
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] 记录 2:
+2025-12-17T16:23:37:    - ID: 0dfa97e6-2fa6-42e9-a237-71c30e8f08b6
+2025-12-17T16:23:37:    - Title: 古诗背诵
+2025-12-17T16:23:37:    - Type: QC
+2025-12-17T16:23:37:    - Status: PENDING
+2025-12-17T16:23:37:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:23:37:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:23:37:    - Exp: 5
+2025-12-17T16:23:37:    - Student: 肖雨虹
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] 记录 3:
+2025-12-17T16:23:37:    - ID: a3c35475-a8fc-42b8-90df-04a685b50a8b
+2025-12-17T16:23:37:    - Title: 口算练习
+2025-12-17T16:23:37:    - Type: QC
+2025-12-17T16:23:37:    - Status: PENDING
+2025-12-17T16:23:37:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:23:37:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:23:37:    - Exp: 5
+2025-12-17T16:23:37:    - Student: 肖雨虹
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] 记录 4:
+2025-12-17T16:23:37:    - ID: e5ab5e5e-618d-47d4-8004-b4367a732d14
+2025-12-17T16:23:37:    - Title: 应用题
+2025-12-17T16:23:37:    - Type: QC
+2025-12-17T16:23:37:    - Status: PENDING
+2025-12-17T16:23:37:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:23:37:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:23:37:    - Exp: 5
+2025-12-17T16:23:37:    - Student: 肖雨虹
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] 记录 5:
+2025-12-17T16:23:37:    - ID: c389ea62-c0a8-4931-8e60-3db4d308fae5
+2025-12-17T16:23:37:    - Title: 单词背诵
+2025-12-17T16:23:37:    - Type: QC
+2025-12-17T16:23:37:    - Status: PENDING
+2025-12-17T16:23:37:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:23:37:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:23:37:    - Exp: 5
+2025-12-17T16:23:37:    - Student: 肖雨虹
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] 记录 6:
+2025-12-17T16:23:37:    - ID: e03dbf8d-be1f-4fe3-831d-092125ef0bb6
+2025-12-17T16:23:37:    - Title: 句型练习
+2025-12-17T16:23:37:    - Type: QC
+2025-12-17T16:23:37:    - Status: PENDING
+2025-12-17T16:23:37:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:23:37:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:23:37:    - Exp: 5
+2025-12-17T16:23:37:    - Student: 肖雨虹
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] 记录 7:
+2025-12-17T16:23:37:    - ID: 587a3ef7-0f8b-4990-a712-8598b2f61c68
+2025-12-17T16:23:37:    - Title: 古诗背诵
+2025-12-17T16:23:37:    - Type: QC
+2025-12-17T16:23:37:    - Status: PENDING
+2025-12-17T16:23:37:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:23:37:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:23:37:    - Exp: 5
+2025-12-17T16:23:37:    - Student: 肖雨虹
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] 记录 8:
+2025-12-17T16:23:37:    - ID: 11d9413b-e935-4149-a9a7-2b1f629b0205
+2025-12-17T16:23:37:    - Title: 生字听写
+2025-12-17T16:23:37:    - Type: QC
+2025-12-17T16:23:37:    - Status: PENDING
+2025-12-17T16:23:37:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:23:37:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:23:37:    - Exp: 5
+2025-12-17T16:23:37:    - Student: 肖雨虹
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] 记录 9:
+2025-12-17T16:23:37:    - ID: 15835c24-e12d-4cbb-8820-f7a9e3d39db2
+2025-12-17T16:23:37:    - Title: 口算练习
+2025-12-17T16:23:37:    - Type: QC
+2025-12-17T16:23:37:    - Status: PENDING
+2025-12-17T16:23:37:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:23:37:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:23:37:    - Exp: 5
+2025-12-17T16:23:37:    - Student: 肖雨虹
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] 记录 10:
+2025-12-17T16:23:37:    - ID: 5114fd34-715e-443b-a8c5-c01de9d3c508
+2025-12-17T16:23:37:    - Title: 应用题
+2025-12-17T16:23:37:    - Type: QC
+2025-12-17T16:23:37:    - Status: PENDING
+2025-12-17T16:23:37:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:23:37:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:23:37:    - Exp: 5
+2025-12-17T16:23:37:    - Student: 肖雨虹
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] 记录 11:
+2025-12-17T16:23:37:    - ID: 9265f12f-67ae-423c-bbd3-07e185efea16
+2025-12-17T16:23:37:    - Title: 单词背诵
+2025-12-17T16:23:37:    - Type: QC
+2025-12-17T16:23:37:    - Status: PENDING
+2025-12-17T16:23:37:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:23:37:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:23:37:    - Exp: 5
+2025-12-17T16:23:37:    - Student: 肖雨虹
+2025-12-17T16:23:37: 🔥 [LMS DEBUG] 记录 12:
+2025-12-17T16:23:37:    - ID: bfec06f7-00b9-4b29-a2ac-eb871364aebd
+2025-12-17T16:23:37:    - Title: 句型练习
+2025-12-17T16:23:37:    - Type: QC
+2025-12-17T16:23:37:    - Status: PENDING
+2025-12-17T16:23:37:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:23:37:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:23:37:    - Exp: 5
+2025-12-17T16:23:37:    - Student: 肖雨虹
+2025-12-17T16:23:43: 2025-12-17T16:23:43.368Z - GET /api/lms/daily-records
+2025-12-17T16:23:43: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T16:23:43: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 483
+2025-12-17T16:23:43: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:23:43: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=65697759-b4ba-49ae-9f18-101730f7bf47, date=2025-12-17
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T16:23:43.369Z
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] 查询结果: 找到 12 条记录
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] ===== 记录详情 =====
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] 记录 1:
+2025-12-17T16:23:43:    - ID: 6f16919c-e52c-4dad-8d6b-9715545bf257
+2025-12-17T16:23:43:    - Title: 口算练习
+2025-12-17T16:23:43:    - Type: QC
+2025-12-17T16:23:43:    - Status: PENDING
+2025-12-17T16:23:43:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:23:43:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:23:43:    - Exp: 5
+2025-12-17T16:23:43:    - Student: 刘梓萌
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] 记录 2:
+2025-12-17T16:23:43:    - ID: 4ed60092-e532-43a3-97ce-caac940628b1
+2025-12-17T16:23:43:    - Title: 古诗背诵
+2025-12-17T16:23:43:    - Type: QC
+2025-12-17T16:23:43:    - Status: PENDING
+2025-12-17T16:23:43:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:23:43:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:23:43:    - Exp: 5
+2025-12-17T16:23:43:    - Student: 刘梓萌
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] 记录 3:
+2025-12-17T16:23:43:    - ID: e1198d1d-d5d3-4d5f-88e3-f164b68bf8b0
+2025-12-17T16:23:43:    - Title: 生字听写
+2025-12-17T16:23:43:    - Type: QC
+2025-12-17T16:23:43:    - Status: PENDING
+2025-12-17T16:23:43:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:23:43:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:23:43:    - Exp: 5
+2025-12-17T16:23:43:    - Student: 刘梓萌
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] 记录 4:
+2025-12-17T16:23:43:    - ID: 4a0e95ac-27ab-4878-a332-125ad12fa7b9
+2025-12-17T16:23:43:    - Title: 应用题
+2025-12-17T16:23:43:    - Type: QC
+2025-12-17T16:23:43:    - Status: PENDING
+2025-12-17T16:23:43:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:23:43:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:23:43:    - Exp: 5
+2025-12-17T16:23:43:    - Student: 刘梓萌
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] 记录 5:
+2025-12-17T16:23:43:    - ID: 6382be1c-e537-468d-9b37-e6c112148d52
+2025-12-17T16:23:43:    - Title: 单词背诵
+2025-12-17T16:23:43:    - Type: QC
+2025-12-17T16:23:43:    - Status: PENDING
+2025-12-17T16:23:43:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:23:43:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:23:43:    - Exp: 5
+2025-12-17T16:23:43:    - Student: 刘梓萌
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] 记录 6:
+2025-12-17T16:23:43:    - ID: a977d6a1-bcb9-4c14-bd1d-1591e4e2980d
+2025-12-17T16:23:43:    - Title: 句型练习
+2025-12-17T16:23:43:    - Type: QC
+2025-12-17T16:23:43:    - Status: PENDING
+2025-12-17T16:23:43:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:23:43:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:23:43:    - Exp: 5
+2025-12-17T16:23:43:    - Student: 刘梓萌
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] 记录 7:
+2025-12-17T16:23:43:    - ID: 7d4e5dcc-155a-434c-8671-a0d2be01cefc
+2025-12-17T16:23:43:    - Title: 古诗背诵
+2025-12-17T16:23:43:    - Type: QC
+2025-12-17T16:23:43:    - Status: PENDING
+2025-12-17T16:23:43:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:23:43:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:23:43:    - Exp: 5
+2025-12-17T16:23:43:    - Student: 刘梓萌
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] 记录 8:
+2025-12-17T16:23:43:    - ID: 76f0f14a-3a1f-48a6-93de-667512935874
+2025-12-17T16:23:43:    - Title: 生字听写
+2025-12-17T16:23:43:    - Type: QC
+2025-12-17T16:23:43:    - Status: PENDING
+2025-12-17T16:23:43:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:23:43:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:23:43:    - Exp: 5
+2025-12-17T16:23:43:    - Student: 刘梓萌
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] 记录 9:
+2025-12-17T16:23:43:    - ID: bb57ed58-f1b4-42f7-9ffe-e95d664413c1
+2025-12-17T16:23:43:    - Title: 口算练习
+2025-12-17T16:23:43:    - Type: QC
+2025-12-17T16:23:43:    - Status: PENDING
+2025-12-17T16:23:43:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:23:43:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:23:43:    - Exp: 5
+2025-12-17T16:23:43:    - Student: 刘梓萌
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] 记录 10:
+2025-12-17T16:23:43:    - ID: 9bbccb31-2a66-4c50-bbed-23e60881d8ef
+2025-12-17T16:23:43:    - Title: 应用题
+2025-12-17T16:23:43:    - Type: QC
+2025-12-17T16:23:43:    - Status: PENDING
+2025-12-17T16:23:43:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:23:43:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:23:43:    - Exp: 5
+2025-12-17T16:23:43:    - Student: 刘梓萌
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] 记录 11:
+2025-12-17T16:23:43:    - ID: 32423c94-feaf-40ef-9425-23dca1c95eaf
+2025-12-17T16:23:43:    - Title: 单词背诵
+2025-12-17T16:23:43:    - Type: QC
+2025-12-17T16:23:43:    - Status: PENDING
+2025-12-17T16:23:43:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:23:43:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:23:43:    - Exp: 5
+2025-12-17T16:23:43:    - Student: 刘梓萌
+2025-12-17T16:23:43: 🔥 [LMS DEBUG] 记录 12:
+2025-12-17T16:23:43:    - ID: caa09b93-7f46-450e-b5d4-9c7e0ffe8380
+2025-12-17T16:23:43:    - Title: 句型练习
+2025-12-17T16:23:43:    - Type: QC
+2025-12-17T16:23:43:    - Status: PENDING
+2025-12-17T16:23:43:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:23:43:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:23:43:    - Exp: 5
+2025-12-17T16:23:43:    - Student: 刘梓萌
+2025-12-17T16:24:23: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T16:24:23: 🛑 Shutting down server...
+2025-12-17T16:24:23: ✅ Database disconnected
+2025-12-17T16:24:23: 🚀 Starting ArkOK V2 Server...
+2025-12-17T16:24:23: 🌍 Environment: production
+2025-12-17T16:24:23: 🔌 Port: 3000
+2025-12-17T16:24:23: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T16:24:23: 📁 Static path exists: true
+2025-12-17T16:24:23: 🔧 Setting up Socket.IO handlers...
+2025-12-17T16:24:23: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T16:24:24: ✅ Database connected successfully
+2025-12-17T16:24:24: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T16:24:24: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T16:24:24: 🔌 WebSocket server ready
+2025-12-17T16:24:24: 🌐 Environment: production
+2025-12-17T16:28:58: 2025-12-17T16:28:58.570Z - GET /api/lms/progress
+2025-12-17T16:28:58: 🔐 [AUTH_MIDDLEWARE] Processing GET /progress
+2025-12-17T16:28:58: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T16:28:58: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:28:58: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:30:53: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T16:30:53: 🛑 Shutting down server...
+2025-12-17T16:30:53: ✅ Database disconnected
+2025-12-17T16:38:09: 🚀 Starting ArkOK V2 Server...
+2025-12-17T16:38:09: 🌍 Environment: development
+2025-12-17T16:38:09: 🔌 Port: 3000
+2025-12-17T16:38:09: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T16:38:09: 📁 Static path exists: true
+2025-12-17T16:38:09: 🔧 Setting up Socket.IO handlers...
+2025-12-17T16:38:09: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T16:38:09: ✅ Database connected successfully
+2025-12-17T16:38:09: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T16:38:09: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T16:38:09: 🔌 WebSocket server ready
+2025-12-17T16:38:09: 🌐 Environment: development
+2025-12-17T16:46:37: 2025-12-17T16:46:37.826Z - GET /api/lms/daily-records
+2025-12-17T16:46:37: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T16:46:37: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T16:46:37: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:46:37: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=65697759-b4ba-49ae-9f18-101730f7bf47, date=2025-12-17
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T16:46:37.830Z
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] 查询结果: 找到 12 条记录
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] ===== 记录详情 =====
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] 记录 1:
+2025-12-17T16:46:37:    - ID: 6f16919c-e52c-4dad-8d6b-9715545bf257
+2025-12-17T16:46:37:    - Title: 口算练习
+2025-12-17T16:46:37:    - Type: QC
+2025-12-17T16:46:37:    - Status: PENDING
+2025-12-17T16:46:37:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:46:37:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:46:37:    - Exp: 5
+2025-12-17T16:46:37:    - Student: 刘梓萌
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] 记录 2:
+2025-12-17T16:46:37:    - ID: 4ed60092-e532-43a3-97ce-caac940628b1
+2025-12-17T16:46:37:    - Title: 古诗背诵
+2025-12-17T16:46:37:    - Type: QC
+2025-12-17T16:46:37:    - Status: PENDING
+2025-12-17T16:46:37:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:46:37:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:46:37:    - Exp: 5
+2025-12-17T16:46:37:    - Student: 刘梓萌
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] 记录 3:
+2025-12-17T16:46:37:    - ID: e1198d1d-d5d3-4d5f-88e3-f164b68bf8b0
+2025-12-17T16:46:37:    - Title: 生字听写
+2025-12-17T16:46:37:    - Type: QC
+2025-12-17T16:46:37:    - Status: PENDING
+2025-12-17T16:46:37:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:46:37:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:46:37:    - Exp: 5
+2025-12-17T16:46:37:    - Student: 刘梓萌
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] 记录 4:
+2025-12-17T16:46:37:    - ID: 4a0e95ac-27ab-4878-a332-125ad12fa7b9
+2025-12-17T16:46:37:    - Title: 应用题
+2025-12-17T16:46:37:    - Type: QC
+2025-12-17T16:46:37:    - Status: PENDING
+2025-12-17T16:46:37:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:46:37:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:46:37:    - Exp: 5
+2025-12-17T16:46:37:    - Student: 刘梓萌
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] 记录 5:
+2025-12-17T16:46:37:    - ID: 6382be1c-e537-468d-9b37-e6c112148d52
+2025-12-17T16:46:37:    - Title: 单词背诵
+2025-12-17T16:46:37:    - Type: QC
+2025-12-17T16:46:37:    - Status: PENDING
+2025-12-17T16:46:37:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:46:37:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:46:37:    - Exp: 5
+2025-12-17T16:46:37:    - Student: 刘梓萌
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] 记录 6:
+2025-12-17T16:46:37:    - ID: a977d6a1-bcb9-4c14-bd1d-1591e4e2980d
+2025-12-17T16:46:37:    - Title: 句型练习
+2025-12-17T16:46:37:    - Type: QC
+2025-12-17T16:46:37:    - Status: PENDING
+2025-12-17T16:46:37:    - Created: 2025-12-16T15:33:37.761Z
+2025-12-17T16:46:37:    - Created Local: 12/16/2025, 3:33:37 PM
+2025-12-17T16:46:37:    - Exp: 5
+2025-12-17T16:46:37:    - Student: 刘梓萌
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] 记录 7:
+2025-12-17T16:46:37:    - ID: 7d4e5dcc-155a-434c-8671-a0d2be01cefc
+2025-12-17T16:46:37:    - Title: 古诗背诵
+2025-12-17T16:46:37:    - Type: QC
+2025-12-17T16:46:37:    - Status: PENDING
+2025-12-17T16:46:37:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:46:37:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:46:37:    - Exp: 5
+2025-12-17T16:46:37:    - Student: 刘梓萌
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] 记录 8:
+2025-12-17T16:46:37:    - ID: 76f0f14a-3a1f-48a6-93de-667512935874
+2025-12-17T16:46:37:    - Title: 生字听写
+2025-12-17T16:46:37:    - Type: QC
+2025-12-17T16:46:37:    - Status: PENDING
+2025-12-17T16:46:37:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:46:37:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:46:37:    - Exp: 5
+2025-12-17T16:46:37:    - Student: 刘梓萌
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] 记录 9:
+2025-12-17T16:46:37:    - ID: bb57ed58-f1b4-42f7-9ffe-e95d664413c1
+2025-12-17T16:46:37:    - Title: 口算练习
+2025-12-17T16:46:37:    - Type: QC
+2025-12-17T16:46:37:    - Status: PENDING
+2025-12-17T16:46:37:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:46:37:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:46:37:    - Exp: 5
+2025-12-17T16:46:37:    - Student: 刘梓萌
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] 记录 10:
+2025-12-17T16:46:37:    - ID: 9bbccb31-2a66-4c50-bbed-23e60881d8ef
+2025-12-17T16:46:37:    - Title: 应用题
+2025-12-17T16:46:37:    - Type: QC
+2025-12-17T16:46:37:    - Status: PENDING
+2025-12-17T16:46:37:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:46:37:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:46:37:    - Exp: 5
+2025-12-17T16:46:37:    - Student: 刘梓萌
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] 记录 11:
+2025-12-17T16:46:37:    - ID: 32423c94-feaf-40ef-9425-23dca1c95eaf
+2025-12-17T16:46:37:    - Title: 单词背诵
+2025-12-17T16:46:37:    - Type: QC
+2025-12-17T16:46:37:    - Status: PENDING
+2025-12-17T16:46:37:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:46:37:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:46:37:    - Exp: 5
+2025-12-17T16:46:37:    - Student: 刘梓萌
+2025-12-17T16:46:37: 🔥 [LMS DEBUG] 记录 12:
+2025-12-17T16:46:37:    - ID: caa09b93-7f46-450e-b5d4-9c7e0ffe8380
+2025-12-17T16:46:37:    - Title: 句型练习
+2025-12-17T16:46:37:    - Type: QC
+2025-12-17T16:46:37:    - Status: PENDING
+2025-12-17T16:46:37:    - Created: 2025-12-17T16:06:34.137Z
+2025-12-17T16:46:37:    - Created Local: 12/17/2025, 4:06:34 PM
+2025-12-17T16:46:37:    - Exp: 5
+2025-12-17T16:46:37:    - Student: 刘梓萌
+2025-12-17T16:46:42: 2025-12-17T16:46:42.660Z - GET /api/lms/student-progress
+2025-12-17T16:46:42: 🔐 [AUTH_MIDDLEWARE] Processing GET /student-progress
+2025-12-17T16:46:42: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T16:46:42: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T16:46:42: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T16:55:06: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T16:55:06: 🛑 Shutting down server...
+2025-12-17T16:55:06: ✅ Database disconnected
+2025-12-17T18:08:01: 🚀 Starting ArkOK V2 Server...
+2025-12-17T18:08:01: 🌍 Environment: development
+2025-12-17T18:08:01: 🔌 Port: 3000
+2025-12-17T18:08:01: 🔍 Static files being served from: /home/devbox/project/arkok-v2/client/dist
+2025-12-17T18:08:01: 📁 Static path exists: true
+2025-12-17T18:08:01: 🔧 Setting up Socket.IO handlers...
+2025-12-17T18:08:01: 🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理
+2025-12-17T18:08:01: ✅ Database connected successfully
+2025-12-17T18:08:01: 🚀 ArkOK V2 Server running on port 3000
+2025-12-17T18:08:01: 📋 Health check: http://0.0.0.0:3000/health
+2025-12-17T18:08:01: 🔌 WebSocket server ready
+2025-12-17T18:08:01: 🌐 Environment: development
+2025-12-17T18:12:09: 2025-12-17T18:12:09.237Z - GET /assets/index-DGGpHUud.css
+2025-12-17T18:12:09: 2025-12-17T18:12:09.252Z - GET /api/auth/me
+2025-12-17T18:12:09: 🔐 [AUTH_MIDDLEWARE] Processing GET /me
+2025-12-17T18:12:09: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T18:12:09: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T18:12:09: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T18:12:09: 2025-12-17T18:12:09.266Z - GET /api/students
+2025-12-17T18:12:09: 🔐 [AUTH_MIDDLEWARE] Processing GET /
+2025-12-17T18:12:09: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T18:12:09: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T18:12:09: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T18:12:09: --- [DEBUG] GET /api/students endpoint hit ---
+2025-12-17T18:12:09: Authenticated User: {
+  userId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  username: 'long',
+  name: '龙老师',
+  displayName: '龙老师',
+  email: null,
+  role: 'TEACHER',
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  schoolName: '星途与伴',
+  primaryClassName: '六年级1班'
+}
+2025-12-17T18:12:09: School ID from user: 625e503b-aa7e-44fe-9982-237d828af717
+2025-12-17T18:12:09: Request query params: {
+  scope: 'MY_STUDENTS',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  userRole: 'TEACHER'
+}
+2025-12-17T18:12:09: [DEBUG] Query object sent to service: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  classRoom: undefined,
+  search: undefined,
+  page: undefined,
+  limit: undefined,
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: 'TEACHER',
+  requesterId: undefined
+}
+2025-12-17T18:12:09: [DEBUG] ✅ teacherId is present: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T18:12:09: [TEACHER BINDING] Fetching students with query: {
+  schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+  teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556',
+  scope: 'MY_STUDENTS',
+  userRole: 'TEACHER'
+}
+2025-12-17T18:12:09: [DEBUG] 🔍 Checking teacherId distribution before query...
+2025-12-17T18:12:09: [DEBUG] 📊 TeacherId distribution: { null: 44, '5ca64703-c978-4d01-bf44-a7568f34f556': 2 }
+2025-12-17T18:12:09: [DEBUG] 📊 Total students in DB: 46
+2025-12-17T18:12:09: [TEACHER BINDING] Querying MY_STUDENTS for teacher: 5ca64703-c978-4d01-bf44-a7568f34f556
+2025-12-17T18:12:09: [TEACHER BINDING] ✅ Found 2 students for scope: MY_STUDENTS
+2025-12-17T18:12:09: [DEBUG] Service returned: {
+  students: [
+    {
+      id: '1896c410-1a91-4281-ac02-797756c638cc',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '宁可歆',
+      className: null,
+      level: 1,
+      points: 6632,
+      exp: 87,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.188Z,
+      updatedAt: 2025-12-17T18:00:53.524Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    },
+    {
+      id: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb',
+      schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+      name: '曾欣媛',
+      className: null,
+      level: 1,
+      points: 202,
+      exp: 70,
+      avatarUrl: null,
+      isActive: true,
+      createdAt: 2025-12-13T00:38:55.163Z,
+      updatedAt: 2025-12-17T18:01:01.687Z,
+      teamId: null,
+      teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+    }
+  ],
+  pagination: { page: 1, limit: 2, total: 2, totalPages: 1 }
+}
+2025-12-17T18:12:09: [DEBUG] Number of students in result: 2
+2025-12-17T18:12:09: [DEBUG] Students data preview: [
+  {
+    id: '1896c410-1a91-4281-ac02-797756c638cc',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '宁可歆',
+    className: null,
+    level: 1,
+    points: 6632,
+    exp: 87,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.188Z,
+    updatedAt: 2025-12-17T18:00:53.524Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  },
+  {
+    id: '31895b6e-8fb0-4eb8-838c-3c0d3d71bbcb',
+    schoolId: '625e503b-aa7e-44fe-9982-237d828af717',
+    name: '曾欣媛',
+    className: null,
+    level: 1,
+    points: 202,
+    exp: 70,
+    avatarUrl: null,
+    isActive: true,
+    createdAt: 2025-12-13T00:38:55.163Z,
+    updatedAt: 2025-12-17T18:01:01.687Z,
+    teamId: null,
+    teacherId: '5ca64703-c978-4d01-bf44-a7568f34f556'
+  }
+]
+2025-12-17T18:12:09: [DEBUG] Response sent to frontend successfully
+2025-12-17T18:12:09: 2025-12-17T18:12:09.310Z - GET /api/lms/daily-records
+2025-12-17T18:12:09: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T18:12:09: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T18:12:09: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T18:12:09: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=1896c410-1a91-4281-ac02-797756c638cc, date=2025-12-17
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T18:12:09.311Z
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 查询结果: 找到 10 条记录
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] ===== 记录详情 =====
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 1:
+2025-12-17T18:12:09:    - ID: 0ce1f1ef-98b7-4c18-bd41-d12f62e405fa
+2025-12-17T18:12:09:    - Title: 口算练习
+2025-12-17T18:12:09:    - Type: QC
+2025-12-17T18:12:09:    - Status: PENDING
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 5
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 2:
+2025-12-17T18:12:09:    - ID: 1deb27ca-ed37-46ba-8318-aac7dd5373d2
+2025-12-17T18:12:09:    - Title: 古诗背诵
+2025-12-17T18:12:09:    - Type: QC
+2025-12-17T18:12:09:    - Status: PENDING
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 5
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 3:
+2025-12-17T18:12:09:    - ID: 27a34056-9193-4dbf-a964-c71b092995be
+2025-12-17T18:12:09:    - Title: 应用题
+2025-12-17T18:12:09:    - Type: QC
+2025-12-17T18:12:09:    - Status: PENDING
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 5
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 4:
+2025-12-17T18:12:09:    - ID: 99edf604-de8c-4394-8e2a-d768621859a9
+2025-12-17T18:12:09:    - Title: 单词背诵
+2025-12-17T18:12:09:    - Type: QC
+2025-12-17T18:12:09:    - Status: PENDING
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 5
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 5:
+2025-12-17T18:12:09:    - ID: c32b1dc3-e746-4b22-a639-707244d43063
+2025-12-17T18:12:09:    - Title: 句型练习
+2025-12-17T18:12:09:    - Type: QC
+2025-12-17T18:12:09:    - Status: PENDING
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 5
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 6:
+2025-12-17T18:12:09:    - ID: ff3d850d-7ba8-4865-9edd-af08f877d87d
+2025-12-17T18:12:09:    - Title: 生字听写
+2025-12-17T18:12:09:    - Type: QC
+2025-12-17T18:12:09:    - Status: PENDING
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 5
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 7:
+2025-12-17T18:12:09:    - ID: 9a2a39a1-6361-4713-a1e6-78248d03a839
+2025-12-17T18:12:09:    - Title: 错题的摘抄与归因
+2025-12-17T18:12:09:    - Type: TASK
+2025-12-17T18:12:09:    - Status: COMPLETED
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 10
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 8:
+2025-12-17T18:12:09:    - ID: 006dfb10-9277-48fe-a5f3-2f144359d126
+2025-12-17T18:12:09:    - Title: 离校前的书包整理
+2025-12-17T18:12:09:    - Type: TASK
+2025-12-17T18:12:09:    - Status: COMPLETED
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 10
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 9:
+2025-12-17T18:12:09:    - ID: a8fdfc95-7f07-4b98-a61e-28ae0caae351
+2025-12-17T18:12:09:    - Title: 离校前的个人卫生清理（桌面/抽屉/地面）
+2025-12-17T18:12:09:    - Type: TASK
+2025-12-17T18:12:09:    - Status: COMPLETED
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 10
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 10:
+2025-12-17T18:12:09:    - ID: a9e49b76-8021-4b7b-bfa2-e10fbc32aaea
+2025-12-17T18:12:09:    - Title: 背诵古诗
+2025-12-17T18:12:09:    - Type: SPECIAL
+2025-12-17T18:12:09:    - Status: PENDING
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 30
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 2025-12-17T18:12:09.366Z - GET /api/lms/daily-records
+2025-12-17T18:12:09: 🔐 [AUTH_MIDDLEWARE] Processing GET /daily-records
+2025-12-17T18:12:09: 🔐 [AUTH_MIDDLEWARE] Token found: true, Length: 467
+2025-12-17T18:12:09: 🔐 [AUTH_MIDDLEWARE] Token verification result: true
+2025-12-17T18:12:09: ✅ [AUTH_MIDDLEWARE] User authenticated: long (TEACHER)
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] ===== getDailyRecords 调用开始 =====
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 传入参数: schoolId=625e503b-aa7e-44fe-9982-237d828af717, studentId=1896c410-1a91-4281-ac02-797756c638cc, date=2025-12-17
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 原始查询范围: 2025-12-17T00:00:00.000Z - 2025-12-17T23:59:59.999Z
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 扩展查询范围: 2025-12-16T00:00:00.000Z - 2025-12-18T23:59:59.999Z
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 服务器当前时间: 2025-12-17T18:12:09.367Z
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 查询结果: 找到 10 条记录
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] ===== 记录详情 =====
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 1:
+2025-12-17T18:12:09:    - ID: 0ce1f1ef-98b7-4c18-bd41-d12f62e405fa
+2025-12-17T18:12:09:    - Title: 口算练习
+2025-12-17T18:12:09:    - Type: QC
+2025-12-17T18:12:09:    - Status: PENDING
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 5
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 2:
+2025-12-17T18:12:09:    - ID: 1deb27ca-ed37-46ba-8318-aac7dd5373d2
+2025-12-17T18:12:09:    - Title: 古诗背诵
+2025-12-17T18:12:09:    - Type: QC
+2025-12-17T18:12:09:    - Status: PENDING
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 5
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 3:
+2025-12-17T18:12:09:    - ID: 27a34056-9193-4dbf-a964-c71b092995be
+2025-12-17T18:12:09:    - Title: 应用题
+2025-12-17T18:12:09:    - Type: QC
+2025-12-17T18:12:09:    - Status: PENDING
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 5
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 4:
+2025-12-17T18:12:09:    - ID: 99edf604-de8c-4394-8e2a-d768621859a9
+2025-12-17T18:12:09:    - Title: 单词背诵
+2025-12-17T18:12:09:    - Type: QC
+2025-12-17T18:12:09:    - Status: PENDING
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 5
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 5:
+2025-12-17T18:12:09:    - ID: c32b1dc3-e746-4b22-a639-707244d43063
+2025-12-17T18:12:09:    - Title: 句型练习
+2025-12-17T18:12:09:    - Type: QC
+2025-12-17T18:12:09:    - Status: PENDING
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 5
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 6:
+2025-12-17T18:12:09:    - ID: ff3d850d-7ba8-4865-9edd-af08f877d87d
+2025-12-17T18:12:09:    - Title: 生字听写
+2025-12-17T18:12:09:    - Type: QC
+2025-12-17T18:12:09:    - Status: PENDING
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 5
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 7:
+2025-12-17T18:12:09:    - ID: 9a2a39a1-6361-4713-a1e6-78248d03a839
+2025-12-17T18:12:09:    - Title: 错题的摘抄与归因
+2025-12-17T18:12:09:    - Type: TASK
+2025-12-17T18:12:09:    - Status: COMPLETED
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 10
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 8:
+2025-12-17T18:12:09:    - ID: 006dfb10-9277-48fe-a5f3-2f144359d126
+2025-12-17T18:12:09:    - Title: 离校前的书包整理
+2025-12-17T18:12:09:    - Type: TASK
+2025-12-17T18:12:09:    - Status: COMPLETED
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 10
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 9:
+2025-12-17T18:12:09:    - ID: a8fdfc95-7f07-4b98-a61e-28ae0caae351
+2025-12-17T18:12:09:    - Title: 离校前的个人卫生清理（桌面/抽屉/地面）
+2025-12-17T18:12:09:    - Type: TASK
+2025-12-17T18:12:09:    - Status: COMPLETED
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 10
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 🔥 [LMS DEBUG] 记录 10:
+2025-12-17T18:12:09:    - ID: a9e49b76-8021-4b7b-bfa2-e10fbc32aaea
+2025-12-17T18:12:09:    - Title: 背诵古诗
+2025-12-17T18:12:09:    - Type: SPECIAL
+2025-12-17T18:12:09:    - Status: PENDING
+2025-12-17T18:12:09:    - Created: 2025-12-17T18:02:11.480Z
+2025-12-17T18:12:09:    - Created Local: 12/17/2025, 6:02:11 PM
+2025-12-17T18:12:09:    - Exp: 30
+2025-12-17T18:12:09:    - Student: 宁可歆
+2025-12-17T18:12:09: 2025-12-17T18:12:09.388Z - GET /avatar.jpg
+2025-12-17T18:14:42: 
+🛑 SIGINT received, shutting down gracefully...
+2025-12-17T18:14:42: 🛑 Shutting down server...
+2025-12-17T18:14:42: ✅ Database disconnected
+2025-12-18T05:26:14: 🚀 Starting ArkOK V2 Server...
+2025-12-18T05:26:14: 🚀 Starting ArkOK V2 Server...
+2025-12-18T05:26:15: 🚀 Starting ArkOK V2 Server...
+2025-12-18T05:26:15: 🚀 Starting ArkOK V2 Server...
+2025-12-18T05:26:15: 🚀 Starting ArkOK V2 Server...
+2025-12-18T05:26:15: 🚀 Starting ArkOK V2 Server...
+2025-12-18T05:26:16: 🚀 Starting ArkOK V2 Server...
+2025-12-18T05:26:16: 🚀 Starting ArkOK V2 Server...
+2025-12-18T05:26:16: 🚀 Starting ArkOK V2 Server...
+2025-12-18T05:26:17: 🚀 Starting ArkOK V2 Server...

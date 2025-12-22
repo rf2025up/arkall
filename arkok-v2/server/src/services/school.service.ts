@@ -61,7 +61,11 @@ export interface GetStudentsOptions {
 }
 
 export class SchoolService {
-  private prisma = new PrismaClient();
+  private prisma: PrismaClient;
+
+  constructor(prisma: PrismaClient) {
+    this.prisma = prisma;
+  }
 
   /**
    * 获取学校列表（包含教师和学生统计）
@@ -82,13 +86,13 @@ export class SchoolService {
     });
 
     // 计算统计信息
-    return schools.map(school => ({
+    return (schools as any[]).map(school => ({
       ...school,
       stats: {
         teacherCount: school.teachers.length,
         studentCount: school.students.length,
-        totalPoints: school.students.reduce((sum, student) => sum + student.points, 0),
-        totalExp: school.students.reduce((sum, student) => sum + student.exp, 0)
+        totalPoints: school.students.reduce((sum: number, student: any) => sum + student.points, 0),
+        totalExp: school.students.reduce((sum: number, student: any) => sum + student.exp, 0)
       }
     }));
   }
@@ -124,7 +128,7 @@ export class SchoolService {
         avatarUrl: true,
         createdAt: true,
         updatedAt: true,
-        school: {
+        schools: {
           select: { id: true, name: true }
         }
       },
@@ -136,7 +140,7 @@ export class SchoolService {
       take: limit
     });
 
-    return students as StudentWithStats[];
+    return students as unknown as StudentWithStats[];
   }
 
   /**
@@ -148,7 +152,7 @@ export class SchoolService {
     const school = await this.prisma.schools.create({
       data: {
         name,
-        planType,
+        planType: planType as any,
         isActive
       },
       include: {
@@ -162,14 +166,14 @@ export class SchoolService {
     });
 
     return {
-      ...school,
+      ...(school as any),
       stats: {
-        teacherCount: school.teachers.length,
-        studentCount: school.students.length,
-        totalPoints: school.students.reduce((sum, student) => sum + student.points, 0),
-        totalExp: school.students.reduce((sum, student) => sum + student.exp, 0)
+        teacherCount: (school as any).teachers.length,
+        studentCount: (school as any).students.length,
+        totalPoints: (school as any).students.reduce((sum: number, student: any) => sum + (student.points || 0), 0),
+        totalExp: (school as any).students.reduce((sum: number, student: any) => sum + (student.exp || 0), 0)
       }
-    };
+    } as any;
   }
 
   /**

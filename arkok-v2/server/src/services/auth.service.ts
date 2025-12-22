@@ -31,7 +31,11 @@ export interface LoginResponse {
 }
 
 export class AuthService {
-  private prisma = new PrismaClient();
+  private prisma: PrismaClient;
+
+  constructor(prisma: PrismaClient) {
+    this.prisma = prisma;
+  }
 
   /**
    * 用户登录验证

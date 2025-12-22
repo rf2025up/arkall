@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { BadgeService } from '../services/badge.service';
+import { AuthService } from '../services/auth.service';
 export interface BadgeResponse {
     success: boolean;
     message?: string;
@@ -16,8 +17,9 @@ export interface BadgeResponse {
  */
 export declare class BadgeRoutes {
     private badgeService;
+    private authService;
     private router;
-    constructor(badgeService: BadgeService);
+    constructor(badgeService: BadgeService, authService: AuthService);
     private initializeRoutes;
     /**
      * 获取勋章列表

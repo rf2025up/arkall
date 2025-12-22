@@ -1,3 +1,4 @@
+import { PrismaClient } from '@prisma/client';
 import { Server as SocketIOServer } from 'socket.io';
 export interface HabitQuery {
     schoolId: string;
@@ -68,7 +69,7 @@ export interface HabitStatsResponse {
 export declare class HabitService {
     private prisma;
     private io;
-    constructor(io: SocketIOServer);
+    constructor(prisma: PrismaClient, io: SocketIOServer);
     /**
      * 获取习惯列表 - 性能优化版本
      */

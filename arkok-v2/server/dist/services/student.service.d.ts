@@ -1,3 +1,4 @@
+import { PrismaClient } from '@prisma/client';
 import { Server as SocketIOServer } from 'socket.io';
 export interface StudentQuery {
     schoolId: string;
@@ -57,7 +58,7 @@ export interface ScoreUpdateEvent {
 export declare class StudentService {
     private prisma;
     private io;
-    constructor(io: SocketIOServer);
+    constructor(prisma: PrismaClient, io: SocketIOServer);
     /**
      * 🆕 获取学生列表 - 基于师生绑定的重构版本
      */
@@ -79,22 +80,22 @@ export declare class StudentService {
      */
     private getTaskTypeLabel;
     createStudent(studentData: CreateStudentRequest): Promise<{
-        name: string;
         id: string;
         schoolId: string;
-        teacherId: string | null;
-        isActive: boolean;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
+        teacherId: string | null;
         className: string | null;
         level: number;
         points: number;
         exp: number;
         avatarUrl: string | null;
-        currentUnit: string | null;
+        teamId: string | null;
         currentLesson: string | null;
         currentLessonTitle: string | null;
-        teamId: string | null;
+        currentUnit: string | null;
     }>;
     /**
      * 更新学生信息

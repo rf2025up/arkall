@@ -3,32 +3,46 @@ import cors from 'cors';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import dotenv from 'dotenv';
+import prisma from './utils/prisma';
 import { PrismaClient } from '@prisma/client';
-import { lmsRoutes } from './routes/lms.routes';
-import { dashboardRoutes } from './routes/dashboard.routes';
-import { schoolRoutes } from './routes/school.routes';
-import { healthRoutes } from './routes/health.routes';
-import { errorHandler } from './middleware/errorHandler';
-import { setupSocketHandlers } from './utils/socketHandlers';
+import path from 'path';
+
+// Services
 import AuthService from './services/auth.service';
 import StudentService from './services/student.service';
+import { LMSService } from './services/lms.service';
 import SocketService from './services/socket.service';
 import HabitService from './services/habit.service';
 import ChallengeService from './services/challenge.service';
 import PKMatchService from './services/pkmatch.service';
 import BadgeService from './services/badge.service';
+import { ReportService } from './services/report.service';
+import SchoolService from './services/school.service';
+import DashboardService from './services/dashboard.service';
+import { PersonalizedTutoringService } from './services/personalized-tutoring.service';
+
+// Routes
 import AuthRoutes from './routes/auth.routes';
 import StudentRoutes from './routes/student.routes';
 import HabitRoutes from './routes/habit.routes';
 import ChallengeRoutes from './routes/challenge.routes';
 import PKMatchRoutes from './routes/pkmatch.routes';
 import BadgeRoutes from './routes/badge.routes';
-import mistakesRoutes from './routes/mistakes.routes';
-import recordsRoutes from './routes/records.routes';
+import { LMSRoutes } from './routes/lms.routes';
+import { ReportRoutes } from './routes/report.routes';
 import { UserRoutes } from './routes/user.routes';
-import reportRoutes from './routes/report.routes';
-import personalizedTutoringRoutes from './routes/personalized-tutoring.routes';
-import path from 'path';
+import { MistakesRoutes } from './routes/mistakes.routes';
+import { RecordsRoutes } from './routes/records.routes';
+import SchoolRoutes from './routes/school.routes';
+import DashboardRoutes from './routes/dashboard.routes';
+import { PersonalizedTutoringRoutes } from './routes/personalized-tutoring.routes';
+import { healthRoutes } from './routes/health.routes';
+import ParentRoutes from './routes/parent.routes';
+import CheckinRoutes from './routes/checkin.routes';
+
+// Middleware & Utils
+import { errorHandler } from './middleware/errorHandler';
+import { setupSocketHandlers } from './utils/socketHandlers';
 
 // 加载环境变量
 dotenv.config();
@@ -38,6 +52,8 @@ export class App {
   public server: any;
   public io: SocketIOServer;
   public prisma: PrismaClient;
+
+  // Services
   public authService: AuthService;
   public studentService: StudentService;
   public socketService: SocketService;
@@ -45,28 +61,38 @@ export class App {
   public challengeService: ChallengeService;
   public pkMatchService: PKMatchService;
   public badgeService: BadgeService;
-  
+  public lmsService: LMSService;
+  public reportService: ReportService;
+  public schoolService: SchoolService;
+  public dashboardService: DashboardService;
+  public tutoringService: PersonalizedTutoringService;
+
   constructor() {
     this.app = express();
     this.server = createServer(this.app);
-    this.prisma = new PrismaClient();
+    this.prisma = prisma;
     this.io = new SocketIOServer(this.server, {
       cors: {
-        origin: "*", // 开发环境允许所有来源
+        origin: "*",
         methods: ["GET", "POST", "PATCH"],
         credentials: true
       }
     });
 
-    // 初始化服务
-    this.authService = new AuthService();
-    this.studentService = new StudentService(this.io);
+    // 1. 初始化所有单例服务
+    this.authService = new AuthService(this.prisma);
+    this.studentService = new StudentService(this.prisma, this.io);
     this.socketService = new SocketService(this.io, this.authService);
-    this.habitService = new HabitService(this.io);
-    this.challengeService = new ChallengeService(this.io);
-    this.pkMatchService = new PKMatchService(this.io);
-    this.badgeService = new BadgeService(this.io);
-    
+    this.habitService = new HabitService(this.prisma, this.io);
+    this.challengeService = new ChallengeService(this.prisma, this.io);
+    this.pkMatchService = new PKMatchService(this.prisma, this.io);
+    this.badgeService = new BadgeService(this.prisma, this.io);
+    this.lmsService = new LMSService(this.prisma);
+    this.reportService = new ReportService(this.prisma);
+    this.schoolService = new SchoolService(this.prisma);
+    this.dashboardService = new DashboardService(this.prisma);
+    this.tutoringService = new PersonalizedTutoringService(this.prisma);
+
     this.initializeMiddlewares();
     this.initializeRoutes();
     this.initializeErrorHandling();
@@ -74,19 +100,14 @@ export class App {
   }
 
   private initializeMiddlewares(): void {
-    // CORS配置
     this.app.use(cors({
-      origin: "*", // 开发环境允许所有来源
+      origin: "*",
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization"],
       credentials: true
     }));
-
-    // JSON解析
     this.app.use(express.json({ limit: '50mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
-    // 请求日志
     this.app.use((req, res, next) => {
       console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
       next();
@@ -94,102 +115,48 @@ export class App {
   }
 
   private initializeRoutes(): void {
-    // 将服务实例附加到app上，供路由使用
+    // 兼容性设置
     this.app.set('io', this.io);
     this.app.set('prisma', this.prisma);
     this.app.set('authService', this.authService);
-    this.app.set('studentService', this.studentService);
-    this.app.set('socketService', this.socketService);
-    this.app.set('habitService', this.habitService);
-    this.app.set('challengeService', this.challengeService);
-    this.app.set('pkMatchService', this.pkMatchService);
-    this.app.set('badgeService', this.badgeService);
-    
-    // 健康检查路由
+
+    // 挂载路由类
     this.app.use('/health', healthRoutes);
 
-    // 认证路由
-    const authRoutes = new AuthRoutes(this.authService);
-    this.app.use('/api/auth', authRoutes.getRoutes());
+    this.app.use('/api/auth', new AuthRoutes(this.authService).getRoutes());
+    this.app.use('/api/students', new StudentRoutes(this.studentService, this.authService).getRoutes());
+    this.app.use('/api/habits', new HabitRoutes(this.habitService, this.authService).getRoutes());
+    this.app.use('/api/challenges', new ChallengeRoutes(this.challengeService, this.authService).getRoutes());
+    this.app.use('/api/pkmatches', new PKMatchRoutes(this.pkMatchService, this.authService).getRoutes());
+    this.app.use('/api/badges', new BadgeRoutes(this.badgeService, this.authService).getRoutes());
+    this.app.use('/api/users', new UserRoutes(this.authService, this.prisma).getRoutes());
+    this.app.use('/api/reports', new ReportRoutes(this.reportService, this.authService, this.prisma).getRoutes());
+    this.app.use('/api/lms', new LMSRoutes(this.lmsService, this.authService, this.prisma).getRoutes());
+    this.app.use('/api/mistakes', new MistakesRoutes(this.authService).getRoutes());
+    this.app.use('/api/records', new RecordsRoutes(this.lmsService, this.authService).getRoutes());
 
-    // 学生管理路由
-    const studentRoutes = new StudentRoutes(this.studentService, this.authService);
-    this.app.use('/api/students', studentRoutes.getRoutes());
+    // 边缘路由类化挂载
+    this.app.use('/api/schools', new SchoolRoutes(this.schoolService, this.authService).getRoutes());
+    this.app.use('/api/dashboard', new DashboardRoutes(this.dashboardService, this.authService).getRoutes());
+    this.app.use('/api/personalized-tutoring', new PersonalizedTutoringRoutes(this.tutoringService, this.authService).getRoutes());
 
-    // 习惯管理路由
-    const habitRoutes = new HabitRoutes(this.habitService, this.authService);
-    this.app.use('/api/habits', habitRoutes.getRoutes());
+    // 家长端路由
+    this.app.use('/api/parent', ParentRoutes);
 
-    // 挑战管理路由
-    const challengeRoutes = new ChallengeRoutes(this.challengeService, this.authService);
-    this.app.use('/api/challenges', challengeRoutes.getRoutes());
+    // 签到路由
+    this.app.use('/api/checkins', new CheckinRoutes(this.authService).getRoutes());
 
-    // PK对战管理路由
-    const pkMatchRoutes = new PKMatchRoutes(this.pkMatchService);
-    this.app.use('/api/pkmatches', pkMatchRoutes.getRoutes());
-
-    // 勋章管理路由
-    const badgeRoutes = new BadgeRoutes(this.badgeService);
-    this.app.use('/api/badges', badgeRoutes.getRoutes());
-
-    // 教师管理路由
-    const userRoutes = new UserRoutes(this.authService, this.prisma);
-    this.app.use('/api/users', userRoutes.getRoutes());
-
-    // 报告和AI提示词路由
-    this.app.use('/api/reports', reportRoutes);
-
-    // 1v1个性化讲解路由
-    this.app.use('/api/personalized-tutoring', personalizedTutoringRoutes);
-
-    // 🚩 核心修复：提升 lmsRoutes 优先级，防止 recordsRoutes 拦截 /api/lms/records 请求
-    this.app.use('/api/lms', lmsRoutes);
-
-    // 错题和记录API路由
-    this.app.use('/api/mistakes', mistakesRoutes);
-    this.app.use('/api/records', recordsRoutes);
-
-    // 旧版API路由（保持兼容性）
-    this.app.use('/api/schools', schoolRoutes);
-    // this.app.use('/api/lms', lmsRoutes); // 移动到上方
-    this.app.use('/api/score', studentRoutes.getRoutes());
-    this.app.use('/api/dashboard', dashboardRoutes);
-
-  
-    // 静态文件服务 - 提供前端应用
+    // 静态文件与前端路由
     const clientPath = path.resolve(__dirname, '../../client/dist');
-    console.log('🔍 Static files being served from:', clientPath);
-    console.log('📁 Static path exists:', require('fs').existsSync(clientPath));
     this.app.use(express.static(clientPath));
-
-    
-    // 移动端调试页面 (必须在通配符路由之前)
-    this.app.get('/debug-mobile', (req, res) => {
-      res.sendFile(path.join(__dirname, '../debug-mobile.html'));
-    });
-
-    // 前端路由支持 - 所有非API请求都返回index.html
+    this.app.get('/debug-mobile', (req, res) => res.sendFile(path.join(__dirname, '../debug-mobile.html')));
     this.app.get('*', (req, res, next) => {
-      // 排除特定路由
-      if (req.path.startsWith('/api/') ||
-          req.path.startsWith('/socket.io/') ||
-          req.path === '/health' ||
-          req.path === '/debug-mobile') {
-        return next();
-      }
-
-      // 返回前端的index.html
+      if (req.path.startsWith('/api/') || req.path.startsWith('/socket.io/') || req.path === '/health') return next();
       res.sendFile(path.join(clientPath, 'index.html'));
     });
 
-    // API 404处理
     this.app.use('/api/*', (req, res) => {
-      res.status(404).json({
-        success: false,
-        message: 'API endpoint not found',
-        path: req.originalUrl,
-        method: req.method
-      });
+      res.status(404).json({ success: false, message: 'API endpoint not found', path: req.originalUrl, method: req.method });
     });
   }
 
@@ -198,50 +165,18 @@ export class App {
   }
 
   private initializeSocketIO(): void {
-    // 初始化 Socket 认证
     this.socketService.initializeAuthentication();
-
-    // 初始化连接处理器
     this.socketService.initializeConnectionHandlers();
-
-    // 保持旧的 Socket 处理器兼容性
     setupSocketHandlers(this.io);
-
-    console.log('🔌 Socket.io 服务已初始化，支持 JWT 认证和学校房间管理');
-  }
-
-  // 广播助手方法
-  public broadcast(event: string, data: any): void {
-    this.io.emit(event, data);
-    console.log(`📡 Broadcasted event: ${event}`);
-  }
-
-  // 向特定房间广播
-  public broadcastToRoom(room: string, event: string, data: any): void {
-    this.io.to(room).emit(event, data);
-    console.log(`📡 Broadcasted to room ${room}: ${event}`);
-  }
-
-  // 获取连接统计
-  public getConnectionStats(): { connected: number; rooms: string[] } {
-    return {
-      connected: this.io.engine.clientsCount,
-      rooms: Array.from(this.io.sockets.adapter.rooms.keys())
-    };
+    console.log('🔌 Socket.io 服务已初始化');
   }
 
   public async start(port: number = 3000): Promise<void> {
     try {
-      // 测试数据库连接
       await this.prisma.$connect();
       console.log('✅ Database connected successfully');
-
-      // 启动服务器，监听在 0.0.0.0
       this.server.listen(port, '0.0.0.0', () => {
         console.log(`🚀 ArkOK V2 Server running on port ${port}`);
-        console.log(`📋 Health check: http://0.0.0.0:${port}/health`);
-        console.log(`🔌 WebSocket server ready`);
-        console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
       });
     } catch (error) {
       console.error('❌ Failed to start server:', error);
@@ -249,21 +184,20 @@ export class App {
     }
   }
 
+  /**
+   * 停止服务（用于安全退出）
+   */
   public async stop(): Promise<void> {
-    console.log('🛑 Shutting down server...');
-
-    return new Promise((resolve) => {
-      this.server.close(async () => {
-        try {
-          await this.prisma.$disconnect();
-          console.log('✅ Database disconnected');
-          console.log('✅ Server stopped successfully');
-          resolve();
-        } catch (error) {
-          console.error('❌ Error during shutdown:', error);
-          resolve();
-        }
-      });
-    });
+    try {
+      if (this.server) {
+        (this.server as any).close();
+      }
+      await this.prisma.$disconnect();
+      console.log('✅ Server and database disconnected');
+    } catch (error) {
+      console.error('❌ Error during shutdown:', error);
+    }
   }
 }
+
+export default App;

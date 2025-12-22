@@ -1,10 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SchoolService = void 0;
-const client_1 = require("@prisma/client");
 class SchoolService {
-    constructor() {
-        this.prisma = new client_1.PrismaClient();
+    constructor(prisma) {
+        this.prisma = prisma;
     }
     /**
      * 获取学校列表（包含教师和学生统计）
@@ -61,7 +60,7 @@ class SchoolService {
                 avatarUrl: true,
                 createdAt: true,
                 updatedAt: true,
-                school: {
+                schools: {
                     select: { id: true, name: true }
                 }
             },
@@ -82,7 +81,7 @@ class SchoolService {
         const school = await this.prisma.schools.create({
             data: {
                 name,
-                planType,
+                planType: planType,
                 isActive
             },
             include: {
@@ -99,8 +98,8 @@ class SchoolService {
             stats: {
                 teacherCount: school.teachers.length,
                 studentCount: school.students.length,
-                totalPoints: school.students.reduce((sum, student) => sum + student.points, 0),
-                totalExp: school.students.reduce((sum, student) => sum + student.exp, 0)
+                totalPoints: school.students.reduce((sum, student) => sum + (student.points || 0), 0),
+                totalExp: school.students.reduce((sum, student) => sum + (student.exp || 0), 0)
             }
         };
     }

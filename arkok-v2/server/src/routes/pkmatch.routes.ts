@@ -1,10 +1,12 @@
 import { Router, Request, Response } from 'express';
-import { PKMatchService,
+import {
+  PKMatchService,
   PKMatchQuery,
   CreatePKMatchRequest,
   UpdatePKMatchRequest
 } from '../services/pkmatch.service';
-import { authenticateToken, AuthRequest } from '../middleware/auth.middleware';
+import { authenticateToken, AuthRequest, validateUser } from '../middleware/auth.middleware';
+import { AuthService } from '../services/auth.service';
 
 export interface PKMatchResponse {
   success: boolean;
@@ -24,7 +26,7 @@ export interface PKMatchResponse {
 export class PKMatchRoutes {
   private router: Router;
 
-  constructor(private pkMatchService: PKMatchService) {
+  constructor(private pkMatchService: PKMatchService, private authService: AuthService) {
     this.router = Router();
     this.initializeRoutes();
   }
@@ -81,221 +83,14 @@ export class PKMatchRoutes {
      *       200:
      *         description: 获取PK对战列表成功
      */
-    this.router.get('/', authenticateToken, this.getPKMatches.bind(this));
-
-    /**
-     * @swagger
-     * /api/pkmatches/{id}:
-     *   get:
-     *     summary: 获取单个PK对战详情
-     *     tags: [PK Matches]
-     *     security:
-     *       - bearerAuth: []
-     *     parameters:
-     *       - in: path
-     *         name: id
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: PK对战ID
-     *       - in: query
-     *         name: schoolId
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: 学校ID
-     *     responses:
-     *       200:
-     *         description: 获取PK对战详情成功
-     */
-    this.router.get('/:id', authenticateToken, this.getPKMatchById.bind(this));
-
-    /**
-     * @swagger
-     * /api/pkmatches:
-     *   post:
-     *     summary: 创建新PK对战
-     *     tags: [PK Matches]
-     *     security:
-     *       - bearerAuth: []
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
-     *             required: [studentA, studentB, topic, schoolId]
-     *             properties:
-     *               studentA:
-     *                 type: string
-     *                 description: 学生A的ID
-     *               studentB:
-     *                 type: string
-     *                 description: 学生B的ID
-     *               topic:
-     *                 type: string
-     *                 description: 对战主题
-     *               schoolId:
-     *                 type: string
-     *                 description: 学校ID
-     *               metadata:
-     *                 type: object
-     *                 description: 对战元数据
-     *     responses:
-     *       201:
-     *         description: 创建PK对战成功
-     */
-    this.router.post('/', authenticateToken, this.createPKMatch.bind(this));
-
-    /**
-     * @swagger
-     * /api/pkmatches/{id}:
-     *   put:
-     *     summary: 更新PK对战信息
-     *     tags: [PK Matches]
-     *     security:
-     *       - bearerAuth: []
-     *     parameters:
-     *       - in: path
-     *         name: id
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: PK对战ID
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
-     *             properties:
-     *               topic:
-     *                 type: string
-     *                 description: 对战主题
-     *               status:
-     *                 type: string
-     *                 description: 对战状态
-     *               winnerId:
-     *                 type: string
-     *                 description: 获胜者ID
-     *               metadata:
-     *                 type: object
-     *                 description: 对战元数据
-     *               schoolId:
-     *                 type: string
-     *                 description: 学校ID
-     *     responses:
-     *       200:
-     *         description: 更新PK对战成功
-     */
-    this.router.put('/:id', authenticateToken, this.updatePKMatch.bind(this));
-
-    /**
-     * @swagger
-     * /api/pkmatches/{id}:
-     *   delete:
-     *     summary: 删除PK对战
-     *     tags: [PK Matches]
-     *     security:
-     *       - bearerAuth: []
-     *     parameters:
-     *       - in: path
-     *         name: id
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: PK对战ID
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
-     *             required: [schoolId]
-     *             properties:
-     *               schoolId:
-     *                 type: string
-     *                 description: 学校ID
-     *     responses:
-     *       200:
-     *         description: 删除PK对战成功
-     */
-    this.router.delete('/:id', authenticateToken, this.deletePKMatch.bind(this));
-
-    /**
-     * @swagger
-     * /api/pkmatches/stats/{studentId}:
-     *   get:
-     *     summary: 获取学生PK统计
-     *     tags: [PK Matches]
-     *     security:
-     *       - bearerAuth: []
-     *     parameters:
-     *       - in: path
-     *         name: studentId
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: 学生ID
-     *       - in: query
-     *         name: schoolId
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: 学校ID
-     *     responses:
-     *       200:
-     *         description: 获取学生PK统计成功
-     */
-    this.router.get('/stats/:studentId', authenticateToken, this.getStudentPKStats.bind(this));
-
-    /**
-     * @swagger
-     * /api/pkmatches/leaderboard:
-     *   get:
-     *     summary: 获取PK排行榜
-     *     tags: [PK Matches]
-     *     security:
-     *       - bearerAuth: []
-     *     parameters:
-     *       - in: query
-     *         name: schoolId
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: 学校ID
-     *       - in: query
-     *         name: limit
-     *         schema:
-     *           type: integer
-     *           default: 10
-     *         description: 返回数量限制
-     *     responses:
-     *       200:
-     *         description: 获取PK排行榜成功
-     */
-    this.router.get('/leaderboard', authenticateToken, this.getPKLeaderboard.bind(this));
-
-    /**
-     * @swagger
-     * /api/pkmatches/stats:
-     *   get:
-     *     summary: 获取PK统计信息
-     *     tags: [PK Matches]
-     *     security:
-     *       - bearerAuth: []
-     *     parameters:
-     *       - in: query
-     *         name: schoolId
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: 学校ID
-     *     responses:
-     *       200:
-     *         description: 获取PK统计成功
-     */
-    this.router.get('/stats', authenticateToken, this.getPKStats.bind(this));
+    this.router.get('/', authenticateToken(this.authService), validateUser, this.getPKMatches.bind(this));
+    this.router.get('/:id', authenticateToken(this.authService), validateUser, this.getPKMatchById.bind(this));
+    this.router.post('/', authenticateToken(this.authService), validateUser, this.createPKMatch.bind(this));
+    this.router.put('/:id', authenticateToken(this.authService), validateUser, this.updatePKMatch.bind(this));
+    this.router.delete('/:id', authenticateToken(this.authService), validateUser, this.deletePKMatch.bind(this));
+    this.router.get('/stats/:studentId', authenticateToken(this.authService), validateUser, this.getStudentPKStats.bind(this));
+    this.router.get('/leaderboard', authenticateToken(this.authService), validateUser, this.getPKLeaderboard.bind(this));
+    this.router.get('/stats', authenticateToken(this.authService), validateUser, this.getPKStats.bind(this));
   }
 
   /**
@@ -303,7 +98,14 @@ export class PKMatchRoutes {
    */
   private async getPKMatches(req: Request, res: Response): Promise<void> {
     try {
-      const query: PKMatchQuery = req.query as any;
+      const { schoolId, search, status, page, limit } = req.query;
+      const query: PKMatchQuery = {
+        schoolId: schoolId as string,
+        search: search as string,
+        status: status as string,
+        page: page ? parseInt(page as string) : undefined,
+        limit: limit ? parseInt(limit as string) : undefined,
+      };
 
       if (!query.schoolId) {
         const response: PKMatchResponse = {

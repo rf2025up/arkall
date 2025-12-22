@@ -13,7 +13,11 @@ export interface CreateTeacherRequest {
 }
 
 export class UserController {
-  private prisma = new PrismaClient();
+  private prisma: PrismaClient;
+
+  constructor(prisma: PrismaClient) {
+    this.prisma = prisma;
+  }
 
   /**
    * 创建教师账号 (仅 Admin)

@@ -1,10 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PKMatchService = void 0;
-const client_1 = require("@prisma/client");
 class PKMatchService {
-    constructor(io) {
-        this.prisma = new client_1.PrismaClient();
+    constructor(prisma, io) {
+        this.prisma = prisma;
         this.io = io;
     }
     /**
@@ -15,29 +14,37 @@ class PKMatchService {
         const skip = (page - 1) * limit;
         // 构建查询条件
         const where = {
-            schoolId,
-            ...(status && { status: status })
+            AND: [
+                { schoolId },
+                ...(status ? [{ status: status }] : [])
+            ]
         };
         if (studentId) {
-            where.OR = [
-                { studentA: studentId },
-                { studentB: studentId }
-            ];
+            where.AND.push({
+                OR: [
+                    { studentA: studentId },
+                    { studentB: studentId }
+                ]
+            });
         }
         if (topic) {
-            where.topic = { contains: topic, mode: 'insensitive' };
+            where.AND.push({
+                topic: { contains: topic, mode: 'insensitive' }
+            });
         }
         if (search) {
-            where.OR = [
-                { topic: { contains: search, mode: 'insensitive' } },
-                { playerA: { name: { contains: search, mode: 'insensitive' } } },
-                { playerB: { name: { contains: search, mode: 'insensitive' } } }
-            ];
+            where.AND.push({
+                OR: [
+                    { topic: { contains: search, mode: 'insensitive' } },
+                    { playerA: { name: { contains: search, mode: 'insensitive' } } },
+                    { playerB: { name: { contains: search, mode: 'insensitive' } } }
+                ]
+            });
         }
         // 获取总数
-        const total = await this.prisma.pk_matcheses.count({ where });
+        const total = await this.prisma.pk_matches.count({ where });
         // 获取PK对战列表
-        const matches = await this.prisma.pk_matcheses.findMany({
+        const matches = await this.prisma.pk_matches.findMany({
             where,
             orderBy: [
                 { createdAt: 'desc' }
@@ -75,7 +82,11 @@ class PKMatchService {
         // 计算分页信息
         const totalPages = Math.ceil(total / limit);
         return {
-            matches,
+            matches: matches.map(m => ({
+                ...m,
+                studentA: m.playerA,
+                studentB: m.playerB
+            })),
             pagination: {
                 page,
                 limit,
@@ -88,7 +99,7 @@ class PKMatchService {
      * 根据ID获取单个PK对战详情
      */
     async getPKMatchById(id, schoolId) {
-        const match = await this.prisma.pk_matcheses.findFirst({
+        const match = await this.prisma.pk_matches.findFirst({
             where: {
                 id,
                 schoolId
@@ -130,6 +141,8 @@ class PKMatchService {
         const stats = this.calculateMatchStats(match);
         return {
             ...match,
+            studentA: match.playerA,
+            studentB: match.playerB,
             stats
         };
     }
@@ -161,7 +174,7 @@ class PKMatchService {
             throw new Error('学生B不存在或不属于该学校');
         }
         // 检查是否已有相同的对战
-        const existingMatch = await this.prisma.pk_matcheses.findFirst({
+        const existingMatch = await this.prisma.pk_matches.findFirst({
             where: {
                 schoolId,
                 OR: [
@@ -174,14 +187,20 @@ class PKMatchService {
         if (existingMatch) {
             throw new Error('已有进行中的对战');
         }
-        const match = await this.prisma.pk_matcheses.create({
+        const match = await this.prisma.pk_matches.create({
             data: {
+                id: require('crypto').randomUUID(),
                 studentA,
                 studentB,
                 topic,
                 schoolId,
-                metadata,
-                status: 'ONGOING'
+                metadata: {
+                    ...(metadata || {}),
+                    expReward: data.expReward || 50,
+                    pointsReward: data.pointsReward || 20
+                },
+                status: 'ONGOING',
+                updatedAt: new Date()
             },
             include: {
                 playerA: {
@@ -202,10 +221,11 @@ class PKMatchService {
                 }
             }
         });
-        // 创建任务记录给两个学生
-        await this.prisma.taskRecord.createMany({
+        // 创建基础任务记录给两个学生 (CHALLENGE类型)
+        await this.prisma.task_records.createMany({
             data: [
                 {
+                    id: require('crypto').randomUUID(),
                     studentId: studentA,
                     schoolId,
                     type: 'CHALLENGE',
@@ -214,11 +234,14 @@ class PKMatchService {
                         matchId: match.id,
                         opponent: playerB.name,
                         opponentClass: playerB.className,
-                        role: 'playerA'
+                        role: 'playerA',
+                        taskDate: new Date().toISOString().split('T')[0]
                     },
-                    status: 'PENDING'
+                    status: 'PENDING',
+                    updatedAt: new Date()
                 },
                 {
+                    id: require('crypto').randomUUID(),
                     studentId: studentB,
                     schoolId,
                     type: 'CHALLENGE',
@@ -227,9 +250,11 @@ class PKMatchService {
                         matchId: match.id,
                         opponent: playerA.name,
                         opponentClass: playerA.className,
-                        role: 'playerB'
+                        role: 'playerB',
+                        taskDate: new Date().toISOString().split('T')[0]
                     },
-                    status: 'PENDING'
+                    status: 'PENDING',
+                    updatedAt: new Date()
                 }
             ]
         });
@@ -249,7 +274,7 @@ class PKMatchService {
     async updatePKMatch(data) {
         const { id, schoolId, topic, status, winnerId, metadata } = data;
         // 验证对战是否存在
-        const existingMatch = await this.prisma.pk_matcheses.findFirst({
+        const existingMatch = await this.prisma.pk_matches.findFirst({
             where: {
                 id,
                 schoolId
@@ -262,7 +287,7 @@ class PKMatchService {
         if (winnerId && winnerId !== existingMatch.studentA && winnerId !== existingMatch.studentB) {
             throw new Error('获胜者必须是对战参与者');
         }
-        const match = await this.prisma.pk_matcheses.update({
+        const match = await this.prisma.pk_matches.update({
             where: {
                 id,
                 schoolId
@@ -318,7 +343,7 @@ class PKMatchService {
      */
     async deletePKMatch(id, schoolId) {
         // 验证对战是否存在
-        const match = await this.prisma.pk_matcheses.findFirst({
+        const match = await this.prisma.pk_matches.findFirst({
             where: {
                 id,
                 schoolId
@@ -331,7 +356,7 @@ class PKMatchService {
         if (match.status === 'ONGOING') {
             throw new Error('无法删除进行中的对战');
         }
-        await this.prisma.pk_matcheses.delete({
+        await this.prisma.pk_matches.delete({
             where: {
                 id,
                 schoolId
@@ -362,7 +387,7 @@ class PKMatchService {
             throw new Error('学生不存在');
         }
         // 获取学生的PK对战记录
-        const matches = await this.prisma.pk_matcheses.findMany({
+        const matches = await this.prisma.pk_matches.findMany({
             where: {
                 schoolId,
                 OR: [
@@ -479,7 +504,7 @@ class PKMatchService {
         });
         // 为每个学生计算PK统计
         const studentStats = await Promise.all(students.map(async (student) => {
-            const matches = await this.prisma.pk_matcheses.findMany({
+            const matches = await this.prisma.pk_matches.findMany({
                 where: {
                     schoolId,
                     OR: [
@@ -528,18 +553,18 @@ class PKMatchService {
     async getPKStats(schoolId) {
         // 获取PK对战总数和状态分布
         const [totalMatches, activeMatches, completedMatches] = await Promise.all([
-            this.prisma.pk_matcheses.count({
+            this.prisma.pk_matches.count({
                 where: { schoolId }
             }),
-            this.prisma.pk_matcheses.count({
+            this.prisma.pk_matches.count({
                 where: { schoolId, status: 'ONGOING' }
             }),
-            this.prisma.pk_matcheses.count({
+            this.prisma.pk_matches.count({
                 where: { schoolId, status: 'COMPLETED' }
             })
         ]);
         // 获取参与统计
-        const participantMatches = await this.prisma.pk_matcheses.findMany({
+        const participantMatches = await this.prisma.pk_matches.findMany({
             where: { schoolId },
             select: {
                 studentA: true,
@@ -554,7 +579,7 @@ class PKMatchService {
         const totalParticipants = uniqueParticipants.size;
         const averageMatchesPerStudent = totalParticipants > 0 ? Math.round(totalMatches / totalParticipants * 2) : 0;
         // 按主题统计
-        const popularTopics = await this.prisma.pk_matcheses.groupBy({
+        const popularTopics = await this.prisma.pk_matches.groupBy({
             by: ['topic'],
             where: { schoolId },
             _count: {
@@ -572,7 +597,7 @@ class PKMatchService {
             count: stat._count.topic
         }));
         // 获取最近活动
-        const recentActivities = await this.prisma.pk_matcheses.findMany({
+        const recentActivities = await this.prisma.pk_matches.findMany({
             where: { schoolId },
             include: {
                 playerA: {
@@ -615,57 +640,80 @@ class PKMatchService {
      * 给予PK对战奖励
      */
     async grantMatchRewards(match) {
-        const baseExpReward = 10; // 基础经验奖励
-        const winnerBonus = 20; // 获胜者额外奖励
-        // 胜利者奖励
+        const metadata = match.metadata || {};
+        const expReward = metadata.expReward || 50;
+        const pointsReward = metadata.pointsReward || 20;
+        // 1. 发放学生属性奖励
         if (match.winnerId) {
+            // 获胜者获得全部
             await this.prisma.students.update({
                 where: { id: match.winnerId },
                 data: {
-                    exp: { increment: baseExpReward + winnerBonus },
-                    points: { increment: 5 }
+                    exp: { increment: expReward },
+                    points: { increment: pointsReward }
                 }
             });
-            // 创建任务记录
-            await this.prisma.taskRecord.create({
+            // 创建汇总记录 (SPECIAL类型) - 用于学情时间轴汇总
+            await this.prisma.task_records.create({
                 data: {
+                    id: require('crypto').randomUUID(),
                     studentId: match.winnerId,
                     schoolId: match.schoolId,
                     type: 'SPECIAL',
-                    title: `PK对战胜利 - ${match.topic}`,
+                    title: `PK对决获胜: ${match.topic}`,
                     content: {
                         matchId: match.id,
                         topic: match.topic,
-                        opponentId: match.studentA === match.winnerId ? match.studentB : match.studentA
+                        opponentName: match.winnerId === match.studentA ? match.playerB?.name : match.playerA?.name,
+                        result: 'WIN'
                     },
-                    expAwarded: 20,
-                    status: 'COMPLETED'
+                    expAwarded: expReward,
+                    status: 'COMPLETED',
+                    updatedAt: new Date()
                 }
             });
         }
-        // 失败者和平局奖励
-        const loserId = match.studentA === match.winnerId ? match.studentB : (match.studentB === match.winnerId ? match.studentA : null);
-        if (loserId && match.winnerId) {
-            // 失败者也能获得少量经验
-            await this.prisma.students.update({
-                where: { id: loserId },
-                data: {
-                    exp: { increment: baseExpReward / 2 }
-                }
-            });
-        }
-        // 平局情况，双方都获得基础奖励
-        if (!match.winnerId) {
+        else {
+            // 平局 - 两人平分奖励
+            const halfExp = Math.floor(expReward / 2);
+            const halfPoints = Math.floor(pointsReward / 2);
             await this.prisma.students.updateMany({
-                where: {
-                    id: { in: [match.studentA, match.studentB] }
-                },
+                where: { id: { in: [match.studentA, match.studentB] } },
                 data: {
-                    exp: { increment: baseExpReward },
-                    points: { increment: 2 }
+                    exp: { increment: halfExp },
+                    points: { increment: halfPoints }
                 }
             });
+            // 为双方创建平局记录
+            for (const sid of [match.studentA, match.studentB]) {
+                await this.prisma.task_records.create({
+                    data: {
+                        id: require('crypto').randomUUID(),
+                        studentId: sid,
+                        schoolId: match.schoolId,
+                        type: 'SPECIAL',
+                        title: `PK对决平局: ${match.topic}`,
+                        content: { matchId: match.id, topic: match.topic, result: 'DRAW' },
+                        expAwarded: halfExp,
+                        status: 'COMPLETED',
+                        updatedAt: new Date()
+                    }
+                });
+            }
         }
+        // 2. 同时更新之前的 CHALLENGE 任务状态为已完成
+        await this.prisma.task_records.updateMany({
+            where: {
+                schoolId: match.schoolId,
+                studentId: { in: [match.studentA, match.studentB] },
+                type: 'CHALLENGE',
+                content: { path: ['matchId'], equals: match.id }
+            },
+            data: {
+                status: 'COMPLETED',
+                updatedAt: new Date()
+            }
+        });
     }
     /**
      * 计算对战统计信息

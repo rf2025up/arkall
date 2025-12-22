@@ -318,6 +318,39 @@ class ChallengeRoutes {
         this.router.put('/participant', (0, auth_middleware_1.authenticateToken)(this.authService), this.updateChallengeParticipant.bind(this));
         /**
          * @swagger
+         * /api/challenges/participant/batch:
+         *   post:
+         *     summary: 批量更新挑战参与者结果
+         *     tags: [Challenges]
+         *     security:
+         *       - bearerAuth: []
+         *     requestBody:
+         *       required: true
+         *       content:
+         *         application/json:
+         *           schema:
+         *             type: object
+         *             required: [challengeId, schoolId, updates]
+         *             properties:
+         *               challengeId:
+         *                 type: string
+         *               schoolId:
+         *                 type: string
+         *               updates:
+         *                 type: array
+         *                 items:
+         *                   type: object
+         *                   properties:
+         *                      studentId: { type: string }
+         *                      result: { type: string }
+         *                      notes: { type: string }
+         *     responses:
+         *       200:
+         *         description: 批量更新成功
+         */
+        this.router.post('/participant/batch', (0, auth_middleware_1.authenticateToken)(this.authService), this.batchUpdateParticipants.bind(this));
+        /**
+         * @swagger
          * /api/challenges/{challengeId}/participants:
          *   get:
          *     summary: 获取挑战参与者列表
@@ -406,8 +439,17 @@ class ChallengeRoutes {
      */
     async getChallenges(req, res) {
         try {
-            const query = req.query;
-            if (!query.schoolId) {
+            const { schoolId, search, type, status, creatorId, page, limit } = req.query;
+            const query = {
+                schoolId: schoolId,
+                search: search,
+                type: type,
+                status: status,
+                creatorId: creatorId,
+                page: page ? parseInt(page) : undefined,
+                limit: limit ? parseInt(limit) : undefined,
+            };
+            if (!schoolId) {
                 const response = {
                     success: false,
                     message: '学校ID不能为空'
@@ -624,6 +666,37 @@ class ChallengeRoutes {
                 message: error instanceof Error ? error.message : '更新参与者状态失败'
             };
             res.status(error instanceof Error && ['挑战不存在', '参与记录不存在'].includes(error.message) ? 404 : 500).json(response);
+        }
+    }
+    /**
+     * 批量更新挑战参与者结果
+     */
+    async batchUpdateParticipants(req, res) {
+        try {
+            const { challengeId, schoolId, updates } = req.body;
+            if (!challengeId || !schoolId || !updates) {
+                const response = {
+                    success: false,
+                    message: '参数缺失'
+                };
+                res.status(400).json(response);
+                return;
+            }
+            const results = await this.challengeService.batchUpdateParticipants(challengeId, schoolId, updates);
+            const response = {
+                success: true,
+                message: '批量更新成功',
+                data: results
+            };
+            res.status(200).json(response);
+        }
+        catch (error) {
+            console.error('Batch update participants error:', error);
+            const response = {
+                success: false,
+                message: error instanceof Error ? error.message : '更新失败'
+            };
+            res.status(500).json(response);
         }
     }
     /**

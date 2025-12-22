@@ -1,3 +1,4 @@
+import { PrismaClient } from '@prisma/client';
 import { Server as SocketIOServer } from 'socket.io';
 export interface PKMatchQuery {
     schoolId: string;
@@ -13,6 +14,8 @@ export interface CreatePKMatchRequest {
     studentB: string;
     topic: string;
     schoolId: string;
+    expReward?: number;
+    pointsReward?: number;
     metadata?: Record<string, any>;
 }
 export interface UpdatePKMatchRequest {
@@ -47,7 +50,7 @@ export interface PKMatchStatsResponse {
 export declare class PKMatchService {
     private prisma;
     private io;
-    constructor(io: SocketIOServer);
+    constructor(prisma: PrismaClient, io: SocketIOServer);
     /**
      * 获取PK对战列表
      */

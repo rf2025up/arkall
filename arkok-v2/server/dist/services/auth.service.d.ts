@@ -1,3 +1,4 @@
+import { PrismaClient } from '@prisma/client';
 export interface LoginRequest {
     username: string;
     password: string;
@@ -22,6 +23,7 @@ export interface LoginResponse {
 }
 export declare class AuthService {
     private prisma;
+    constructor(prisma: PrismaClient);
     /**
      * 用户登录验证
      */

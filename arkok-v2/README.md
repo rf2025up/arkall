@@ -1,12 +1,16 @@
 # 🚀 ArkOK V2 - 智慧教育 SaaS 平台
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-2.0.0-green.svg)](https://github.com/your-org/arkok-v2)
-[![Status](https://img.shields.io/badge/status-Production%20Ready-brightgreen.svg)](ArkOK_V2_Technical_Whitepaper.md)
-[![Whitepaper](https://img.shields.io/badge/📋-Technical%20Whitepaper-blue.svg)](ArkOK_V2_Technical_Whitepaper.md)
+## 📖 核心文档入口 (Direct Link to Truth)
 
-> ArkOK V2 是一个现代化的智慧教育 SaaS 平台，采用 API 驱动的服务化架构，支持多校区并发使用，具备完整的学生管理和激励系统。
-> **🎯 从 V1 到 V2 的惊心动魄重构历程：保持卓越的前端体验，将内核彻底替换为企业级 SaaS 架构。**
+> [!IMPORTANT]
+> **⚖️ 技术宪法 (V5.0/2025-12-21)**: [ARKOK_V2_CONSTITUTION.md](./ARKOK_V2_CONSTITUTION.md)
+> **这是项目的最高指令准则，包含单例架构逻辑、标签化体系规范。所有开发者必须背诵并在开发中严格遵守。**
+
+- **技术白皮书**: [ArkOK_V2_Technical_Whitepaper.md](./ArkOK_V2_Technical_Whitepaper.md)
+- **家长端 PRD**: [../PRD_PARENT_FULL.md](../PRD_PARENT_FULL.md)
+- **UI 设计规范**: [docs/UI_DESIGN_SYSTEM.md](./docs/UI_DESIGN_SYSTEM.md)
+
+---
 
 ## ✨ 核心特性
 

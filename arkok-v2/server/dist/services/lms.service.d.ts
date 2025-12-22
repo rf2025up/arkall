@@ -1,9 +1,7 @@
-import { lesson_plans, TaskType } from '@prisma/client';
+import { PrismaClient, lesson_plans, TaskType } from '@prisma/client';
 export interface TaskLibraryItem {
     id: string;
     category: string;
-    educationalDomain: string;
-    educationalSubcategory?: string;
     name: string;
     description?: string;
     defaultExp: number;
@@ -16,7 +14,7 @@ export interface PublishPlanRequest {
     teacherId: string;
     title: string;
     content: any;
-    date: Date;
+    date: Date | string;
     progress?: any;
     tasks: Array<{
         type: TaskType;
@@ -36,7 +34,7 @@ export interface PublishPlanResult {
 }
 export declare class LMSService {
     private prisma;
-    constructor();
+    constructor(prisma: PrismaClient);
     /**
      * 获取任务库
      */
@@ -73,13 +71,13 @@ export declare class LMSService {
         } & {
             id: string;
             schoolId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            isActive: boolean;
             teacherId: string;
             title: string;
             content: import("@prisma/client/runtime/library").JsonValue;
             date: Date;
-            isActive: boolean;
-            createdAt: Date;
-            updatedAt: Date;
         })[];
         total: number;
     }>;
@@ -98,32 +96,32 @@ export declare class LMSService {
         } & {
             id: string;
             schoolId: string;
-            title: string;
-            content: import("@prisma/client/runtime/library").JsonValue | null;
             createdAt: Date;
             updatedAt: Date;
+            studentId: string;
             type: import(".prisma/client").$Enums.TaskType;
+            title: string;
+            content: import("@prisma/client/runtime/library").JsonValue | null;
             status: import(".prisma/client").$Enums.TaskStatus;
             expAwarded: number;
             submittedAt: Date | null;
+            lessonPlanId: string | null;
             task_category: import(".prisma/client").$Enums.TaskCategory;
             is_current: boolean;
-            isOverridden: boolean;
             attempts: number;
             subject: string | null;
-            studentId: string;
-            lessonPlanId: string | null;
+            isOverridden: boolean;
         })[];
     } & {
         id: string;
         schoolId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        isActive: boolean;
         teacherId: string;
         title: string;
         content: import("@prisma/client/runtime/library").JsonValue;
         date: Date;
-        isActive: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     /**
      * 删除教学计划
@@ -131,13 +129,13 @@ export declare class LMSService {
     deleteLessonPlan(planId: string): Promise<{
         id: string;
         schoolId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        isActive: boolean;
         teacherId: string;
         title: string;
         content: import("@prisma/client/runtime/library").JsonValue;
         date: Date;
-        isActive: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     /**
      * 获取学校统计信息
@@ -155,21 +153,43 @@ export declare class LMSService {
     getDailyRecords(schoolId: string, studentId: string, date: string): Promise<{
         id: string;
         schoolId: string;
-        title: string;
-        content: import("@prisma/client/runtime/library").JsonValue | null;
         createdAt: Date;
         updatedAt: Date;
+        studentId: string;
         type: import(".prisma/client").$Enums.TaskType;
+        title: string;
+        content: import("@prisma/client/runtime/library").JsonValue | null;
         status: import(".prisma/client").$Enums.TaskStatus;
         expAwarded: number;
         submittedAt: Date | null;
+        lessonPlanId: string | null;
         task_category: import(".prisma/client").$Enums.TaskCategory;
         is_current: boolean;
-        isOverridden: boolean;
         attempts: number;
         subject: string | null;
+        isOverridden: boolean;
+    }[]>;
+    /**
+     * 🆕 性能优化：按老师或班级批量获取所有学生的每日任务记录
+     */
+    getBatchDailyRecords(schoolId: string, date: string, teacherId?: string, className?: string): Promise<{
+        id: string;
+        schoolId: string;
+        createdAt: Date;
+        updatedAt: Date;
         studentId: string;
+        type: import(".prisma/client").$Enums.TaskType;
+        title: string;
+        content: import("@prisma/client/runtime/library").JsonValue | null;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        expAwarded: number;
+        submittedAt: Date | null;
         lessonPlanId: string | null;
+        task_category: import(".prisma/client").$Enums.TaskCategory;
+        is_current: boolean;
+        attempts: number;
+        subject: string | null;
+        isOverridden: boolean;
     }[]>;
     /**
      * 获取学生所有历史任务记录
@@ -177,21 +197,21 @@ export declare class LMSService {
     getAllStudentRecords(schoolId: string, studentId: string, limit?: number): Promise<{
         id: string;
         schoolId: string;
-        title: string;
-        content: import("@prisma/client/runtime/library").JsonValue | null;
         createdAt: Date;
         updatedAt: Date;
+        studentId: string;
         type: import(".prisma/client").$Enums.TaskType;
+        title: string;
+        content: import("@prisma/client/runtime/library").JsonValue | null;
         status: import(".prisma/client").$Enums.TaskStatus;
         expAwarded: number;
         submittedAt: Date | null;
+        lessonPlanId: string | null;
         task_category: import(".prisma/client").$Enums.TaskCategory;
         is_current: boolean;
-        isOverridden: boolean;
         attempts: number;
         subject: string | null;
-        studentId: string;
-        lessonPlanId: string | null;
+        isOverridden: boolean;
     }[]>;
     /**
      * 记录尝试次数
@@ -199,26 +219,26 @@ export declare class LMSService {
     markAttempt(recordId: string, userId: string): Promise<{
         id: string;
         schoolId: string;
-        title: string;
-        content: import("@prisma/client/runtime/library").JsonValue | null;
         createdAt: Date;
         updatedAt: Date;
+        studentId: string;
         type: import(".prisma/client").$Enums.TaskType;
+        title: string;
+        content: import("@prisma/client/runtime/library").JsonValue | null;
         status: import(".prisma/client").$Enums.TaskStatus;
         expAwarded: number;
         submittedAt: Date | null;
+        lessonPlanId: string | null;
         task_category: import(".prisma/client").$Enums.TaskCategory;
         is_current: boolean;
-        isOverridden: boolean;
         attempts: number;
         subject: string | null;
-        studentId: string;
-        lessonPlanId: string | null;
+        isOverridden: boolean;
     }>;
     /**
      * 批量更新任务状态
      */
-    updateMultipleRecordStatus(schoolId: string, recordIds: string[], status: any, userId: string): Promise<{
+    updateMultipleRecordStatus(schoolId: string, recordIds: string[], status: any, userId: string, courseInfo?: any): Promise<{
         success: number;
         failed: number;
     }>;
@@ -228,21 +248,96 @@ export declare class LMSService {
     updateStudentProgress(schoolId: string, studentId: string, teacherId: string, courseInfo: any): Promise<{
         id: string;
         schoolId: string;
-        title: string;
-        content: import("@prisma/client/runtime/library").JsonValue | null;
         createdAt: Date;
         updatedAt: Date;
+        studentId: string;
         type: import(".prisma/client").$Enums.TaskType;
+        title: string;
+        content: import("@prisma/client/runtime/library").JsonValue | null;
         status: import(".prisma/client").$Enums.TaskStatus;
         expAwarded: number;
         submittedAt: Date | null;
+        lessonPlanId: string | null;
         task_category: import(".prisma/client").$Enums.TaskCategory;
         is_current: boolean;
-        isOverridden: boolean;
         attempts: number;
         subject: string | null;
+        isOverridden: boolean;
+    }>;
+    /**
+     * 🛡️ 辅助方法：将中文/字符串分类映射为 Prisma 枚举
+     */
+    private mapToTaskCategory;
+    /**
+     * 🆕 创建单条任务记录 - 用于过关页增量添加
+     */
+    createSingleTaskRecord(data: {
+        schoolId: string;
         studentId: string;
+        type: TaskType;
+        title: string;
+        category: string;
+        exp: number;
+        courseInfo?: any;
+        isOverridden?: boolean;
+    }): Promise<{
+        id: string;
+        schoolId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        studentId: string;
+        type: import(".prisma/client").$Enums.TaskType;
+        title: string;
+        content: import("@prisma/client/runtime/library").JsonValue | null;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        expAwarded: number;
+        submittedAt: Date | null;
         lessonPlanId: string | null;
+        task_category: import(".prisma/client").$Enums.TaskCategory;
+        is_current: boolean;
+        attempts: number;
+        subject: string | null;
+        isOverridden: boolean;
+    }>;
+    /**
+     * 🆕 创建任务记录 - 用于过关抽屉手动添加 QC 项
+     * courseInfo 会被完整存储，以便全学期地图能显示"第X单元 第X课 课文名字"
+     */
+    createTaskRecord(data: {
+        studentId: string;
+        type: string;
+        title: string;
+        status: string;
+        category: string;
+        date: string;
+        courseInfo?: any;
+        exp: number;
+    }): Promise<{
+        id: string;
+        schoolId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        studentId: string;
+        type: import(".prisma/client").$Enums.TaskType;
+        title: string;
+        content: import("@prisma/client/runtime/library").JsonValue | null;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        expAwarded: number;
+        submittedAt: Date | null;
+        lessonPlanId: string | null;
+        task_category: import(".prisma/client").$Enums.TaskCategory;
+        is_current: boolean;
+        attempts: number;
+        subject: string | null;
+        isOverridden: boolean;
+    }>;
+    /**
+     * 🆕 结算学生当日所有任务 - V2 正式版
+     */
+    settleStudentTasks(schoolId: string, studentId: string, expBonus?: number): Promise<{
+        success: boolean;
+        count: number;
+        totalExpAwarded: number;
     }>;
     /**
      * 获取最新教学计划

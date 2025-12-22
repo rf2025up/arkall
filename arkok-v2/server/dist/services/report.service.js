@@ -1,10 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReportService = void 0;
-const client_1 = require("@prisma/client");
 class ReportService {
-    constructor() {
-        this.prisma = new client_1.PrismaClient();
+    constructor(prisma) {
+        this.prisma = prisma;
     }
     /**
      * 获取学生在指定时间范围内的综合统计数据
@@ -106,7 +105,7 @@ class ReportService {
         return student;
     }
     async getTasksStats(studentId, schoolId, startDate, endDate) {
-        const tasks = await this.prisma.taskRecord.groupBy({
+        const tasks = await this.prisma.task_records.groupBy({
             by: ['type'],
             where: {
                 studentId,
@@ -140,7 +139,7 @@ class ReportService {
         };
     }
     async getBadgesStats(studentId, startDate, endDate) {
-        const studentBadges = await this.prisma.studentsBadge.findMany({
+        const studentBadges = await this.prisma.student_badges.findMany({
             where: {
                 studentId,
                 awardedAt: {
@@ -149,7 +148,7 @@ class ReportService {
                 }
             },
             include: {
-                badge: {
+                badges: {
                     select: {
                         name: true,
                         category: true
@@ -162,8 +161,8 @@ class ReportService {
             take: 10 // 最近10个勋章
         });
         const recentBadges = studentBadges.map(sb => ({
-            name: sb.badge.name,
-            category: sb.badge.category,
+            name: sb.badges.name,
+            category: sb.badges.category,
             awardedAt: sb.awardedAt
         }));
         return {
@@ -174,7 +173,7 @@ class ReportService {
     async getPKStats(studentId, startDate, endDate) {
         const [totalMatches, wins] = await Promise.all([
             // 总参赛场次
-            this.prisma.pk_matcheses.count({
+            this.prisma.pk_matches.count({
                 where: {
                     OR: [
                         { studentA: studentId },
@@ -188,7 +187,7 @@ class ReportService {
                 }
             }),
             // 胜利场次
-            this.prisma.pk_matcheses.count({
+            this.prisma.pk_matches.count({
                 where: {
                     winnerId: studentId,
                     updatedAt: {
@@ -238,7 +237,7 @@ class ReportService {
     async getHabitsStats(studentId, startDate, endDate) {
         const [totalCheckins, activeHabits, maxStreak] = await Promise.all([
             // 总打卡次数
-            this.prisma.habits_logs.count({
+            this.prisma.habit_logs.count({
                 where: {
                     studentId,
                     checkedAt: {
@@ -248,7 +247,7 @@ class ReportService {
                 }
             }),
             // 活跃习惯数
-            this.prisma.habits_logs.groupBy({
+            this.prisma.habit_logs.groupBy({
                 by: ['habitId'],
                 where: {
                     studentId,
@@ -259,7 +258,7 @@ class ReportService {
                 }
             }).then(result => result.length),
             // 最高连续天数
-            this.prisma.habits_logs.aggregate({
+            this.prisma.habit_logs.aggregate({
                 where: {
                     studentId,
                     checkedAt: {

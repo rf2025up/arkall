@@ -1,10 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChallengeService = void 0;
-const client_1 = require("@prisma/client");
 class ChallengeService {
-    constructor(io) {
-        this.prisma = new client_1.PrismaClient();
+    constructor(prisma, io) {
+        this.prisma = prisma;
         this.io = io;
     }
     /**
@@ -38,7 +37,7 @@ class ChallengeService {
             skip,
             take: limit,
             include: {
-                creator: {
+                teachers: {
                     select: {
                         id: true,
                         name: true,
@@ -47,7 +46,7 @@ class ChallengeService {
                 },
                 _count: {
                     select: {
-                        participants: true
+                        challenge_participants: true
                     }
                 }
             }
@@ -57,7 +56,7 @@ class ChallengeService {
         return {
             challenges: challenges.map(challenge => ({
                 ...challenge,
-                participantCount: challenge._count.participants
+                participantCount: challenge._count.challenge_participants
             })),
             pagination: {
                 page,
@@ -77,16 +76,16 @@ class ChallengeService {
                 schoolId
             },
             include: {
-                creator: {
+                teachers: {
                     select: {
                         id: true,
                         name: true,
                         username: true
                     }
                 },
-                participants: {
+                challenge_participants: {
                     include: {
-                        student: {
+                        students: {
                             select: {
                                 id: true,
                                 name: true,
@@ -105,7 +104,7 @@ class ChallengeService {
             throw new Error('挑战不存在');
         }
         // 计算挑战统计信息
-        const stats = this.calculateChallengeStats(challenge.participants);
+        const stats = this.calculateChallengeStats(challenge.challenge_participants);
         return {
             ...challenge,
             stats
@@ -128,6 +127,7 @@ class ChallengeService {
         }
         const challenge = await this.prisma.challenges.create({
             data: {
+                id: require('crypto').randomUUID(),
                 title,
                 description,
                 type: type,
@@ -139,10 +139,11 @@ class ChallengeService {
                 rewardExp: rewardExp || 0,
                 maxParticipants: maxParticipants || 2,
                 metadata,
-                status: 'DRAFT'
+                status: 'DRAFT',
+                updatedAt: new Date()
             },
             include: {
-                creator: {
+                teachers: {
                     select: {
                         id: true,
                         name: true,
@@ -185,7 +186,7 @@ class ChallengeService {
                 ...(isActive !== undefined && { isActive })
             },
             include: {
-                creator: {
+                teachers: {
                     select: {
                         id: true,
                         name: true,
@@ -194,7 +195,7 @@ class ChallengeService {
                 },
                 _count: {
                     select: {
-                        participants: true
+                        challenge_participants: true
                     }
                 }
             }
@@ -205,14 +206,14 @@ class ChallengeService {
             data: {
                 challenge: {
                     ...challenge,
-                    participantCount: challenge._count.participants
+                    participantCount: challenge._count.challenge_participants
                 },
                 timestamp: new Date().toISOString()
             }
         });
         return {
             ...challenge,
-            participantCount: challenge._count.participants
+            participantCount: challenge._count.challenge_participants
         };
     }
     /**
@@ -273,7 +274,7 @@ class ChallengeService {
             throw new Error('挑战已结束');
         }
         // 检查是否已参加
-        const existingParticipant = await this.prisma.challengesParticipant.findFirst({
+        const existingParticipant = await this.prisma.challenge_participants.findFirst({
             where: {
                 challengeId,
                 studentId
@@ -283,7 +284,7 @@ class ChallengeService {
             throw new Error('已参加该挑战');
         }
         // 检查参与人数限制
-        const currentParticipants = await this.prisma.challengesParticipant.count({
+        const currentParticipants = await this.prisma.challenge_participants.count({
             where: {
                 challengeId
             }
@@ -292,14 +293,15 @@ class ChallengeService {
             throw new Error('挑战参与人数已满');
         }
         // 创建参与记录
-        const participant = await this.prisma.challengesParticipant.create({
+        const participant = await this.prisma.challenge_participants.create({
             data: {
+                id: require('crypto').randomUUID(),
                 challengeId,
                 studentId,
                 status: 'JOINED'
             },
             include: {
-                student: {
+                students: {
                     select: {
                         id: true,
                         name: true,
@@ -307,6 +309,26 @@ class ChallengeService {
                         avatarUrl: true
                     }
                 }
+            }
+        });
+        // 🚀 [宪法 5.0 落地] 同步创建一条 CHALLENGE 类型任务记录
+        await this.prisma.task_records.create({
+            data: {
+                id: require('crypto').randomUUID(),
+                studentId,
+                schoolId,
+                type: 'CHALLENGE',
+                title: `参加挑战: ${challenge.title}`,
+                content: {
+                    challengeId,
+                    participantId: participant.id,
+                    rewardPoints: challenge.rewardPoints,
+                    rewardExp: challenge.rewardExp,
+                    taskDate: new Date().toISOString().split('T')[0]
+                },
+                status: 'PENDING',
+                updatedAt: new Date(),
+                task_category: 'TASK'
             }
         });
         // 广播参与事件
@@ -340,7 +362,7 @@ class ChallengeService {
             throw new Error('挑战不存在');
         }
         // 查找参与记录
-        const participant = await this.prisma.challengesParticipant.findFirst({
+        const participant = await this.prisma.challenge_participants.findFirst({
             where: {
                 challengeId,
                 studentId
@@ -350,7 +372,7 @@ class ChallengeService {
             throw new Error('参与记录不存在');
         }
         // 更新参与记录
-        const updatedParticipant = await this.prisma.challengesParticipant.update({
+        const updatedParticipant = await this.prisma.challenge_participants.update({
             where: {
                 id: participant.id
             },
@@ -362,7 +384,7 @@ class ChallengeService {
                 ...(result === 'COMPLETED' && { completedAt: new Date() })
             },
             include: {
-                student: {
+                students: {
                     select: {
                         id: true,
                         name: true,
@@ -389,7 +411,44 @@ class ChallengeService {
                 timestamp: new Date().toISOString()
             }
         });
+        // 🚀 [宪法 5.0 落地] 如果挑战完成，同步更新任务记录状态
+        if (status === 'COMPLETED' || result === 'COMPLETED') {
+            await this.prisma.task_records.updateMany({
+                where: {
+                    studentId,
+                    schoolId,
+                    type: 'CHALLENGE',
+                    content: {
+                        path: ['challengeId'],
+                        equals: challengeId
+                    }
+                },
+                data: {
+                    status: 'COMPLETED',
+                    updatedAt: new Date(),
+                    expAwarded: challenge.rewardExp || 0
+                }
+            });
+        }
         return updatedParticipant;
+    }
+    /**
+     * 批量更新挑战参与者结果
+     */
+    async batchUpdateParticipants(challengeId, schoolId, updates) {
+        const results = [];
+        for (const update of updates) {
+            const res = await this.updateChallengeParticipant({
+                challengeId,
+                studentId: update.studentId,
+                schoolId,
+                result: update.result,
+                notes: update.notes,
+                status: 'JOINED'
+            });
+            results.push(res);
+        }
+        return results;
     }
     /**
      * 获取挑战参与者列表
@@ -407,13 +466,13 @@ class ChallengeService {
             throw new Error('挑战不存在');
         }
         // 获取总数
-        const total = await this.prisma.challengesParticipant.count({
+        const total = await this.prisma.challenge_participants.count({
             where: {
                 challengeId
             }
         });
         // 获取参与者列表
-        const participants = await this.prisma.challengesParticipant.findMany({
+        const participants = await this.prisma.challenge_participants.findMany({
             where: {
                 challengeId
             },
@@ -425,7 +484,7 @@ class ChallengeService {
             skip,
             take: limit,
             include: {
-                student: {
+                students: {
                     select: {
                         id: true,
                         name: true,
@@ -474,12 +533,12 @@ class ChallengeService {
             throw new Error('学生不存在');
         }
         // 获取学生的参与记录
-        const participants = await this.prisma.challengesParticipant.findMany({
+        const participants = await this.prisma.challenge_participants.findMany({
             where: {
                 studentId
             },
             include: {
-                challenge: {
+                challenges: {
                     select: {
                         id: true,
                         title: true,
@@ -500,11 +559,11 @@ class ChallengeService {
         const totalChallenges = participants.length;
         const completedChallenges = participants.filter(p => p.result === 'COMPLETED').length;
         const inProgressChallenges = participants.filter(p => p.status === 'JOINED' && p.result !== 'COMPLETED').length;
-        const totalPoints = participants.filter(p => p.result === 'COMPLETED').reduce((sum, p) => sum + (p.challenge.rewardPoints || 0), 0);
-        const totalExp = participants.filter(p => p.result === 'COMPLETED').reduce((sum, p) => sum + (p.challenge.rewardExp || 0), 0);
+        const totalPoints = participants.filter(p => p.result === 'COMPLETED').reduce((sum, p) => sum + (p.challenges.rewardPoints || 0), 0);
+        const totalExp = participants.filter(p => p.result === 'COMPLETED').reduce((sum, p) => sum + (p.challenges.rewardExp || 0), 0);
         // 按类型分组统计
         const typeStats = participants.reduce((acc, participant) => {
-            const type = participant.challenge.type;
+            const type = participant.challenges.type;
             if (!acc[type]) {
                 acc[type] = {
                     total: 0,
@@ -516,8 +575,8 @@ class ChallengeService {
             acc[type].total++;
             if (participant.result === 'COMPLETED') {
                 acc[type].completed++;
-                acc[type].totalPoints += participant.challenge.rewardPoints || 0;
-                acc[type].totalExp += participant.challenge.rewardExp || 0;
+                acc[type].totalPoints += participant.challenges.rewardPoints || 0;
+                acc[type].totalExp += participant.challenges.rewardExp || 0;
             }
             return acc;
         }, {});
@@ -556,9 +615,9 @@ class ChallengeService {
             })
         ]);
         // 获取参与统计
-        const totalParticipants = await this.prisma.challengesParticipant.count({
+        const totalParticipants = await this.prisma.challenge_participants.count({
             where: {
-                challenge: {
+                challenges: {
                     schoolId
                 }
             }
@@ -577,20 +636,20 @@ class ChallengeService {
             count: stat._count.type
         }));
         // 获取最近活动
-        const recentActivities = await this.prisma.challengesParticipant.findMany({
+        const recentActivities = await this.prisma.challenge_participants.findMany({
             where: {
-                challenge: {
+                challenges: {
                     schoolId
                 }
             },
             include: {
-                challenge: {
+                challenges: {
                     select: {
                         id: true,
                         title: true
                     }
                 },
-                student: {
+                students: {
                     select: {
                         id: true,
                         name: true,
@@ -617,29 +676,37 @@ class ChallengeService {
      * 给予挑战奖励
      */
     async grantChallengeRewards(studentId, challenge, participant) {
-        // 更新学生积分和经验
+        // 更新学生积分和经验 (兼容字段名)
+        const expToAdd = challenge.rewardExp || challenge.expReward || 0;
+        const pointsToAdd = challenge.rewardPoints || challenge.pointsReward || 0;
         await this.prisma.students.update({
             where: { id: studentId },
             data: {
-                points: { increment: challenge.rewardPoints || 0 },
-                exp: { increment: challenge.rewardExp || 0 }
+                points: { increment: pointsToAdd },
+                exp: { increment: expToAdd },
+                updatedAt: new Date()
             }
         });
-        // 创建任务记录
-        await this.prisma.taskRecord.create({
+        // 创建挑战成长记录 (SPECIAL类型，用于汇总)
+        await this.prisma.task_records.create({
             data: {
+                id: require('crypto').randomUUID(),
                 studentId,
                 schoolId: challenge.schoolId,
-                type: 'CHALLENGE',
-                title: `完成挑战 - ${challenge.title}`,
+                type: 'SPECIAL',
+                title: `挑战赛: ${challenge.title}`,
                 content: {
                     challengeId: challenge.id,
                     challengeTitle: challenge.title,
-                    score: participant.score,
-                    notes: participant.notes
+                    result: participant.result,
+                    notes: participant.notes,
+                    rewardExp: expToAdd,
+                    rewardPoints: pointsToAdd
                 },
                 status: 'COMPLETED',
-                expAwarded: challenge.rewardExp || 0
+                expAwarded: expToAdd,
+                updatedAt: new Date(),
+                task_category: 'TASK'
             }
         });
     }

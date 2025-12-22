@@ -81,12 +81,12 @@ export interface TutoringQueryOptions {
   sortOrder?: 'asc' | 'desc';
 }
 
-// ✅ 宪法合规：自持有PrismaClient
+// ✅ 宪法合规：注入单例 PrismaClient
 export class PersonalizedTutoringService {
   private prisma: PrismaClient;
 
-  constructor() {
-    this.prisma = new PrismaClient();
+  constructor(prisma: PrismaClient) {
+    this.prisma = prisma;
   }
 
   /**

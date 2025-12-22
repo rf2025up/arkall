@@ -4,7 +4,7 @@ import { AuthService, AuthUser } from './auth.service';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'arkok-v2-super-secret-jwt-key-2024';
 
-export interface AuthenticatedSocket extends Socket {
+export interface AuthenticatedSocket extends Socket<any, any, any, any> {
   user?: AuthUser;
   schoolId?: string;
   isAuthenticated?: boolean;
@@ -23,7 +23,7 @@ export class SocketService {
   constructor(
     private io: SocketIOServer,
     private authService: AuthService
-  ) {}
+  ) { }
 
   /**
    * 初始化 Socket.io 认证中间件
@@ -37,10 +37,10 @@ export class SocketService {
    */
   private async authenticateSocket(socket: AuthenticatedSocket, next: (err?: Error) => void): Promise<void> {
     try {
-      const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.replace('Bearer ', '');
+      const token = (socket as any).handshake.auth.token || (socket as any).handshake.headers.authorization?.replace('Bearer ', '');
 
       if (!token) {
-        console.log(`🔌 Socket ${socket.id} 连接失败: 缺少认证令牌`);
+        console.log(`🔌 Socket ${(socket as any).id} 连接失败: 缺少认证令牌`);
         return next(new Error('认证令牌缺失'));
       }
 
@@ -48,7 +48,7 @@ export class SocketService {
       const user = this.authService.verifyToken(token);
 
       if (!user) {
-        console.log(`🔌 Socket ${socket.id} 连接失败: 无效的认证令牌`);
+        console.log(`🔌 Socket ${(socket as any).id} 连接失败: 无效的认证令牌`);
         return next(new Error('无效的认证令牌'));
       }
 
@@ -57,11 +57,11 @@ export class SocketService {
       socket.schoolId = user.schoolId;
       socket.isAuthenticated = true;
 
-      console.log(`🔌 Socket ${socket.id} 认证成功: ${user.username}(${user.role}) - School: ${user.schoolId}`);
+      console.log(`🔌 Socket ${(socket as any).id} 认证成功: ${user.username}(${user.role}) - School: ${user.schoolId}`);
 
       next();
     } catch (error) {
-      console.error(`❌ Socket ${socket.id} 认证错误:`, error);
+      console.error(`❌ Socket ${(socket as any).id} 认证错误:`, error);
       next(new Error('认证过程中发生错误'));
     }
   }
@@ -78,12 +78,12 @@ export class SocketService {
    */
   private handleConnection(socket: AuthenticatedSocket): void {
     if (!socket.isAuthenticated || !socket.user || !socket.schoolId) {
-      console.log(`🔌 未认证的连接被拒绝: ${socket.id}`);
-      socket.disconnect();
+      console.log(`🔌 未认证的连接被拒绝: ${(socket as any).id}`);
+      (socket as any).disconnect();
       return;
     }
 
-    console.log(`🔌 用户 ${socket.user.username} 已连接: ${socket.id}`);
+    console.log(`🔌 用户 ${socket.user.username} 已连接: ${(socket as any).id}`);
     console.log(`📊 当前活跃连接数: ${this.io.engine.clientsCount}`);
 
     // 自动加入学校房间
@@ -93,7 +93,7 @@ export class SocketService {
     this.setupSocketEventHandlers(socket);
 
     // 发送连接成功消息
-    socket.emit('CONNECTION_SUCCESS', {
+    (socket as any).emit('CONNECTION_SUCCESS', {
       message: '连接成功',
       user: {
         userId: socket.user.userId,
@@ -102,7 +102,7 @@ export class SocketService {
         schoolId: socket.user.schoolId,
         schoolName: socket.user.schoolName
       },
-      socketId: socket.id,
+      socketId: (socket as any).id,
       timestamp: new Date().toISOString()
     });
 
@@ -120,45 +120,45 @@ export class SocketService {
    */
   private setupSocketEventHandlers(socket: AuthenticatedSocket): void {
     // 加入学校房间
-    socket.on('JOIN_SCHOOL', (data) => {
+    (socket as any).on('JOIN_SCHOOL', (data: any) => {
       if (socket.schoolId && data.schoolId === socket.schoolId) {
         this.joinSchoolRoom(socket, data.schoolId);
       } else {
-        socket.emit('ERROR', { message: '无权加入指定学校房间' });
+        (socket as any).emit('ERROR', { message: '无权加入指定学校房间' });
       }
     });
 
     // 离开学校房间
-    socket.on('LEAVE_SCHOOL', (data) => {
+    (socket as any).on('LEAVE_SCHOOL', (data: any) => {
       if (socket.schoolId && data.schoolId === socket.schoolId) {
         this.leaveSchoolRoom(socket, data.schoolId);
       }
     });
 
     // 获取房间信息
-    socket.on('GET_ROOM_INFO', () => {
+    (socket as any).on('GET_ROOM_INFO', () => {
       if (socket.schoolId) {
         const roomInfo = this.getSchoolRoomInfo(socket.schoolId);
-        socket.emit('ROOM_INFO', roomInfo);
+        (socket as any).emit('ROOM_INFO', roomInfo);
       }
     });
 
     // 心跳检测
-    socket.on('PING', () => {
-      socket.emit('PONG', {
+    (socket as any).on('PING', () => {
+      (socket as any).emit('PONG', {
         timestamp: new Date().toISOString(),
-        socketId: socket.id
+        socketId: (socket as any).id
       });
     });
 
     // 处理断开连接
-    socket.on('disconnect', (reason) => {
+    (socket as any).on('disconnect', (reason: string) => {
       this.handleDisconnection(socket, reason);
     });
 
     // 处理错误
-    socket.on('error', (error) => {
-      console.error(`❌ Socket ${socket.id} 错误:`, error);
+    (socket as any).on('error', (error: any) => {
+      console.error(`❌ Socket ${(socket as any).id} 错误:`, error);
     });
   }
 
@@ -167,11 +167,11 @@ export class SocketService {
    */
   private joinSchoolRoom(socket: AuthenticatedSocket, schoolId: string): void {
     const roomName = `school_${schoolId}`;
-    socket.join(roomName);
+    (socket as any).join(roomName);
 
     console.log(`🏠 用户 ${socket.user?.username} 加入学校房间: ${roomName}`);
 
-    socket.emit('JOINED_SCHOOL', {
+    (socket as any).emit('JOINED_SCHOOL', {
       schoolId,
       roomName,
       timestamp: new Date().toISOString()
@@ -183,11 +183,11 @@ export class SocketService {
    */
   private leaveSchoolRoom(socket: AuthenticatedSocket, schoolId: string): void {
     const roomName = `school_${schoolId}`;
-    socket.leave(roomName);
+    (socket as any).leave(roomName);
 
     console.log(`🚪 用户 ${socket.user?.username} 离开学校房间: ${roomName}`);
 
-    socket.emit('LEFT_SCHOOL', {
+    (socket as any).emit('LEFT_SCHOOL', {
       schoolId,
       roomName,
       timestamp: new Date().toISOString()
@@ -198,7 +198,7 @@ export class SocketService {
    * 处理断开连接
    */
   private handleDisconnection(socket: AuthenticatedSocket, reason: string): void {
-    console.log(`🔌 用户 ${socket.user?.username} 断开连接: ${socket.id} - 原因: ${reason}`);
+    console.log(`🔌 用户 ${socket.user?.username} 断开连接: ${(socket as any).id} - 原因: ${reason}`);
     console.log(`📊 剩余活跃连接数: ${this.io.engine.clientsCount}`);
 
     // 广播用户下线（可选）
@@ -222,24 +222,18 @@ export class SocketService {
     console.log(`📡 向学校 ${schoolId} 广播事件: ${event}`);
   }
 
-  /**
-   * 向指定用户发送消息
-   */
   public sendToUser(userId: string, event: string, data: any): void {
     // 查找属于该用户的所有 socket 连接
     const sockets = Array.from(this.io.sockets.sockets.values())
       .filter((socket: AuthenticatedSocket) => socket.user?.userId === userId);
 
     sockets.forEach(socket => {
-      socket.emit(event, data);
+      (socket as any).emit(event, data);
     });
 
     console.log(`📤 向用户 ${userId} 发送事件: ${event} (${sockets.length} 个连接)`);
   }
 
-  /**
-   * 向指定角色用户广播消息
-   */
   public broadcastToRole(schoolId: string, role: string, event: string, data: any): void {
     const roomName = `school_${schoolId}`;
     const sockets = Array.from(this.io.sockets.adapter.rooms.get(roomName) || [])
@@ -249,7 +243,7 @@ export class SocketService {
       ) as AuthenticatedSocket[];
 
     sockets.forEach(socket => {
-      socket.emit(event, data);
+      (socket as any).emit(event, data);
     });
 
     console.log(`📡 向学校 ${schoolId} 的 ${role} 角色广播事件: ${event} (${sockets.length} 个用户)`);
@@ -278,11 +272,11 @@ export class SocketService {
       );
 
     const users = sockets.map(socket => ({
-      socketId: socket.id,
+      socketId: (socket as any).id,
       userId: socket.user?.userId,
       username: socket.user?.username,
       role: socket.user?.role,
-      connectedAt: socket.handshake.time
+      connectedAt: (socket as any).handshake.time
     }));
 
     return {
@@ -327,7 +321,7 @@ export class SocketService {
         socket?.schoolId === schoolId
       ) as AuthenticatedSocket[];
 
-    sockets.forEach(socket => {
+    sockets.forEach((socket: any) => {
       socket.emit('FORCE_DISCONNECT', {
         reason,
         timestamp: new Date().toISOString()

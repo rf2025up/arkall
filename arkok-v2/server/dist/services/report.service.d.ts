@@ -1,3 +1,4 @@
+import { PrismaClient } from '@prisma/client';
 export interface StudentStatsRequest {
     studentId: string;
     schoolId: string;
@@ -59,6 +60,7 @@ export interface GeneratedPrompt {
 }
 export declare class ReportService {
     private prisma;
+    constructor(prisma: PrismaClient);
     /**
      * 获取学生在指定时间范围内的综合统计数据
      * 这是核心的"超级函数"，从所有相关表中抓取并计算数据

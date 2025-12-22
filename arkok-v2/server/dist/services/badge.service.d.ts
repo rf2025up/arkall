@@ -1,3 +1,4 @@
+import { PrismaClient } from '@prisma/client';
 import { Server as SocketIOServer } from 'socket.io';
 export interface BadgeQuery {
     schoolId: string;
@@ -61,7 +62,7 @@ export interface BadgeStatsResponse {
 export declare class BadgeService {
     private prisma;
     private io;
-    constructor(io: SocketIOServer);
+    constructor(prisma: PrismaClient, io: SocketIOServer);
     /**
      * 获取勋章列表
      */

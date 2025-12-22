@@ -75,7 +75,11 @@ export interface DashboardData {
 }
 
 export class DashboardService {
-  private prisma = new PrismaClient();
+  private prisma: PrismaClient;
+
+  constructor(prisma: PrismaClient) {
+    this.prisma = prisma;
+  }
 
   /**
    * 获取仪表板数据
@@ -133,25 +137,26 @@ export class DashboardService {
         },
         take: 5,
         include: {
-          students_pk_matches_studentATostudents: {
+          playerA: {
             select: { id: true, name: true, className: true, avatarUrl: true }
           },
-          students_pk_matches_studentBTostudents: {
+          playerB: {
             select: { id: true, name: true, className: true, avatarUrl: true }
           }
         }
       }),
 
-      // 获取最近完成的挑战
-      this.prisma.challenges.findMany({
+      // 获取最近完成的挑战 (从 task_records 获取以对齐 SSOT)
+      this.prisma.task_records.findMany({
         where: {
           schoolId,
+          type: 'CHALLENGE',
           status: 'COMPLETED'
         },
         orderBy: { updatedAt: 'desc' },
         take: 5,
         include: {
-          student: {
+          students: {
             select: { id: true, name: true, className: true, avatarUrl: true }
           }
         }
@@ -212,13 +217,13 @@ export class DashboardService {
       id: pk.id,
       topic: pk.topic || 'PK对决',
       status: pk.status.toLowerCase(),
-      playerA: pk.students_pk_matches_studentATostudents || {
+      playerA: (pk as any).playerA || {
         id: pk.studentA,
         name: '选手A',
         className: '待定',
         avatarUrl: undefined
       },
-      playerB: pk.students_pk_matches_studentBTostudents || {
+      playerB: (pk as any).playerB || {
         id: pk.studentB,
         name: '选手B',
         className: '待定',
@@ -231,13 +236,13 @@ export class DashboardService {
     }));
 
     // 格式化挑战数据
-    const formattedChallenges = challenges.map(challenge => ({
-      id: challenge.id,
-      title: challenge.title,
-      type: challenge.type,
-      expAwarded: challenge.rewardExp || 0,
-      student: challenge.student,
-      submittedAt: challenge.updatedAt.toISOString(),
+    const formattedChallenges = challenges.map((record: any) => ({
+      id: record.id,
+      title: record.title,
+      type: 'CHALLENGE',
+      expAwarded: record.expAwarded || 0,
+      student: record.students,
+      submittedAt: record.updatedAt.toISOString(),
       status: 'success'
     }));
 

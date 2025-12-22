@@ -34,11 +34,9 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserController = void 0;
-const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcryptjs"));
 class UserController {
-    constructor() {
-        this.prisma = new client_1.PrismaClient();
+    constructor(prisma) {
         /**
          * 创建教师账号 (仅 Admin)
          */
@@ -334,6 +332,7 @@ class UserController {
                 next(error);
             }
         };
+        this.prisma = prisma;
     }
 }
 exports.UserController = UserController;

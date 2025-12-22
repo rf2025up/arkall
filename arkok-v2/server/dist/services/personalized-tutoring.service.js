@@ -1,11 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PersonalizedTutoringService = void 0;
-const client_1 = require("@prisma/client");
-// ✅ 宪法合规：自持有PrismaClient
+// ✅ 宪法合规：注入单例 PrismaClient
 class PersonalizedTutoringService {
-    constructor() {
-        this.prisma = new client_1.PrismaClient();
+    constructor(prisma) {
+        this.prisma = prisma;
     }
     /**
      * 创建1v1教学计划

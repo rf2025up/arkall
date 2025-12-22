@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { PKMatchService } from '../services/pkmatch.service';
+import { AuthService } from '../services/auth.service';
 export interface PKMatchResponse {
     success: boolean;
     message?: string;
@@ -16,8 +17,9 @@ export interface PKMatchResponse {
  */
 export declare class PKMatchRoutes {
     private pkMatchService;
+    private authService;
     private router;
-    constructor(pkMatchService: PKMatchService);
+    constructor(pkMatchService: PKMatchService, authService: AuthService);
     private initializeRoutes;
     /**
      * 获取PK对战列表

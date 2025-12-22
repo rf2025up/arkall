@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArkOK V2 - 亲子绑定演示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #e5e7eb; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        
+        .phone-frame {
+            width: 375px;
+            height: 812px;
+            background: #fff;
+            border-radius: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            position: relative;
+            border: 8px solid #1f2937;
+        }
+
+        /* 场景切换动画 */
+        .scene {
+            position: absolute;
+            inset: 0;
+            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s;
+            opacity: 0;
+            pointer-events: none;
+            background: #f7f8fa;
+        }
+        .scene.active { opacity: 1; pointer-events: auto; transform: translateX(0); }
+        .scene.exit-left { transform: translateX(-100%); }
+        .scene.enter-right { transform: translateX(100%); }
+
+        /* 教师端：邀请卡样式 */
+        .invite-card {
+            background: linear-gradient(135deg, #fff 0%, #fff7ed 100%);
+            border: 1px solid #fed7aa;
+            box-shadow: 0 10px 40px -10px rgba(249, 115, 22, 0.2);
+        }
+
+        /* 家长端：登录背景 */
+        .login-bg {
+            background: linear-gradient(180deg, #ffedd5 0%, #fff 40%);
+        }
+        
+        /* 输入框聚焦动画 */
+        .input-group:focus-within label { color: #f97316; }
+        .input-group:focus-within input { border-color: #f97316; background-color: #fff; }
+
+        /* 成功动画 */
+        @keyframes success-pop {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .success-icon { animation: success-pop 0.5s ease-out forwards; }
+    </style>
+</head>
+<body>
+
+    <!-- 演示控制器 -->
+    <div class="fixed left-10 top-1/2 -translate-y-1/2 space-y-4 bg-white p-6 rounded-xl shadow-lg w-64 hidden md:block">
+        <h3 class="font-bold text-gray-800 mb-2 border-b pb-2">🕹️ 流程演示</h3>
+        <button onclick="switchScene('teacher')" class="w-full text-left px-4 py-2 rounded hover:bg-orange-50 text-sm font-medium transition-colors border-l-4 border-blue-500 bg-blue-50">
+            1. 教师端 (生成邀请)
+        </button>
+        <button onclick="switchScene('parent-login')" class="w-full text-left px-4 py-2 rounded hover:bg-orange-50 text-sm font-medium transition-colors border-l-4 border-orange-500 bg-orange-50">
+            2. 家长端 (输入绑定)
+        </button>
+        <div class="text-xs text-gray-400 mt-4">
+            模拟数据:<br>
+            学生: 宋子晨<br>
+            访问码: 1234
+        </div>
+    </div>
+
+    <div class="phone-frame relative">
+        
+        <!-- ================= 场景 1: 教师端 (邀请弹窗) ================= -->
+        <div id="scene-teacher" class="scene active flex items-center justify-center bg-black/50 backdrop-blur-sm p-6">
+            
+            <!-- 模拟底层的教师端详情页背景 -->
+            <div class="absolute inset-0 z-0 bg-white">
+                <div class="bg-orange-500 h-48 rounded-b-[3rem]"></div>
+                <div class="mt-20 px-6 space-y-4 opacity-50">
+                    <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div class="h-32 bg-gray-100 rounded-xl"></div>
+                </div>
+            </div>
+
+            <!-- 邀请卡片 -->
+            <div class="invite-card w-full rounded-2xl p-6 relative z-10 text-center transform transition-all">
+                <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                    🎁
+                </div>
+                <h2 class="text-xl font-bold text-gray-800">邀请家长加入</h2>
+                <p class="text-sm text-gray-500 mt-2">将此卡片或链接发给家长，<br>邀请他们共同关注孩子成长。</p>
+
+                <!-- 核心信息区 -->
+                <div class="bg-white border border-dashed border-orange-300 rounded-xl p-4 mt-6">
+                    <div class="flex items-center gap-3 mb-3 border-b border-gray-100 pb-3">
+                        <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Song" class="w-10 h-10 rounded-full bg-gray-100">
+                        <div class="text-left">
+                            <div class="font-bold text-gray-800">宋子晨</div>
+                            <div class="text-xs text-gray-400">三年二班</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center bg-orange-50 px-3 py-2 rounded-lg">
+                        <span class="text-xs text-gray-500">访问码 (Access Code)</span>
+                        <span class="font-mono font-bold text-xl text-orange-600 tracking-widest">1234</span>
+                    </div>
+                </div>
+
+                <!-- 按钮组 -->
+                <div class="mt-6 space-y-3">
+                    <button onclick="copyInvite()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors">
+                        <i class="fab fa-weixin"></i> 发送给家长
+                    </button>
+                    <button class="w-full bg-white border border-gray-200 text-gray-600 py-3 rounded-xl text-sm font-medium">
+                        复制链接
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 场景 2: 家长端 (登录页) ================= -->
+        <div id="scene-parent-login" class="scene login-bg flex flex-col p-8">
+            
+            <div class="flex-1 flex flex-col justify-center">
+                <!-- Logo区 -->
+                <div class="text-center mb-10">
+                    <div class="w-20 h-20 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl mx-auto shadow-lg shadow-orange-200 flex items-center justify-center text-4xl text-white mb-4">
+                        🚀
+                    </div>
+                    <h1 class="text-2xl font-bold text-gray-800">星途与伴</h1>
+                    <p class="text-sm text-gray-500 mt-2">开启孩子的成长数字档案</p>
+                </div>
+
+                <!-- 表单区 -->
+                <div class="bg-white rounded-2xl shadow-xl shadow-gray-100 p-6 space-y-5">
+                    
+                    <!-- 姓名输入 -->
+                    <div class="input-group">
+                        <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">孩子姓名</label>
+                        <input type="text" id="input-name" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-gray-800 outline-none transition-all placeholder-gray-300" placeholder="例如：宋子晨">
+                    </div>
+
+                    <!-- 访问码输入 -->
+                    <div class="input-group">
+                        <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">访问码 (Access Code)</label>
+                        <div class="relative">
+                            <input type="tel" id="input-code" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-gray-800 outline-none transition-all font-mono tracking-widest text-lg placeholder-gray-300" placeholder="0000" maxlength="4">
+                            <i class="fas fa-key absolute right-4 top-1/2 -translate-y-1/2 text-gray-300"></i>
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-2 text-right">不知道访问码？请联系老师获取</p>
+                    </div>
+
+                    <!-- 登录按钮 -->
+                    <button onclick="handleLogin()" class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-orange-200 active:scale-95 transition-transform mt-4 flex justify-center items-center gap-2">
+                        <span>开启成长之旅</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-center text-xs text-gray-300 pb-4">
+                ArkOK Family v2.0
+            </div>
+        </div>
+
+        <!-- ================= 场景 3: 家长端 (登录成功/首页预览) ================= -->
+        <div id="scene-parent-home" class="scene bg-gray-50 flex flex-col items-center justify-center text-center p-8">
+            <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center text-green-500 text-4xl mb-6 success-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">绑定成功！</h2>
+            <p class="text-gray-500 mb-8">欢迎来到宋子晨的成长空间</p>
+            
+            <!-- 模拟首页卡片 -->
+            <div class="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-left animate-[fadeIn_0.5s_ease-out_0.3s_both]">
+                <div class="flex justify-between items-center border-b border-gray-50 pb-3 mb-3">
+                    <span class="font-bold text-gray-800 text-sm">今日动态</span>
+                    <span class="text-xs text-orange-500">刚刚更新</span>
+                </div>
+                <div class="flex gap-3">
+                    <div class="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center"><i class="fas fa-swords"></i></div>
+                    <div>
+                        <div class="text-sm font-bold text-gray-700">PK 获胜</div>
+                        <div class="text-xs text-gray-400">战胜了 李小红 (+50 XP)</div>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="location.reload()" class="mt-8 text-gray-400 text-sm hover:text-gray-600">
+                <i class="fas fa-redo"></i> 重新演示
+            </button>
+        </div>
+
+    </div>
+
+    <!-- 简易 Toast -->
+    <div id="toast" class="fixed top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-full text-sm opacity-0 transition-opacity pointer-events-none z-50">
+        已复制到剪贴板
+    </div>
+
+    <script>
+        function switchScene(sceneId) {
+            document.querySelectorAll('.scene').forEach(el => {
+                el.classList.remove('active');
+                el.style.opacity = '0';
+                el.style.pointerEvents = 'none';
+            });
+            
+            const target = document.getElementById('scene-' + sceneId);
+            target.classList.add('active');
+            target.style.opacity = '1';
+            target.style.pointerEvents = 'auto';
+        }
+
+        function copyInvite() {
+            const toast = document.getElementById('toast');
+            toast.innerText = "✨ 文案已复制，快去发微信吧！";
+            toast.style.opacity = '1';
+            setTimeout(() => toast.style.opacity = '0', 2000);
+        }
+
+        function handleLogin() {
+            const name = document.getElementById('input-name').value;
+            const code = document.getElementById('input-code').value;
+            const btn = document.querySelector('button[onclick="handleLogin()"]');
+
+            if (!name || !code) {
+                const toast = document.getElementById('toast');
+                toast.innerText = "⚠️ 请输入完整信息";
+                toast.style.opacity = '1';
+                setTimeout(() => toast.style.opacity = '0', 2000);
+                return;
+            }
+
+            // 模拟 Loading
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 验证中...';
+            
+            setTimeout(() => {
+                if (name === "宋子晨" && code === "1234") {
+                    switchScene('parent-home');
+                } else {
+                    const toast = document.getElementById('toast');
+                    toast.innerText = "❌ 姓名或访问码错误 (试: 宋子晨/1234)";
+                    toast.style.opacity = '1';
+                    setTimeout(() => toast.style.opacity = '0', 2000);
+                    btn.innerHTML = originalText;
+                }
+            }, 1000);
+        }
+        
+        // 自动填充模拟数据（为了演示方便）
+        // document.getElementById('input-name').value = "宋子晨";
+        // document.getElementById('input-code').value = "1234";
+    </script>
+</body>
+</html>

@@ -1,10 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HabitService = void 0;
-const client_1 = require("@prisma/client");
 class HabitService {
-    constructor(io) {
-        this.prisma = new client_1.PrismaClient();
+    constructor(prisma, io) {
+        this.prisma = prisma;
         this.io = io;
     }
     /**
@@ -73,7 +72,7 @@ class HabitService {
             include: {
                 _count: {
                     select: {
-                        habitLogs: true
+                        habit_logs: true
                     }
                 }
             }
@@ -83,7 +82,7 @@ class HabitService {
         }
         return {
             ...habit,
-            totalCheckIns: habit._count.habitLogs
+            totalCheckIns: habit._count.habit_logs
         };
     }
     /**
@@ -103,12 +102,14 @@ class HabitService {
         }
         const habit = await this.prisma.habits.create({
             data: {
+                id: require('crypto').randomUUID(),
                 name,
                 description,
                 icon,
                 expReward,
                 pointsReward,
-                schoolId
+                schoolId,
+                updatedAt: new Date()
             }
         });
         // 广播习惯创建事件
@@ -217,7 +218,7 @@ class HabitService {
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        const existingCheckIn = await this.prisma.habits_logs.findFirst({
+        const existingCheckIn = await this.prisma.habit_logs.findFirst({
             where: {
                 habitId,
                 studentId,
@@ -234,7 +235,7 @@ class HabitService {
         // 计算连续打卡天数
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayCheckIn = await this.prisma.habits_logs.findFirst({
+        const yesterdayCheckIn = await this.prisma.habit_logs.findFirst({
             where: {
                 habitId,
                 studentId,
@@ -248,8 +249,9 @@ class HabitService {
         });
         const streakDays = yesterdayCheckIn ? yesterdayCheckIn.streakDays + 1 : 1;
         // 创建打卡记录
-        const habitLog = await this.prisma.habits_logs.create({
+        const habitLog = await this.prisma.habit_logs.create({
             data: {
+                id: require('crypto').randomUUID(),
                 habitId,
                 studentId,
                 schoolId,
@@ -274,22 +276,25 @@ class HabitService {
                 data: { level: newLevel }
             });
         }
-        // 创建任务记录
-        await this.prisma.taskRecord.create({
+        // 创建激励记录 (DAILY类型)
+        await this.prisma.task_records.create({
             data: {
+                id: require('crypto').randomUUID(),
                 studentId,
                 schoolId,
                 type: 'DAILY',
-                title: `习惯打卡 - ${habit.name}`,
+                title: `习惯打卡: ${habit.name}`,
                 content: {
                     habitId,
                     habitName: habit.name,
                     streakDays,
-                    notes,
+                    teacherMessage: notes,
                     checkedBy
                 },
                 status: 'COMPLETED',
-                expAwarded: habit.expReward
+                expAwarded: habit.expReward,
+                updatedAt: new Date(),
+                task_category: 'TASK'
             }
         });
         // 准备广播数据
@@ -344,15 +349,15 @@ class HabitService {
             }
         }
         // 获取总数
-        const total = await this.prisma.habits_logs.count({ where });
+        const total = await this.prisma.habit_logs.count({ where });
         // 获取打卡记录列表
-        const habitLogs = await this.prisma.habits_logs.findMany({
+        const habitLogs = await this.prisma.habit_logs.findMany({
             where,
             orderBy: { checkedAt: 'desc' },
             skip,
             take: limit,
             include: {
-                habit: {
+                habits: {
                     select: {
                         id: true,
                         name: true,
@@ -361,7 +366,7 @@ class HabitService {
                         pointsReward: true
                     }
                 },
-                student: {
+                students: {
                     select: {
                         id: true,
                         name: true,
@@ -406,13 +411,13 @@ class HabitService {
             }
         });
         // 获取学生的打卡记录
-        const habitLogs = await this.prisma.habits_logs.findMany({
+        const habitLogs = await this.prisma.habit_logs.findMany({
             where: {
                 studentId,
                 schoolId
             },
             include: {
-                habit: {
+                habits: {
                     select: {
                         id: true,
                         name: true,
@@ -492,11 +497,11 @@ class HabitService {
             })
         ]);
         // 获取打卡总数
-        const totalCheckIns = await this.prisma.habits_logs.count({
+        const totalCheckIns = await this.prisma.habit_logs.count({
             where: { schoolId }
         });
         // 获取每个习惯的平均连续打卡天数
-        const habitStreakRates = await this.prisma.habits_logs.groupBy({
+        const habitStreakRates = await this.prisma.habit_logs.groupBy({
             by: ['habitId'],
             where: { schoolId },
             _avg: {
@@ -518,7 +523,7 @@ class HabitService {
             totalCheckIns: rate._count.habitId
         }));
         // 获取参与度最高的学生
-        const topParticipants = await this.prisma.habits_logs.groupBy({
+        const topParticipants = await this.prisma.habit_logs.groupBy({
             by: ['studentId'],
             where: { schoolId },
             _count: {

@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { StudentService, StudentQuery, CreateStudentRequest, UpdateStudentRequest, AddScoreRequest } from '../services/student.service';
 import { authenticateToken, AuthRequest, requireTeacher, requireAdmin } from '../middleware/auth.middleware';
-import AuthService from '../services/auth.service';
+import { AuthService } from '../services/auth.service';
 
 /**
  * 学生管理路由
@@ -126,7 +126,7 @@ export class StudentRoutes {
      *       401:
      *         description: 用户未认证
      */
-    
+
     /**
      * @swagger
      * /api/students/{id}/profile:
@@ -633,7 +633,8 @@ export class StudentRoutes {
       res.status(200).json({
         success: true,
         message: '获取学生列表成功',
-        data: result
+        data: result.students,
+        pagination: result.pagination
       });
       console.log(`[DEBUG] Response sent to frontend successfully`);
       // --- 日志结束 ---

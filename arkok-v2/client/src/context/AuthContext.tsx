@@ -39,7 +39,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const data = await response.json();
           if (data.success && data.user) {
             setToken(storedToken);
-            setUser(data.user);
+            // 🚀 确保 id 字段存在
+            const normalizedUser = { ...data.user, id: data.user.id || data.user.userId };
+            setUser(normalizedUser);
           } else {
             // token 无效，清除本地存储
             localStorage.removeItem('auth_token');
@@ -76,11 +78,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (data.success && data.token && data.user) {
         setToken(data.token);
-        setUser(data.user);
+
+        // 🚀 确保 id 字段存在
+        const normalizedUser = { ...data.user, id: data.user.id || data.user.userId };
+        setUser(normalizedUser);
 
         // 存储到 localStorage
         localStorage.setItem('auth_token', data.token);
-        localStorage.setItem('auth_user', JSON.stringify(data.user));
+        localStorage.setItem('auth_user', JSON.stringify(normalizedUser));
 
         return { success: true };
       } else {

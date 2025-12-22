@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, UserPlus } from 'lucide-react';
-import { Student, PointPreset } from '../types/student';
+import { X, UserPlus, CalendarCheck } from 'lucide-react';
+import { Student } from '../types/student';
 import { useClass } from '../context/ClassContext';
 
 interface ActionSheetProps {
@@ -8,9 +8,8 @@ interface ActionSheetProps {
   onClose: () => void;
   selectedStudents: Student[];
   onConfirm: (points: number, reason: string, exp?: number) => void;
-  onTransfer?: (studentIds: string[], targetTeacherId?: string) => void;  // 🆕 修改参数类型
-  scorePresets: PointPreset[];
-  categoryNames: Record<string, string>;
+  onTransfer?: (studentIds: string[], targetTeacherId?: string) => void;
+  onCheckin?: (studentIds: string[]) => void;  // 🆕 签到回调
 }
 
 const ActionSheet: React.FC<ActionSheetProps> = ({
@@ -19,38 +18,20 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
   selectedStudents,
   onConfirm,
   onTransfer,
-  scorePresets,
-  categoryNames
+  onCheckin  // 🆕 签到回调
 }) => {
-  const { viewMode } = useClass();  // 🆕 使用 viewMode 而不是 currentClass
-  const [activeTab, setActiveTab] = useState<string>('');
+  const { viewMode } = useClass();
   const [customPoints, setCustomPoints] = useState<string>('');
   const [customExp, setCustomExp] = useState<string>('');
 
-  console.log('[DEBUG] ActionSheet component state:', {
-    isOpen,
-    viewMode,
-    hasOnTransfer: !!onTransfer,
-    selectedStudentsCount: selectedStudents.length,
-    shouldShowTransferButton: !!(onTransfer && (viewMode === 'ALL_SCHOOL' || viewMode === 'SPECIFIC_CLASS'))
-  });
-
   useEffect(() => {
     if (isOpen) {
-      const keys = Object.keys(categoryNames);
-      if (keys.length > 0 && !activeTab) {
-          setActiveTab(keys[0]);
-      }
       setCustomPoints('');
       setCustomExp('');
     }
-  }, [isOpen, categoryNames]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
-
-  const handlePresetClick = (value: number, label: string) => {
-    onConfirm(value, label);
-  };
 
   const handleCustomConfirm = () => {
     const pts = parseInt(customPoints);
@@ -101,7 +82,7 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
 
         {/* 顶部把手 */}
         <div className="w-full flex justify-center pt-3 pb-1" onClick={onClose}>
-            <div className="w-12 h-1.5 bg-gray-200 rounded-full"></div>
+          <div className="w-12 h-1.5 bg-gray-200 rounded-full"></div>
         </div>
 
         <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-white sticky top-0 z-10">
@@ -140,62 +121,67 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
           });
           return shouldShow;
         })() && (
-          <div className="px-4 pb-2">
-            <button
-              onClick={handleTransferToMyClass}
-              className="w-full bg-blue-600 text-white font-bold rounded-xl py-3.5 hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2"
-            >
-              <UserPlus size={20} />
-              移入我的班级 ({selectedStudents.length}人)
-            </button>
-            <p className="text-xs text-gray-500 text-center mt-2">
-              将选中的学生划归到您名下
-            </p>
-          </div>
-        )}
-
-        {/* 🆕 积分调整功能 - 仅在我的学生视图下显示 */}
-        {viewMode === 'MY_STUDENTS' && (
-          <>
-            {/* 预制加分项目提示 */}
-            <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl mx-4">
-              <div className="text-center">
-                <p className="text-sm font-medium text-orange-600 mb-1">🚧 预制加分项目暂时关闭</p>
-                <p className="text-xs text-orange-500">请使用下方手动填写功能进行调整</p>
-              </div>
-            </div>
-
-            <div className="p-5 border-t border-gray-100 bg-white pb-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]">
-              <div className="flex gap-3 items-center mb-3">
-                <div className="flex-1 relative">
-                   <label className="absolute -top-2 left-2 bg-white px-1 text-[10px] font-bold text-gray-400">积分</label>
-                   <input
-                      type="number"
-                      placeholder="0"
-                      value={customPoints}
-                      onChange={(e) => setCustomPoints(e.target.value)}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-center font-bold text-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-gray-50"
-                   />
-                </div>
-                <div className="flex-1 relative">
-                   <label className="absolute -top-2 left-2 bg-white px-1 text-[10px] font-bold text-gray-400">经验值</label>
-                   <input
-                      type="number"
-                      placeholder="0"
-                      value={customExp}
-                      onChange={(e) => setCustomExp(e.target.value)}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-center font-bold text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none bg-gray-50"
-                   />
-                </div>
-              </div>
+            <div className="px-4 pb-2">
               <button
-                onClick={handleCustomConfirm}
-                className="w-full bg-gray-900 text-white font-bold rounded-xl py-3.5 hover:bg-gray-800 active:scale-[0.98] transition-all shadow-lg"
+                onClick={handleTransferToMyClass}
+                className="w-full bg-blue-600 text-white font-bold rounded-xl py-3.5 hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2"
               >
-                 确认调整
-               </button>
+                <UserPlus size={20} />
+                移入我的班级 ({selectedStudents.length}人)
+              </button>
+              <p className="text-xs text-gray-500 text-center mt-2">
+                将选中的学生划归到您名下
+              </p>
             </div>
-          </>
+          )}
+
+        {/* 🆕 积分调整 + 签到功能 - 仅在我的学生视图下显示 */}
+        {viewMode === 'MY_STUDENTS' && (
+          <div className="p-5 border-t border-gray-100 bg-white pb-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]">
+            {/* 🆕 签到按钮 */}
+            {onCheckin && (
+              <button
+                onClick={() => {
+                  onCheckin(selectedStudents.map(s => s.id));
+                  onClose();
+                }}
+                className="w-full bg-green-500 text-white font-bold rounded-xl py-3.5 mb-3 hover:bg-green-600 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2"
+              >
+                <CalendarCheck size={20} />
+                批量签到 ({selectedStudents.length}人)
+              </button>
+            )}
+
+            {/* 积分调整 */}
+            <div className="flex gap-3 items-center mb-3">
+              <div className="flex-1 relative">
+                <label className="absolute -top-2 left-2 bg-white px-1 text-[10px] font-bold text-gray-400">积分</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={customPoints}
+                  onChange={(e) => setCustomPoints(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-center font-bold text-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-gray-50"
+                />
+              </div>
+              <div className="flex-1 relative">
+                <label className="absolute -top-2 left-2 bg-white px-1 text-[10px] font-bold text-gray-400">经验值</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={customExp}
+                  onChange={(e) => setCustomExp(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-center font-bold text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none bg-gray-50"
+                />
+              </div>
+            </div>
+            <button
+              onClick={handleCustomConfirm}
+              className="w-full bg-gray-900 text-white font-bold rounded-xl py-3.5 hover:bg-gray-800 active:scale-[0.98] transition-all shadow-lg"
+            >
+              确认加分
+            </button>
+          </div>
         )}
 
         {/* 🆕 非我的学生视图的提示 */}
@@ -207,7 +193,6 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

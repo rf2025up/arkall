@@ -1,10 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BadgeService = void 0;
-const client_1 = require("@prisma/client");
 class BadgeService {
-    constructor(io) {
-        this.prisma = new client_1.PrismaClient();
+    constructor(prisma, io) {
+        this.prisma = prisma;
         this.io = io;
     }
     /**
@@ -42,7 +41,7 @@ class BadgeService {
             include: {
                 _count: {
                     select: {
-                        studentBadges: true
+                        student_badges: true
                     }
                 }
             }
@@ -52,7 +51,7 @@ class BadgeService {
         return {
             badges: badges.map(badge => ({
                 ...badge,
-                awardedCount: badge._count.studentBadges
+                awardedCount: badge._count.student_badges
             })),
             pagination: {
                 page,
@@ -72,9 +71,9 @@ class BadgeService {
                 schoolId
             },
             include: {
-                studentBadges: {
+                student_badges: {
                     include: {
-                        student: {
+                        students: {
                             select: {
                                 id: true,
                                 name: true,
@@ -90,7 +89,7 @@ class BadgeService {
                 },
                 _count: {
                     select: {
-                        studentBadges: true
+                        student_badges: true
                     }
                 }
             }
@@ -100,8 +99,8 @@ class BadgeService {
         }
         return {
             ...badge,
-            awardedCount: badge._count.studentBadges,
-            recentRecipients: badge.studentBadges
+            awardedCount: badge._count.student_badges,
+            recentRecipients: badge.student_badges
         };
     }
     /**
@@ -121,12 +120,14 @@ class BadgeService {
         }
         const badge = await this.prisma.badges.create({
             data: {
+                id: require('crypto').randomUUID(),
                 name,
                 description,
                 icon,
                 category,
                 requirement,
-                schoolId
+                schoolId,
+                updatedAt: new Date()
             }
         });
         // 广播勋章创建事件
@@ -231,7 +232,7 @@ class BadgeService {
             throw new Error('学生不存在');
         }
         // 检查是否已经获得过该勋章
-        const existingAward = await this.prisma.studentsBadge.findFirst({
+        const existingAward = await this.prisma.student_badges.findFirst({
             where: {
                 studentId,
                 badgeId
@@ -241,15 +242,16 @@ class BadgeService {
             throw new Error('学生已获得过该勋章');
         }
         // 创建勋章授予记录
-        const studentBadge = await this.prisma.studentsBadge.create({
+        const studentBadge = await this.prisma.student_badges.create({
             data: {
+                id: require('crypto').randomUUID(),
                 studentId,
                 badgeId,
                 awardedBy,
                 reason
             },
             include: {
-                student: {
+                students: {
                     select: {
                         id: true,
                         name: true,
@@ -257,7 +259,7 @@ class BadgeService {
                         avatarUrl: true
                     }
                 },
-                badge: {
+                badges: {
                     select: {
                         id: true,
                         name: true,
@@ -272,26 +274,32 @@ class BadgeService {
         await this.prisma.students.update({
             where: { id: studentId },
             data: {
-                points: { increment: 10 }, // 勋章奖励10积分
-                exp: { increment: 20 } // 勋章奖励20经验
+                points: { increment: 10 },
+                exp: { increment: 20 },
+                updatedAt: new Date()
             }
         });
-        // 创建任务记录
-        await this.prisma.taskRecord.create({
+        // 🚀 [宪法 5.0 落地] 创建成长激励记录 (同步至全量记录表)
+        await this.prisma.task_records.create({
             data: {
+                id: require('crypto').randomUUID(),
                 studentId,
                 schoolId,
-                type: 'SPECIAL',
-                title: `获得勋章 - ${badge.name}`,
+                type: 'CHALLENGE', // 勋章授予在 5.0 中属于挑战激励流
+                title: `获得勋章: ${badge.name}`,
                 content: {
                     badgeId: badge.id,
                     badgeName: badge.name,
-                    badgeCategory: badge.category,
-                    reason,
-                    awardedBy
+                    badgeDescription: badge.description,
+                    badgeIcon: badge.icon,
+                    teacherMessage: reason,
+                    awardedBy,
+                    taskDate: new Date().toISOString().split('T')[0]
                 },
                 status: 'COMPLETED',
-                expAwarded: 20
+                expAwarded: 20,
+                updatedAt: new Date(),
+                task_category: 'TASK'
             }
         });
         // 准备广播数据
@@ -338,7 +346,7 @@ class BadgeService {
             throw new Error('学生不存在');
         }
         // 删除勋章授予记录
-        await this.prisma.studentsBadge.deleteMany({
+        await this.prisma.student_badges.deleteMany({
             where: {
                 studentId,
                 badgeId
@@ -372,12 +380,12 @@ class BadgeService {
             throw new Error('学生不存在');
         }
         // 获取学生的勋章
-        const studentBadges = await this.prisma.studentsBadge.findMany({
+        const student_badges = await this.prisma.student_badges.findMany({
             where: {
                 studentId
             },
             include: {
-                badge: {
+                badges: {
                     select: {
                         id: true,
                         name: true,
@@ -392,8 +400,8 @@ class BadgeService {
             }
         });
         // 按类别分组统计
-        const categoryStats = studentBadges.reduce((acc, studentBadge) => {
-            const category = studentBadge.badge.category;
+        const categoryStats = student_badges.reduce((acc, studentBadge) => {
+            const category = studentBadge.badges.category;
             if (!acc[category]) {
                 acc[category] = [];
             }
@@ -406,9 +414,9 @@ class BadgeService {
                 name: student.name,
                 className: student.className
             },
-            totalBadges: studentBadges.length,
+            totalBadges: student_badges.length,
             categoryStats,
-            badges: studentBadges
+            badges: student_badges
         };
     }
     /**
@@ -423,9 +431,9 @@ class BadgeService {
                 isActive: true
             },
             include: {
-                studentBadges: {
+                student_badges: {
                     include: {
-                        badge: {
+                        badges: {
                             select: {
                                 id: true
                             }
@@ -445,7 +453,7 @@ class BadgeService {
             }
         });
         // 获取学生已有的勋章ID
-        const earnedBadgeIds = new Set(student.studentBadges.map(sb => sb.badgeId));
+        const earnedBadgeIds = new Set(student.student_badges.map(sb => sb.badgeId));
         // 过滤出未获得的勋章
         const availableBadges = allBadges.filter(badge => !earnedBadgeIds.has(badge.id));
         // 分析每个勋章的达成情况
@@ -483,18 +491,18 @@ class BadgeService {
             })
         ]);
         // 获取授予总数
-        const totalAwarded = await this.prisma.studentsBadge.count({
+        const totalAwarded = await this.prisma.student_badges.count({
             where: {
-                badge: {
+                badges: {
                     schoolId
                 }
             }
         });
         // 获取获得勋章的唯一学生数
-        const uniqueEarners = await this.prisma.studentsBadge.groupBy({
+        const uniqueEarners = await this.prisma.student_badges.groupBy({
             by: ['studentId'],
             where: {
-                badge: {
+                badges: {
                     schoolId
                 }
             }
@@ -508,9 +516,9 @@ class BadgeService {
             }
         });
         const categoryStats = await Promise.all(categoryDistribution.map(async (stat) => {
-            const awardedCount = await this.prisma.studentsBadge.count({
+            const awardedCount = await this.prisma.student_badges.count({
                 where: {
-                    badge: {
+                    badges: {
                         schoolId,
                         category: stat.category
                     }
@@ -523,10 +531,10 @@ class BadgeService {
             };
         }));
         // 获取获得最多勋章的学生
-        const topEarners = await this.prisma.studentsBadge.groupBy({
+        const topEarners = await this.prisma.student_badges.groupBy({
             by: ['studentId'],
             where: {
-                badge: {
+                badges: {
                     schoolId
                 }
             },
@@ -560,21 +568,21 @@ class BadgeService {
             };
         });
         // 获取最近授予记录
-        const recentAwards = await this.prisma.studentsBadge.findMany({
+        const recentAwards = await this.prisma.student_badges.findMany({
             where: {
-                badge: {
+                badges: {
                     schoolId
                 }
             },
             include: {
-                student: {
+                students: {
                     select: {
                         id: true,
                         name: true,
                         className: true
                     }
                 },
-                badge: {
+                badges: {
                     select: {
                         id: true,
                         name: true,
@@ -613,7 +621,7 @@ class BadgeService {
         const student = await this.prisma.students.findUnique({
             where: { id: studentId },
             include: {
-                taskRecords: true
+                task_records: true
             }
         });
         if (!student) {
@@ -643,14 +651,14 @@ class BadgeService {
         }
         else if (requirement.type === 'task_count') {
             const targetCount = requirement.value || 10;
-            const actualCount = student.taskRecords.length;
+            const actualCount = student.task_records.length;
             analysis.progress = Math.min(100, (actualCount / targetCount) * 100);
             analysis.eligible = actualCount >= targetCount;
             analysis.requirement = `完成 ${targetCount} 个任务`;
         }
         else if (requirement.type === 'badge_collection') {
             // 简化版：检查已获得的勋章数量
-            const earnedBadges = await this.prisma.studentsBadge.count({
+            const earnedBadges = await this.prisma.student_badges.count({
                 where: { studentId }
             });
             const targetCount = requirement.value || 5;

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { PrismaClient } from '@prisma/client';
 export interface CreateTeacherRequest {
     username: string;
     password: string;
@@ -9,6 +10,7 @@ export interface CreateTeacherRequest {
 }
 export declare class UserController {
     private prisma;
+    constructor(prisma: PrismaClient);
     /**
      * 创建教师账号 (仅 Admin)
      */

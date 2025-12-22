@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { HabitService,
+import {
+  HabitService,
   HabitQuery,
   CreateHabitRequest,
   UpdateHabitRequest,
@@ -367,9 +368,17 @@ export class HabitRoutes {
    */
   private async getHabits(req: Request, res: Response): Promise<void> {
     try {
-      const query: HabitQuery = req.query as any;
+      const { schoolId, search, isActive, page, limit } = req.query;
+      const query: HabitQuery = {
+        schoolId: schoolId as string,
+        search: search as string,
+        // 🔴 修复：当 isActive 参数未传递时默认查询活跃习惯，而不是返回 false
+        isActive: isActive !== undefined ? isActive === 'true' : true,
+        page: page ? parseInt(page as string) : undefined,
+        limit: limit ? parseInt(limit as string) : undefined,
+      };
 
-      if (!query.schoolId) {
+      if (!schoolId) {
         const response: HabitResponse = {
           success: false,
           message: '学校ID不能为空'

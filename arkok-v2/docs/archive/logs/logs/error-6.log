@@ -1,0 +1,6 @@
+2025-12-17T16:08:15: Get student by id error: Error: 学生不存在
+    at StudentService.getStudentById (/home/devbox/project/arkok-v2/server/dist/services/student.service.js:111:19)
+    at StudentRoutes.getStudentById (/home/devbox/project/arkok-v2/server/dist/routes/student.routes.js:584:29)
+2025-12-17T18:12:09: Get student by id error: Error: 学生不存在
+    at StudentService.getStudentById (/home/devbox/project/arkok-v2/server/dist/services/student.service.js:111:19)
+    at StudentRoutes.getStudentById (/home/devbox/project/arkok-v2/server/dist/routes/student.routes.js:584:29)

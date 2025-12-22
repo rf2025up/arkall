@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArkOK V2 - 教师消息中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #e5e7eb; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        
+        .phone-frame {
+            width: 375px;
+            height: 812px;
+            background: #f7f8fa;
+            border-radius: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            position: relative;
+            border: 8px solid #1f2937;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        /* 未读消息背景闪烁 */
+        @keyframes pulse-bg {
+            0% { background-color: #fff7ed; }
+            50% { background-color: #ffedd5; }
+            100% { background-color: #fff7ed; }
+        }
+        .item-unread { 
+            background-color: #fff7ed; 
+            border-left: 3px solid #f97316;
+        }
+        
+        /* 已读淡出效果 */
+        .item-read { 
+            background-color: #ffffff; 
+            border-left: 3px solid transparent;
+            opacity: 0.8;
+        }
+
+        /* 列表项进入动画 */
+        .msg-item { animation: slideIn 0.3s ease-out forwards; opacity: 0; transform: translateY(10px); }
+        @keyframes slideIn { to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="phone-frame">
+        
+        <!-- 顶部导航 -->
+        <div class="bg-gradient-to-r from-orange-500 to-red-500 px-4 pt-12 pb-4 shadow-lg z-10">
+            <div class="flex justify-between items-center text-white">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-chevron-left text-lg opacity-80 cursor-pointer"></i>
+                    <h1 class="font-bold text-lg">家校反馈</h1>
+                </div>
+                <button onclick="markAllRead()" class="text-xs bg-white/20 px-3 py-1.5 rounded-full hover:bg-white/30 transition-colors backdrop-blur-sm flex items-center gap-1">
+                    <i class="fas fa-check-double"></i> 全部已读
+                </button>
+            </div>
+            
+            <!-- 统计条 -->
+            <div class="flex gap-4 mt-4 text-white/90 text-xs">
+                <div class="bg-black/10 px-3 py-1 rounded-lg">
+                    未读 <span class="font-bold text-white" id="count-unread">3</span>
+                </div>
+                <div class="px-3 py-1">
+                    今日互动 12
+                </div>
+            </div>
+        </div>
+
+        <!-- 消息列表 -->
+        <div class="flex-1 overflow-y-auto no-scrollbar p-3 space-y-3" id="msg-list">
+            
+            <!-- 消息 1: 留言 (未读) -->
+            <div class="msg-item item-unread p-4 rounded-xl shadow-sm cursor-pointer group" onclick="readItem(this)">
+                <div class="flex justify-between items-start mb-2">
+                    <div class="flex items-center gap-3">
+                        <div class="relative">
+                            <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Song" class="w-10 h-10 rounded-full bg-white border border-gray-100">
+                            <!-- 留言图标 -->
+                            <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white text-white text-[10px]">
+                                <i class="fas fa-comment-dots"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="font-bold text-gray-800 text-sm">宋子晨家长</div>
+                            <div class="text-[10px] text-gray-400">10分钟前</div>
+                        </div>
+                    </div>
+                    <div class="w-2 h-2 rounded-full bg-red-500 unread-dot"></div>
+                </div>
+                <!-- 留言内容 -->
+                <div class="bg-white/60 p-3 rounded-lg text-sm text-gray-600 leading-relaxed border border-orange-100/50">
+                    "姜老师，子晨今天回家很开心，说PK赢了，感谢老师的鼓励！这种形式真好。"
+                </div>
+                <!-- 快捷回复按钮 -->
+                <div class="flex justify-end mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button class="text-xs text-orange-500 font-bold px-3 py-1 bg-orange-50 rounded-full">回复</button>
+                </div>
+            </div>
+
+            <!-- 消息 2: 点赞 (未读) -->
+            <div class="msg-item item-unread p-4 rounded-xl shadow-sm cursor-pointer flex items-center justify-between" onclick="readItem(this)" style="animation-delay: 0.1s">
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Li" class="w-10 h-10 rounded-full bg-white border border-gray-100">
+                        <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-white text-white text-[10px]">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="font-bold text-gray-800 text-sm">李小红家长</div>
+                        <div class="text-xs text-gray-500 mt-0.5">为今日表现点了赞 👍</div>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end gap-1">
+                    <div class="text-[10px] text-gray-400">15:30</div>
+                    <div class="w-2 h-2 rounded-full bg-red-500 unread-dot"></div>
+                </div>
+            </div>
+
+            <!-- 消息 3: 点赞 (未读) -->
+            <div class="msg-item item-unread p-4 rounded-xl shadow-sm cursor-pointer flex items-center justify-between" onclick="readItem(this)" style="animation-delay: 0.2s">
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Wang" class="w-10 h-10 rounded-full bg-white border border-gray-100">
+                        <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-white text-white text-[10px]">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="font-bold text-gray-800 text-sm">王小强家长</div>
+                        <div class="text-xs text-gray-500 mt-0.5">为今日表现点了赞 👍</div>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end gap-1">
+                    <div class="text-[10px] text-gray-400">14:20</div>
+                    <div class="w-2 h-2 rounded-full bg-red-500 unread-dot"></div>
+                </div>
+            </div>
+
+            <!-- 消息 4: 已读历史 -->
+            <div class="text-center text-xs text-gray-300 my-4">昨天</div>
+
+            <div class="msg-item item-read p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between grayscale-[0.5]" style="animation-delay: 0.3s">
+                <div class="flex items-center gap-3">
+                    <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Chen" class="w-10 h-10 rounded-full bg-gray-50">
+                    <div>
+                        <div class="font-bold text-gray-600 text-sm">陈笑妍家长</div>
+                        <div class="text-xs text-gray-400 mt-0.5">留言: "明天请假一天..."</div>
+                    </div>
+                </div>
+                <div class="text-[10px] text-gray-300">昨天</div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function readItem(el) {
+            if (el.classList.contains('item-unread')) {
+                el.classList.remove('item-unread');
+                el.classList.add('item-read');
+                // 隐藏红点
+                const dot = el.querySelector('.unread-dot');
+                if(dot) dot.style.display = 'none';
+                
+                // 更新计数
+                updateCount(-1);
+            }
+        }
+
+        function markAllRead() {
+            const unreadItems = document.querySelectorAll('.item-unread');
+            unreadItems.forEach(el => {
+                readItem(el);
+            });
+        }
+
+        function updateCount(change) {
+            const badge = document.getElementById('count-unread');
+            let current = parseInt(badge.innerText);
+            let next = current + change;
+            if(next < 0) next = 0;
+            badge.innerText = next;
+            
+            if(next === 0) {
+                badge.parentElement.classList.remove('bg-black/10');
+                badge.parentElement.classList.add('bg-green-500/20');
+                badge.parentElement.innerHTML = '<i class="fas fa-check"></i> 全部处理完毕';
+            }
+        }
+    </script>
+</body>
+</html>

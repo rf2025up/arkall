@@ -1,1 +1,1 @@
-{"version":3,"file":"mistakes.routes.d.ts","sourceRoot":"","sources":["../../src/routes/mistakes.routes.ts"],"names":[],"mappings":"AAEA,QAAA,MAAM,MAAM,4CAAW,CAAC;AAoBxB,eAAe,MAAM,CAAC"}
+{"version":3,"file":"mistakes.routes.d.ts","sourceRoot":"","sources":["../../src/routes/mistakes.routes.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAC;AACjC,OAAO,WAAW,MAAM,0BAA0B,CAAC;AAGnD;;GAEG;AACH,qBAAa,cAAc;IAGb,OAAO,CAAC,WAAW;IAF/B,OAAO,CAAC,MAAM,CAAS;gBAEH,WAAW,EAAE,WAAW;IAK5C,OAAO,CAAC,gBAAgB;IAcjB,SAAS,IAAI,MAAM;CAG3B"}
