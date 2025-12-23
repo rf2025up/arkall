@@ -4,7 +4,7 @@ import { ChevronRight, Shield, Bell, Info, LogOut, Sparkles, Users, GraduationCa
 import { useAuth } from '../context/AuthContext';
 import { useClass } from '../context/ClassContext';
 import apiService from '../services/api.service';
-import MessageCenter from '../components/MessageCenter';
+
 
 interface ProfileProps { }
 
@@ -245,11 +245,6 @@ const Profile: React.FC<ProfileProps> = () => {
             </div>
 
             <div className="flex items-center gap-1.5">
-              {/* 铃铛集成到卡片右侧 */}
-              <div className="scale-75 active:scale-90 transition-transform origin-right">
-                <MessageCenter variant="header" />
-              </div>
-
               <button
                 onClick={() => setPermOpen(true)}
                 className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white active:scale-95 transition-all border border-white/5"
