@@ -651,15 +651,22 @@ export class ParentService {
      * 生成学生邀请码（教师端调用）
      * 格式：4位随机数字
      * 邀请码有效期：24小时
+     * 权限校验：仅限管理老师或管理员
      */
-    async generateInviteCode(studentId: string) {
+    async generateInviteCode(studentId: string, requesterId?: string, userRole?: string) {
         const student = await prisma.students.findUnique({
             where: { id: studentId },
-            select: { id: true, name: true, className: true }
+            select: { id: true, name: true, className: true, teacherId: true }
         });
 
         if (!student) {
             throw new Error('学生不存在');
+        }
+
+        // 权限校验：如果不是管理员，必须是该学生的管理老师
+        if (userRole !== 'ADMIN' && requesterId && student.teacherId !== requesterId) {
+            console.error(`[AUTH_DENIED] Teacher ${requesterId} attempted to generate invite for student ${studentId} managed by ${student.teacherId}`);
+            throw new Error('权限不足：您不是该学生的管理老师');
         }
 
         // 邀请码格式: 4位随机数字 (1000-9999)

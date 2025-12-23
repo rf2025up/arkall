@@ -211,7 +211,10 @@ router.post('/invite/generate', authenticateTeacher, async (req: Request, res: R
             return res.status(400).json({ error: '请提供学生ID' });
         }
 
-        const result = await parentService.generateInviteCode(studentId);
+        const requesterId = (req as any).user?.userId;
+        const userRole = (req as any).user?.role;
+
+        const result = await parentService.generateInviteCode(studentId, requesterId, userRole);
         res.json(result);
     } catch (error: any) {
         console.error('[Invite Generate Error]', error.message);

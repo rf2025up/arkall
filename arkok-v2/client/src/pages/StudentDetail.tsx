@@ -5,7 +5,7 @@ import {
   Camera, Printer, AlertCircle, Calendar,
   BookOpen, Filter, Circle, Sparkles, ArrowLeft, X, Share2
 } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { API } from '../services/api.service';
@@ -98,6 +98,9 @@ interface StudentProfile {
       source: string;
       updatedAt: string;
     };
+    teachers?: {
+      name: string;
+    };
   };
   task_records: TaskRecord[];
   pkRecords: Array<{
@@ -165,7 +168,11 @@ interface StudentProfile {
 const StudentDetail: React.FC = () => {
   const { studentId } = useParams<{ studentId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+
+  // 获取从上个页面传入的预加载数据 (如有)
+  const initialStudentData = (location.state as any)?.studentData;
 
   // --- 1. 状态管理 ---
   const [activeTab, setActiveTab] = useState<'growth' | 'academic' | 'mistakes'>('academic');
@@ -179,9 +186,21 @@ const StudentDetail: React.FC = () => {
   const [habitPage, setHabitPage] = useState(0);
 
   // --- 2. 数据状态 ---
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(!initialStudentData); // 如果没有预加载数据，则显示初始 Loading
   const [error, setError] = useState<string | null>(null);
-  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(initialStudentData ? {
+    student: initialStudentData,
+    task_records: [],
+    pkRecords: [],
+    pkStats: { totalMatches: 0, wins: 0, losses: 0, draws: 0, winRate: '0%' },
+    taskStats: { totalTasks: 0, completedTasks: 0, pendingTasks: 0, totalExp: 0, qcTasks: 0, specialTasks: 0, challengeTasks: 0 },
+    timelineData: [],
+    habitStats: [],
+    semesterMap: [],
+    summary: { joinDate: '', totalActiveDays: 0, lastActiveDate: '' }
+  } : null);
+
+  const [isDataFetching, setIsDataFetching] = useState(false); // 独立标记后端聚合数据是否正在加载
 
   // AI提示词生成器相关状态
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
@@ -257,7 +276,7 @@ const StudentDetail: React.FC = () => {
     if (!studentId) return;
 
     console.log('[DEBUG] fetchStudentProfile started');
-    setIsLoading(true);
+    setIsDataFetching(true);
     setError(null);
 
     try {
@@ -265,15 +284,21 @@ const StudentDetail: React.FC = () => {
       if (response.success) {
         setStudentProfile(response.data as StudentProfile);
       } else {
-        setError(response.message || '获取学生数据失败');
+        // 使用 functional update 或判断初始数据来决定是否静默失败
+        if (!initialStudentData) {
+          setError(response.message || '获取学生数据失败');
+        }
       }
     } catch (err: any) {
       console.error('[DEBUG] 获取学生数据失败:', err);
-      setError('网络错误，请稍后重试');
 
-      // 兜底 Mock
-      setStudentProfile({
-        student: {
+      if (!initialStudentData) {
+        setError('网络错误，请稍后重试');
+      }
+
+      // 兜底逻辑使用 prev 处理
+      setStudentProfile(prev => ({
+        student: prev?.student || {
           id: studentId,
           name: '学生加载中...',
           className: '',
@@ -291,11 +316,12 @@ const StudentDetail: React.FC = () => {
         habitStats: [],
         semesterMap: [],
         summary: { joinDate: '', totalActiveDays: 0, lastActiveDate: '' }
-      });
+      }));
     } finally {
+      setIsDataFetching(false);
       setIsLoading(false);
     }
-  }, [studentId]);
+  }, [studentId]); // 关键修复：移除 studentProfile 依赖，防止死循环
 
   useEffect(() => {
     fetchStudentProfile();
@@ -782,7 +808,7 @@ const StudentDetail: React.FC = () => {
 
   console.log('[DEBUG] Render check - error:', error, 'isLoading:', isLoading, 'studentProfile:', studentProfile);
 
-  if (error) {
+  if (error && !studentProfile) {
     console.log('[DEBUG] Rendering error state with error:', error);
     return (
       <div className="min-h-screen bg-[#F2F4F7] text-[#1E293B] flex items-center justify-center">
@@ -799,21 +825,13 @@ const StudentDetail: React.FC = () => {
     );
   }
 
-  if (!studentProfile || isLoading) {
-    console.log('[DEBUG] Rendering loading/empty state - isLoading:', isLoading, 'hasProfile:', !!studentProfile);
+  // 移除全屏 Loading 遮罩，改为 Header 优先渲染
+  if (isLoading && !studentProfile) {
     return (
       <div className="min-h-screen bg-[#F2F4F7] text-[#1E293B] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-500">
-            {isLoading ? '加载学生数据中...' : '学生信息未找到'}
-          </p>
-          <button
-            onClick={() => navigate('/')}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
-          >
-            返回首页
-          </button>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-500">初始化学生信息...</p>
         </div>
       </div>
     );
@@ -879,7 +897,9 @@ const StudentDetail: React.FC = () => {
               {/* 姓名行 */}
               <div className="flex items-baseline gap-2">
                 <h1 className="text-2xl font-black text-slate-800">{studentName}</h1>
-                <span className="text-xs text-slate-500 font-bold bg-white/50 px-2 py-0.5 rounded-full">{student.className || '黄老师班'}</span>
+                <span className="text-[9px] text-slate-500 font-extrabold bg-white/40 backdrop-blur-md px-1 py-0.5 rounded-md border border-white/50 shadow-sm leading-none flex items-center h-[16px]">
+                  {studentProfile.student.teachers?.name || studentProfile.student.className || '导师'}的班级
+                </span>
               </div>
 
               {/* 数据行 (积分 & 经验 并排) */}
@@ -1206,73 +1226,54 @@ const StudentDetail: React.FC = () => {
 
           {/* --- TAB 2: 学业攻克 (Academic) - V1原版样式 --- */}
           {activeTab === 'academic' && (
-            <div className="space-y-4 animate-in slide-in-from-right-4 fade-in duration-300">
+            <div className="space-y-4 animate-in slide-in-from-right-4 fade-in duration-300 pb-16">
 
               {/* 0. AI提示词生成器 - 新增功能 */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 shadow-sm border border-blue-100">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Bot className="w-5 h-5 text-blue-600" />
-                    <h3 className="font-bold text-gray-800">AI 成长报告生成器</h3>
-                  </div>
-                  <button className="text-xs text-blue-600 hover:text-blue-800 transition-colors">
-                    历史记录 ▼
-                  </button>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
+                    <Bot size={14} className="text-blue-500" />
+                    本周学情总结
+                  </h3>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   <button
                     onClick={handleCopyWeeklyPrompt}
-                    disabled={isGeneratingPrompt}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 shadow-sm"
+                    disabled={isGeneratingPrompt || !studentId}
+                    className={`flex-1 ${promptSuccess ? 'bg-green-500' : 'bg-blue-600'} hover:opacity-90 active:scale-95 text-white py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-blue-200/50 transition-all`}
                   >
                     {isGeneratingPrompt ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        生成中...
-                      </>
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-white/30 border-t-white"></div>
+                        <span>生成中...</span>
+                      </div>
+                    ) : promptSuccess ? (
+                      <Check size={14} />
                     ) : (
-                      <>
-                        <span className="text-lg">📑</span>
-                        复制本周 AI 提示词
-                      </>
+                      <BookOpen size={14} />
                     )}
+                    {promptSuccess ? '总结已复制' : '复制本周总结'}
                   </button>
 
                   <button
                     onClick={() => setShowHistoryModal(true)}
-                    className="bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 shadow-sm border border-gray-200"
+                    className="bg-white border text-blue-600 px-3 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 hover:bg-blue-50 active:scale-95 transition-all border-blue-100"
                   >
-                    <Calendar className="w-4 h-4" />
+                    <Calendar size={12} />
                     历史周
                   </button>
-                </div>
-
-                {promptSuccess && (
-                  <div className="mt-3 text-sm text-green-600 bg-green-50 p-2 rounded-lg flex items-center gap-2 animate-in fade-in duration-300">
-                    <Check className="w-4 h-4" />
-                    提示词已复制到剪贴板！
-                  </div>
-                )}
-              </div>
-
-              {/* A. AI Dashboard - V1原版样式 */}
-              <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 relative overflow-hidden">
-                <div className="absolute top-0 right-0 bg-purple-100 text-purple-600 text-[10px] px-2 py-1 rounded-bl-lg font-bold">AI 实时分析</div>
-                <div className="flex items-center gap-4">
-                  <div className="shrink-0"><RadarChart /></div>
-                  <div className="flex-1">
-                    <div className="text-sm font-bold text-gray-800 mb-2">状态: <span className="text-green-500">稳步上升 ↗</span></div>
-                    <div className="bg-gray-50 p-2 rounded-lg text-xs text-gray-600 leading-relaxed border border-gray-100">
-                      <Bot className="inline w-3 h-3 text-purple-500 mr-1 -mt-0.5" />
-                      <span dangerouslySetInnerHTML={{ __html: academicData.aiComment }}></span>
-                    </div>
-                  </div>
                 </div>
               </div>
 
               {/* B. 今日过关 (Quick Check) - V1原版样式 */}
-              <div>
+              <div className="bg-white rounded-[28px] p-5 shadow-sm border border-slate-100 relative overflow-hidden">
+                {isDataFetching && (
+                  <div className="absolute top-3 right-5 flex items-center gap-1 opacity-60">
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span className="text-[8px] text-blue-400 font-bold uppercase tracking-widest">同步中</span>
+                  </div>
+                )}
                 <h3 className="font-bold text-gray-700 mb-2 flex justify-between items-center px-1">
                   今日过关
                   <span className="text-xs font-normal text-gray-400">
@@ -1280,35 +1281,37 @@ const StudentDetail: React.FC = () => {
                   </span>
                 </h3>
                 <div className="space-y-2">
-                  {academicData.pendingTasks.map(task => (
-                    <div key={task.id} className="bg-white p-3 rounded-xl border-l-4 border-orange-400 shadow-sm flex justify-between items-center">
+                  {academicData.pendingTasks.length > 0 ? academicData.pendingTasks.map(task => (
+                    <div key={task.id} className="bg-gray-50/50 p-3 rounded-xl border-l-4 border-orange-400 flex justify-between items-center transition-all hover:bg-gray-50 active:scale-[0.98]">
                       <div>
                         <div className="text-sm font-bold text-gray-800">{task.title}</div>
-                        {(task.attempts as number) > 0 && <div className="text-[10px] text-orange-500 font-bold mt-1">🔥 辅导: {task.attempts as number} 次</div>}
+                        {(task.attempts as number) > 0 && <div className="text-[10px] text-orange-500 font-bold mt-1 text-xs">🔥 辅导: {task.attempts as number} 次</div>}
                       </div>
                       <div className="flex gap-2">
-                        <button className="w-8 h-8 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center active:bg-orange-200"><Plus size={16} /></button>
-                        <button id={`btn-pass-${task.id}`} onClick={() => handlePassTask(0, task.id.toString())} className="w-8 h-8 rounded-full bg-green-50 text-green-600 flex items-center justify-center active:bg-green-200"><Check size={16} /></button>
+                        <button className="w-8 h-8 rounded-full bg-white text-orange-600 flex items-center justify-center active:bg-orange-100 shadow-sm transition-colors border border-orange-100"><Plus size={16} /></button>
+                        <button id={`btn-pass-${task.id}`} onClick={() => handlePassTask(0, task.id.toString())} className="w-8 h-8 rounded-full bg-white text-green-600 flex items-center justify-center active:bg-green-100 shadow-sm transition-colors border border-green-100"><Check size={16} /></button>
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="text-center py-6 text-slate-400 text-xs bg-slate-50/50 rounded-2xl border border-dashed border-slate-100">
+                      今日暂无待过关任务
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* C. 个性化加餐 (来自备课的个性化加餐) - V1原版样式 */}
-              <div className="relative rounded-[24px] p-6 overflow-hidden text-slate-800 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#FFF7ED] via-[#FFF1F2] to-[#FFF7ED]"></div>
-                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
-
+              {/* C. 个性化加餐 - V1原版样式 */}
+              <div className="relative rounded-[28px] p-6 overflow-hidden text-slate-800 shadow-sm border border-slate-100 bg-white">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
                 <div className="relative z-10">
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-white/80 backdrop-blur text-orange-500 flex items-center justify-center shadow-sm">
+                      <div className="w-8 h-8 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center">
                         <Sparkles size={14} fill="currentColor" />
                       </div>
                       <span className="font-bold text-slate-800 text-sm">个性化加餐</span>
                     </div>
-                    <span className="text-[10px] text-orange-700 bg-white/60 backdrop-blur px-2 py-1 rounded-md font-bold shadow-sm">
+                    <span className="text-[10px] text-orange-700 bg-orange-50 px-2 py-1 rounded-md font-bold">
                       {studentPersonalizedTasks.length} 项
                     </span>
                   </div>
@@ -1329,7 +1332,7 @@ const StudentDetail: React.FC = () => {
                         </div>
                       </div>
                     )) : (
-                      <div className="text-center py-4 text-slate-400 text-xs">
+                      <div className="text-center py-6 text-slate-400 text-xs bg-slate-50/50 rounded-2xl border border-dashed border-slate-100">
                         暂无个性化加餐任务
                       </div>
                     )}
@@ -1342,12 +1345,12 @@ const StudentDetail: React.FC = () => {
                 <div className="flex justify-between items-center mb-3 px-1">
                   <h3 className="font-bold text-gray-700">全学期过关地图</h3>
                   <div className="flex items-center gap-2">
-                    <div className="flex bg-white p-0.5 rounded-lg border border-gray-200">
+                    <div className="flex bg-white p-0.5 rounded-lg border border-gray-200 shadow-sm">
                       {(['chinese', 'math', 'english'] as const).map(sub => (
                         <button
                           key={sub}
                           onClick={() => setTimelineSubject(sub)}
-                          className={`px-3 py-1 text-[10px] rounded-md font-bold transition-all ${timelineSubject === sub ? 'bg-purple-100 text-purple-600' : 'text-gray-400'}`}
+                          className={`px-3 py-1 text-[10px] rounded-md font-black transition-all ${timelineSubject === sub ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                           {sub === 'chinese' ? '语文' : sub === 'math' ? '数学' : '英语'}
                         </button>
@@ -1357,23 +1360,22 @@ const StudentDetail: React.FC = () => {
                 </div>
 
                 {/* 进度条 & 筛选 - V1原版样式 */}
-                <div className="bg-white p-3 rounded-xl border border-gray-100 mb-4">
+                <div className="bg-white p-4 rounded-2xl border border-slate-100 mb-4 shadow-sm">
                   <div className="flex justify-between items-center mb-2">
-                    <div className="text-xs text-gray-500">总体进度: <span className="font-bold text-blue-600">85%</span></div>
-                    <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
-                      <input type="checkbox" checked={showPendingOnly} onChange={e => setShowPendingOnly(e.target.checked)} className="rounded text-blue-600 focus:ring-0 w-3 h-3" />
-                      只看未完成
+                    <div className="text-xs text-slate-500 font-bold">总体进度: <span className="text-blue-600 font-black">85%</span></div>
+                    <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer font-bold">
+                      <input type="checkbox" checked={showPendingOnly} onChange={e => setShowPendingOnly(e.target.checked)} className="rounded text-blue-600 focus:ring-0 w-3.5 h-3.5 border-slate-300" />
+                      只看待补
                     </label>
                   </div>
-                  <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 w-[85%] rounded-full"></div>
+                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 w-[85%] rounded-full shadow-inner animate-pulse duration-2000"></div>
                   </div>
                 </div>
 
                 {/* Timeline List - V1原版样式 */}
                 <div className="relative pl-6 space-y-6">
-                  {/* Timeline Line */}
-                  <div className="absolute left-[11px] top-2 bottom-0 w-0.5 bg-gray-200"></div>
+                  <div className="absolute left-[11px] top-2 bottom-0 w-0.5 bg-slate-200/60 rounded-full"></div>
 
                   {academicData.timeline[timelineSubject as keyof typeof academicData.timeline]
                     .filter((l: TimelineLesson) => !showPendingOnly || l.status === 'pending')
@@ -1382,62 +1384,56 @@ const StudentDetail: React.FC = () => {
                       const isDone = lesson.status === 'done';
 
                       return (
-                        <div key={lesson.id} className="relative z-10">
-                          {/* Dot */}
-                          <div className={`absolute -left-[21px] top-4 w-4 h-4 rounded-full border-4 box-content ${isDone ? 'bg-green-500 border-green-100' : 'bg-orange-500 border-orange-100'}`}></div>
+                        <div key={lesson.id} className="relative z-10 scale-in-center">
+                          <div className={`absolute -left-[21px] top-4 w-4 h-4 rounded-full border-4 box-content shadow-sm transition-all duration-300 ${isDone ? 'bg-green-500 border-green-100' : 'bg-orange-500 border-orange-100 animate-pulse'}`}></div>
 
-                          {/* Card */}
-                          <div className={`bg-white rounded-xl shadow-sm overflow-hidden transition-all border-l-4 ${isDone ? 'border-green-500' : 'border-orange-500'}`}>
-                            {/* Card Header */}
+                          <div className={`bg-white rounded-2xl shadow-sm overflow-hidden transition-all border border-slate-100 ${!isDone ? 'ring-1 ring-orange-100' : ''}`}>
                             <div
-                              className={`p-3 flex justify-between items-center cursor-pointer ${!isDone ? 'bg-orange-50/50' : ''}`}
+                              className={`p-3.5 flex justify-between items-center cursor-pointer active:bg-slate-50 transition-colors ${!isDone ? 'bg-orange-50/30' : ''}`}
                               onClick={() => toggleLessonExpand(lesson.id)}
                             >
                               <div className="flex-1">
-                                <div className={`text-[10px] font-bold mb-0.5 ${isDone ? 'text-gray-400' : 'text-orange-600'}`}>
-                                  第{lesson.unit}单元 第{lesson.lesson}课 {isDone ? '' : '· 待补过'}
+                                <div className={`text-[10px] font-black mb-1 leading-none ${isDone ? 'text-slate-400' : 'text-orange-600 uppercase'}`}>
+                                  U{lesson.unit} L{lesson.lesson} {isDone ? '已过关' : '· 过关中'}
                                 </div>
-                                <div className={`font-bold text-sm ${isDone ? 'text-gray-600' : 'text-gray-800'}`}>{lesson.title}</div>
+                                <div className={`font-black text-sm ${isDone ? 'text-slate-600' : 'text-slate-800'}`}>{lesson.title}</div>
                               </div>
                               <div className="flex items-center gap-2">
-                                {/* 🆕 一键补过按钮 - 只在未完成课程显示 */}
                                 {!isDone && (
                                   <button
                                     onClick={(e) => {
-                                      e.stopPropagation(); // 防止触发展开/收起
+                                      e.stopPropagation();
                                       handlePassLesson(lesson.id, lesson);
                                     }}
-                                    className="px-2 py-1 bg-green-500 text-white text-[10px] font-medium rounded-full hover:bg-green-600 active:bg-green-700 transition-colors"
-                                    title="一键补过本课程所有未完成任务"
+                                    className="px-2.5 py-1.5 bg-green-500 text-white text-[10px] font-black rounded-xl hover:bg-green-600 active:scale-95 transition-all shadow-sm"
                                   >
-                                    全部补过
+                                    补过
                                   </button>
                                 )}
-                                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                <ChevronDown className={`w-4 h-4 text-slate-300 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
                               </div>
                             </div>
 
-                            {/* Card Content (Tasks) */}
                             {isExpanded && (
-                              <div className="px-3 pb-3 border-t border-gray-100">
+                              <div className="px-3 pb-3 border-t border-slate-50 animate-in fade-in slide-in-from-top-2 duration-300">
                                 <div className="pt-3 space-y-2">
                                   {lesson.tasks.map((task: TimelineTask) => {
                                     const isTaskDone = task.status === 'passed';
                                     return (
-                                      <div key={task.id} className={`flex items-center justify-between p-2 rounded-lg border ${isTaskDone ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
-                                        <div className="flex items-center gap-2">
-                                          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${isTaskDone ? 'bg-green-500 text-white' : 'bg-orange-400 text-white'}`}>
+                                      <div key={task.id} className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${isTaskDone ? 'bg-green-50/50 border-green-100' : 'bg-slate-50/50 border-slate-100'}`}>
+                                        <div className="flex items-center gap-2.5">
+                                          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shadow-sm ${isTaskDone ? 'bg-green-500 text-white' : 'bg-white text-slate-300 border border-slate-200'}`}>
                                             {isTaskDone ? '✓' : '○'}
                                           </div>
-                                          <span className={`text-xs font-medium ${isTaskDone ? 'text-green-700' : 'text-orange-700'}`}>{task.name}</span>
+                                          <span className={`text-xs font-bold ${isTaskDone ? 'text-green-700' : 'text-slate-600'}`}>{task.name}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                          {task.attempts > 0 && <span className="text-[10px] text-orange-600">🔥 {task.attempts}次</span>}
+                                          {task.attempts > 0 && <span className="text-[10px] text-orange-600 font-black tracking-tighter bg-orange-50 px-1.5 py-0.5 rounded-md border border-orange-100">🔥 {task.attempts}次辅导</span>}
                                           {!isTaskDone && (
                                             <button
                                               id={`btn-pass-${task.id}`}
                                               onClick={() => handlePassTask(lesson.id, task.id.toString())}
-                                              className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs"
+                                              className="w-7 h-7 rounded-full bg-white text-green-600 flex items-center justify-center text-xs shadow-sm border border-green-100 active:scale-90 transition-all hover:bg-green-50"
                                             >
                                               ✓
                                             </button>
@@ -1457,11 +1453,14 @@ const StudentDetail: React.FC = () => {
               </div>
 
               {/* F. 历史报告入口 - V1原版样式 */}
-              <div className="bg-white rounded-xl border border-gray-100 p-3 flex justify-between items-center mt-4">
-                <span className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                  <Calendar size={14} className="text-blue-500" /> 历史学情报告
+              <div className="bg-white rounded-2xl border border-slate-100 p-4 flex justify-between items-center shadow-sm cursor-pointer hover:bg-slate-50 active:scale-[0.98] transition-all">
+                <span className="text-sm font-black text-slate-700 flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center">
+                    <Calendar size={16} />
+                  </div>
+                  历史学情报告
                 </span>
-                <ChevronRight size={14} className="text-gray-300" />
+                <ChevronRight size={16} className="text-slate-300" />
               </div>
 
             </div>
@@ -1508,91 +1507,95 @@ const StudentDetail: React.FC = () => {
             </div>
           )}
 
-        </div>
-      </div>
+        </div >
+      </div >
 
       {/* 历史记录模态框 */}
-      {showHistoryModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-in fade-in duration-300">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 animate-in zoom-in-95 duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-800">历史周提示词</h3>
-              <button
-                onClick={() => setShowHistoryModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {
+        showHistoryModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-in fade-in duration-300">
+            <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 animate-in zoom-in-95 duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-800">历史周提示词</h3>
+                <button
+                  onClick={() => setShowHistoryModal(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {availableWeeks.length > 0 ? (
-                availableWeeks.map((week) => (
-                  <div
-                    key={week.weekNumber}
-                    className={`flex items-center justify-between p-3 rounded-lg border ${week.isCurrentWeek
-                      ? 'bg-blue-50 border-blue-200'
-                      : 'bg-white border-gray-200 hover:bg-gray-50'
-                      } transition-colors`}
-                  >
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-800">
-                        {week.label}
-                        {week.isCurrentWeek && (
-                          <span className="ml-2 text-xs text-blue-600 font-medium bg-blue-100 px-2 py-1 rounded">当前周</span>
-                        )}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {new Date(week.startDate).toLocaleDateString('zh-CN')} - {new Date(week.endDate).toLocaleDateString('zh-CN')}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleHistoryPrompt(
-                        week.weekNumber,
-                        week.startDate,
-                        week.endDate
-                      )}
-                      disabled={isGeneratingPrompt}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-all duration-200 active:scale-95"
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {availableWeeks.length > 0 ? (
+                  availableWeeks.map((week) => (
+                    <div
+                      key={week.weekNumber}
+                      className={`flex items-center justify-between p-3 rounded-lg border ${week.isCurrentWeek
+                        ? 'bg-blue-50 border-blue-200'
+                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                        } transition-colors`}
                     >
-                      {isGeneratingPrompt ? '生成中...' : '复制'}
-                    </button>
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-800">
+                          {week.label}
+                          {week.isCurrentWeek && (
+                            <span className="ml-2 text-xs text-blue-600 font-medium bg-blue-100 px-2 py-1 rounded">当前周</span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {new Date(week.startDate).toLocaleDateString('zh-CN')} - {new Date(week.endDate).toLocaleDateString('zh-CN')}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleHistoryPrompt(
+                          week.weekNumber,
+                          week.startDate,
+                          week.endDate
+                        )}
+                        disabled={isGeneratingPrompt}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-all duration-200 active:scale-95"
+                      >
+                        {isGeneratingPrompt ? '生成中...' : '复制'}
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                    <p>加载历史周数据中...</p>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                  <p>加载历史周数据中...</p>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <button
-                onClick={() => setShowHistoryModal(false)}
-                className="w-full py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
-              >
-                取消
-              </button>
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => setShowHistoryModal(false)}
+                  className="w-full py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+                >
+                  取消
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* 邀请卡弹窗 */}
-      {student && (
-        <InviteCardModal
-          isOpen={showInviteModal}
-          onClose={() => setShowInviteModal(false)}
-          student={{
-            id: student.id || studentId || '',
-            name: student.name || '未知学生',
-            className: student.className,
-            avatarUrl: undefined
-          }}
-        />
-      )}
-    </ProtectedRoute>
+      {
+        student && (
+          <InviteCardModal
+            isOpen={showInviteModal}
+            onClose={() => setShowInviteModal(false)}
+            student={{
+              id: student.id || studentId || '',
+              name: student.name || '未知学生',
+              className: student.className,
+              avatarUrl: undefined
+            }}
+          />
+        )
+      }
+    </ProtectedRoute >
   );
 };
 

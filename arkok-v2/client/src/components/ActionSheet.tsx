@@ -20,7 +20,7 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
   onTransfer,
   onCheckin  // 🆕 签到回调
 }) => {
-  const { viewMode } = useClass();
+  const { viewMode, isProxyMode } = useClass();
   const [customPoints, setCustomPoints] = useState<string>('');
   const [customExp, setCustomExp] = useState<string>('');
 
@@ -135,8 +135,8 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
             </div>
           )}
 
-        {/* 🆕 积分调整 + 签到功能 - 仅在我的学生视图下显示 */}
-        {viewMode === 'MY_STUDENTS' && (
+        {/* 🆕 积分调整 + 签到功能 - 在"我的学生"视图或"全权代理模式"下显示 */}
+        {(viewMode === 'MY_STUDENTS' || isProxyMode) && (
           <div className="p-5 border-t border-gray-100 bg-white pb-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]">
             {/* 🆕 签到按钮 */}
             {onCheckin && (
@@ -184,12 +184,14 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
           </div>
         )}
 
-        {/* 🆕 非我的学生视图的提示 */}
-        {viewMode !== 'MY_STUDENTS' && (
+        {/* 🆕 非我的学生且非代理视图的提示 */}
+        {viewMode !== 'MY_STUDENTS' && !isProxyMode && (
           <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl mx-4 mb-4">
             <div className="text-center">
               <p className="text-sm font-medium text-blue-600 mb-1">🔒 积分调整功能锁定</p>
-              <p className="text-xs text-blue-500">请切换到"我的学生"视图以调整积分</p>
+              <p className="text-xs text-blue-500">
+                {viewMode === 'SPECIFIC_CLASS' ? '当前为临时查看模式，如需代管理请至"我的"页发起。' : '请切换到"我的学生"视图以调整积分'}
+              </p>
             </div>
           </div>
         )}

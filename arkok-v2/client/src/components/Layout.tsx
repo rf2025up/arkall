@@ -9,25 +9,41 @@ export function Layout() {
   const location = useLocation();
   const { user, logout } = useAuth();
 
-  // 判断是否需要显示顶部导航（某些页面可能自带顶部）
-  const showTopNav = !['/', '/student/'].some(path =>
-    location.pathname === path || location.pathname.startsWith('/student/')
+  // 判断是否需要显示顶部导航（某些页面自带顶部）
+  const showTopNav = !['/', '/student/', '/prep', '/qc', '/profile'].some(path =>
+    location.pathname === path ||
+    location.pathname.startsWith('/student/') ||
+    location.pathname.startsWith('/prep') ||
+    location.pathname.startsWith('/qc') ||
+    location.pathname.startsWith('/profile')
   );
 
   return (
-    <div className="min-h-screen w-full bg-background">
-      {/* 顶部导航栏 - 包含消息中心 */}
+    <div className="min-h-screen w-full bg-[#F5F7FA]">
+      {/* 🆕 顶部导航栏 - 橙色渐变风格 */}
       {showTopNav && (
-        <div className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-40 px-4 py-3 flex justify-between items-center">
-          <div className="text-lg font-bold text-gray-800">
-            {getPageTitle(location.pathname)}
+        <div
+          className="fixed top-0 left-0 right-0 z-40 px-5 pt-12 pb-4"
+          style={{ background: 'linear-gradient(160deg, #FF8C00 0%, #FF5500 100%)' }}
+        >
+          {/* 背景纹理装饰 */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-1/2 -left-1/5 w-[200%] h-[200%]"
+              style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 60%)' }}
+            />
           </div>
-          <MessageCenter />
+
+          <div className="relative z-10 flex justify-between items-center">
+            <h1 className="text-xl font-bold text-white tracking-wide">
+              {getPageTitle(location.pathname)}
+            </h1>
+            <MessageCenter variant="header" />
+          </div>
         </div>
       )}
 
       {/* 可滚动的主要内容区域 */}
-      <main className={`min-h-screen ${showTopNav ? 'pt-14' : ''}`}>
+      <main className={`min-h-screen ${showTopNav ? 'pt-24' : ''}`}>
         <Outlet />
       </main>
 

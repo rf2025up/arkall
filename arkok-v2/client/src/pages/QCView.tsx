@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Check, Search, Settings, Trash2, Plus, ChevronRight, User, Shield, Award, Calendar, BookOpen, Zap, Star, Leaf, ArrowRight } from 'lucide-react';
+import { X, Check, Search, Settings, Trash2, Plus, ChevronRight, User, Shield, Award, Calendar, BookOpen, Zap, Star, Leaf, ArrowRight, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useClass } from '../context/ClassContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import apiService from '../services/api.service';
+import MessageCenter from '../components/MessageCenter';
 import { FIXED_QC_ITEMS } from '../config/taskCategories';
 
 // --- 类型定义 ---
@@ -92,7 +93,7 @@ interface TaskLibraryItem {
 
 const QCView: React.FC = () => {
   const { user, token } = useAuth();
-  const { currentClass, viewMode } = useClass(); // 🆕 获取viewMode用于师生绑定
+  const { currentClass, viewMode, managedTeacherName, isProxyMode } = useClass(); // 🆕 获取完整视图状态，包含代理模式标志
 
   // --- 状态管理 ---
   const [activeTab, setActiveTab] = useState<'qc' | 'settle'>('qc');
@@ -159,6 +160,12 @@ const QCView: React.FC = () => {
       focusBorder: "focus-within:border-purple-200"
     }
   };
+
+  const dateStr = new Date().toLocaleDateString('zh-CN', {
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long'
+  });
 
   // 🚀 获取学生课程进度 - 集成备课页数据
   const fetchStudentProgress = async (studentId: string) => {
@@ -974,43 +981,64 @@ const QCView: React.FC = () => {
       {/* 🔴 修复触控滑动：将 h-full 改为 min-h-screen overflow-y-auto */}
       <div className="flex flex-col min-h-screen overflow-y-auto bg-gray-100 font-sans text-slate-900" style={pageStyle}>
 
-        {/* === 顶部 Header (V1原版样式) === */}
-        <div className="bg-white pt-10 px-4 pb-2 border-b border-gray-200 shadow-sm z-10">
-          <div className="flex justify-between items-start mb-2">
-            <div className="flex items-center gap-2">
-              <div className="text-xl font-extrabold text-slate-800">
-                {activeTab === 'qc' ? '过关台' : '任务结算台'}
+        {/* 🆕 “精致沉浸·精准排版” Header (与备课页统一) */}
+        <div
+          className="pt-8 pb-5 px-6 rounded-b-[30px] shadow-lg shadow-orange-200/20 overflow-hidden mb-6 relative"
+          style={{ background: isProxyMode ? 'linear-gradient(135deg, #475569 0%, #1e293b 100%)' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' }}
+        >
+          {/* 背景装饰 */}
+          <div className="absolute inset-0 pointer-events-none opacity-40">
+            <div className="absolute -top-1/4 -right-1/4 w-full h-full bg-white/10 blur-[80px] rounded-full" />
+          </div>
+
+          <div className="relative z-10 flex flex-col gap-4">
+            {/* 第一行：标题 + 日期 | 通知 */}
+            <div className="flex justify-between items-center">
+              <div className="flex items-baseline gap-2">
+                <h1 className="text-xl font-black text-white tracking-tight drop-shadow-sm">
+                  今日过关
+                </h1>
+                <span className="text-[10px] font-bold text-white/50 tracking-wider">
+                  {dateStr}
+                </span>
+              </div>
+
+              <div className="scale-90 active:scale-100 transition-transform">
+                <MessageCenter variant="header" />
               </div>
             </div>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs text-slate-400">
-                {activeTab === 'qc' ? '记录辅导过程，体现深度服务' : '确认完成 & 发放EXP'}
-              </span>
-              {currentClass !== 'ALL' && (
-                <div className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                  {currentClass}
-                </div>
-              )}
-              {currentClass === 'ALL' && (
-                <div className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
-                  全校
-                </div>
-              )}
-            </div>
 
+            {/* 第二行：班级标签 */}
+            <div className="flex justify-between items-center">
+              {/* 精细玻璃态班级选择器 */}
+              <button
+                onClick={() => {/* 逻辑保持不变 */ }}
+                className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/10 active:bg-white/20 transition-all group"
+              >
+                <span className="text-white font-black text-[10px] tracking-tight">
+                  {viewMode === 'MY_STUDENTS' ? '我的班级' :
+                    viewMode === 'ALL_SCHOOL' ? '全校名册' :
+                      `${managedTeacherName || '代管理'} 的班级`}
+                </span>
+                <ChevronDown size={10} className="text-white/40 group-hover:text-white/70 transition-colors" />
+              </button>
+
+              {/* 右侧空位 (可放其他动作) */}
+              <div className="flex-1"></div>
+            </div>
             {/* 结算页显示总分 */}
             {activeTab === 'settle' && (
-              <div className="text-right">
-                <div className="text-2xl font-black text-indigo-600 font-mono">
+              <div className="text-right mt-2">
+                <div className="text-2xl font-black text-indigo-100 font-mono">
                   {calculateTotalExp()}
                 </div>
-                <div className="text-[10px] text-gray-400 font-bold tracking-wider">TOTAL EXP</div>
+                <div className="text-[10px] text-white/40 font-bold tracking-wider uppercase">Total Exp</div>
               </div>
             )}
           </div>
-
-          {/* Tab 已删除，结算功能整合到过关抽屉 */}
         </div>
+
+        {/* Tab 已删除，结算功能整合到过关抽屉 */}
 
         {/* === 内容滚动区 === */}
         <div className="flex-1 overflow-y-auto p-4 pb-24">
@@ -1063,399 +1091,402 @@ const QCView: React.FC = () => {
         </div>
 
         {/* === 抽屉 1: 学生过关详情 (Best Practice V2) === */}
-        {isQCDrawerOpen && selectedStudentId && (
-          <>
-            <div
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]"
-              onClick={() => setIsQCDrawerOpen(false)}
-            />
-            <div className="fixed bottom-0 left-0 right-0 lg:left-auto lg:top-0 lg:right-0 lg:w-[480px] bg-white rounded-t-[28px] lg:rounded-none h-[94vh] lg:h-screen z-[70] flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.15)] animate-slide-up overflow-hidden">
+        {
+          isQCDrawerOpen && selectedStudentId && (
+            <>
+              <div
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]"
+                onClick={() => setIsQCDrawerOpen(false)}
+              />
+              <div className="fixed bottom-0 left-0 right-0 lg:left-auto lg:top-0 lg:right-0 lg:w-[480px] bg-white rounded-t-[28px] lg:rounded-none h-[94vh] lg:h-screen z-[70] flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.15)] animate-slide-up overflow-hidden">
 
-              {/* 1. Header (玻璃拟态) */}
-              <header className="px-5 py-4 bg-white/85 backdrop-blur-xl border-b border-slate-100 flex justify-between items-center sticky top-0 z-50">
-                <div>
-                  <h1 className="text-xl font-bold text-slate-900 tracking-tight">{getSelectedStudent()?.name}</h1>
-                  <span className="text-xs text-slate-500 font-medium">{new Date().toLocaleDateString('zh-CN', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button onClick={passAllQC} className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full hover:bg-emerald-100 active:scale-95 transition-all">
-                    一键过关
-                  </button>
-                  <button onClick={() => setIsQCDrawerOpen(false)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
-                    <X size={18} />
-                  </button>
-                </div>
-              </header>
-
-              {/* 2. 滚动区域 */}
-              <main className="flex-1 overflow-y-auto px-5 pb-36">
-
-                {/* 2.1 进度编辑 (移植自备课页) */}
-                <section className="mt-5 space-y-3">
-                  {/* 语文 */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-1 h-8 rounded-full bg-orange-400"></div>
-                    <div className="text-sm font-bold text-orange-500 w-6">语</div>
-                    <div className="flex-1 flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-orange-300 transition-all">
-                      <input
-                        className="w-6 bg-transparent text-center font-bold text-sm text-slate-800 outline-none"
-                        value={courseInfo.chinese.unit}
-                        onChange={e => handleCourseChange('chinese', 'unit', e.target.value)}
-                      />
-                      <span className="text-xs text-slate-400 font-medium">单元</span>
-                      <input
-                        className="w-6 bg-transparent text-center font-bold text-sm text-slate-800 outline-none"
-                        value={courseInfo.chinese.lesson || ''}
-                        onChange={e => handleCourseChange('chinese', 'lesson', e.target.value)}
-                      />
-                      <span className="text-xs text-slate-400 font-medium">课</span>
-                      <input
-                        className="flex-1 bg-transparent font-medium text-sm text-slate-800 outline-none placeholder:text-slate-300"
-                        value={courseInfo.chinese.title}
-                        placeholder="课程名称..."
-                        onChange={e => handleCourseChange('chinese', 'title', e.target.value)}
-                      />
-                    </div>
+                {/* 1. Header (玻璃拟态) */}
+                <header className="px-5 py-4 bg-white/85 backdrop-blur-xl border-b border-slate-100 flex justify-between items-center sticky top-0 z-50">
+                  <div>
+                    <h1 className="text-xl font-bold text-slate-900 tracking-tight">{getSelectedStudent()?.name}</h1>
+                    <span className="text-xs text-slate-500 font-medium">{new Date().toLocaleDateString('zh-CN', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
                   </div>
-                  {/* 数学 */}
                   <div className="flex items-center gap-3">
-                    <div className="w-1 h-8 rounded-full bg-blue-500"></div>
-                    <div className="text-sm font-bold text-blue-600 w-6">数</div>
-                    <div className="flex-1 flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-blue-300 transition-all">
-                      <input
-                        className="w-6 bg-transparent text-center font-bold text-sm text-slate-800 outline-none"
-                        value={courseInfo.math.unit}
-                        onChange={e => handleCourseChange('math', 'unit', e.target.value)}
-                      />
-                      <span className="text-xs text-slate-400 font-medium">章</span>
-                      <input
-                        className="flex-1 bg-transparent font-medium text-sm text-slate-800 outline-none placeholder:text-slate-300"
-                        value={courseInfo.math.title}
-                        placeholder="课程名称..."
-                        onChange={e => handleCourseChange('math', 'title', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  {/* 英语 */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-1 h-8 rounded-full bg-purple-500"></div>
-                    <div className="text-sm font-bold text-purple-600 w-6">英</div>
-                    <div className="flex-1 flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-purple-300 transition-all">
-                      <span className="text-xs text-slate-400 font-medium">Unit</span>
-                      <input
-                        className="w-8 bg-transparent text-center font-bold text-sm text-slate-800 outline-none"
-                        value={courseInfo.english.unit}
-                        onChange={e => handleCourseChange('english', 'unit', e.target.value)}
-                      />
-                      <input
-                        className="flex-1 bg-transparent font-medium text-sm text-slate-800 outline-none placeholder:text-slate-300"
-                        value={courseInfo.english.title}
-                        placeholder="课程名称..."
-                        onChange={e => handleCourseChange('english', 'title', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </section>
-
-                {/* 2.2 分段控制器 Tab (iOS Style) */}
-                <div className="mt-6 bg-slate-100 p-1 rounded-xl flex relative">
-                  <div
-                    className="absolute top-1 bottom-1 bg-white rounded-lg shadow-sm transition-transform duration-300"
-                    style={{
-                      width: 'calc(33.33% - 4px)',
-                      transform: `translateX(${qcTabSubject === 'chinese' ? '0%' : qcTabSubject === 'math' ? '100%' : '200%'})`
-                    }}
-                  ></div>
-                  {Object.entries(QC_TAB_CONFIG).map(([key, cfg]) => (
-                    <button
-                      key={key}
-                      onClick={() => setQcTabSubject(key as any)}
-                      className={`flex-1 text-center text-sm font-semibold py-2 rounded-lg relative z-10 transition-colors ${qcTabSubject === key ? 'text-slate-900' : 'text-slate-500'}`}
-                    >
-                      {cfg.label}
+                    <button onClick={passAllQC} className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full hover:bg-emerald-100 active:scale-95 transition-all">
+                      一键过关
                     </button>
-                  ))}
-                </div>
+                    <button onClick={() => setIsQCDrawerOpen(false)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
+                      <X size={18} />
+                    </button>
+                  </div>
+                </header>
 
-                {/* 2.3 基础过关清单 */}
-                <section className="mt-6 bg-white rounded-2xl p-1.5 border border-slate-100 shadow-sm">
-                  <div className="flex justify-between items-center px-3 py-2">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">今日必达 (基础)</span>
-                    <button
-                      onClick={() => {
-                        const name = prompt('输入过关项名称:');
-                        if (name) toggleQCPassByManual(selectedStudentId, name, qcTabSubject);
+                {/* 2. 滚动区域 */}
+                <main className="flex-1 overflow-y-auto px-5 pb-36">
+
+                  {/* 2.1 进度编辑 (移植自备课页) */}
+                  <section className="mt-5 space-y-3">
+                    {/* 语文 */}
+                    <div className="flex items-center gap-3">
+                      <div className="w-1 h-8 rounded-full bg-orange-400"></div>
+                      <div className="text-sm font-bold text-orange-500 w-6">语</div>
+                      <div className="flex-1 flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-orange-300 transition-all">
+                        <input
+                          className="w-6 bg-transparent text-center font-bold text-sm text-slate-800 outline-none"
+                          value={courseInfo.chinese.unit}
+                          onChange={e => handleCourseChange('chinese', 'unit', e.target.value)}
+                        />
+                        <span className="text-xs text-slate-400 font-medium">单元</span>
+                        <input
+                          className="w-6 bg-transparent text-center font-bold text-sm text-slate-800 outline-none"
+                          value={courseInfo.chinese.lesson || ''}
+                          onChange={e => handleCourseChange('chinese', 'lesson', e.target.value)}
+                        />
+                        <span className="text-xs text-slate-400 font-medium">课</span>
+                        <input
+                          className="flex-1 bg-transparent font-medium text-sm text-slate-800 outline-none placeholder:text-slate-300"
+                          value={courseInfo.chinese.title}
+                          placeholder="课程名称..."
+                          onChange={e => handleCourseChange('chinese', 'title', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    {/* 数学 */}
+                    <div className="flex items-center gap-3">
+                      <div className="w-1 h-8 rounded-full bg-blue-500"></div>
+                      <div className="text-sm font-bold text-blue-600 w-6">数</div>
+                      <div className="flex-1 flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-blue-300 transition-all">
+                        <input
+                          className="w-6 bg-transparent text-center font-bold text-sm text-slate-800 outline-none"
+                          value={courseInfo.math.unit}
+                          onChange={e => handleCourseChange('math', 'unit', e.target.value)}
+                        />
+                        <span className="text-xs text-slate-400 font-medium">章</span>
+                        <input
+                          className="flex-1 bg-transparent font-medium text-sm text-slate-800 outline-none placeholder:text-slate-300"
+                          value={courseInfo.math.title}
+                          placeholder="课程名称..."
+                          onChange={e => handleCourseChange('math', 'title', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    {/* 英语 */}
+                    <div className="flex items-center gap-3">
+                      <div className="w-1 h-8 rounded-full bg-purple-500"></div>
+                      <div className="text-sm font-bold text-purple-600 w-6">英</div>
+                      <div className="flex-1 flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-purple-300 transition-all">
+                        <span className="text-xs text-slate-400 font-medium">Unit</span>
+                        <input
+                          className="w-8 bg-transparent text-center font-bold text-sm text-slate-800 outline-none"
+                          value={courseInfo.english.unit}
+                          onChange={e => handleCourseChange('english', 'unit', e.target.value)}
+                        />
+                        <input
+                          className="flex-1 bg-transparent font-medium text-sm text-slate-800 outline-none placeholder:text-slate-300"
+                          value={courseInfo.english.title}
+                          placeholder="课程名称..."
+                          onChange={e => handleCourseChange('english', 'title', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* 2.2 分段控制器 Tab (iOS Style) */}
+                  <div className="mt-6 bg-slate-100 p-1 rounded-xl flex relative">
+                    <div
+                      className="absolute top-1 bottom-1 bg-white rounded-lg shadow-sm transition-transform duration-300"
+                      style={{
+                        width: 'calc(33.33% - 4px)',
+                        transform: `translateX(${qcTabSubject === 'chinese' ? '0%' : qcTabSubject === 'math' ? '100%' : '200%'})`
                       }}
-                      className={`w-7 h-7 rounded-full flex items-center justify-center active:scale-95 transition-all ${qcTabSubject === 'chinese' ? 'bg-orange-50 text-orange-500 hover:bg-orange-100' :
-                        qcTabSubject === 'math' ? 'bg-blue-50 text-blue-500 hover:bg-blue-100' :
-                          'bg-purple-50 text-purple-500 hover:bg-purple-100'
-                        }`}
-                    >
-                      <Plus size={16} />
-                    </button>
+                    ></div>
+                    {Object.entries(QC_TAB_CONFIG).map(([key, cfg]) => (
+                      <button
+                        key={key}
+                        onClick={() => setQcTabSubject(key as any)}
+                        className={`flex-1 text-center text-sm font-semibold py-2 rounded-lg relative z-10 transition-colors ${qcTabSubject === key ? 'text-slate-900' : 'text-slate-500'}`}
+                      >
+                        {cfg.label}
+                      </button>
+                    ))}
                   </div>
-                  <div className="space-y-0.5">
-                    {SUBJECT_DEFAULT_QC[qcTabSubject].map(itemName => {
-                      const student = getSelectedStudent();
-                      const existingTask = student?.tasks.find(t => t.name === itemName && t.type === 'QC');
-                      const isDone = existingTask?.status === 'PASSED' || existingTask?.status === 'COMPLETED';
-                      return (
-                        <div
-                          key={itemName}
-                          onClick={() => toggleQCPassByManual(selectedStudentId, itemName, qcTabSubject)}
-                          className="flex items-center px-3 py-3 rounded-xl cursor-pointer active:bg-slate-50 transition-colors"
-                        >
-                          <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all ${isDone ? 'bg-emerald-500 border-emerald-500' : 'border-slate-200'}`}>
-                            {isDone && <Check size={12} className="text-white" strokeWidth={3} />}
+
+                  {/* 2.3 基础过关清单 */}
+                  <section className="mt-6 bg-white rounded-2xl p-1.5 border border-slate-100 shadow-sm">
+                    <div className="flex justify-between items-center px-3 py-2">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">今日必达 (基础)</span>
+                      <button
+                        onClick={() => {
+                          const name = prompt('输入过关项名称:');
+                          if (name) toggleQCPassByManual(selectedStudentId, name, qcTabSubject);
+                        }}
+                        className={`w-7 h-7 rounded-full flex items-center justify-center active:scale-95 transition-all ${qcTabSubject === 'chinese' ? 'bg-orange-50 text-orange-500 hover:bg-orange-100' :
+                          qcTabSubject === 'math' ? 'bg-blue-50 text-blue-500 hover:bg-blue-100' :
+                            'bg-purple-50 text-purple-500 hover:bg-purple-100'
+                          }`}
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                    <div className="space-y-0.5">
+                      {SUBJECT_DEFAULT_QC[qcTabSubject].map(itemName => {
+                        const student = getSelectedStudent();
+                        const existingTask = student?.tasks.find(t => t.name === itemName && t.type === 'QC');
+                        const isDone = existingTask?.status === 'PASSED' || existingTask?.status === 'COMPLETED';
+                        return (
+                          <div
+                            key={itemName}
+                            onClick={() => toggleQCPassByManual(selectedStudentId, itemName, qcTabSubject)}
+                            className="flex items-center px-3 py-3 rounded-xl cursor-pointer active:bg-slate-50 transition-colors"
+                          >
+                            <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all ${isDone ? 'bg-emerald-500 border-emerald-500' : 'border-slate-200'}`}>
+                              {isDone && <Check size={12} className="text-white" strokeWidth={3} />}
+                            </div>
+                            <span className={`flex-1 text-sm font-medium transition-colors ${isDone ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{itemName}</span>
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${isDone ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>+5</span>
                           </div>
-                          <span className={`flex-1 text-sm font-medium transition-colors ${isDone ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{itemName}</span>
-                          <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${isDone ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>+5</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </section>
+                        );
+                      })}
+                    </div>
+                  </section>
 
-                {/* 2.4 核心教学法 */}
-                <section className="mt-4 bg-white rounded-2xl p-1.5 border border-slate-100 shadow-sm">
-                  <div className="flex justify-between items-center px-3 py-2">
-                    <span className="text-xs font-bold text-red-500 uppercase tracking-wide">核心教学法</span>
-                    <button
-                      onClick={() => setIsMethodologyModalOpen(true)}
-                      className="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 active:scale-95 transition-all"
-                    >
-                      <Plus size={16} />
-                    </button>
-                  </div>
-                  <div className="space-y-0.5">
-                    {(() => {
-                      const student = getSelectedStudent();
-                      const tasks = (student?.tasks || []).filter(t =>
-                        (t.type === 'TASK' && t.id.startsWith('temp-methodology-')) ||
-                        t.category === '核心教学法' ||
-                        t.educationalDomain === '核心教学法'
-                      );
-                      if (tasks.length === 0) return <div className="py-6 text-center text-slate-300 text-xs">暂无发布任务</div>;
-                      return tasks.map(task => (
-                        <div key={task.id} onClick={() => toggleTaskComplete(selectedStudentId, task.id)} className="flex items-center px-3 py-3 rounded-xl cursor-pointer active:bg-slate-50 transition-colors">
-                          <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all ${task.status === 'PASSED' || task.status === 'COMPLETED' ? 'bg-red-500 border-red-500' : 'border-slate-200'}`}>
-                            {(task.status === 'PASSED' || task.status === 'COMPLETED') && <Check size={12} className="text-white" strokeWidth={3} />}
+                  {/* 2.4 核心教学法 */}
+                  <section className="mt-4 bg-white rounded-2xl p-1.5 border border-slate-100 shadow-sm">
+                    <div className="flex justify-between items-center px-3 py-2">
+                      <span className="text-xs font-bold text-red-500 uppercase tracking-wide">核心教学法</span>
+                      <button
+                        onClick={() => setIsMethodologyModalOpen(true)}
+                        className="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 active:scale-95 transition-all"
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                    <div className="space-y-0.5">
+                      {(() => {
+                        const student = getSelectedStudent();
+                        const tasks = (student?.tasks || []).filter(t =>
+                          (t.type === 'TASK' && t.id.startsWith('temp-methodology-')) ||
+                          t.category === '核心教学法' ||
+                          t.educationalDomain === '核心教学法'
+                        );
+                        if (tasks.length === 0) return <div className="py-6 text-center text-slate-300 text-xs">暂无发布任务</div>;
+                        return tasks.map(task => (
+                          <div key={task.id} onClick={() => toggleTaskComplete(selectedStudentId, task.id)} className="flex items-center px-3 py-3 rounded-xl cursor-pointer active:bg-slate-50 transition-colors">
+                            <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all ${task.status === 'PASSED' || task.status === 'COMPLETED' ? 'bg-red-500 border-red-500' : 'border-slate-200'}`}>
+                              {(task.status === 'PASSED' || task.status === 'COMPLETED') && <Check size={12} className="text-white" strokeWidth={3} />}
+                            </div>
+                            <span className={`flex-1 text-sm font-medium ${task.status === 'PASSED' || task.status === 'COMPLETED' ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{task.name}</span>
+                            <span className="text-xs font-bold bg-slate-100 text-slate-400 px-2 py-0.5 rounded-lg">+{task.exp}</span>
                           </div>
-                          <span className={`flex-1 text-sm font-medium ${task.status === 'PASSED' || task.status === 'COMPLETED' ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{task.name}</span>
-                          <span className="text-xs font-bold bg-slate-100 text-slate-400 px-2 py-0.5 rounded-lg">+{task.exp}</span>
-                        </div>
-                      ));
-                    })()}
-                  </div>
-                </section>
+                        ));
+                      })()}
+                    </div>
+                  </section>
 
-                {/* 2.5 综合成长 */}
-                <section className="mt-4 bg-white rounded-2xl p-1.5 border border-slate-100 shadow-sm">
-                  <div className="flex justify-between items-center px-3 py-2">
-                    <span className="text-xs font-bold text-emerald-500 uppercase tracking-wide">综合成长</span>
-                    <button
-                      onClick={() => setIsGrowthModalOpen(true)}
-                      className="w-7 h-7 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center hover:bg-emerald-100 active:scale-95 transition-all"
-                    >
-                      <Plus size={16} />
-                    </button>
-                  </div>
-                  <div className="space-y-0.5">
-                    {(() => {
-                      const student = getSelectedStudent();
-                      const tasks = (student?.tasks || []).filter(t =>
-                        (t.type === 'TASK' && t.id.startsWith('temp-growth-')) ||
-                        t.category === '综合成长' ||
-                        t.educationalDomain === '综合成长'
-                      );
-                      if (tasks.length === 0) return <div className="py-6 text-center text-slate-300 text-xs">暂无成长任务</div>;
-                      return tasks.map(task => (
-                        <div key={task.id} onClick={() => toggleTaskComplete(selectedStudentId, task.id)} className="flex items-center px-3 py-3 rounded-xl cursor-pointer active:bg-slate-50 transition-colors">
-                          <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all ${task.status === 'PASSED' || task.status === 'COMPLETED' ? 'bg-emerald-500 border-emerald-500' : 'border-slate-200'}`}>
-                            {(task.status === 'PASSED' || task.status === 'COMPLETED') && <Check size={12} className="text-white" strokeWidth={3} />}
+                  {/* 2.5 综合成长 */}
+                  <section className="mt-4 bg-white rounded-2xl p-1.5 border border-slate-100 shadow-sm">
+                    <div className="flex justify-between items-center px-3 py-2">
+                      <span className="text-xs font-bold text-emerald-500 uppercase tracking-wide">综合成长</span>
+                      <button
+                        onClick={() => setIsGrowthModalOpen(true)}
+                        className="w-7 h-7 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center hover:bg-emerald-100 active:scale-95 transition-all"
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                    <div className="space-y-0.5">
+                      {(() => {
+                        const student = getSelectedStudent();
+                        const tasks = (student?.tasks || []).filter(t =>
+                          (t.type === 'TASK' && t.id.startsWith('temp-growth-')) ||
+                          t.category === '综合成长' ||
+                          t.educationalDomain === '综合成长'
+                        );
+                        if (tasks.length === 0) return <div className="py-6 text-center text-slate-300 text-xs">暂无成长任务</div>;
+                        return tasks.map(task => (
+                          <div key={task.id} onClick={() => toggleTaskComplete(selectedStudentId, task.id)} className="flex items-center px-3 py-3 rounded-xl cursor-pointer active:bg-slate-50 transition-colors">
+                            <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all ${task.status === 'PASSED' || task.status === 'COMPLETED' ? 'bg-emerald-500 border-emerald-500' : 'border-slate-200'}`}>
+                              {(task.status === 'PASSED' || task.status === 'COMPLETED') && <Check size={12} className="text-white" strokeWidth={3} />}
+                            </div>
+                            <span className={`flex-1 text-sm font-medium ${task.status === 'PASSED' || task.status === 'COMPLETED' ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{task.name}</span>
+                            <span className="text-xs font-bold bg-slate-100 text-slate-400 px-2 py-0.5 rounded-lg">+{task.exp}</span>
                           </div>
-                          <span className={`flex-1 text-sm font-medium ${task.status === 'PASSED' || task.status === 'COMPLETED' ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{task.name}</span>
-                          <span className="text-xs font-bold bg-slate-100 text-slate-400 px-2 py-0.5 rounded-lg">+{task.exp}</span>
-                        </div>
-                      ));
-                    })()}
-                  </div>
-                </section>
+                        ));
+                      })()}
+                    </div>
+                  </section>
 
-                {/* 2.6 定制加餐 */}
-                <section className="mt-4 bg-amber-50 rounded-2xl p-1.5 border border-amber-200 shadow-sm">
-                  <div className="flex justify-between items-center px-3 py-2">
-                    <span className="text-xs font-bold text-amber-600 uppercase tracking-wide">定制加餐</span>
-                  </div>
-                  <div className="space-y-0.5">
-                    {(() => {
-                      const student = getSelectedStudent();
-                      const tasks = (student?.tasks || []).filter(t => t.type === 'SPECIAL');
-                      if (tasks.length === 0) return <div className="py-6 text-center text-amber-400 text-xs">暂无个性化任务</div>;
-                      return tasks.map(task => (
-                        <div key={task.id} onClick={() => toggleTaskComplete(selectedStudentId, task.id)} className="flex items-center px-3 py-3 rounded-xl cursor-pointer active:bg-amber-100/50 transition-colors bg-white/50">
-                          <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all ${task.status === 'PASSED' || task.status === 'COMPLETED' ? 'bg-amber-500 border-amber-500' : 'border-amber-300'}`}>
-                            {(task.status === 'PASSED' || task.status === 'COMPLETED') && <Check size={12} className="text-white" strokeWidth={3} />}
+                  {/* 2.6 定制加餐 */}
+                  <section className="mt-4 bg-amber-50 rounded-2xl p-1.5 border border-amber-200 shadow-sm">
+                    <div className="flex justify-between items-center px-3 py-2">
+                      <span className="text-xs font-bold text-amber-600 uppercase tracking-wide">定制加餐</span>
+                    </div>
+                    <div className="space-y-0.5">
+                      {(() => {
+                        const student = getSelectedStudent();
+                        const tasks = (student?.tasks || []).filter(t => t.type === 'SPECIAL');
+                        if (tasks.length === 0) return <div className="py-6 text-center text-amber-400 text-xs">暂无个性化任务</div>;
+                        return tasks.map(task => (
+                          <div key={task.id} onClick={() => toggleTaskComplete(selectedStudentId, task.id)} className="flex items-center px-3 py-3 rounded-xl cursor-pointer active:bg-amber-100/50 transition-colors bg-white/50">
+                            <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all ${task.status === 'PASSED' || task.status === 'COMPLETED' ? 'bg-amber-500 border-amber-500' : 'border-amber-300'}`}>
+                              {(task.status === 'PASSED' || task.status === 'COMPLETED') && <Check size={12} className="text-white" strokeWidth={3} />}
+                            </div>
+                            <div className="flex-1">
+                              <span className={`text-sm font-medium ${task.status === 'PASSED' || task.status === 'COMPLETED' ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{task.name}</span>
+                              <span className="block text-[10px] text-amber-600 mt-0.5">指定: {getSelectedStudent()?.name}</span>
+                            </div>
+                            <span className="text-xs font-bold bg-white/50 text-amber-600 px-2 py-0.5 rounded-lg">Pending</span>
                           </div>
-                          <div className="flex-1">
-                            <span className={`text-sm font-medium ${task.status === 'PASSED' || task.status === 'COMPLETED' ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{task.name}</span>
-                            <span className="block text-[10px] text-amber-600 mt-0.5">指定: {getSelectedStudent()?.name}</span>
-                          </div>
-                          <span className="text-xs font-bold bg-white/50 text-amber-600 px-2 py-0.5 rounded-lg">Pending</span>
-                        </div>
-                      ));
-                    })()}
+                        ));
+                      })()}
+                    </div>
+                  </section>
+
+                </main>
+
+                {/* 3. 底部结算栏 - 调整位置避免被导航栏遮挡 */}
+                <footer className="absolute bottom-16 left-0 right-0 px-5 pt-4 pb-4 bg-white border-t border-slate-100 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] flex justify-between items-center z-50">
+                  <div>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase">Total Exp</span>
+                    <div className="text-2xl font-extrabold text-slate-900 tabular-nums">{calculateSelectedStudentExp()}<span className="text-sm font-semibold text-slate-400 ml-1">PTS</span></div>
                   </div>
-                </section>
+                  <button
+                    onClick={settleToday}
+                    className="bg-slate-900 text-white px-8 h-13 rounded-full text-base font-semibold shadow-lg shadow-slate-900/20 active:scale-95 transition-all flex items-center gap-2"
+                  >
+                    确认结算 <ArrowRight size={18} />
+                  </button>
+                </footer>
 
-              </main>
-
-              {/* 3. 底部结算栏 - 调整位置避免被导航栏遮挡 */}
-              <footer className="absolute bottom-16 left-0 right-0 px-5 pt-4 pb-4 bg-white border-t border-slate-100 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] flex justify-between items-center z-50">
-                <div>
-                  <span className="text-[10px] font-semibold text-slate-500 uppercase">Total Exp</span>
-                  <div className="text-2xl font-extrabold text-slate-900 tabular-nums">{calculateSelectedStudentExp()}<span className="text-sm font-semibold text-slate-400 ml-1">PTS</span></div>
-                </div>
-                <button
-                  onClick={settleToday}
-                  className="bg-slate-900 text-white px-8 h-13 rounded-full text-base font-semibold shadow-lg shadow-slate-900/20 active:scale-95 transition-all flex items-center gap-2"
-                >
-                  确认结算 <ArrowRight size={18} />
-                </button>
-              </footer>
-
-            </div>
-          </>
-        )}
+              </div>
+            </>
+          )
+        }
 
         {/* === 抽屉 2: CMS 任务库 (CMS Drawer) - V1原版样式 === */}
-        {isCMSDrawerOpen && selectedStudentId && (
-          <>
-            <div
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
-              onClick={() => setIsCMSDrawerOpen(false)}
-            />
-            <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl h-[85vh] z-50 flex flex-col animate-slide-up overflow-hidden">
-              {/* Header */}
-              <div className="p-4 border-b border-slate-100 flex justify-between items-center shrink-0">
-                <div>
-                  <div className="font-bold text-lg text-slate-800">自主任务申报</div>
-                  <div className="text-xs text-slate-500">
-                    学生: <span className="text-indigo-600 font-bold">{getSelectedStudent()?.name}</span>
+        {
+          isCMSDrawerOpen && selectedStudentId && (
+            <>
+              <div
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+                onClick={() => setIsCMSDrawerOpen(false)}
+              />
+              <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl h-[85vh] z-50 flex flex-col animate-slide-up overflow-hidden">
+                {/* Header */}
+                <div className="p-4 border-b border-slate-100 flex justify-between items-center shrink-0">
+                  <div>
+                    <div className="font-bold text-lg text-slate-800">自主任务申报</div>
+                    <div className="text-xs text-slate-500">
+                      学生: <span className="text-indigo-600 font-bold">{getSelectedStudent()?.name}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setIsManageMode(!isManageMode)}
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${isManageMode ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-200'
+                        }`}
+                    >
+                      <Settings size={12} /> {isManageMode ? '完成' : '管理库'}
+                    </button>
+                    <X className="text-gray-400 cursor-pointer" onClick={() => setIsCMSDrawerOpen(false)} />
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setIsManageMode(!isManageMode)}
-                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${isManageMode ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-200'
-                      }`}
-                  >
-                    <Settings size={12} /> {isManageMode ? '完成' : '管理库'}
-                  </button>
-                  <X className="text-gray-400 cursor-pointer" onClick={() => setIsCMSDrawerOpen(false)} />
-                </div>
-              </div>
 
-              {/* Manual Entry */}
-              <div className="p-3 bg-white border-b border-slate-100 shrink-0">
-                <div className="flex gap-2">
-                  <input
-                    value={manualName}
-                    onChange={(e) => setManualName(e.target.value)}
-                    placeholder="✨ 手动输入特殊任务..."
-                    className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-indigo-500"
-                  />
-                  <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg px-2">
-                    <span className="text-slate-400 text-xs font-bold mr-1">+</span>
+                {/* Manual Entry */}
+                <div className="p-3 bg-white border-b border-slate-100 shrink-0">
+                  <div className="flex gap-2">
                     <input
-                      type="number"
-                      value={manualExp}
-                      onChange={(e) => setManualExp(Number(e.target.value))}
-                      className="w-8 bg-transparent text-center font-bold text-sm outline-none"
+                      value={manualName}
+                      onChange={(e) => setManualName(e.target.value)}
+                      placeholder="✨ 手动输入特殊任务..."
+                      className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-indigo-500"
                     />
+                    <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg px-2">
+                      <span className="text-slate-400 text-xs font-bold mr-1">+</span>
+                      <input
+                        type="number"
+                        value={manualExp}
+                        onChange={(e) => setManualExp(Number(e.target.value))}
+                        className="w-8 bg-transparent text-center font-bold text-sm outline-none"
+                      />
+                    </div>
+                    <button
+                      onClick={addManualTask}
+                      className="px-4 bg-slate-900 text-white rounded-lg text-sm font-bold"
+                    >
+                      添加
+                    </button>
                   </div>
-                  <button
-                    onClick={addManualTask}
-                    className="px-4 bg-slate-900 text-white rounded-lg text-sm font-bold"
-                  >
-                    添加
-                  </button>
-                </div>
-              </div>
-
-              {/* Body: Sidebar + List */}
-              <div className="flex flex-1 overflow-hidden">
-                {/* Sidebar */}
-                <div className="w-24 bg-slate-50 border-r border-slate-100 overflow-y-auto">
-                  {getSortedCategories(taskDB).map(cat => (
-                    <div
-                      key={cat}
-                      onClick={() => setCurrentCategory(cat)}
-                      className={`p-4 text-[12px] font-medium cursor-pointer border-l-4 transition-colors relative ${currentCategory === cat
-                        ? 'bg-white text-indigo-600 border-indigo-600 font-bold'
-                        : 'text-slate-500 border-transparent hover:bg-slate-100'
-                        }`}
-                    >
-                      {isManageMode && <span className="text-[10px] mr-1">✏️</span>}
-                      {cat}
-                    </div>
-                  ))}
-                  {isManageMode && (
-                    <div
-                      className="p-4 text-[12px] font-bold text-indigo-500 cursor-pointer"
-                      onClick={() => {
-                        const n = prompt("新分类名称:");
-                        if (n) { setTaskDB(p => ({ ...p, [n]: [] })); setCurrentCategory(n); }
-                      }}
-                    >
-                      + 分类
-                    </div>
-                  )}
                 </div>
 
-                {/* Task List */}
-                <div className="flex-1 overflow-y-auto p-3 bg-white">
-                  {isManageMode && (
-                    <div
-                      onClick={addTaskToDB}
-                      className="p-3 mb-2 rounded-lg border border-dashed border-indigo-200 text-indigo-500 text-center text-xs font-bold cursor-pointer hover:bg-indigo-50"
-                    >
-                      + 新增模板任务
-                    </div>
-                  )}
-
-                  {taskDB[currentCategory]?.map((t, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => !isManageMode && claimTask(t.name, t.exp)}
-                      className={`flex justify-between items-center p-3 mb-2 rounded-lg border transition-all cursor-pointer ${isManageMode
-                        ? 'border-dashed border-amber-300 bg-amber-50'
-                        : 'border-slate-100 hover:border-indigo-200 hover:shadow-sm'
-                        }`}
-                    >
-                      <div>
-                        <div className="text-[13px] font-medium text-slate-800">{t.name}</div>
-                        <div className="text-[11px] font-bold text-amber-500 mt-0.5">+{t.exp} EXP</div>
+                {/* Body: Sidebar + List */}
+                <div className="flex flex-1 overflow-hidden">
+                  {/* Sidebar */}
+                  <div className="w-24 bg-slate-50 border-r border-slate-100 overflow-y-auto">
+                    {getSortedCategories(taskDB).map(cat => (
+                      <div
+                        key={cat}
+                        onClick={() => setCurrentCategory(cat)}
+                        className={`p-4 text-[12px] font-medium cursor-pointer border-l-4 transition-colors relative ${currentCategory === cat
+                          ? 'bg-white text-indigo-600 border-indigo-600 font-bold'
+                          : 'text-slate-500 border-transparent hover:bg-slate-100'
+                          }`}
+                      >
+                        {isManageMode && <span className="text-[10px] mr-1">✏️</span>}
+                        {cat}
                       </div>
-                      {isManageMode ? (
-                        <div
-                          onClick={(e) => { e.stopPropagation(); removeTaskFromDB(idx); }}
-                          className="p-2 text-red-500 hover:bg-red-100 rounded-full"
-                        >
-                          <Trash2 size={16} />
+                    ))}
+                    {isManageMode && (
+                      <div
+                        className="p-4 text-[12px] font-bold text-indigo-500 cursor-pointer"
+                        onClick={() => {
+                          const n = prompt("新分类名称:");
+                          if (n) { setTaskDB(p => ({ ...p, [n]: [] })); setCurrentCategory(n); }
+                        }}
+                      >
+                        + 分类
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Task List */}
+                  <div className="flex-1 overflow-y-auto p-3 bg-white">
+                    {isManageMode && (
+                      <div
+                        onClick={addTaskToDB}
+                        className="p-3 mb-2 rounded-lg border border-dashed border-indigo-200 text-indigo-500 text-center text-xs font-bold cursor-pointer hover:bg-indigo-50"
+                      >
+                        + 新增模板任务
+                      </div>
+                    )}
+
+                    {taskDB[currentCategory]?.map((t, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => !isManageMode && claimTask(t.name, t.exp)}
+                        className={`flex justify-between items-center p-3 mb-2 rounded-lg border transition-all cursor-pointer ${isManageMode
+                          ? 'border-dashed border-amber-300 bg-amber-50'
+                          : 'border-slate-100 hover:border-indigo-200 hover:shadow-sm'
+                          }`}
+                      >
+                        <div>
+                          <div className="text-[13px] font-medium text-slate-800">{t.name}</div>
+                          <div className="text-[11px] font-bold text-amber-500 mt-0.5">+{t.exp} EXP</div>
                         </div>
-                      ) : (
-                        <div className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
-                          +
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                        {isManageMode ? (
+                          <div
+                            onClick={(e) => { e.stopPropagation(); removeTaskFromDB(idx); }}
+                            className="p-2 text-red-500 hover:bg-red-100 rounded-full"
+                          >
+                            <Trash2 size={16} />
+                          </div>
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                            +
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          </>
-        )
+            </>
+          )
         }
 
         {/* 修改进度弹窗 - V1原版样式 */}

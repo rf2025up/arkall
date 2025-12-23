@@ -12,12 +12,16 @@ interface Feedback {
     updatedAt: string;
 }
 
+interface MessageCenterProps {
+    variant?: 'default' | 'header';  // 🆕 header 用于首页橙色渐变背景
+}
+
 /**
  * 教师端消息中心组件
  * 显示家长的点赞和留言反馈
  * UI 参考: /parent/右上角消息.html
  */
-const MessageCenter: React.FC = () => {
+const MessageCenter: React.FC<MessageCenterProps> = ({ variant = 'default' }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -111,17 +115,26 @@ const MessageCenter: React.FC = () => {
         return date.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' });
     };
 
+    // 🆕 根据 variant 选择铃铛样式
+    const bellButtonClass = variant === 'header'
+        ? "w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md hover:bg-white/30 transition-colors border border-white/10 relative"
+        : "relative p-2 rounded-full hover:bg-gray-100 transition-colors";
+
+    const bellIconClass = variant === 'header'
+        ? "text-white"
+        : "text-gray-600";
+
     return (
         <div className="relative" ref={panelRef}>
             {/* 铃铛按钮 */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
+                className={bellButtonClass}
             >
-                <Bell size={22} className="text-gray-600" />
+                <Bell size={variant === 'header' ? 18 : 22} className={bellIconClass} />
                 {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
-                        {unreadCount > 99 ? '99+' : unreadCount}
+                    <span className={`absolute ${variant === 'header' ? 'top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border border-white/50' : '-top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1'}`}>
+                        {variant === 'header' ? '' : (unreadCount > 99 ? '99+' : unreadCount)}
                     </span>
                 )}
             </button>
@@ -169,8 +182,8 @@ const MessageCenter: React.FC = () => {
                                         key={feedback.id}
                                         onClick={() => !feedback.read && markAsRead(feedback.id)}
                                         className={`p-4 cursor-pointer transition-colors ${feedback.read
-                                                ? 'bg-white opacity-70'
-                                                : 'bg-orange-50 border-l-3 border-l-orange-500 hover:bg-orange-100/50'
+                                            ? 'bg-white opacity-70'
+                                            : 'bg-orange-50 border-l-3 border-l-orange-500 hover:bg-orange-100/50'
                                             }`}
                                     >
                                         <div className="flex justify-between items-start">

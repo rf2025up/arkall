@@ -19,11 +19,11 @@ export interface ClassContextType {
   // 🆕 核心变更：从班级切换改为视图模式切换
   viewMode: ViewMode['type'];     // 当前视图模式
   currentClass: string;           // 保留兼容性，当前选中的班级，'ALL' 表示全校
-  selectedTeacherId: string | null; // 当前选择的老师ID（用于SPECIFIC_CLASS模式）
-  availableClasses: ClassInfo[];  // 可用的班级列表
-
-  // 🆕 新的方法
-  switchViewMode: (mode: ViewMode['type'], teacherId?: string) => void;  // 切换视图模式
+  selectedTeacherId: string | null; // 目前选中的老师ID（针对 SPECIFIC_CLASS 模式）
+  managedTeacherName: string | null; // 🆕 当前代管理老师姓名
+  isProxyMode: boolean;           // 🆕 是否处于代理模式 (Profile页切入激活，Header页切入为临时查看)
+  availableClasses: ClassInfo[];  // 可选班级列表
+  switchViewMode: (mode: ViewMode['type'], teacherId?: string, teacherName?: string, isProxy?: boolean) => void;  // 切换视图模式
   switchClass: (className: string) => void;                           // 保留兼容性
 
   isLoading: boolean;
@@ -44,7 +44,10 @@ export const ClassProvider: React.FC<ClassProviderProps> = ({ children }) => {
   // 🆕 核心状态：视图模式 + 兼容性状态
   const [viewMode, setViewMode] = useState<ViewMode['type']>('MY_STUDENTS');  // 默认查看我的学生
   const [currentClass, setCurrentClass] = useState<string>('ALL');  // 保留兼容性
-  const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);  // 当前选择的老师ID
+  const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
+  const [managedTeacherName, setManagedTeacherName] = useState<string | null>(null);
+  const [isProxyMode, setIsProxyMode] = useState<boolean>(false);
+  // 🆕 代管理的老师姓名
   const [availableClasses, setAvailableClasses] = useState<ClassInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -78,24 +81,24 @@ export const ClassProvider: React.FC<ClassProviderProps> = ({ children }) => {
       const response = await apiService.get('/students/classes');
 
       if (response.success && response.data) {
-          const classes: ClassInfo[] = (response.data as any[]).map((cls: any) => ({
-            name: cls.className,
-            studentCount: parseInt(cls.studentCount),
-            isPrimaryClass: cls.className === user.primaryClassName,
-            teacherId: cls.teacherId,
-            teacherName: cls.teacherName || '未知老师'
-          }));
+        const classes: ClassInfo[] = (response.data as any[]).map((cls: any) => ({
+          name: cls.className,
+          studentCount: parseInt(cls.studentCount),
+          isPrimaryClass: cls.className === user.primaryClassName,
+          teacherId: cls.teacherId,
+          teacherName: cls.teacherName || '未知老师'
+        }));
 
-          // 🆕 新的排序逻辑：当前老师的班级排第一，其他老师按学生数量排序
-          classes.sort((a, b) => {
-            // 当前老师的班级排最前面
-            if (a.teacherId === user.id) return -1;
-            if (b.teacherId === user.id) return 1;
-            // 其他按学生数量排序
-            return b.studentCount - a.studentCount;
-          });
+        // 🆕 新的排序逻辑：当前老师的班级排第一，其他老师按学生数量排序
+        classes.sort((a, b) => {
+          // 当前老师的班级排最前面
+          if (a.teacherId === user.id) return -1;
+          if (b.teacherId === user.id) return 1;
+          // 其他按学生数量排序
+          return b.studentCount - a.studentCount;
+        });
 
-          setAvailableClasses(classes);
+        setAvailableClasses(classes);
       } else {
         console.error('Failed to fetch classes:', response.message);
       }
@@ -107,18 +110,27 @@ export const ClassProvider: React.FC<ClassProviderProps> = ({ children }) => {
   };
 
   // 🆕 切换视图模式 - 核心新功能
-  const switchViewMode = (mode: ViewMode['type'], teacherId?: string) => {
+  const switchViewMode = (mode: ViewMode['type'], teacherId?: string, teacherName?: string, isProxy: boolean = false) => {
     setViewMode(mode);
+    setIsProxyMode(isProxy);
+    localStorage.setItem('is_proxy_mode', isProxy ? 'true' : 'false');
+
     if (teacherId) {
       setSelectedTeacherId(teacherId);
+      setManagedTeacherName(teacherName || '未知老师');
       localStorage.setItem('selected_teacher_id', teacherId);
+      if (teacherName) {
+        localStorage.setItem('managed_teacher_name', teacherName);
+      }
     } else {
       setSelectedTeacherId(null);
+      setManagedTeacherName(null);
       localStorage.removeItem('selected_teacher_id');
+      localStorage.removeItem('managed_teacher_name');
     }
     // 保存到 localStorage
     localStorage.setItem('view_mode', mode);
-    console.log(`[TEACHER BINDING] Switched to view mode: ${mode}, teacherId: ${teacherId}`);
+    console.log(`[TEACHER BINDING] Switched to view mode: ${mode}, teacherId: ${teacherId}, isProxy: ${isProxy}`);
   };
 
   // 保留兼容性：切换班级
@@ -139,14 +151,25 @@ export const ClassProvider: React.FC<ClassProviderProps> = ({ children }) => {
     if (user) {
       fetchClasses();
 
+      // 🆕 暴露刷新方法给全局，方便其他页面（如 Profile）强制刷新
+      (window as any).refreshGlobalClasses = fetchClasses;
+
       // 🆕 从 localStorage 恢复上次的视图模式
       const savedViewMode = localStorage.getItem('view_mode') as ViewMode['type'];
       if (savedViewMode && ['MY_STUDENTS', 'ALL_SCHOOL', 'SPECIFIC_CLASS'].includes(savedViewMode)) {
         setViewMode(savedViewMode);
+        // 恢复代理模式状态
+        const savedIsProxy = localStorage.getItem('is_proxy_mode') === 'true';
+        setIsProxyMode(savedIsProxy);
+
         // 恢复选中的老师ID
         const savedTeacherId = localStorage.getItem('selected_teacher_id');
         if (savedTeacherId) {
           setSelectedTeacherId(savedTeacherId);
+          const savedName = localStorage.getItem('managed_teacher_name');
+          if (savedName) {
+            setManagedTeacherName(savedName);
+          }
         }
       }
 
@@ -169,11 +192,13 @@ export const ClassProvider: React.FC<ClassProviderProps> = ({ children }) => {
     // 🆕 新的核心状态
     viewMode,
     selectedTeacherId,
+    managedTeacherName,
+    isProxyMode,
+    availableClasses,
     switchViewMode,
 
     // 保留兼容性的状态
     currentClass,
-    availableClasses,
     switchClass,
 
     isLoading,

@@ -253,6 +253,27 @@ export class ApiService {
     };
   }
 
+  // 🆕 用户/老师相关API
+  public get users() {
+    return {
+      create: (data: {
+        username: string;
+        name: string;
+        primaryClassName?: string;
+        email?: string;
+      }) => this.post<any>('/users', data),
+
+      list: (params?: { search?: string; page?: number; limit?: number }) =>
+        this.get<any>('/users', params),
+
+      update: (id: string, data: any) =>
+        this.put<any>(`/users/${id}`, data),
+
+      delete: (id: string) =>
+        this.delete<any>(`/users/${id}`)
+    };
+  }
+
   // 🆕 记录相关API
   public get records() {
     return {
@@ -430,6 +451,14 @@ export const API = {
     login: (credentials: { username: string; password: string }) =>
       apiService.post<{ token: string; user: any }>('/auth/login', credentials),
   },
+
+  // 用户/老师管理
+  users: {
+    create: (data: any) => apiService.users.create(data),
+    list: (params?: any) => apiService.users.list(params),
+    update: (id: string, data: any) => apiService.users.update(id, data),
+    delete: (id: string) => apiService.users.delete(id),
+  }
 };
 
 console.log('[AUTH FIX] API Service loaded with interceptors and authentication support');

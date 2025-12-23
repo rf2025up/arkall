@@ -2,17 +2,18 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useClass } from '../context/ClassContext';
-import { Check, CheckSquare, ListChecks, BookOpen, AlertCircle, User, UserPlus, Trophy, Medal, Swords, Flag, ChevronDown, Users, Calendar, Bell } from 'lucide-react';
+import { Check, CheckSquare, ListChecks, BookOpen, AlertCircle, User, UserPlus, Trophy, Medal, Swords, Flag, ChevronDown, Users, Calendar, Bell, Plus } from 'lucide-react';
 import { Student, StudentListResponse, ScoreUpdateEvent } from '../types/student';
 import ActionSheet from '../components/ActionSheet';
 import { AddStudentModal } from '../components/AddStudentModal';
+import MessageCenter from '../components/MessageCenter';
 import apiService from '../services/api.service';
 
 // 积分已支持手动输入，不再需要预制列表。
 const Home = () => {
   const navigate = useNavigate();
   const { token, user } = useAuth();
-  const { viewMode, switchViewMode, selectedTeacherId, currentClass, availableClasses, switchClass } = useClass();  // 🆕 获取 viewMode、selectedTeacherId 和班级列表
+  const { viewMode, switchViewMode, selectedTeacherId, managedTeacherName, currentClass, availableClasses, switchClass, isProxyMode } = useClass();  // 🆕 获取 viewMode、managedTeacherName、isProxyMode 等
 
   // --- 状态管理（来自旧版UI的肉体）---
   const [students, setStudents] = useState<Student[]>([]);
@@ -290,7 +291,7 @@ const Home = () => {
 
     // 2. 普通模式：点击跳转到个人详情页
     console.log('[DEBUG] Navigate to student detail:', student.name);
-    navigate(`/student/${student.id}`);
+    navigate(`/student/${student.id}`, { state: { studentData: student } });
   };
 
   const handleBatchScoreClick = () => {
@@ -485,7 +486,7 @@ const Home = () => {
       {/* 🆕 头部区域 - 参考设计风格 */}
       <header
         className="pt-14 pb-24 px-6 rounded-b-[40px] relative overflow-hidden"
-        style={{ background: 'linear-gradient(160deg, #FF8C00 0%, #FF5500 100%)' }}
+        style={{ background: isProxyMode ? 'linear-gradient(135deg, #475569 0%, #1e293b 100%)' : 'linear-gradient(160deg, #FF8C00 0%, #FF5500 100%)' }}
       >
         {/* 背景纹理装饰 */}
         <div className="absolute -top-1/2 -left-1/5 w-[200%] h-[200%] pointer-events-none"
@@ -497,25 +498,27 @@ const Home = () => {
           {/* 班级切换器 - 玻璃胶囊 */}
           <button
             onClick={() => setIsClassDrawerOpen(true)}
-            className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full backdrop-blur-md active:bg-white/30 transition-colors border border-white/10"
+            className="flex flex-col items-start bg-white/20 px-4 py-2 rounded-2xl backdrop-blur-md active:bg-white/30 transition-colors border border-white/10"
           >
-            <span className="font-bold text-lg text-white tracking-wide">
-              {viewMode === 'MY_STUDENTS' ? `${user?.name}班` :
-                viewMode === 'ALL_SCHOOL' ? '全校大名单' :
-                  `${availableClasses.find(cls => cls.teacherId === selectedTeacherId)?.teacherName}班`}
-            </span>
-            <ChevronDown size={16} className="text-white/80" />
+            <div className="flex items-center gap-2">
+              <span className="font-black text-lg text-white tracking-tight">
+                {viewMode === 'MY_STUDENTS' ? '我的班级' :
+                  viewMode === 'ALL_SCHOOL' ? '全校大名单' :
+                    `${managedTeacherName || '代管理'} 的班级`}
+              </span>
+              <ChevronDown size={14} className="text-white/80" />
+            </div>
+            {viewMode === 'SPECIFIC_CLASS' && (
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className="px-1.5 py-0.5 rounded-md bg-white/20 text-[9px] font-black text-white/90 uppercase tracking-widest border border-white/10">
+                  代理模式
+                </span>
+              </div>
+            )}
           </button>
 
-          {/* 🆕 通知铃铛 */}
-          <button
-            onClick={() => navigate('/parent-messages')}
-            className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md hover:bg-white/30 transition-colors border border-white/10 relative"
-          >
-            <Bell size={18} className="text-white" />
-            {/* 红点提示 */}
-            <div className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-white/50"></div>
-          </button>
+          {/* 🆕 通知铃铛 - 使用 MessageCenter 组件 */}
+          <MessageCenter variant="header" />
         </div>
       </header>
 
@@ -587,7 +590,7 @@ const Home = () => {
                 onClick={() => {
                   if (!isMultiSelectMode) {
                     console.log('[DEBUG] PC Click - Navigate to student detail:', student.name);
-                    navigate(`/student/${student.id}`);
+                    navigate(`/student/${student.id}`, { state: { studentData: student } });
                   } else {
                     toggleSelection(student.id);
                   }
@@ -641,45 +644,57 @@ const Home = () => {
               </div>
             );
           })}
+
+          {/* 🆕 UI宪法 V5.0: 新增学生卡片 - 融入网格，虚线风格，微动效 */}
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex flex-col items-center p-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:bg-blue-50/30 hover:border-blue-300 active:scale-95 transition-all duration-300 group h-[116px] justify-center"
+          >
+            <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-sm text-slate-300 group-hover:text-blue-500 group-hover:shadow-md group-hover:scale-110 transition-all duration-300">
+              <Plus size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+            </div>
+            <span className="mt-2 text-xs font-bold text-slate-400 group-hover:text-blue-600 transition-colors">
+              新增学生
+            </span>
+            <span className="text-[10px] text-slate-300 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+              点击添加
+            </span>
+          </button>
         </div>
 
         {/* 新增学生按钮 - 放在学生头像网格下方 */}
-        <div className="mt-4 flex justify-center">
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="px-4 py-3 rounded-xl bg-primary text-white text-sm font-bold flex items-center shadow-lg shadow-primary/200 active:scale-95 transition-transform"
-          >
-            <UserPlus size={18} className="mr-2" />
-            新增学生
-          </button>
-        </div>
       </div>
 
+      {/* 底部保留一定间距 */}
+      <div className="h-20"></div>
+
       {/* Batch Action Bar - 🆕 两个独立按钮 */}
-      {isMultiSelectMode && selectedIds.size > 0 && (
-        <div className="fixed bottom-24 left-0 right-0 px-4 z-30 animate-in slide-in-from-bottom-10">
-          <div className="flex gap-3">
-            {/* 批量签到按钮 */}
-            <button
-              onClick={() => {
-                handleBatchCheckin(Array.from(selectedIds));
-              }}
-              className="flex-1 bg-green-500 text-white font-bold py-4 rounded-2xl shadow-2xl flex items-center justify-center space-x-2 active:scale-95 transition-transform"
-            >
-              <Calendar size={20} />
-              <span>签到 ({selectedIds.size})</span>
-            </button>
-            {/* 批量评分按钮 */}
-            <button
-              onClick={handleBatchScoreClick}
-              className="flex-1 bg-gray-900 text-white font-bold py-4 rounded-2xl shadow-2xl flex items-center justify-center space-x-2 active:scale-95 transition-transform"
-            >
-              <CheckSquare size={20} />
-              <span>评分 ({selectedIds.size})</span>
-            </button>
+      {
+        isMultiSelectMode && selectedIds.size > 0 && (
+          <div className="fixed bottom-24 left-0 right-0 px-4 z-30 animate-in slide-in-from-bottom-10">
+            <div className="flex gap-3">
+              {/* 批量签到按钮 */}
+              <button
+                onClick={() => {
+                  handleBatchCheckin(Array.from(selectedIds));
+                }}
+                className="flex-1 bg-green-500 text-white font-bold py-4 rounded-2xl shadow-2xl flex items-center justify-center space-x-2 active:scale-95 transition-transform"
+              >
+                <Calendar size={20} />
+                <span>签到 ({selectedIds.size})</span>
+              </button>
+              {/* 批量评分按钮 */}
+              <button
+                onClick={handleBatchScoreClick}
+                className="flex-1 bg-gray-900 text-white font-bold py-4 rounded-2xl shadow-2xl flex items-center justify-center space-x-2 active:scale-95 transition-transform"
+              >
+                <CheckSquare size={20} />
+                <span>评分 ({selectedIds.size})</span>
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       <ActionSheet
         isOpen={isSheetOpen}
@@ -814,8 +829,8 @@ const Home = () => {
                 <button
                   key={`teacher-${cls.teacherId}-${index}`}
                   onClick={() => {
-                    // 🆕 切换到指定老师的班级视图
-                    switchViewMode('SPECIFIC_CLASS', cls.teacherId);
+                    // 🆕 切换到指定老师的班级视图 (从首页切换仅作为临时查看)
+                    switchViewMode('SPECIFIC_CLASS', cls.teacherId, cls.teacherName, false);
                     setIsClassDrawerOpen(false);
                     setToastMsg(`正在查看${cls.teacherName}的班级`);
                   }}
@@ -871,7 +886,7 @@ const Home = () => {
                   : 'text-green-600'
                 }`}>
                 {viewMode === 'ALL_SCHOOL' || viewMode === 'SPECIFIC_CLASS'
-                  ? '长按学生头像，选择"移入我的班级"即可将学生划归到您名下'
+                  ? '该模式下可以"物色"学生。长按学生头像，选择"移入我的班级"即可。'
                   : '长按学生头像，可调整积分和经验值'
                 }
               </p>

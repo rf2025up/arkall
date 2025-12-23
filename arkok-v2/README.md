@@ -3,10 +3,12 @@
 ## 📖 核心文档入口 (Direct Link to Truth)
 
 > [!IMPORTANT]
-> **⚖️ 技术宪法 (V5.0/2025-12-21)**: [ARKOK_V2_CONSTITUTION.md](./ARKOK_V2_CONSTITUTION.md)
-> **这是项目的最高指令准则，包含单例架构逻辑、标签化体系规范。所有开发者必须背诵并在开发中严格遵守。**
+> **⚖️ ArkOK V2 权威技术白皮书 (V5.0/2025-12-23)**: [ARKOK_V5_AUTHORITATIVE_WHITE_PAPER.md](./ARKOK_V5_AUTHORITATIVE_WHITE_PAPER.md)
+> **📊 ArkOK V2 SaaS 多校区运营管理白皮书**: [ARKOK_SAAS_OPERATIONS_WHITEPAPER.md](./ARKOK_SAAS_OPERATIONS_WHITEPAPER.md)
+> **这是项目的最高运营与技术蓝图，包含多租户架构与超级管理员规范。**
 
-- **技术白皮书**: [ArkOK_V2_Technical_Whitepaper.md](./ArkOK_V2_Technical_Whitepaper.md)
+- **历史文档归档**: [docs/archive](./docs/archive)
+- **校区账户手册 (星途与伴)**: [STAR_PATH_COMPANION_ACCOUNTS.md](./STAR_PATH_COMPANION_ACCOUNTS.md)
 - **家长端 PRD**: [../PRD_PARENT_FULL.md](../PRD_PARENT_FULL.md)
 - **UI 设计规范**: [docs/UI_DESIGN_SYSTEM.md](./docs/UI_DESIGN_SYSTEM.md)
 
@@ -25,7 +27,7 @@
 
 ## 📋 完整技术架构白皮书
 
-**📖 [详细技术架构白皮书](ArkOK_V2_Technical_Whitepaper.md)** - 深入了解 ArkOK V2 的完整技术演进历程和架构设计
+**📖 [详细技术架构白皮书 (V5.0 权威版)](ARKOK_V5_AUTHORITATIVE_WHITE_PAPER.md)** - 深入了解 ArkOK V2 的完整技术演进历程和架构设计
 
 ### 🎯 V1 → V2 重构里程碑
 

@@ -218,6 +218,11 @@ export class StudentService {
             isActive: true,
             // 权限过滤：如果是老师，只能查看自己名下的学生；如果是管理员，可以查看所有学生
             ...(userRole === 'TEACHER' && userId ? { teacherId: userId } : {})
+          },
+          include: {
+            teachers: {
+              select: { name: true }
+            }
           }
         }),
 
@@ -854,24 +859,9 @@ export class StudentService {
    * 🆕 修改：返回按老师分组的班级信息，支持多老师显示
    */
   async getClasses(schoolId: string): Promise<any[]> {
-    // 🆕 按老师分组获取学生统计
-    const teacherGroups = await this.prisma.students.groupBy({
-      by: ['teacherId'],
+    // 🆕 获取学校内所有老师
+    const allTeachers = await this.prisma.teachers.findMany({
       where: {
-        schoolId,
-        isActive: true,
-        teacherId: { not: null }  // 排除没有归属老师的学生
-      },
-      _count: {
-        id: true
-      }
-    });
-
-    // 获取对应的老师信息
-    const teacherIds = teacherGroups.map(g => g.teacherId!);
-    const teachers = await this.prisma.teachers.findMany({
-      where: {
-        id: { in: teacherIds },
         schoolId,
         role: 'TEACHER'
       },
@@ -881,14 +871,27 @@ export class StudentService {
       }
     });
 
+    // 🆕 按老师分组获取学生统计
+    const studentStats = await this.prisma.students.groupBy({
+      by: ['teacherId'],
+      where: {
+        schoolId,
+        isActive: true,
+        teacherId: { in: allTeachers.map(t => t.id) }
+      },
+      _count: {
+        id: true
+      }
+    });
+
     // 组装数据：每个老师作为一个"班级"
-    const classData = teacherGroups.map(group => {
-      const teacher = teachers.find(t => t.id === group.teacherId);
+    const classData = allTeachers.map(teacher => {
+      const stats = studentStats.find(s => s.teacherId === teacher.id);
       return {
-        className: `${teacher?.name || '未知老师'}的班级`,
-        studentCount: group._count.id,
-        teacherId: group.teacherId,
-        teacherName: teacher?.name || '未知老师'
+        className: `${teacher.name}的班级`,
+        studentCount: stats?._count.id || 0,
+        teacherId: teacher.id,
+        teacherName: teacher.name
       };
     });
 
