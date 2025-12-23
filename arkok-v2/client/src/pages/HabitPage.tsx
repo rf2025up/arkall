@@ -5,6 +5,7 @@ import { useClass } from '../context/ClassContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import apiService from '../services/api.service';
 import { ApiResponse } from '../types/api';
+import MessageCenter from '../components/MessageCenter';
 
 // 习惯图标常量 - 完全复制V1的HABIT_ICONS
 const HABIT_ICONS = ['🌅', '📚', '🏃', '💧', '🧘', '🎯', '✏️', '🎨', '🎵', '💡', '🌟', '🥗', '💪', '🧠', '🗣️'];
@@ -362,28 +363,37 @@ const HabitPage: React.FC = () => {
       {/* V1原版样式：min-h-screen bg-background */}
       <div className="min-h-screen bg-background pb-24">
 
-        {/* === Header (V1原版样式) === */}
-        <header className="bg-primary px-6 py-8 pb-12 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-10">
-            <Check size={120} className="text-white" />
-          </div>
-          <div className="flex justify-center mb-6 relative z-10">
-            <h1 className="text-white text-xl font-bold">好习惯打卡</h1>
+        {/* === Header (统一设计风格) === */}
+        <header
+          className="pt-14 pb-20 px-6 rounded-b-[40px] relative overflow-hidden"
+          style={{ background: 'linear-gradient(160deg, #FF8C00 0%, #FF5500 100%)' }}
+        >
+          {/* 背景纹理装饰 */}
+          <div className="absolute -top-1/2 -left-1/5 w-[200%] h-[200%] pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 60%)' }}
+          />
+
+          {/* 顶栏 */}
+          <div className="relative z-10 flex justify-between items-center mb-6">
+            <h1 className="text-white text-xl font-black tracking-tight">好习惯打卡</h1>
+            <MessageCenter variant="header" />
           </div>
 
-          <div className="bg-white rounded-2xl p-2 shadow-inner flex items-center relative z-10">
+          {/* 习惯选择器 - 毛玻璃卡片 */}
+          <div className="relative z-10 bg-white/20 backdrop-blur-md rounded-2xl p-3 flex items-center border border-white/10">
             <select
               value={selectedHabitId}
               onChange={(e) => setSelectedHabitId(e.target.value)}
-              className="w-full bg-transparent text-gray-800 font-bold text-lg outline-none px-2 py-1 appearance-none"
+              className="w-full bg-transparent text-white font-bold text-lg outline-none px-2 py-1 appearance-none"
+              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}
             >
               {habits.map(h => (
-                <option key={String(h.id)} value={String(h.id)}>{h.icon} {h.name}</option>
+                <option key={String(h.id)} value={String(h.id)} className="text-gray-800">{h.icon} {h.name}</option>
               ))}
             </select>
             <button
               onClick={() => setIsManageOpen(true)}
-              className="bg-orange-100 text-primary p-2 rounded-lg hover:bg-orange-200 transition-colors"
+              className="bg-white/20 text-white p-2.5 rounded-xl hover:bg-white/30 transition-colors border border-white/10"
             >
               <Settings size={18} />
             </button>
