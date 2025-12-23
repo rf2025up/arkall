@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ChevronLeft, Plus, Award, Trophy, Star, Crown, Sparkles, Users, Target, Zap, Gift, CheckCircle2, UserCheck } from 'lucide-react'
+import { ChevronLeft, Plus, Award, Trophy, Star, Crown, Sparkles, Users, Target, Zap, Gift, CheckCircle2, UserCheck, ArrowLeft } from 'lucide-react'
 import { apiService } from '../services/api.service'
 import { useAuth } from '../context/AuthContext'
+// 移除已删除的 MessageCenter 导入
 
 interface Badge {
   id: string
@@ -74,36 +75,60 @@ const BadgePage: React.FC = () => {
 
 
   // 获取真实数据
-  const fetchData = async () => {
+  const fetchData = async (forceRefresh = false) => {
     if (!userInfo?.schoolId || !userInfo?.userId) return;
 
-    setLoading(true);
+    const hasData = badges.length > 0 || students.length > 0;
+    if (!hasData) setLoading(true);
+
     try {
-      // 🆕 移除不存在的 /badges/stats API
+      const badgeUrl = `/badges?schoolId=${userInfo.schoolId}`;
+      const studentUrl = `/students?schoolId=${userInfo.schoolId}&teacherId=${userInfo.userId}&scope=MY_STUDENTS&userRole=TEACHER&limit=100`;
+
+      // 🚀 第一阶段：尝试从缓存加载 (SWR)
       const [badgesRes, studentsRes] = await Promise.all([
-        apiService.get(`/badges?schoolId=${userInfo.schoolId}`),
-        apiService.get(`/students?schoolId=${userInfo.schoolId}&teacherId=${userInfo.userId}&scope=MY_STUDENTS&userRole=TEACHER&limit=100`)
+        apiService.get<any>(badgeUrl, {}, { useCache: !forceRefresh }),
+        apiService.get<any>(studentUrl, {}, { useCache: !forceRefresh })
       ]);
 
-      if (badgesRes.success) {
-        // 🆕 处理可能的嵌套格式 { data: [...] } 或直接数组
-        const badgeList = Array.isArray(badgesRes.data)
-          ? badgesRes.data
-          : (badgesRes.data as any)?.badges || badgesRes.data || [];
-        console.log('[BADGE PAGE] 获取勋章数量:', badgeList.length);
-        setBadges(badgeList as Badge[]);
+      const processData = (bRes: any, sRes: any) => {
+        if (bRes.success || (bRes as any)._fromCache) {
+          const badgeList = Array.isArray(bRes.data || bRes)
+            ? bRes.data || bRes
+            : (bRes.data as any)?.badges || [];
+          setBadges(badgeList as Badge[]);
+        }
+        if (sRes.success || (sRes as any)._fromCache) {
+          const studentList = Array.isArray(sRes.data || sRes)
+            ? sRes.data || sRes
+            : (sRes.data as any)?.students || [];
+          setStudents(studentList.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            className: s.className,
+            avatarUrl: s.avatarUrl || '/avatar.jpg'
+          })));
+        }
+      };
+
+      processData(badgesRes, studentsRes);
+
+      // 如果命中了缓存
+      const isFromCache = (badgesRes as any)._fromCache || (studentsRes as any)._fromCache;
+      if (isFromCache) {
+        setLoading(false);
+        console.log('[SWR] ⚡ BadgePage rendered from cache, revalidating...');
+
+        // 静默刷新
+        Promise.all([
+          apiService.get<any>(badgeUrl, {}, { useCache: false }),
+          apiService.get<any>(studentUrl, {}, { useCache: false })
+        ]).then(([fb, fs]) => {
+          processData(fb, fs);
+          console.log('[SWR] ✅ BadgePage revalidated');
+        });
       }
-      if (studentsRes.success) {
-        const studentList = Array.isArray(studentsRes.data)
-          ? studentsRes.data
-          : (studentsRes.data as any)?.students || [];
-        setStudents(studentList.map((s: any) => ({
-          id: s.id,
-          name: s.name,
-          className: s.className,
-          avatarUrl: s.avatarUrl || '/avatar.jpg'
-        })));
-      }
+
     } catch (error) {
       console.error('Fetch data failed:', error);
     } finally {
@@ -137,7 +162,8 @@ const BadgePage: React.FC = () => {
           setBadges(prev => [...prev, { ...newBadgeData, awardedCount: 0 }]);
         } else {
           // 如果返回数据不完整，则刷新整个列表
-          fetchData();
+          apiService.invalidateCache('/badges');
+          fetchData(true);
         }
         setShowCreateModal(false);
         setNewBadge({ name: '', description: '', icon: '⭐', category: 'INDIVIDUAL' });
@@ -159,30 +185,28 @@ const BadgePage: React.FC = () => {
 
     setAwardLoading(true)
     try {
-      const results = await Promise.all(
-        awardForm.studentIds.map(studentId =>
-          apiService.post('/badges/award', {
-            badgeId: awardForm.badgeId,
-            studentId,
-            schoolId: userInfo?.schoolId,
-            reason: awardForm.reason,
-            awardedBy: userInfo?.userId
-          })
-        )
-      );
+      // 🚀 [性能优化] 改用后端原生的批量授予接口，取代循环调用
+      const res = await apiService.post('/badges/award/batch', {
+        badgeId: awardForm.badgeId,
+        studentIds: awardForm.studentIds,
+        schoolId: userInfo?.schoolId,
+        reason: awardForm.reason,
+        awardedBy: userInfo?.userId
+      });
 
-      const successCount = results.filter(r => r.success).length;
-
-      if (successCount > 0) {
-        fetchData();
+      if (res.success) {
+        const successCount = (res.data as any)?.awardedCount || 0;
+        apiService.invalidateCache(); // 全局失效或精细失效
+        fetchData(true);
         setShowAwardModal(false);
         setAwardForm({ badgeId: '', studentIds: [], reason: '' });
         toast.success(`成功为 ${successCount} 位学生授予勋章`);
       } else {
-        toast.error('授予失败');
+        toast.error(res.message || '授予失败');
       }
     } catch (error) {
-      toast.error('授予失败');
+      console.error('[BADGE PAGE] Award failed:', error);
+      toast.error('授予失败，请检查网络');
     } finally {
       setAwardLoading(false);
     }
@@ -217,37 +241,32 @@ const BadgePage: React.FC = () => {
 
     return (
       <div
-        className={`bg-white rounded-[2rem] p-6 shadow-xl shadow-slate-200/50 border-2 transition-all duration-300 relative group overflow-hidden ${isCollective ? 'border-purple-100' : 'border-blue-50'
+        className={`bg-white rounded-[2.5rem] p-6 shadow-xl shadow-slate-200/50 border-2 transition-all duration-300 relative group overflow-hidden ${isCollective ? 'border-purple-100' : 'border-slate-50'
           }`}
       >
-        <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full opacity-10 group-hover:scale-110 transition-transform ${isCollective ? 'bg-purple-500' : 'bg-blue-500'
-          }`} />
-
         <div className="flex items-start gap-4">
-          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-lg shrink-0 ${isCollective ? 'bg-purple-50' : 'bg-blue-50'
+          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-lg shrink-0 ${isCollective ? 'bg-purple-50' : 'bg-orange-50'
             }`}>
             {badge.icon}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-extrabold text-slate-800 text-lg truncate">{badge.name}</h3>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isCollective ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'
+              <h3 className="font-black text-slate-800 text-lg truncate">{badge.name}</h3>
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${isCollective ? 'bg-purple-500 text-white' : 'bg-orange-500 text-white'
                 }`}>
                 {isCollective ? '集体奖' : '个人奖'}
               </span>
             </div>
-            <p className="text-xs font-bold text-slate-400 line-clamp-2 leading-relaxed">
-              {badge.description || '暂无描述'}
+            <p className="text-[10px] font-bold text-slate-400 line-clamp-2 leading-relaxed">
+              {badge.description || '为孩子的每一次进步喝彩'}
             </p>
           </div>
         </div>
 
         <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-50">
-          <div className="flex items-center gap-1.5">
-            <div className="bg-amber-100 p-1 rounded-lg">
-              <Award size={14} className="text-amber-500" />
-            </div>
-            <span className="text-xs font-bold text-slate-500">已授予</span>
+          <div className="flex items-center gap-1.5 opacity-60">
+            <Award size={14} className="text-slate-400" />
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">已授予次数</span>
           </div>
           <span className="text-xl font-black text-slate-900">{badge.awardedCount}</span>
         </div>
@@ -256,80 +275,105 @@ const BadgePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100 px-5 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-            <ChevronLeft size={24} className="text-slate-600" />
-          </button>
-          <h1 className="text-lg font-bold text-slate-900">勋章授予</h1>
+    <div className="min-h-screen w-full bg-[#F7F9FC] pb-24">
+      {/* === 统一头部 (橙色渐变) === */}
+      <header
+        className="pt-12 pb-16 px-5 rounded-b-[2.5rem] shadow-xl shadow-orange-500/10 relative overflow-hidden z-30"
+        style={{ background: 'linear-gradient(180deg, #FF7E36 0%, #FF9D5C 100%)' }}
+      >
+        {/* 背景装饰 */}
+        <div className="absolute top-0 right-0 p-4 opacity-10">
+          <Trophy size={140} className="text-white rotate-12" />
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowAwardModal(true)}
-            className="bg-amber-100 text-amber-600 px-4 py-2 rounded-full text-sm font-bold active:scale-95 transition-all flex items-center gap-1"
-          >
-            <Award size={18} /> 授予
-          </button>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg shadow-blue-200 active:scale-95 transition-all flex items-center gap-1"
-          >
-            <Plus size={18} /> 新勋章
-          </button>
+
+        <div className="relative z-10 flex flex-col gap-6">
+          {/* 顶栏 */}
+          <div className="flex justify-between items-center">
+            <button
+              onClick={() => navigate('/')}
+              className="w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-xl text-white active:scale-90 transition-transform"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <h1 className="text-lg font-black text-white">勋章荣耀</h1>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-xl text-white active:scale-90 transition-transform"
+              >
+                <Plus size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* 按钮区 */}
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowAwardModal(true)}
+              className="flex-1 bg-white text-orange-600 py-3.5 rounded-2xl text-sm font-black shadow-lg shadow-orange-900/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <Award size={18} /> 批量授予勋章
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-5 pb-24 space-y-6">
-        <section className="bg-white rounded-[2rem] p-6 shadow-xl shadow-slate-200/50 flex items-center justify-around">
+      {/* 统计概览岛 */}
+      <div className="px-5 -mt-8 relative z-40">
+        <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 flex justify-around items-center shadow-xl shadow-orange-200/20 border border-white/80">
           <div className="text-center">
-            <div className="text-2xl font-black text-blue-600">{badges.length}</div>
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">勋章库</div>
+            <div className="text-2xl font-black text-orange-600 leading-none mb-1">{badges.length}</div>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">勋章种类</div>
           </div>
           <div className="w-px h-8 bg-slate-100" />
           <div className="text-center">
-            <div className="text-2xl font-black text-amber-500">{studentBadges.length}</div>
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">总授予记录</div>
-          </div>
-          <div className="w-px h-8 bg-slate-100" />
-          <div className="text-center cursor-pointer" onClick={() => setShowAwardModal(true)}>
-            <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-1">
-              <Gift size={20} className="text-blue-600" />
+            <div className="text-2xl font-black text-slate-800 leading-none mb-1">
+              {badges.reduce((acc, b) => acc + (b.awardedCount || 0), 0)}
             </div>
-            <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">批量授予</div>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">累计授予</div>
           </div>
-        </section>
+          <div className="w-px h-8 bg-slate-100" />
+          <div className="text-center">
+            <div className="text-2xl font-black text-orange-400 leading-none mb-1">🏅</div>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">荣誉殿堂</div>
+          </div>
+        </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {badges.map((badge, index) => (
+      {/* 🆕 主内容区 */}
+      <main className="p-5 space-y-8">
+        {/* 勋章网格 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {badges.map((badge) => (
             <BadgeCard key={badge.id} badge={badge} />
           ))}
         </div>
 
+        {/* 最近动态 */}
         {studentBadges.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-4 mt-8">
-              <h2 className="text-base font-extrabold text-slate-800 flex items-center gap-2">
-                <Sparkles size={18} className="text-amber-500 fill-amber-500" /> 最近授予明细
-              </h2>
+          <section className="space-y-4">
+            <div className="flex items-center gap-2 px-1">
+              <div className="w-1.5 h-5 bg-amber-500 rounded-full" />
+              <h2 className="text-base font-black text-slate-800">荣耀时刻</h2>
             </div>
+
             <div className="space-y-3">
               {studentBadges.map((sb) => (
-                <div key={sb.id} className="bg-white rounded-2xl p-4 shadow-md border border-slate-50 flex items-center justify-between animate-in fade-in slide-in-from-right-4">
+                <div key={sb.id} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-3">
-                    <div className="text-2xl w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center">
+                    <div className="text-2xl w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center border border-amber-100/50 group-hover:scale-110 transition-transform">
                       {sb.badge.icon}
                     </div>
                     <div>
                       <div className="text-sm font-black text-slate-800">{sb.student.name}</div>
                       <div className="text-[10px] font-bold text-slate-400">
-                        {sb.badge.name} • {formatDate(sb.awardedAt)}
+                        荣获 {sb.badge.name} • {formatDate(sb.awardedAt)}
                       </div>
                     </div>
                   </div>
                   {sb.reason && (
-                    <div className="text-[10px] font-bold px-3 py-1 bg-blue-50 text-blue-600 rounded-full max-w-[120px] truncate">
-                      {sb.reason}
+                    <div className="text-[10px] font-bold px-3 py-1 bg-amber-50 text-amber-600 rounded-full max-w-[120px] truncate border border-amber-100/50">
+                      获得理由: {sb.reason}
                     </div>
                   )}
                 </div>

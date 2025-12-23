@@ -19,6 +19,8 @@ interface TimelineData {
     date: string;
     weekday: string;
     todayExp: number;
+    parentLiked?: boolean;
+    parentComment?: string | null;
     timeline: TimelineItem[];
 }
 
@@ -33,6 +35,8 @@ const TodayTimeline: React.FC = () => {
     const [error, setError] = useState('');
     const [liked, setLiked] = useState(false);
     const [comment, setComment] = useState('');
+    const [serverComment, setServerComment] = useState<string | null>(null);
+    const [submitting, setSubmitting] = useState(false);
 
     // 获取今日动态
     useEffect(() => {
@@ -48,6 +52,9 @@ const TodayTimeline: React.FC = () => {
 
                 if (!res.ok) throw new Error(result.error);
                 setData(result);
+                // 同步初始化交互状态
+                if (result.parentLiked) setLiked(true);
+                if (result.parentComment) setServerComment(result.parentComment);
             } catch (err: any) {
                 setError(err.message);
             } finally {
@@ -80,24 +87,30 @@ const TodayTimeline: React.FC = () => {
 
     // 发送留言
     const handleComment = async () => {
-        if (!comment.trim()) return;
+        if (!comment.trim() || submitting) return;
 
         const token = localStorage.getItem('parent_token');
         if (!token) return;
 
+        setSubmitting(true);
         try {
-            await fetch(`${API_BASE}/feedback/comment`, {
+            const res = await fetch(`${API_BASE}/feedback/comment`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ studentId, comment })
+                body: JSON.stringify({ studentId, comment: comment.trim() })
             });
-            setComment('');
-            alert('留言已发送！');
+
+            if (res.ok) {
+                setServerComment(comment.trim());
+                setComment('');
+            }
         } catch (err) {
             console.error('留言失败', err);
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -382,8 +395,8 @@ const TodayTimeline: React.FC = () => {
                             {/* 挑战类型显示成功/失败 - 🆕 只有成功或失败，无"进行中" */}
                             {item.type === 'CHALLENGE' && (
                                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${item.content?.status === 'COMPLETED' || item.content?.result === 'SUCCESS'
-                                        ? 'bg-green-100 text-green-600'
-                                        : 'bg-red-100 text-red-600'
+                                    ? 'bg-green-100 text-green-600'
+                                    : 'bg-red-100 text-red-600'
                                     }`}>
                                     {item.content?.status === 'COMPLETED' || item.content?.result === 'SUCCESS'
                                         ? '✅ 成功'
@@ -531,17 +544,30 @@ const TodayTimeline: React.FC = () => {
             </div>
 
             {/* 底部反馈区 */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-4px_25px_rgba(0,0,0,0.08)] rounded-t-[2rem] p-5 z-20">
+            <div className="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-4px_25px_rgba(0,0,0,0.08)] rounded-t-[2rem] p-5 z-20 pb-safe">
+                {/* 已有留言显示 */}
+                {serverComment && (
+                    <div className="mb-4 px-4 py-3 bg-orange-50/50 rounded-2xl border border-orange-100/50 animate-in fade-in slide-in-from-bottom-2">
+                        <div className="flex gap-2 items-start">
+                            <span className="text-orange-400 text-xs mt-0.5">💬</span>
+                            <div className="flex-1">
+                                <div className="text-[10px] text-orange-400 font-bold mb-1 uppercase tracking-wider">我的留言</div>
+                                <div className="text-sm text-gray-700 leading-relaxed">{serverComment}</div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* 点赞按钮 */}
                 <div className="flex gap-3 mb-4">
                     <button
                         onClick={handleLike}
                         className={`flex-1 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 ${liked
-                            ? 'bg-orange-50 text-orange-500 border border-orange-500'
-                            : 'bg-gray-50 text-gray-600 border border-gray-200'
+                            ? 'bg-orange-50 text-orange-500 border border-orange-400'
+                            : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
                             }`}
                     >
-                        <span className="text-xl">{liked ? '❤️' : '👍'}</span>
+                        <span className="text-xl animate-bounce-slow">{liked ? '❤️' : '👍'}</span>
                         <span className="text-sm">{liked ? '已收到，谢谢老师！' : '为孩子今日表现点赞'}</span>
                     </button>
                 </div>
@@ -552,14 +578,20 @@ const TodayTimeline: React.FC = () => {
                         type="text"
                         value={comment}
                         onChange={(e) => setComment(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-100 rounded-xl pl-4 pr-14 py-3 text-sm focus:outline-none focus:border-orange-300 focus:bg-white transition-colors"
-                        placeholder="想对老师说点什么..."
+                        onKeyDown={(e) => e.key === 'Enter' && handleComment()}
+                        className="w-full bg-gray-50 border border-gray-100 rounded-xl pl-4 pr-16 py-3 text-sm focus:outline-none focus:border-orange-300 focus:bg-white transition-all shadow-inner"
+                        placeholder={serverComment ? "继续补充留言..." : "想对老师说点什么..."}
+                        disabled={submitting}
                     />
                     <button
                         onClick={handleComment}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-orange-500 font-bold text-sm px-3 py-1 hover:bg-orange-50 rounded-lg transition-colors"
+                        disabled={!comment.trim() || submitting}
+                        className={`absolute right-2 top-1/2 -translate-y-1/2 font-bold text-sm px-4 py-1.5 rounded-lg transition-all ${!comment.trim() || submitting
+                                ? 'text-gray-300'
+                                : 'text-orange-500 hover:bg-orange-50 active:scale-90'
+                            }`}
                     >
-                        发送
+                        {submitting ? '...' : '发送'}
                     </button>
                 </div>
             </div>

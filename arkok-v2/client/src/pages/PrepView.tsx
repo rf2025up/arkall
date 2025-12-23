@@ -1022,8 +1022,14 @@ const PrepView: React.FC = () => {
       {
         isTaskModalOpen && (
           <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-[#F8FAFC] w-full h-[90vh] rounded-t-[24px] flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300">
-              <div className="flex justify-between items-center p-5 bg-white border-b border-slate-100 rounded-t-[24px]">
+            {/* 点击背景关闭 */}
+            <div className="absolute inset-0" onClick={() => {
+              setIsTaskModalOpen(false);
+              setShowOnlyMethodology(false);
+              setShowOnlyGrowth(false);
+            }}></div>
+            <div className="relative bg-[#F8FAFC] w-full h-[90vh] rounded-t-[24px] flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300">
+              <div className="relative flex justify-between items-center p-5 bg-white border-b border-slate-100 rounded-t-[24px]">
                 <h3 className="font-extrabold text-lg text-slate-800">
                   {showOnlyMethodology ? '核心教学法任务' : showOnlyGrowth ? '综合成长任务' : '任务库'}
                 </h3>
@@ -1464,9 +1470,10 @@ const PrepView: React.FC = () => {
       {
         isSpecialModalOpen && (
           <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white w-full rounded-t-[24px] p-6 flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[85vh]">
-
-              <div className="flex justify-between items-center mb-6">
+            {/* 点击背景关闭 */}
+            <div className="absolute inset-0" onClick={() => setIsSpecialModalOpen(false)}></div>
+            <div className="relative bg-white w-full rounded-t-[24px] p-6 flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[85vh]">
+              <div className="relative flex justify-between items-center mb-6">
                 <h3 className="font-extrabold text-lg text-slate-800">添加加餐</h3>
                 <button onClick={() => setIsSpecialModalOpen(false)} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-100">
                   <X size={20} />

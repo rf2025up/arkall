@@ -10,13 +10,16 @@ export function Layout() {
   const { user, logout } = useAuth();
 
   // 判断是否需要显示顶部导航（某些页面自带顶部）
-  const showTopNav = !['/', '/student/', '/prep', '/qc', '/profile', '/habits'].some(path =>
+  const showTopNav = !['/', '/student/', '/prep', '/qc', '/profile', '/habits', '/badges', '/pk', '/challenges'].some(path =>
     location.pathname === path ||
     location.pathname.startsWith('/student/') ||
     location.pathname.startsWith('/prep') ||
     location.pathname.startsWith('/qc') ||
     location.pathname.startsWith('/profile') ||
-    location.pathname.startsWith('/habits')
+    location.pathname.startsWith('/habits') ||
+    location.pathname.startsWith('/badges') ||
+    location.pathname.startsWith('/pk') ||
+    location.pathname.startsWith('/challenges')
   );
 
   return (

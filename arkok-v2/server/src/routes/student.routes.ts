@@ -607,9 +607,10 @@ export class StudentRoutes {
         search: req.query.search as string,
         page: req.query.page ? parseInt(req.query.page as string) : undefined,
         limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
-        // 🆕 修复：从认证用户获取teacherId和role
-        teacherId: user?.userId || req.query.teacherId as string,
-        scope: req.query.scope as 'MY_STUDENTS' | 'ALL_SCHOOL' | 'SPECIFIC_TEACHER',
+        // 🆕 修复：优先使用 query 中的 teacherId，如果没有则回退到当前登录用户
+        // 这样在切换查看其他老师班级时，传递的 teacherId 才会生效
+        teacherId: (req.query.teacherId as string) || user?.userId,
+        scope: req.query.scope as any,
         userRole: user?.role as 'ADMIN' | 'TEACHER',
         requesterId: user?.userId as string
       };

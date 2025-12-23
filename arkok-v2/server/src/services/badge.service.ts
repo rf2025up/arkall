@@ -428,6 +428,107 @@ export class BadgeService {
   }
 
   /**
+   * 批量授予学生勋章
+   */
+  async batchAwardBadges(data: { studentIds: string[], badgeId: string, schoolId: string, reason?: string, awardedBy?: string }): Promise<any> {
+    const { studentIds, badgeId, schoolId, reason, awardedBy } = data;
+
+    // 1. 验证勋章是否存在
+    const badge = await this.prisma.badges.findFirst({
+      where: { id: badgeId, schoolId, isActive: true }
+    });
+    if (!badge) throw new Error('勋章不存在或已停用');
+
+    // 2. 检查这些学生是否已经拥有该勋章 (过滤掉已拥有的)
+    const existingAwards = await this.prisma.student_badges.findMany({
+      where: {
+        badgeId,
+        studentId: { in: studentIds }
+      },
+      select: { studentId: true }
+    });
+    const existingStudentIds = new Set(existingAwards.map(a => a.studentId));
+    const targetStudentIds = studentIds.filter(id => !existingStudentIds.has(id));
+
+    if (targetStudentIds.length === 0) {
+      return { success: true, message: '选择的学生均已拥有该勋章', awardedCount: 0 };
+    }
+
+    // 3. 事务处理
+    const result = await this.prisma.$transaction(async (tx) => {
+      const records = [];
+      const timestamp = new Date();
+
+      for (const studentId of targetStudentIds) {
+        const id = require('crypto').randomUUID();
+        // A. 创建勋章记录
+        const sb = await tx.student_badges.create({
+          data: {
+            id,
+            studentId,
+            badgeId,
+            awardedBy,
+            reason,
+            awardedAt: timestamp
+          },
+          include: {
+            students: { select: { id: true, name: true, className: true } }
+          }
+        });
+
+        // B. 增加学生积分
+        await tx.students.update({
+          where: { id: studentId },
+          data: {
+            points: { increment: 10 },
+            exp: { increment: 20 },
+            updatedAt: timestamp
+          }
+        });
+
+        // C. 同步成长记录 (5.0 规范)
+        await tx.task_records.create({
+          data: {
+            id: require('crypto').randomUUID(),
+            studentId,
+            schoolId,
+            type: 'CHALLENGE',
+            title: `获得勋章: ${badge.name}`,
+            content: {
+              badgeId: badge.id,
+              badgeName: badge.name,
+              badgeIcon: badge.icon,
+              teacherMessage: reason,
+              awardedBy,
+              taskDate: timestamp.toISOString().split('T')[0]
+            },
+            status: 'COMPLETED',
+            expAwarded: 20,
+            updatedAt: timestamp,
+            task_category: 'TASK'
+          }
+        });
+
+        records.push(sb);
+      }
+
+      return records;
+    });
+
+    // 4. 广播结果
+    this.broadcastToSchool(schoolId, {
+      type: 'BADGES_BATCH_AWARDED',
+      data: {
+        badge,
+        awardedCount: result.length,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+    return { success: true, awardedCount: result.length, records: result };
+  }
+
+  /**
    * 取消学生勋章
    */
   async revokeBadge(studentId: string, badgeId: string, schoolId: string): Promise<void> {

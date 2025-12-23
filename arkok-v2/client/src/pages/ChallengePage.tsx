@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ChevronLeft, Plus, Trophy, Target, Users, Zap, Crown, Star, Sparkles, ArrowRight, X, Swords, CheckCircle2, UserCheck, Award, Loader2, Search, Calendar, MessageSquare, Clock, XCircle } from 'lucide-react'
+import { ChevronLeft, Plus, Trophy, Target, Users, Zap, Crown, Star, Sparkles, ArrowRight, X, Swords, CheckCircle2, UserCheck, Award, Loader2, Search, Calendar, MessageSquare, Clock, XCircle, ArrowLeft } from 'lucide-react'
 import { apiService } from '../services/api.service'
 import { useAuth } from '../context/AuthContext'
+// 移除已删除的 MessageCenter 导入
 
 interface Challenge {
   id: string
@@ -68,22 +69,50 @@ const ChallengePage: React.FC = () => {
   })
 
   // 初始数据加载
-  const fetchData = async () => {
-    setLoading(true)
-    try {
-      const [challengesRes, studentsRes] = await Promise.all([
-        apiService.get(`/challenges?schoolId=${userInfo?.schoolId}`),
-        apiService.get(`/students?schoolId=${userInfo?.schoolId}&limit=100`)
-      ])
+  const fetchData = async (forceRefresh = false) => {
+    const hasData = challenges.length > 0 || students.length > 0;
+    if (!hasData) setLoading(true);
 
-      if (challengesRes.success) setChallenges(challengesRes.data as Challenge[])
-      if (studentsRes.success) {
-        const studentList = Array.isArray(studentsRes.data) ? studentsRes.data : (studentsRes.data as any).students || [];
-        setStudents(studentList.map((s: any) => ({
-          ...s,
-          avatarUrl: s.avatarUrl || s.avatar_url || '/avatar.jpg'
-        })));
+    try {
+      const challengeUrl = `/challenges?schoolId=${userInfo?.schoolId}`;
+      const studentUrl = `/students?schoolId=${userInfo?.schoolId}&limit=100`;
+
+      // 🚀 SWR 第一阶段
+      const [challengesRes, studentsRes] = await Promise.all([
+        apiService.get<any>(challengeUrl, {}, { useCache: !forceRefresh }),
+        apiService.get<any>(studentUrl, {}, { useCache: !forceRefresh })
+      ]);
+
+      const processData = (cRes: any, sRes: any) => {
+        if (cRes.success || (cRes as any)._fromCache) {
+          const cData = Array.isArray(cRes.data || cRes) ? cRes.data || cRes : (cRes.data as any)?.challenges || [];
+          setChallenges(cData as Challenge[]);
+        }
+        if (sRes.success || (sRes as any)._fromCache) {
+          const studentList = Array.isArray(sRes.data || sRes) ? sRes.data || sRes : (sRes.data as any)?.students || [];
+          setStudents(studentList.map((s: any) => ({
+            ...s,
+            avatarUrl: s.avatarUrl || s.avatar_url || '/avatar.jpg'
+          })));
+        }
+      };
+
+      processData(challengesRes, studentsRes);
+
+      // SWR 静默刷新
+      const isFromCache = (challengesRes as any)._fromCache || (studentsRes as any)._fromCache;
+      if (isFromCache) {
+        setLoading(false);
+        console.log('[SWR] ⚡ ChallengePage rendered from cache, revalidating...');
+        Promise.all([
+          apiService.get<any>(challengeUrl, {}, { useCache: false }),
+          apiService.get<any>(studentUrl, {}, { useCache: false })
+        ]).then(([fc, fs]) => {
+          processData(fc, fs);
+          console.log('[SWR] ✅ ChallengePage revalidated');
+        });
       }
+
     } catch (error) {
       console.error('Fetch error:', error)
     } finally {
@@ -160,8 +189,9 @@ const ChallengePage: React.FC = () => {
         }
 
         toast.success('挑战发布成功！');
+        apiService.invalidateCache('/challenges');
         setShowCreateModal(false);
-        fetchData();
+        fetchData(true);
         setNewChallenge({ title: '', description: '', type: 'PERSONAL', rewardPoints: 100, rewardExp: 50, studentIds: [] });
       }
     } catch (error) {
@@ -182,8 +212,9 @@ const ChallengePage: React.FC = () => {
 
       if (res.success) {
         toast.success(result === 'COMPLETED' ? '🎉 挑战成功！' : '挑战结束')
+        apiService.invalidateCache('/challenges');
         // 刷新数据
-        fetchData()
+        fetchData(true)
         // 更新本地参与者状态
         setParticipants(prev => prev.map(p =>
           p.studentId === studentId ? { ...p, result } : p
@@ -230,7 +261,7 @@ const ChallengePage: React.FC = () => {
     }, [])
 
     return (
-      <div className={`bg-white rounded-xl p-3 shadow-sm border transition-all ${isCompleted ? 'border-slate-100 opacity-60' : 'border-purple-100'}`}>
+      <div className={`bg-white rounded-3xl p-4 shadow-xl shadow-slate-200/50 border-2 transition-all ${isCompleted ? 'border-slate-100 opacity-60' : 'border-slate-50'}`}>
         {/* 卡片头部 */}
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isCompleted ? 'bg-slate-100' : 'bg-purple-100'}`}>
@@ -298,42 +329,70 @@ const ChallengePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
-      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100 px-5 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-            <ChevronLeft size={24} className="text-slate-600" />
-          </button>
-          <h1 className="text-lg font-bold text-slate-900">挑战赛场</h1>
+    <div className="min-h-screen w-full bg-[#F7F9FC] pb-24">
+      {/* === 统一头部 (橙色渐变) === */}
+      <header
+        className="pt-12 pb-16 px-5 rounded-b-[2.5rem] shadow-xl shadow-orange-500/10 relative overflow-hidden z-30"
+        style={{ background: 'linear-gradient(180deg, #FF7E36 0%, #FF9D5C 100%)' }}
+      >
+        {/* 背景装饰 */}
+        <div className="absolute top-0 right-0 p-4 opacity-10">
+          <Target size={140} className="text-white rotate-12" />
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-purple-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg shadow-purple-200 active:scale-95 transition-all flex items-center gap-1"
-        >
-          <Plus size={18} /> 发布挑战
-        </button>
+
+        <div className="relative z-10 flex flex-col gap-6">
+          {/* 顶栏 */}
+          <div className="flex justify-between items-center">
+            <button
+              onClick={() => navigate('/')}
+              className="w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-xl text-white active:scale-90 transition-transform"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <h1 className="text-lg font-black text-white">挑战赛场</h1>
+            <div className="w-10 h-10" /> {/* 占位平衡 */}
+          </div>
+
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-white text-orange-600 w-full py-4 rounded-2xl text-sm font-black shadow-lg shadow-orange-900/20 active:scale-95 transition-all flex items-center justify-center gap-2 border border-white"
+          >
+            <Plus size={18} /> 发布新挑战
+          </button>
+        </div>
       </header>
 
-      <main className="flex-1 p-4 pb-20 space-y-6">
-        {/* 顶部统计卡片 */}
-        <section className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-[2rem] p-6 text-white shadow-xl shadow-purple-200 relative overflow-hidden">
-          <div className="relative z-10 flex justify-between items-end">
-            <div>
-              <div className="text-purple-100 text-[10px] font-black uppercase tracking-widest mb-1">正在进行</div>
-              <div className="text-4xl font-black">{challenges.filter(c => c.status === 'ACTIVE').length}</div>
+      {/* 状态概览岛 */}
+      <div className="px-5 -mt-8 relative z-40">
+        <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 flex justify-around items-center shadow-xl shadow-orange-200/20 border border-white/80">
+          <div className="text-center">
+            <div className="text-2xl font-black text-orange-600 leading-none mb-1">
+              {challenges.filter(c => c.status === 'ACTIVE').length}
             </div>
-            <div className="text-right">
-              <div className="text-purple-100 text-[10px] font-black uppercase tracking-widest mb-1">已完赛</div>
-              <div className="text-4xl font-black">{challenges.filter(c => c.status === 'COMPLETED').length}</div>
-            </div>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">进行中</div>
           </div>
-          <Sparkles className="absolute -top-10 -right-10 w-48 h-48 text-white/10" />
-        </section>
+          <div className="w-px h-8 bg-slate-100" />
+          <div className="text-center">
+            <div className="text-2xl font-black text-slate-800 leading-none mb-1">
+              {challenges.filter(c => c.status === 'COMPLETED').length}
+            </div>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">已结束</div>
+          </div>
+          <div className="w-px h-8 bg-slate-100" />
+          <div className="text-center">
+            <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-500 border border-orange-100/50 flex items-center justify-center shadow-sm mx-auto mb-1">
+              <Trophy size={18} />
+            </div>
+            <div className="text-[10px] font-bold text-orange-600">荣誉墙</div>
+          </div>
+        </div>
+      </div>
 
+      <main className="p-5 space-y-6">
         {/* 标题 */}
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-1.5 h-6 bg-purple-600 rounded-full" />
-          <h2 className="text-base font-extrabold text-slate-800">所有挑战任务</h2>
+        <div className="flex items-center gap-2 px-1">
+          <div className="w-1.5 h-5 bg-orange-500 rounded-full" />
+          <h2 className="text-base font-black text-slate-800">所有挑战任务</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -341,8 +400,8 @@ const ChallengePage: React.FC = () => {
             <ChallengeCard key={c.id} challenge={c} />
           ))}
           {challenges.length === 0 && !loading && (
-            <div className="col-span-full py-12 text-center">
-              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="col-span-full py-12 text-center bg-white rounded-3xl border border-dashed border-slate-200">
+              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Target size={28} className="text-slate-300" />
               </div>
               <p className="text-slate-400 font-bold text-sm">暂无挑战，快去发布一个吧！</p>

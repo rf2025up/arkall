@@ -3,13 +3,14 @@ import {
   Trophy, Medal, Swords, Check,
   Bot, Flame, Plus, ChevronRight, ChevronDown,
   Camera, Printer, AlertCircle, Calendar,
-  BookOpen, Filter, Circle, Sparkles, ArrowLeft, X, Share2
+  BookOpen, Filter, Circle, Sparkles, ArrowLeft, X, Share2, Award
 } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { API } from '../services/api.service';
 import apiService from '../services/api.service';
+import { toast } from 'sonner';
 import InviteCardModal from '../components/InviteCardModal';
 import ParentBindingList from '../components/ParentBindingList';
 
@@ -163,6 +164,13 @@ interface StudentProfile {
     totalActiveDays: number;
     lastActiveDate: string;
   };
+  badges: Array<{
+    id: string;
+    name: string;
+    icon: string;
+    category: string;
+    awardedAt: string;
+  }>;
 }
 
 const StudentDetail: React.FC = () => {
@@ -197,6 +205,7 @@ const StudentDetail: React.FC = () => {
     timelineData: [],
     habitStats: [],
     semesterMap: [],
+    badges: [],
     summary: { joinDate: '', totalActiveDays: 0, lastActiveDate: '' }
   } : null);
 
@@ -212,6 +221,15 @@ const StudentDetail: React.FC = () => {
 
   // 邀请卡弹窗状态
   const [showInviteModal, setShowInviteModal] = useState(false);
+
+  // 勋章授予相关状态
+  const [showAwardModal, setShowAwardModal] = useState(false);
+  const [availableBadges, setAvailableBadges] = useState<any[]>([]);
+  const [awardForm, setAwardForm] = useState({
+    badgeId: '',
+    reason: ''
+  });
+  const [awardLoading, setAwardLoading] = useState(false);
 
   // 🆕 本月签到天数
   const [monthlyCheckinCount, setMonthlyCheckinCount] = useState<number>(0);
@@ -315,17 +333,75 @@ const StudentDetail: React.FC = () => {
         timelineData: [],
         habitStats: [],
         semesterMap: [],
+        badges: [],
         summary: { joinDate: '', totalActiveDays: 0, lastActiveDate: '' }
       }));
     } finally {
       setIsDataFetching(false);
       setIsLoading(false);
     }
-  }, [studentId]); // 关键修复：移除 studentProfile 依赖，防止死循环
+  }, [studentId, initialStudentData]); // 关键修复：移除 studentProfile 依赖，加入 initialStudentData
 
+  // 🆕 获取所有可用勋章（用于授予操作）
+  const fetchAvailableBadges = React.useCallback(async () => {
+    if (!user?.schoolId) return;
+    try {
+      const res = await apiService.get(`/badges?schoolId=${user.schoolId}`);
+      if (res.success) {
+        const badgeList = Array.isArray(res.data)
+          ? res.data
+          : (res.data as any)?.badges || res.data || [];
+        setAvailableBadges(badgeList);
+      }
+    } catch (error) {
+      console.error('[STUDENT DETAIL] Fetch badges failed:', error);
+    }
+  }, [user?.schoolId]);
+
+  // 🆕 授予勋章处理函数
+  const handleAwardBadge = async () => {
+    if (!studentId || !awardForm.badgeId) {
+      toast.error('请选择一个勋章');
+      return;
+    }
+
+    setAwardLoading(true);
+    try {
+      // 🚀 直接复用批量接口（单人模式）
+      const res = await apiService.post('/badges/award/batch', {
+        badgeId: awardForm.badgeId,
+        studentIds: [studentId],
+        schoolId: user?.schoolId,
+        reason: awardForm.reason,
+        awardedBy: user?.userId
+      });
+
+      if (res.success) {
+        toast.success('勋章授予成功！');
+        setShowAwardModal(false);
+        setAwardForm({ badgeId: '', reason: '' });
+        fetchStudentProfile(); // 刷新档案中的勋章列表
+      } else {
+        toast.error(res.message || '授予失败');
+      }
+    } catch (error) {
+      console.error('[STUDENT DETAIL] Award failed:', error);
+      toast.error('授予失败，请检查网络');
+    } finally {
+      setAwardLoading(false);
+    }
+  };
+
+  // --- 5. 初始加载 ---
   useEffect(() => {
     fetchStudentProfile();
   }, [fetchStudentProfile]);
+
+  useEffect(() => {
+    if (showAwardModal) {
+      fetchAvailableBadges();
+    }
+  }, [showAwardModal, fetchAvailableBadges]);
 
   // 🆕 获取本月签到天数
   useEffect(() => {
@@ -803,6 +879,79 @@ const StudentDetail: React.FC = () => {
       <div className="absolute inset-0 rounded-full border border-dashed border-gray-300 opacity-50"></div>
       <div className="absolute inset-4 rounded-full border border-dashed border-gray-300 opacity-50"></div>
       <div className="w-[60px] h-[60px] bg-purple-500/20 border-2 border-purple-500 transform rotate-45 skew-x-12 rounded-lg"></div>
+      {/* 勋章授予弹窗 */}
+      {showAwardModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
+                <Award className="text-amber-500" /> 授予荣誉勋章
+              </h3>
+              <button
+                onClick={() => setShowAwardModal(false)}
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-slate-400" />
+              </button>
+            </div>
+
+            <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">选择勋章类型</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {availableBadges.map(badge => (
+                    <button
+                      key={badge.id}
+                      onClick={() => setAwardForm({ ...awardForm, badgeId: badge.id })}
+                      className={`p-3 rounded-2xl border-2 text-left transition-all flex items-center gap-2 ${awardForm.badgeId === badge.id
+                        ? 'border-amber-500 bg-amber-50'
+                        : 'border-slate-50 bg-slate-50 hover:border-slate-200'
+                        }`}
+                    >
+                      <span className="text-xl">{badge.icon}</span>
+                      <span className={`text-xs font-bold ${awardForm.badgeId === badge.id ? 'text-amber-700' : 'text-slate-600'}`}>
+                        {badge.name}
+                      </span>
+                    </button>
+                  ))}
+                  {availableBadges.length === 0 && (
+                    <p className="col-span-2 text-center text-xs text-slate-400 py-4 font-bold">
+                      暂无可用勋章，请先在勋章管理页创建
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">授予寄语 (可选)</label>
+                <textarea
+                  placeholder="写下对孩子的鼓励吧..."
+                  value={awardForm.reason}
+                  onChange={(e) => setAwardForm({ ...awardForm, reason: e.target.value })}
+                  rows={3}
+                  className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-amber-500 resize-none placeholder:text-slate-300"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-8">
+              <button
+                onClick={() => setShowAwardModal(false)}
+                className="flex-1 py-4 bg-slate-100 text-slate-500 font-bold rounded-2xl active:scale-95 transition-all"
+              >
+                返回
+              </button>
+              <button
+                onClick={handleAwardBadge}
+                disabled={awardLoading || !awardForm.badgeId}
+                className="flex-1 py-4 bg-amber-500 text-white font-bold rounded-2xl shadow-lg shadow-amber-200 active:scale-95 transition-all disabled:opacity-50 disabled:shadow-none"
+              >
+                {awardLoading ? '正在授予...' : '确认授予'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -976,25 +1125,39 @@ const StudentDetail: React.FC = () => {
               )}
 
               {/* 所获勋章 */}
-              <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-bold text-gray-700 flex items-center gap-2">
-                    <Medal className="w-4 h-4 text-yellow-500" /> 所获勋章
+              <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                    <Medal className="w-4 h-4 text-amber-500" /> 成就勋章
                   </h3>
-                  <span className="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-500">
-                    {growthData.badges.length} 枚
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowAwardModal(true)}
+                      className="text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full font-black flex items-center gap-0.5 active:scale-95 transition-transform"
+                    >
+                      <Plus className="w-2.5 h-2.5" /> 授予
+                    </button>
+                    <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 font-black">
+                      {studentProfile?.badges?.length || 0} 枚
+                    </span>
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {growthData.badges.length > 0 ? (
-                    growthData.badges.map((badge, index) => (
-                      <div key={`${badge}-${index}`} className="bg-yellow-50 border border-yellow-100 rounded-lg p-2 text-xs font-bold text-yellow-700 text-center">
-                        {badge}
+                <div className="grid grid-cols-4 gap-3">
+                  {(studentProfile?.badges || []).length > 0 ? (
+                    studentProfile?.badges.map((badge, index) => (
+                      <div key={`${badge.id}-${index}`} className="flex flex-col items-center gap-1.5 active:scale-95 transition-transform group">
+                        <div className="w-12 h-12 bg-amber-50 rounded-2xl border border-amber-100 flex items-center justify-center text-2xl shadow-sm group-hover:bg-amber-100 transition-colors">
+                          {badge.icon}
+                        </div>
+                        <span className="text-[10px] font-black text-slate-600 truncate w-full text-center">
+                          {badge.name}
+                        </span>
                       </div>
                     ))
                   ) : (
-                    <div className="col-span-2 text-center py-4 text-gray-400 text-xs">
-                      暂无勋章记录
+                    <div className="col-span-4 text-center py-6">
+                      <div className="text-3xl grayscale opacity-20 mb-2">🏅</div>
+                      <p className="text-[10px] font-bold text-slate-300">还没有获得勋章哦，加油！</p>
                     </div>
                   )}
                 </div>

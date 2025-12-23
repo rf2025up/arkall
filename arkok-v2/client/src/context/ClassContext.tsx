@@ -51,23 +51,13 @@ export const ClassProvider: React.FC<ClassProviderProps> = ({ children }) => {
   const [availableClasses, setAvailableClasses] = useState<ClassInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 🆕 智能路由逻辑：基于师生绑定的默认视图
+  // 🆕 智能路由逻辑：初始视图设置
   useEffect(() => {
-    if (user) {
-      // 🆕 优先检查localStorage中是否有保存的班级
-      const savedClass = localStorage.getItem('current_class');
-
+    if (user && !localStorage.getItem('view_mode')) {
       if (user.role === 'TEACHER') {
-        // 老师默认查看"我的学生"
         setViewMode('MY_STUDENTS');
-        // 只有当localStorage中没有保存的班级时才设置为ALL
-        if (!savedClass) {
-          setCurrentClass('ALL');  // 不再依赖班级名
-        }
       } else if (user.role === 'ADMIN') {
-        // 管理员默认查看全校
         setViewMode('ALL_SCHOOL');
-        setCurrentClass('ALL');
       }
     }
   }, [user]);

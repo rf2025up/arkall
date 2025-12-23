@@ -85,6 +85,7 @@ export class BadgeRoutes {
     this.router.put('/:id', authenticateToken(this.authService), validateUser, this.updateBadge.bind(this));
     this.router.delete('/:id', authenticateToken(this.authService), validateUser, this.deleteBadge.bind(this));
     this.router.post('/award', authenticateToken(this.authService), validateUser, this.awardBadge.bind(this));
+    this.router.post('/award/batch', authenticateToken(this.authService), validateUser, this.batchAward.bind(this));
     this.router.delete('/revoke', authenticateToken(this.authService), validateUser, this.revokeBadge.bind(this));
     this.router.get('/student/:studentId', authenticateToken(this.authService), validateUser, this.getStudentBadges.bind(this));
     this.router.get('/available/:studentId', authenticateToken(this.authService), validateUser, this.getAvailableBadges.bind(this));
@@ -344,6 +345,43 @@ export class BadgeRoutes {
       };
       const statusCode = error instanceof Error && ['勋章不存在', '学生不存在'].includes(error.message) ? 404 : 500;
       res.status(statusCode).json(response);
+    }
+  }
+
+  /**
+   * 批量授予学生勋章
+   */
+  private async batchAward(req: Request, res: Response): Promise<void> {
+    try {
+      const data = req.body;
+
+      if (!data.studentIds || !data.badgeId || !data.schoolId) {
+        const response: BadgeResponse = {
+          success: false,
+          message: '学生IDs、勋章ID和学校ID不能为空'
+        };
+        res.status(400).json(response);
+        return;
+      }
+
+      const result = await this.badgeService.batchAwardBadges({
+        ...data,
+        awardedBy: req.user?.userId
+      });
+
+      const response: BadgeResponse = {
+        success: true,
+        message: '批量授予勋章成功',
+        data: result
+      };
+      res.status(200).json(response);
+    } catch (error) {
+      console.error('Batch award badge error:', error);
+      const response: BadgeResponse = {
+        success: false,
+        message: error instanceof Error ? error.message : '批量授予勋章失败'
+      };
+      res.status(500).json(response);
     }
   }
 

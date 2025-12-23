@@ -279,6 +279,15 @@ export class ParentService {
         });
         const timeline = this.buildTimeline(filteredRecords, habitLogs, pkMatches, badges, studentId);
 
+        // 获取今日点赞和留言状态
+        const summary = await prisma.daily_summaries.findFirst({
+            where: {
+                studentId,
+                parentId,
+                date: today.toISOString().split('T')[0]
+            }
+        });
+
         // 计算今日积分
         const todayExp = records.reduce((sum, r) => sum + (r.expAwarded || 0), 0);
 
@@ -286,6 +295,8 @@ export class ParentService {
             date: today.toISOString().split('T')[0],
             weekday: ['日', '一', '二', '三', '四', '五', '六'][today.getDay()],
             todayExp,
+            parentLiked: !!summary?.parentLiked,
+            parentComment: summary?.parentComment || null,
             timeline
         };
     }

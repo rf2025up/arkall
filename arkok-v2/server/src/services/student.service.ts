@@ -143,6 +143,17 @@ export class StudentService {
 
       const students = await this.prisma.students.findMany({
         where: whereCondition,
+        select: {
+          id: true,
+          name: true,
+          className: true,
+          avatarUrl: true,
+          points: true,
+          exp: true,
+          level: true,
+          teacherId: true,
+          isActive: true,
+        },
         orderBy: [
           { exp: 'desc' },
           { name: 'asc' },
@@ -208,7 +219,8 @@ export class StudentService {
         allHabits,
         studentHabitLogs,
         latestLessonPlan,
-        latestOverride
+        latestOverride,
+        student_badges
       ] = await Promise.all([
         // 1. 学生基础信息
         this.prisma.students.findFirst({
@@ -332,6 +344,17 @@ export class StudentService {
         this.prisma.task_records.findFirst({
           where: { studentId, schoolId, isOverridden: true },
           orderBy: { updatedAt: 'desc' }
+        }),
+
+        // 11. 🆕 勋章数据
+        this.prisma.student_badges.findMany({
+          where: { studentId },
+          include: {
+            badges: {
+              select: { id: true, name: true, icon: true, category: true }
+            }
+          },
+          orderBy: { awardedAt: 'desc' }
         })
       ]);
 
@@ -490,6 +513,15 @@ export class StudentService {
 
         // 🆕 过关地图数据
         semesterMap: Object.values(semesterMap),
+
+        // 🆕 勋章数据
+        badges: student_badges.map(sb => ({
+          id: sb.badgeId,
+          name: sb.badges.name,
+          icon: sb.badges.icon,
+          category: sb.badges.category,
+          awardedAt: sb.awardedAt
+        })),
 
         // 综合数据
         summary: {

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Check, Settings, Plus, Trash2, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Check, Settings, Plus, Trash2, X, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useClass } from '../context/ClassContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import apiService from '../services/api.service';
 import { ApiResponse } from '../types/api';
-import MessageCenter from '../components/MessageCenter';
+// 移除已删除的 MessageCenter 导入
 
 // 习惯图标常量 - 完全复制V1的HABIT_ICONS
 const HABIT_ICONS = ['🌅', '📚', '🏃', '💧', '🧘', '🎯', '✏️', '🎨', '🎵', '💡', '🌟', '🥗', '💪', '🧠', '🗣️'];
@@ -68,6 +69,7 @@ interface CheckinFeedback {
 const HabitPage: React.FC = () => {
   const { user } = useAuth();
   const { currentClass, viewMode, selectedTeacherId } = useClass();
+  const navigate = useNavigate();
 
   // --- 状态管理 ---
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -82,105 +84,84 @@ const HabitPage: React.FC = () => {
   const [isAddMode, setIsAddMode] = useState(false);
   const [editForm, setEditForm] = useState<{ id?: string, name: string, icon: string }>({ name: '', icon: HABIT_ICONS[0] });
 
-  // --- 数据获取 - 分离加载，学生数据优先 ---
-  useEffect(() => {
-    console.log('[HABIT_PAGE] 开始加载数据 - 学生优先策略');
-    setLoading(true);
-    let hasStudents = false;
+  // --- 统一数据获取 - 并发优化 ---
+  const fetchData = async (forceRefresh = false) => {
+    if (!user?.schoolId) return;
 
-    // 1. 优先加载学生数据（必须成功）
-    const fetchStudents = async () => {
-      try {
-        console.log('[HABIT_PAGE] 正在加载学生数据...', '当前班级:', currentClass, '视图模式:', viewMode);
+    // 只有在完全没有数据且不是 SWR 命中的情况下才显示全屏 loading
+    const hasData = habits.length > 0 || students.length > 0;
+    if (!hasData) setLoading(true);
 
-        // 🔒 习惯页安全锁定：始终只显示当前老师的学生，不允许全校视图
-        // 因为习惯打卡是针对本班学生的教学活动，不应该涉及全校学生或抢人功能
-        const url = `/students?scope=MY_STUDENTS&teacherId=${user?.id || ''}`;
-        console.log('🔒 [HABIT_SECURITY] 习惯页只显示本班学生，URL:', url);
-        const studentsResponse = await apiService.get(url);
+    try {
+      const studentUrl = `/students?scope=MY_STUDENTS&teacherId=${user?.id || ''}`;
+      const habitUrl = `/habits?schoolId=${user?.schoolId || ''}`;
 
-        if (isApiResponse(studentsResponse) && studentsResponse.data) {
-          const studentsData = extractStudentsData(studentsResponse.data);
-          // 为所有学生设置默认头像，使用过关页相同的格式
-          const studentsWithAvatar = studentsData.map((student: Student) => ({
-            ...student,
-            avatarUrl: student.avatarUrl || '/avatar.jpg'
-          }));
-          console.log('✅ [HABIT_PAGE] 学生数据加载成功:', studentsWithAvatar.length, '名学生');
-          setStudents(studentsWithAvatar);
-          hasStudents = true;
+      // 🚀 第一阶段：尝试从缓存加载 (SWR)
+      const [studentsRes, habitsRes] = await Promise.all([
+        apiService.get<any>(studentUrl, {}, { useCache: !forceRefresh }),
+        apiService.get<any>(habitUrl, {}, { useCache: !forceRefresh }).catch(() => ({ success: false }))
+      ]);
 
-          // 学生数据加载成功即可关闭loading，不等待习惯数据
-          setLoading(false);
-        } else {
-          console.warn('⚠️ [HABIT_PAGE] 学生数据格式异常');
-          setStudents([]);
+      const processData = (sRes: any, hRes: any) => {
+        if (sRes.success || (sRes as any)._fromCache) {
+          const sData = extractStudentsData(sRes.data || sRes);
+          setStudents(sData.map(s => ({ ...s, avatarUrl: s.avatarUrl || '/avatar.jpg' })));
         }
-      } catch (error) {
-        console.error('❌ [HABIT_PAGE] 学生数据加载失败:', error);
-        setStudents([]);
-      }
-    };
-
-    // 2. 异步加载习惯数据（失败不影响页面显示）
-    const fetchHabits = async () => {
-      try {
-        console.log('[HABIT_PAGE] 正在加载习惯数据...');
-        // 为习惯数据设置较短的超时时间
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('习惯数据请求超时')), 5000)
-        );
-
-        const habitsResponse = await Promise.race([apiService.get(`/habits?schoolId=${user?.schoolId || ''}`), timeoutPromise]);
-
-        if (isApiResponse(habitsResponse) && habitsResponse.data) {
-          const habitsData = extractHabitsData(habitsResponse.data);
-          setHabits(habitsData);
-          if (habitsData.length > 0) {
-            if (!selectedHabitId) {
-              setSelectedHabitId(habitsData[0].id);
-            }
-            console.log('✅ [HABIT_PAGE] 习惯数据加载成功:', habitsData.length, '个习惯');
+        if (hRes.success || (hRes as any)._fromCache) {
+          const hData = extractHabitsData(hRes.data || hRes);
+          if (hData.length > 0) {
+            setHabits(hData);
+            if (!selectedHabitId) setSelectedHabitId(hData[0].id);
           } else {
-            console.log('ℹ️ [HABIT_PAGE] 习惯数据为空，使用默认习惯');
             loadDefaultHabits();
           }
-        } else {
-          console.warn('⚠️ [HABIT_PAGE] 习惯数据格式异常，使用默认习惯');
-          loadDefaultHabits();
         }
-      } catch (error) {
-        console.warn('⚠️ [HABIT_PAGE] 习惯数据加载失败，使用默认习惯:', error);
-        loadDefaultHabits();
+      };
+
+      processData(studentsRes, habitsRes);
+
+      // 如果命中了缓存，立即停止 Loading 并展示“旧”布局
+      const isFromCache = (studentsRes as any)._fromCache || (habitsRes as any)._fromCache;
+      if (isFromCache) {
+        setLoading(false);
+        console.log('[SWR] ⚡ HabitPage rendered from cache, refreshing...');
+
+        // 静默刷新
+        Promise.all([
+          apiService.get<any>(studentUrl, {}, { useCache: false }),
+          apiService.get<any>(habitUrl, {}, { useCache: false })
+        ]).then(([fs, fh]) => {
+          processData(fs, fh);
+          console.log('[SWR] ✅ HabitPage revalidated');
+        });
       }
-    };
 
-
-    // 3. 默认习惯数据
-    const loadDefaultHabits = () => {
-      const defaultHabits: Habit[] = [
-        { id: '1', name: '早起', icon: '🌅' },
-        { id: '2', name: '阅读', icon: '📚' },
-        { id: '3', name: '运动', icon: '🏃' },
-        { id: '4', name: '整理', icon: '🧹' },
-        { id: '5', name: '复习', icon: '📖' }
-      ];
-      setHabits(defaultHabits);
-      if (defaultHabits.length > 0 && !selectedHabitId) {
-        setSelectedHabitId(defaultHabits[0].id);
-      }
-    };
-
-    // 4. 并发执行，但学生数据优先
-    fetchStudents();          // 立即执行学生数据加载
-    fetchHabits();             // 异步执行习惯数据加载
-
-    // 5. 确保最多3秒后关闭loading（兜底机制）
-    setTimeout(() => {
+    } catch (error) {
+      console.error('❌ [HABIT_PAGE] 数据加载出错:', error);
+      loadDefaultHabits();
+    } finally {
       setLoading(false);
-    }, 3000);
+    }
+  };
 
-  }, [currentClass, user?.schoolId]); // 不依赖 selectedHabitId，避免选择习惯时触发重新加载
+  const loadDefaultHabits = () => {
+    const defaultHabits: Habit[] = [
+      { id: '1', name: '早起', icon: '🌅' },
+      { id: '2', name: '阅读', icon: '📚' },
+      { id: '3', name: '运动', icon: '🏃' },
+      { id: '4', name: '整理', icon: '🧹' },
+      { id: '5', name: '复习', icon: '📖' }
+    ];
+    setHabits(defaultHabits);
+    if (defaultHabits.length > 0 && !selectedHabitId) {
+      setSelectedHabitId(defaultHabits[0].id);
+    }
+    console.log('ℹ️ [HABIT_PAGE] 已加载默认习惯数据');
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [currentClass, user?.schoolId, user?.id]);
 
   // --- 计算属性 ---
   const selectedHabit = habits.find(h => h.id === selectedHabitId);
@@ -206,6 +187,7 @@ const HabitPage: React.FC = () => {
         });
 
         if (response.success) {
+          apiService.invalidateCache(); // 或者更精细地失效相应 key
           const selectedCount = selectedStudentIds.size;
           const habitName = selectedHabit?.name || '习惯';
           setSelectedStudentIds(new Set());
@@ -250,6 +232,7 @@ const HabitPage: React.FC = () => {
       try {
         const response = await apiService.delete(`/habits/${id}`);
         if (response.success) {
+          apiService.invalidateCache('/habits');
           const newHabits = habits.filter(h => h.id !== id);
           setHabits(newHabits);
           if (selectedHabitId === id && newHabits.length > 0) {
@@ -287,6 +270,7 @@ const HabitPage: React.FC = () => {
           expReward: 10 // 默认经验奖励
         });
         if (response.success && response.data) {
+          apiService.invalidateCache('/habits');
           const newHabit: Habit = {
             id: (response.data as { id?: string }).id || `h-${Date.now()}`,
             name: editForm.name,
@@ -309,9 +293,11 @@ const HabitPage: React.FC = () => {
       } else if (editForm.id) {
         const response = await apiService.put(`/habits/${editForm.id}`, {
           name: editForm.name,
-          icon: editForm.icon
+          icon: editForm.icon,
+          schoolId: user?.schoolId || ''  // 后端需要 schoolId 验证权限
         });
         if (response.success) {
+          apiService.invalidateCache('/habits');
           const newHabits = habits.map(h => h.id === editForm.id ? { ...h, name: editForm.name, icon: editForm.icon } : h);
           setHabits(newHabits);
         } else {
@@ -361,52 +347,66 @@ const HabitPage: React.FC = () => {
   return (
     <ProtectedRoute>
       {/* V1原版样式：min-h-screen bg-background */}
-      <div className="min-h-screen bg-background pb-24">
+      {/* V1增强样式：使用 4tab.html 推荐的橙色渐变风格 */}
+      <div className="min-h-screen bg-[#F7F9FC] pb-24">
 
-        {/* === Header (与备课/过关页统一) === */}
+        {/* === 统一头部 (橙色渐变) === */}
         <header
-          className="pt-8 pb-5 px-6 rounded-b-[30px] shadow-lg shadow-orange-200/20 relative overflow-hidden mb-6"
-          style={{ background: 'linear-gradient(160deg, #FF8C00 0%, #FF5500 100%)' }}
+          className="pt-12 pb-6 px-5 rounded-b-[2.5rem] shadow-xl shadow-orange-500/10 relative overflow-hidden mb-6 z-30"
+          style={{ background: 'linear-gradient(180deg, #FF7E36 0%, #FF9D5C 100%)' }}
         >
-          {/* 背景纹理装饰 */}
-          <div className="absolute inset-0 pointer-events-none opacity-40">
-            <div className="absolute -top-1/4 -right-1/4 w-full h-full bg-white/10 blur-[80px] rounded-full" />
+          {/* 背景装饰 */}
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+            <Settings size={120} className="text-white rotate-12" />
           </div>
 
-          {/* 顶栏 */}
-          <div className="relative z-10 flex justify-between items-center">
-            <h1 className="text-xl font-black text-white tracking-tight drop-shadow-sm">好习惯打卡</h1>
-            <MessageCenter variant="header" />
+          <div className="relative z-10 flex flex-col gap-4">
+            {/* 顶栏 */}
+            <div className="flex justify-between items-center">
+              <button
+                onClick={() => navigate('/')}
+                className="w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-xl text-white active:scale-90 transition-transform"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <h1 className="text-lg font-black text-white">习惯打卡</h1>
+              <div className="w-10 h-10" /> {/* 占位保持标题居中 */}
+            </div>
+
+            {/* 功能区：当前习惯选择 (Header 内部) */}
+            <div
+              onClick={() => setIsManageOpen(true)}
+              className="bg-white/20 backdrop-blur-md self-center px-5 py-2 rounded-full border border-white/30 flex items-center gap-2 cursor-pointer active:scale-95 transition-all"
+            >
+              <span className="text-xl">
+                {habits.find(h => h.id === selectedHabitId)?.icon || '📋'}
+              </span>
+              <span className="text-sm font-bold text-white">
+                {habits.find(h => h.id === selectedHabitId)?.name || '选择习惯'}
+              </span>
+              <span className="text-white/60 text-[10px]">▼</span>
+            </div>
           </div>
         </header>
 
-        {/* === 习惯选择器 - 悬浮卡片 === */}
-        <div className="px-5 -mt-10 relative z-20 mb-4">
-          <div className="bg-white rounded-2xl shadow-lg p-4 flex items-center gap-3">
-            <div className="flex-1 flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
-              <span className="text-2xl">{habits.find(h => h.id === selectedHabitId)?.icon || '📋'}</span>
-              <select
-                value={selectedHabitId}
-                onChange={(e) => setSelectedHabitId(e.target.value)}
-                className="flex-1 bg-transparent text-gray-800 font-bold text-base outline-none appearance-none cursor-pointer"
-              >
-                {habits.map(h => (
-                  <option key={String(h.id)} value={String(h.id)}>{h.name}</option>
-                ))}
-              </select>
-            </div>
-            <button
-              onClick={() => setIsManageOpen(true)}
-              className="bg-orange-50 text-orange-500 p-2.5 rounded-xl hover:bg-orange-100 transition-colors border border-orange-100"
-            >
-              <Settings size={18} />
-            </button>
-          </div>
-        </div>
+        {/* 隐藏的 Select 用于状态变更 (保持原有逻辑) */}
+        <select
+          value={selectedHabitId}
+          onChange={(e) => setSelectedHabitId(e.target.value)}
+          className="hidden"
+        >
+          {habits.map(h => (
+            <option key={String(h.id)} value={String(h.id)}>{h.name}</option>
+          ))}
+        </select>
 
-        {/* === Student Grid === */}
-        <div className="px-4 relative z-20">
-          <div className="bg-white rounded-2xl shadow-lg p-4 min-h-[50vh]">
+        {/* === 内容区 - 统一背景卡片 === */}
+        <div className="px-5 relative z-20">
+          <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-6 min-h-[55vh] border border-white">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-1.5 h-4 bg-[#FF7E36] rounded-full"></div>
+              <h3 className="text-sm font-black text-slate-800">选择打卡学员</h3>
+            </div>
             <div className="grid grid-cols-4 gap-4">
               {students.map(student => {
                 const isSelected = selectedStudentIds.has(student.id);
@@ -414,35 +414,34 @@ const HabitPage: React.FC = () => {
                   <div
                     key={student.id}
                     onClick={() => toggleStudent(student.id)}
-                    className="flex flex-col items-center space-y-2 cursor-pointer active:scale-95 transition-transform"
+                    className="flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform group"
                   >
-                    <div className={`relative w-14 h-14 rounded-full transition-all duration-200 ${isSelected ? 'ring-4 ring-primary ring-offset-2' : 'ring-2 ring-gray-100'}`}>
+                    <div className={`relative w-14 h-14 rounded-2xl transition-all duration-300 shadow-sm ${isSelected ? 'ring-4 ring-orange-500 ring-offset-2' : 'bg-slate-50 border border-slate-100'}`}>
                       <img
                         src={student.avatarUrl || '/avatar.jpg'}
                         onError={(e) => { e.currentTarget.src = '/avatar.jpg'; }}
-                        className={`w-full h-full rounded-full bg-gray-200 object-cover select-none pointer-events-none ${isSelected ? 'opacity-100' : 'opacity-70 grayscale'}`}
+                        className={`w-full h-full rounded-2xl bg-slate-200 object-cover select-none pointer-events-none ${isSelected ? 'opacity-100' : 'opacity-40 grayscale group-hover:opacity-60'}`}
                         alt={student.name}
                         draggable={false}
-                        onContextMenu={(e) => e.preventDefault()}
                       />
                       {isSelected && (
-                        <div className="absolute -top-1 -right-1 bg-primary rounded-full p-0.5 border-2 border-white shadow-sm">
-                          <Check size={10} className="text-white" strokeWidth={4} />
+                        <div className="absolute -top-2 -right-2 bg-orange-500 rounded-full p-1 border-2 border-white shadow-md">
+                          <Check size={12} className="text-white" strokeWidth={4} />
                         </div>
                       )}
                     </div>
-                    <span className={`text-xs text-center truncate w-full ${isSelected ? 'text-primary font-bold' : 'text-gray-400'}`}>
+                    <span className={`text-[10px] text-center font-black truncate w-full ${isSelected ? 'text-orange-600' : 'text-slate-400'}`}>
                       {student.name}
                     </span>
                   </div>
                 )
               })}
             </div>
-            <div className="mt-3 flex justify-between items-center">
-              <span className="text-xs text-gray-500">本班学生：{students.length} 位</span>
+            <div className="mt-8 flex justify-between items-center bg-slate-50 p-4 rounded-2xl">
+              <span className="text-[10px] font-bold text-slate-400">本班学生：{students.length} 位</span>
               <button
                 onClick={() => { if (allSelected) { setSelectedStudentIds(new Set()); } else { setSelectedStudentIds(new Set(students.map(s => s.id))); } }}
-                className={`px-3 py-1 rounded-xl text-xs font-bold ${allSelected ? 'bg-gray-100 text-gray-700' : 'bg-primary/10 text-primary'}`}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${allSelected ? 'bg-slate-200 text-slate-600' : 'bg-orange-500 text-white shadow-lg shadow-orange-200'}`}
               >
                 {allSelected ? '取消全选' : '一键全选'}
               </button>
@@ -450,17 +449,17 @@ const HabitPage: React.FC = () => {
           </div>
         </div>
 
-        {/* === Confirm Button (V1原版样式) === */}
-        <div className="fixed bottom-20 left-0 right-0 px-6 z-30 flex justify-center">
+        {/* === Confirm Button (V1增强样式) === */}
+        <div className="fixed bottom-24 left-0 right-0 px-6 z-40 flex justify-center">
           <button
             onClick={handleConfirm}
             disabled={selectedStudentIds.size === 0}
-            className={`px-6 py-2.5 rounded-xl font-bold text-white shadow-lg transition-all flex items-center justify-center text-sm ${selectedStudentIds.size > 0
-              ? 'bg-gray-900 hover:bg-gray-800 active:scale-95'
-              : 'bg-gray-300 cursor-not-allowed'
+            className={`w-full max-w-sm py-4 rounded-2xl font-black text-white shadow-2xl transition-all flex items-center justify-center gap-2 ${selectedStudentIds.size > 0
+              ? 'bg-gradient-to-r from-orange-500 to-orange-600 shadow-orange-200 active:scale-95'
+              : 'bg-slate-300 cursor-not-allowed shadow-none'
               }`}
           >
-            确认打卡 ({selectedStudentIds.size})
+            确认打卡 ({selectedStudentIds.size}人)
           </button>
         </div>
 

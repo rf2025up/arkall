@@ -137,7 +137,7 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
 
         {/* 🆕 积分调整功能 - 在"我的学生"视图或"全权代理模式"下显示 */}
         {(viewMode === 'MY_STUDENTS' || isProxyMode) && (
-          <div className="p-5 border-t border-gray-100 bg-white pb-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]">
+          <div className="p-5 border-t border-gray-100 bg-white pb-14 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]">
             {/* 积分调整 */}
             <div className="flex gap-3 items-center mb-3">
               <div className="flex-1 relative">

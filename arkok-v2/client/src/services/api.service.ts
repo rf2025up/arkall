@@ -20,6 +20,8 @@ const API_BASE_URL = '/api';
 // --- [AUTH FIX] 强制重写：使用Axios和拦截器的API服务 ---
 export class ApiService {
   private api: AxiosInstance;
+  private cache: Map<string, { data: any, timestamp: number }> = new Map();
+  private readonly CACHE_TTL = 1000 * 60 * 5; // 5分钟有效期
 
   constructor(baseURL: string = API_BASE_URL) {
     // 创建Axios实例
@@ -128,13 +130,50 @@ export class ApiService {
   }
 
   // HTTP方法
-  async get<T>(endpoint: string, params?: Record<string, any>): Promise<ApiResponse<T>> {
+  async get<T>(endpoint: string, params?: Record<string, any>, options?: { useCache?: boolean }): Promise<ApiResponse<T>> {
+    const cacheKey = `${endpoint}${JSON.stringify(params || {})}`;
+
+    // 🚀 SWR 策略：如果命中缓存，立即返回缓存数据
+    if (options?.useCache && this.cache.has(cacheKey)) {
+      const cached = this.cache.get(cacheKey)!;
+      // 这里的逻辑是：即便返回了缓存，外层组件仍然可以根据需要再次触发 fetch 来刷新
+      // 为了保持兼容性，我们这里返回一个带有特殊标记的 response
+      console.log(`[CACHE] 🎯 Hit: ${cacheKey}`);
+      return {
+        ...cached.data,
+        _fromCache: true
+      };
+    }
+
     try {
       const response: AxiosResponse<ApiResponse<T>> = await this.api.get(endpoint, { params });
+
+      // 存储缓存
+      if (options?.useCache && response.data.success) {
+        this.cache.set(cacheKey, { data: response.data, timestamp: Date.now() });
+      }
+
       return response.data;
     } catch (error) {
       console.error(`[AUTH FIX] GET ${endpoint} failed:`, error);
       throw this.handleError(error);
+    }
+  }
+
+  /**
+   * 🆕 强制失效特定缓存 (用于突变后)
+   */
+  public invalidateCache(partialKey?: string) {
+    if (!partialKey) {
+      this.cache.clear();
+      console.log('[CACHE] 🧹 All cleared');
+      return;
+    }
+    for (const key of this.cache.keys()) {
+      if (key.includes(partialKey)) {
+        this.cache.delete(key);
+        console.log(`[CACHE] 🗑️ Invalidated: ${key}`);
+      }
     }
   }
 
