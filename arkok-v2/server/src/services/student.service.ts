@@ -605,7 +605,7 @@ export class StudentService {
           schools: {
             connect: { id: studentData.schoolId }
           },
-          avatarUrl: `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(studentData.name)}`,
+          avatarUrl: '/avatar.jpg',
           isActive: true,
           updatedAt: new Date()
         },
