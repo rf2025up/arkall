@@ -135,23 +135,9 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
             </div>
           )}
 
-        {/* 🆕 积分调整 + 签到功能 - 在"我的学生"视图或"全权代理模式"下显示 */}
+        {/* 🆕 积分调整功能 - 在"我的学生"视图或"全权代理模式"下显示 */}
         {(viewMode === 'MY_STUDENTS' || isProxyMode) && (
           <div className="p-5 border-t border-gray-100 bg-white pb-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]">
-            {/* 🆕 签到按钮 */}
-            {onCheckin && (
-              <button
-                onClick={() => {
-                  onCheckin(selectedStudents.map(s => s.id));
-                  onClose();
-                }}
-                className="w-full bg-green-500 text-white font-bold rounded-xl py-3.5 mb-3 hover:bg-green-600 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2"
-              >
-                <CalendarCheck size={20} />
-                批量签到 ({selectedStudents.length}人)
-              </button>
-            )}
-
             {/* 积分调整 */}
             <div className="flex gap-3 items-center mb-3">
               <div className="flex-1 relative">
