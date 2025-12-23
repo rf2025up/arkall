@@ -1047,10 +1047,26 @@ const QCView: React.FC = () => {
           {(
             <div className="grid grid-cols-3 gap-3">
               {qcStudents.map(student => {
-                const qcTasks = student.tasks.filter(t => t.type === 'QC');
-                const total = qcTasks.length;
-                const passed = qcTasks.filter(t => t.status === 'PASSED').length;
-                const percent = total > 0 ? (passed / total) * 100 : 0;
+                // 🔧 修复：进度条只统计基础过关项（SUBJECT_DEFAULT_QC）
+                // 分母：3科 × 各4项 = 12 个固定基础过关项
+                const totalQCItems =
+                  SUBJECT_DEFAULT_QC.chinese.length +
+                  SUBJECT_DEFAULT_QC.math.length +
+                  SUBJECT_DEFAULT_QC.english.length;
+
+                // 分子：学生已完成的属于基础过关项的任务数
+                const allDefaultItems = [
+                  ...SUBJECT_DEFAULT_QC.chinese,
+                  ...SUBJECT_DEFAULT_QC.math,
+                  ...SUBJECT_DEFAULT_QC.english
+                ];
+                const passedQCItems = student.tasks.filter(t =>
+                  t.type === 'QC' &&
+                  (t.status === 'PASSED' || t.status === 'COMPLETED') &&
+                  allDefaultItems.includes(t.name)
+                ).length;
+
+                const percent = totalQCItems > 0 ? (passedQCItems / totalQCItems) * 100 : 0;
                 const isFull = percent === 100;
 
                 return (

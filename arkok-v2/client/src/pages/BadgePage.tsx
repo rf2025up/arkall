@@ -131,7 +131,14 @@ const BadgePage: React.FC = () => {
       });
 
       if (res.success) {
-        fetchData();
+        // 🔧 创建成功后，直接将新勋章添加到 badges 数组中，确保授予弹窗可以立即选择
+        const newBadgeData = res.data as Badge;
+        if (newBadgeData && newBadgeData.id) {
+          setBadges(prev => [...prev, { ...newBadgeData, awardedCount: 0 }]);
+        } else {
+          // 如果返回数据不完整，则刷新整个列表
+          fetchData();
+        }
         setShowCreateModal(false);
         setNewBadge({ name: '', description: '', icon: '⭐', category: 'INDIVIDUAL' });
         toast.success('勋章创建成功');
@@ -255,7 +262,7 @@ const BadgePage: React.FC = () => {
           <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
             <ChevronLeft size={24} className="text-slate-600" />
           </button>
-          <h1 className="text-lg font-bold text-slate-900">勋章奖赏系统</h1>
+          <h1 className="text-lg font-bold text-slate-900">勋章授予</h1>
         </div>
         <div className="flex items-center gap-2">
           <button
