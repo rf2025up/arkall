@@ -139,121 +139,129 @@ const MessageCenter: React.FC<MessageCenterProps> = ({ variant = 'default' }) =>
                 )}
             </button>
 
-            {/* 消息面板 */}
+            {/* 消息面板 - 固定定位居中显示 */}
             {isOpen && (
-                <div className="absolute right-0 top-full mt-2 w-[360px] max-h-[500px] bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in slide-in-from-top-2 duration-200">
-                    {/* 头部 */}
-                    <div className="bg-gradient-to-r from-orange-500 to-red-500 px-4 py-3 flex justify-between items-center">
-                        <div className="text-white">
-                            <h3 className="font-bold">家校反馈</h3>
-                            <div className="text-[10px] text-white/80 mt-0.5">
-                                未读 {unreadCount} 条
+                <>
+                    {/* 遮罩背景 */}
+                    <div
+                        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9998]"
+                        onClick={() => setIsOpen(false)}
+                    />
+                    {/* 弹窗内容 */}
+                    <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-[360px] max-h-[70vh] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[9999] animate-in fade-in zoom-in duration-200">
+                        {/* 头部 */}
+                        <div className="bg-gradient-to-r from-orange-500 to-red-500 px-4 py-3 flex justify-between items-center">
+                            <div className="text-white">
+                                <h3 className="font-bold">家校反馈</h3>
+                                <div className="text-[10px] text-white/80 mt-0.5">
+                                    未读 {unreadCount} 条
+                                </div>
                             </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            {unreadCount > 0 && (
-                                <button
-                                    onClick={markAllAsRead}
-                                    className="text-xs bg-white/20 px-3 py-1.5 rounded-full hover:bg-white/30 transition-colors text-white flex items-center gap-1"
-                                >
-                                    <CheckCheck size={14} />
-                                    全部已读
-                                </button>
-                            )}
-                            <button
-                                onClick={() => setIsOpen(false)}
-                                className="p-1 hover:bg-white/20 rounded-full transition-colors"
-                            >
-                                <X size={18} className="text-white/80" />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* 消息列表 */}
-                    <div className="max-h-[400px] overflow-y-auto">
-                        {loading ? (
-                            <div className="p-8 text-center text-gray-400">加载中...</div>
-                        ) : feedbacks.length === 0 ? (
-                            <div className="p-8 text-center text-gray-400">暂无反馈消息</div>
-                        ) : (
-                            <div className="divide-y divide-gray-50">
-                                {feedbacks.map(feedback => (
-                                    <div
-                                        key={feedback.id}
-                                        onClick={() => !feedback.read && markAsRead(feedback.id)}
-                                        className={`p-4 cursor-pointer transition-colors ${feedback.read
-                                            ? 'bg-white opacity-70'
-                                            : 'bg-orange-50 border-l-3 border-l-orange-500 hover:bg-orange-100/50'
-                                            }`}
+                            <div className="flex items-center gap-2">
+                                {unreadCount > 0 && (
+                                    <button
+                                        onClick={markAllAsRead}
+                                        className="text-xs bg-white/20 px-3 py-1.5 rounded-full hover:bg-white/30 transition-colors text-white flex items-center gap-1"
                                     >
-                                        <div className="flex justify-between items-start">
-                                            <div className="flex items-center gap-3">
-                                                {/* 头像 */}
-                                                <div className="relative">
-                                                    {feedback.student.avatarUrl ? (
-                                                        <img
-                                                            src={feedback.student.avatarUrl}
-                                                            className="w-10 h-10 rounded-full bg-gray-100 border border-gray-100"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-bold text-sm">
-                                                            {feedback.student.name?.charAt(0)}
-                                                        </div>
-                                                    )}
-                                                    {/* 类型图标 */}
-                                                    <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white ${feedback.comment ? 'bg-blue-500' : 'bg-red-500'
-                                                        }`}>
-                                                        {feedback.comment ? (
-                                                            <MessageCircle size={10} className="text-white" />
-                                                        ) : (
-                                                            <Heart size={10} className="text-white fill-white" />
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <div className="font-bold text-gray-800 text-sm">
-                                                        {feedback.student.name}
-                                                        {feedback.parent.identity && (
-                                                            <span className="font-normal text-gray-400 ml-1">
-                                                                {feedback.parent.identity}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    {feedback.comment ? (
-                                                        <div className="text-xs text-gray-500 mt-0.5 line-clamp-1">
-                                                            "{feedback.comment}"
-                                                        </div>
-                                                    ) : (
-                                                        <div className="text-xs text-gray-500 mt-0.5">
-                                                            为今日表现点了赞 👍
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="flex flex-col items-end gap-1">
-                                                <div className="text-[10px] text-gray-400">
-                                                    {formatTime(feedback.updatedAt)}
-                                                </div>
-                                                {!feedback.read && (
-                                                    <div className="w-2 h-2 rounded-full bg-red-500" />
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* 留言内容完整显示 */}
-                                        {feedback.comment && (
-                                            <div className="mt-3 bg-white/60 p-3 rounded-lg text-sm text-gray-600 leading-relaxed border border-orange-100/50">
-                                                "{feedback.comment}"
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
+                                        <CheckCheck size={14} />
+                                        全部已读
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => setIsOpen(false)}
+                                    className="p-1 hover:bg-white/20 rounded-full transition-colors"
+                                >
+                                    <X size={18} className="text-white/80" />
+                                </button>
                             </div>
-                        )}
+                        </div>
+
+                        {/* 消息列表 */}
+                        <div className="max-h-[50vh] overflow-y-auto">
+                            {loading ? (
+                                <div className="p-8 text-center text-gray-400">加载中...</div>
+                            ) : feedbacks.length === 0 ? (
+                                <div className="p-8 text-center text-gray-400">暂无反馈消息</div>
+                            ) : (
+                                <div className="divide-y divide-gray-50">
+                                    {feedbacks.map(feedback => (
+                                        <div
+                                            key={feedback.id}
+                                            onClick={() => !feedback.read && markAsRead(feedback.id)}
+                                            className={`p-4 cursor-pointer transition-colors ${feedback.read
+                                                ? 'bg-white opacity-70'
+                                                : 'bg-orange-50 border-l-3 border-l-orange-500 hover:bg-orange-100/50'
+                                                }`}
+                                        >
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex items-center gap-3">
+                                                    {/* 头像 */}
+                                                    <div className="relative">
+                                                        {feedback.student.avatarUrl ? (
+                                                            <img
+                                                                src={feedback.student.avatarUrl}
+                                                                className="w-10 h-10 rounded-full bg-gray-100 border border-gray-100"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-bold text-sm">
+                                                                {feedback.student.name?.charAt(0)}
+                                                            </div>
+                                                        )}
+                                                        {/* 类型图标 */}
+                                                        <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white ${feedback.comment ? 'bg-blue-500' : 'bg-red-500'
+                                                            }`}>
+                                                            {feedback.comment ? (
+                                                                <MessageCircle size={10} className="text-white" />
+                                                            ) : (
+                                                                <Heart size={10} className="text-white fill-white" />
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <div className="font-bold text-gray-800 text-sm">
+                                                            {feedback.student.name}
+                                                            {feedback.parent.identity && (
+                                                                <span className="font-normal text-gray-400 ml-1">
+                                                                    {feedback.parent.identity}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {feedback.comment ? (
+                                                            <div className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                                                                "{feedback.comment}"
+                                                            </div>
+                                                        ) : (
+                                                            <div className="text-xs text-gray-500 mt-0.5">
+                                                                为今日表现点了赞 👍
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <div className="text-[10px] text-gray-400">
+                                                        {formatTime(feedback.updatedAt)}
+                                                    </div>
+                                                    {!feedback.read && (
+                                                        <div className="w-2 h-2 rounded-full bg-red-500" />
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* 留言内容完整显示 */}
+                                            {feedback.comment && (
+                                                <div className="mt-3 bg-white/60 p-3 rounded-lg text-sm text-gray-600 leading-relaxed border border-orange-100/50">
+                                                    "{feedback.comment}"
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
+                </>
             )}
         </div>
     );
