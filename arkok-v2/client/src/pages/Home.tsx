@@ -508,7 +508,7 @@ const Home = () => {
               </span>
               <ChevronDown size={14} className="text-white/80" />
             </div>
-            {viewMode === 'SPECIFIC_CLASS' && (
+            {viewMode === 'SPECIFIC_CLASS' && isProxyMode && (
               <div className="flex items-center gap-1 mt-0.5">
                 <span className="px-1.5 py-0.5 rounded-md bg-white/20 text-[9px] font-black text-white/90 uppercase tracking-widest border border-white/10">
                   代理模式

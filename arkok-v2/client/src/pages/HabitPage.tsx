@@ -363,45 +363,49 @@ const HabitPage: React.FC = () => {
       {/* V1原版样式：min-h-screen bg-background */}
       <div className="min-h-screen bg-background pb-24">
 
-        {/* === Header (统一设计风格) === */}
+        {/* === Header (与备课/过关页统一) === */}
         <header
-          className="pt-14 pb-20 px-6 rounded-b-[40px] relative overflow-hidden"
+          className="pt-8 pb-5 px-6 rounded-b-[30px] shadow-lg shadow-orange-200/20 relative overflow-hidden mb-6"
           style={{ background: 'linear-gradient(160deg, #FF8C00 0%, #FF5500 100%)' }}
         >
           {/* 背景纹理装饰 */}
-          <div className="absolute -top-1/2 -left-1/5 w-[200%] h-[200%] pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 60%)' }}
-          />
-
-          {/* 顶栏 */}
-          <div className="relative z-10 flex justify-between items-center mb-6">
-            <h1 className="text-white text-xl font-black tracking-tight">好习惯打卡</h1>
-            <MessageCenter variant="header" />
+          <div className="absolute inset-0 pointer-events-none opacity-40">
+            <div className="absolute -top-1/4 -right-1/4 w-full h-full bg-white/10 blur-[80px] rounded-full" />
           </div>
 
-          {/* 习惯选择器 - 毛玻璃卡片 */}
-          <div className="relative z-10 bg-white/20 backdrop-blur-md rounded-2xl p-3 flex items-center border border-white/10">
-            <select
-              value={selectedHabitId}
-              onChange={(e) => setSelectedHabitId(e.target.value)}
-              className="w-full bg-transparent text-white font-bold text-lg outline-none px-2 py-1 appearance-none"
-              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}
-            >
-              {habits.map(h => (
-                <option key={String(h.id)} value={String(h.id)} className="text-gray-800">{h.icon} {h.name}</option>
-              ))}
-            </select>
+          {/* 顶栏 */}
+          <div className="relative z-10 flex justify-between items-center">
+            <h1 className="text-xl font-black text-white tracking-tight drop-shadow-sm">好习惯打卡</h1>
+            <MessageCenter variant="header" />
+          </div>
+        </header>
+
+        {/* === 习惯选择器 - 悬浮卡片 === */}
+        <div className="px-5 -mt-10 relative z-20 mb-4">
+          <div className="bg-white rounded-2xl shadow-lg p-4 flex items-center gap-3">
+            <div className="flex-1 flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
+              <span className="text-2xl">{habits.find(h => h.id === selectedHabitId)?.icon || '📋'}</span>
+              <select
+                value={selectedHabitId}
+                onChange={(e) => setSelectedHabitId(e.target.value)}
+                className="flex-1 bg-transparent text-gray-800 font-bold text-base outline-none appearance-none cursor-pointer"
+              >
+                {habits.map(h => (
+                  <option key={String(h.id)} value={String(h.id)}>{h.name}</option>
+                ))}
+              </select>
+            </div>
             <button
               onClick={() => setIsManageOpen(true)}
-              className="bg-white/20 text-white p-2.5 rounded-xl hover:bg-white/30 transition-colors border border-white/10"
+              className="bg-orange-50 text-orange-500 p-2.5 rounded-xl hover:bg-orange-100 transition-colors border border-orange-100"
             >
               <Settings size={18} />
             </button>
           </div>
-        </header>
+        </div>
 
-        {/* === Student Grid (V1原版样式) === */}
-        <div className="px-4 -mt-6 relative z-20">
+        {/* === Student Grid === */}
+        <div className="px-4 relative z-20">
           <div className="bg-white rounded-2xl shadow-lg p-4 min-h-[50vh]">
             <div className="grid grid-cols-4 gap-4">
               {students.map(student => {
