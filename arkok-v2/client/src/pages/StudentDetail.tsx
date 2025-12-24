@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Trophy, Medal, Swords, Check,
   Bot, Flame, Plus, ChevronRight, ChevronDown,
-  Camera, Printer, AlertCircle, Calendar,
+  Camera, Printer, AlertCircle, Calendar, Settings2,
   BookOpen, Filter, Circle, Sparkles, ArrowLeft, X, Share2, Award
 } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
@@ -234,6 +234,15 @@ const StudentDetail: React.FC = () => {
   // 🆕 本月签到天数
   const [monthlyCheckinCount, setMonthlyCheckinCount] = useState<number>(0);
 
+  // 🆕 进度修改相关状态
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [progressForm, setProgressForm] = useState({
+    chinese: { unit: '1', lesson: '1', title: '' },
+    math: { unit: '1', lesson: '1', title: '' },
+    english: { unit: '1', title: '' }
+  });
+  const [isUpdatingProgress, setIsUpdatingProgress] = useState(false);
+
   // --- 3. 派生状态 (SSOT) ---
   const student = studentProfile?.student;
   const studentName = student?.name || '未知学生';
@@ -300,7 +309,27 @@ const StudentDetail: React.FC = () => {
     try {
       const response = await API.get(`/students/${studentId}/profile`);
       if (response.success) {
-        setStudentProfile(response.data as StudentProfile);
+        const profile = response.data as StudentProfile;
+        setStudentProfile(profile);
+        // 🆕 初始化进度修改表单数据
+        if (profile.student.progress) {
+          setProgressForm({
+            chinese: {
+              unit: profile.student.progress.chinese?.unit || '1',
+              lesson: profile.student.progress.chinese?.lesson || '1',
+              title: profile.student.progress.chinese?.title || ''
+            },
+            math: {
+              unit: profile.student.progress.math?.unit || '1',
+              lesson: profile.student.progress.math?.lesson || '1',
+              title: profile.student.progress.math?.title || ''
+            },
+            english: {
+              unit: profile.student.progress.english?.unit || '1',
+              title: profile.student.progress.english?.title || ''
+            }
+          });
+        }
       } else {
         // 使用 functional update 或判断初始数据来决定是否静默失败
         if (!initialStudentData) {
@@ -638,6 +667,38 @@ const StudentDetail: React.FC = () => {
       alert('生成历史提示词失败，请稍后重试');
     } finally {
       setIsGeneratingPrompt(false);
+    }
+  };
+
+  // 处理进度修改提交
+  const handleUpdateProgress = async () => {
+    if (!studentId || !user?.schoolId || !user?.userId) {
+      toast.error('权限不足或学生信息缺失');
+      return;
+    }
+
+    setIsUpdatingProgress(true);
+    try {
+      const res = await apiService.records.updateProgress({
+        studentId,
+        schoolId: user.schoolId,
+        teacherId: user.userId,
+        courseInfo: progressForm
+      });
+
+      if (res.success) {
+        toast.success('进度已修正并记录为最高优先级');
+        setShowProgressModal(false);
+        // 刷新数据
+        fetchStudentProfile();
+      } else {
+        toast.error(res.message || '进度更新失败');
+      }
+    } catch (err: any) {
+      console.error('进度修改失败:', err);
+      toast.error(err.message || '进度修改失败');
+    } finally {
+      setIsUpdatingProgress(false);
     }
   };
 
@@ -1032,6 +1093,8 @@ const StudentDetail: React.FC = () => {
                   src="/avatar.jpg"
                   className="w-full h-full rounded-full bg-white border-3 border-white object-cover"
                   alt={studentName}
+                  draggable="false"
+                  onContextMenu={(e) => e.preventDefault()}
                   onError={(e) => { e.currentTarget.src = '/avatar.jpg'; }}
                 />
               </div>
@@ -1508,6 +1571,13 @@ const StudentDetail: React.FC = () => {
                 <div className="flex justify-between items-center mb-3 px-1">
                   <h3 className="font-bold text-gray-700">全学期过关地图</h3>
                   <div className="flex items-center gap-2">
+                    {/* 🆕 调整进度按钮 */}
+                    <button
+                      onClick={() => setShowProgressModal(true)}
+                      className="px-2 py-1 bg-white border border-slate-200 text-slate-500 text-[10px] font-black rounded-lg hover:bg-slate-50 active:scale-95 transition-all shadow-sm flex items-center gap-1"
+                    >
+                      <Settings2 size={10} /> 修改进度
+                    </button>
                     <div className="flex bg-white p-0.5 rounded-lg border border-gray-200 shadow-sm">
                       {(['chinese', 'math', 'english'] as const).map(sub => (
                         <button
@@ -1742,6 +1812,139 @@ const StudentDetail: React.FC = () => {
           </div>
         )
       }
+
+      {/* 进度修改模态框 */}
+      {showProgressModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] animate-in fade-in duration-300 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="bg-gradient-to-r from-indigo-600 to-blue-600 p-5 text-white">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-black flex items-center gap-2">
+                  <Settings2 size={20} /> 修正教学进度
+                </h3>
+                <button onClick={() => setShowProgressModal(false)} className="opacity-70 hover:opacity-100 transition-opacity">
+                  <X size={20} />
+                </button>
+              </div>
+              <p className="text-[10px] opacity-80 mt-1 font-bold uppercase tracking-widest">最高权限覆盖 · 立即对该生生效</p>
+            </div>
+
+            <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+              {/* 语文 */}
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-500 flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> 语文进度
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">UNIT</span>
+                    <input
+                      type="number"
+                      value={progressForm.chinese.unit}
+                      onChange={(e) => setProgressForm({ ...progressForm, chinese: { ...progressForm.chinese, unit: e.target.value } })}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-10 pr-3 py-2.5 text-sm font-black focus:ring-2 ring-indigo-500/20 outline-none"
+                    />
+                  </div>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">LESSON</span>
+                    <input
+                      type="number"
+                      value={progressForm.chinese.lesson}
+                      onChange={(e) => setProgressForm({ ...progressForm, chinese: { ...progressForm.chinese, lesson: e.target.value } })}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-12 pr-3 py-2.5 text-sm font-black focus:ring-2 ring-indigo-500/20 outline-none"
+                    />
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  placeholder="课文标题（可选）"
+                  value={progressForm.chinese.title}
+                  onChange={(e) => setProgressForm({ ...progressForm, chinese: { ...progressForm.chinese, title: e.target.value } })}
+                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 ring-indigo-500/20 outline-none"
+                />
+              </div>
+
+              {/* 数学 */}
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-500 flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div> 数学进度
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">UNIT</span>
+                    <input
+                      type="number"
+                      value={progressForm.math.unit}
+                      onChange={(e) => setProgressForm({ ...progressForm, math: { ...progressForm.math, unit: e.target.value } })}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-10 pr-3 py-2.5 text-sm font-black focus:ring-2 ring-indigo-500/20 outline-none"
+                    />
+                  </div>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">LESSON</span>
+                    <input
+                      type="number"
+                      value={progressForm.math.lesson}
+                      onChange={(e) => setProgressForm({ ...progressForm, math: { ...progressForm.math, lesson: e.target.value } })}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-12 pr-3 py-2.5 text-sm font-black focus:ring-2 ring-indigo-500/20 outline-none"
+                    />
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  placeholder="知识点描述（可选）"
+                  value={progressForm.math.title}
+                  onChange={(e) => setProgressForm({ ...progressForm, math: { ...progressForm.math, title: e.target.value } })}
+                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 ring-indigo-500/20 outline-none"
+                />
+              </div>
+
+              {/* 英语 */}
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-500 flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div> 英语进度
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">UNIT</span>
+                  <input
+                    type="number"
+                    value={progressForm.english.unit}
+                    onChange={(e) => setProgressForm({ ...progressForm, english: { ...progressForm.english, unit: e.target.value } })}
+                    className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-10 pr-3 py-2.5 text-sm font-black focus:ring-2 ring-indigo-500/20 outline-none"
+                  />
+                </div>
+                <input
+                  type="text"
+                  placeholder="单元主题（可选）"
+                  value={progressForm.english.title}
+                  onChange={(e) => setProgressForm({ ...progressForm, english: { ...progressForm.english, title: e.target.value } })}
+                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 ring-indigo-500/20 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="p-5 bg-slate-50 flex gap-3">
+              <button
+                onClick={() => setShowProgressModal(false)}
+                className="flex-1 py-3 text-sm font-black text-slate-500 hover:text-slate-700 transition-colors"
+                disabled={isUpdatingProgress}
+              >
+                取消
+              </button>
+              <button
+                onClick={handleUpdateProgress}
+                disabled={isUpdatingProgress}
+                className="flex-[2] bg-indigo-600 text-white py-3 rounded-2xl text-sm font-black shadow-lg shadow-indigo-200 active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                {isUpdatingProgress ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
+                ) : (
+                  <>确认修正</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 邀请卡弹窗 */}
       {

@@ -423,6 +423,7 @@ const HabitPage: React.FC = () => {
                         className={`w-full h-full rounded-2xl bg-slate-200 object-cover select-none pointer-events-none ${isSelected ? 'opacity-100' : 'opacity-40 grayscale group-hover:opacity-60'}`}
                         alt={student.name}
                         draggable={false}
+                        onContextMenu={(e) => e.preventDefault()}
                       />
                       {isSelected && (
                         <div className="absolute -top-2 -right-2 bg-orange-500 rounded-full p-1 border-2 border-white shadow-md">

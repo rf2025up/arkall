@@ -305,7 +305,7 @@ const PKPage: React.FC = () => {
                       className="relative group/avatar active:scale-90 transition-all"
                     >
                       <div className="w-24 h-24 rounded-3xl overflow-hidden border-4 border-white shadow-lg relative z-10">
-                        <img src={pk.studentA.avatarUrl || '/avatar.jpg'} className="w-full h-full object-cover" />
+                        <img src={pk.studentA.avatarUrl || '/avatar.jpg'} className="w-full h-full object-cover" draggable={false} onContextMenu={(e) => e.preventDefault()} />
                       </div>
                       <div className="absolute -inset-2 bg-orange-500 rounded-[2rem] opacity-0 group-hover/avatar:opacity-10 transition-all -z-10" />
                       <div className="absolute -bottom-2 inset-x-0 mx-auto w-fit bg-white border border-orange-100 text-orange-600 text-[10px] font-black px-3 py-1 rounded-xl shadow-sm">结算获胜</div>
@@ -336,7 +336,7 @@ const PKPage: React.FC = () => {
                       className="relative group/avatar active:scale-90 transition-all"
                     >
                       <div className="w-24 h-24 rounded-3xl overflow-hidden border-4 border-white shadow-lg relative z-10">
-                        <img src={pk.studentB.avatarUrl || '/avatar.jpg'} className="w-full h-full object-cover" />
+                        <img src={pk.studentB.avatarUrl || '/avatar.jpg'} className="w-full h-full object-cover" draggable={false} onContextMenu={(e) => e.preventDefault()} />
                       </div>
                       <div className="absolute -inset-2 bg-orange-500 rounded-[2rem] opacity-0 group-hover/avatar:opacity-10 transition-all -z-10" />
                       <div className="absolute -bottom-2 inset-x-0 mx-auto w-fit bg-white border border-orange-100 text-orange-600 text-[10px] font-black px-3 py-1 rounded-xl shadow-sm">结算获胜</div>
@@ -385,7 +385,7 @@ const PKPage: React.FC = () => {
                 <div key={pk.id} className="bg-white rounded-2xl p-4 shadow-sm border border-white flex items-center justify-between gap-3 group hover:shadow-md transition-all">
                   <div className="flex items-center gap-3 flex-1">
                     <div className="relative">
-                      <img src={pk.studentA.avatarUrl} className={`w-10 h-10 rounded-xl object-cover ${studentAWon ? 'ring-2 ring-orange-400' : 'grayscale opacity-50'}`} />
+                      <img src={pk.studentA.avatarUrl} className={`w-10 h-10 rounded-xl object-cover ${studentAWon ? 'ring-2 ring-orange-400' : 'grayscale opacity-50'}`} draggable={false} onContextMenu={(e) => e.preventDefault()} />
                       {studentAWon && <Crown size={12} className="absolute -top-1.5 -right-1.5 text-orange-500 fill-orange-500" />}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -407,7 +407,7 @@ const PKPage: React.FC = () => {
                       </div>
                     </div>
                     <div className="relative">
-                      <img src={pk.studentB.avatarUrl} className={`w-10 h-10 rounded-xl object-cover ${studentBWon ? 'ring-2 ring-orange-400' : 'grayscale opacity-50'}`} />
+                      <img src={pk.studentB.avatarUrl} className={`w-10 h-10 rounded-xl object-cover ${studentBWon ? 'ring-2 ring-orange-400' : 'grayscale opacity-50'}`} draggable={false} onContextMenu={(e) => e.preventDefault()} />
                       {studentBWon && <Crown size={12} className="absolute -top-1.5 -right-1.5 text-orange-500 fill-orange-500" />}
                     </div>
                   </div>

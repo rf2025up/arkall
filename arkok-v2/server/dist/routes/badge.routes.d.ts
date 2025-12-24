@@ -50,6 +50,10 @@ export declare class BadgeRoutes {
      */
     private revokeBadge;
     /**
+     * 批量授予学生勋章
+     */
+    private batchAward;
+    /**
      * 获取学生勋章列表
      */
     private getStudentBadges;

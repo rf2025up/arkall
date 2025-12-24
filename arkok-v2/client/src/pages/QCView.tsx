@@ -132,6 +132,8 @@ const QCView: React.FC = () => {
 
   // 课程进度编辑状态
   const [progressEditMode, setProgressEditMode] = useState(false);
+  const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
+  const [isUpdatingProgress, setIsUpdatingProgress] = useState(false);
 
   // 🚀 学科配置 - 直接复制备课页的配置
   const SUBJECT_CONFIG = {
@@ -206,28 +208,45 @@ const QCView: React.FC = () => {
 
   // 🚀 更新学生课程进度 - 权限高于备课页
   const updateStudentProgress = async (studentId: string) => {
-    if (!token) {
-      alert('无法更新课程进度，请重新登录');
-      return;
-    }
-
     try {
-      const response = await apiService.patch(`/lms/student-progress/${studentId}`, courseInfo);
-
-      if (response.success && response.data) {
+      setIsUpdatingProgress(true);
+      const response = await apiService.records.updateProgress({
+        studentId,
+        subjectProgress: courseInfo
+      });
+      if (response.success) {
+        toast.success("进度修正成功！");
         setProgressEditMode(false);
-        alert('课程进度更新成功！');
-
-        // 震动反馈
-        if (navigator.vibrate) navigator.vibrate(50);
-      } else {
-        console.error('[QCView] 更新课程进度失败:', response.message);
-        alert(`更新失败: ${response.message}`);
+        // 更新本地学生进度显示
+        setQcStudents(prev => prev.map(s => {
+          if (s.id !== studentId) return s;
+          const newLesson = {
+            unit: courseInfo.chinese.unit,
+            lesson: courseInfo.chinese.lesson || '1',
+            title: courseInfo.chinese.title
+          };
+          return { ...s, lesson: newLesson };
+        }));
       }
-    } catch (error) {
-      console.error('[QCView] 更新学生课程进度异常:', error);
-      alert('更新课程进度失败，请重试');
+    } catch (err: any) {
+      toast.error("修正失败: " + err.message);
+    } finally {
+      setIsUpdatingProgress(false);
     }
+  };
+
+  const handleOpenProgressModal = (e: React.MouseEvent, student: Student) => {
+    e.stopPropagation();
+    setEditingStudentId(student.id);
+    // 尝试从学生当前 lesson 导出
+    setCourseInfo({
+      chinese: { unit: student.lesson.unit, lesson: student.lesson.lesson || '1', title: student.lesson.title },
+      math: { unit: '1', lesson: '1', title: '' },
+      english: { unit: '1', title: '' }
+    });
+    setProgressEditMode(true);
+    // 异步加载完整进度数据以补全其他学科
+    fetchStudentProgress(student.id);
   };
 
   // 获取学生任务记录
@@ -1086,8 +1105,16 @@ const QCView: React.FC = () => {
                       />
                     </div>
                     <div className="font-bold text-sm text-slate-800">{student.name}</div>
-                    <div className="text-[10px] text-gray-400 mb-2 truncate max-w-full">
-                      {getLessonStr(student.lesson)}
+                    <div className="flex items-center gap-1 mb-2 max-w-full">
+                      <div className="text-[10px] text-gray-400 truncate">
+                        {getLessonStr(student.lesson)}
+                      </div>
+                      <button
+                        onClick={(e) => handleOpenProgressModal(e, student)}
+                        className="p-1 text-slate-300 hover:text-orange-500 transition-colors"
+                      >
+                        <Settings size={10} />
+                      </button>
                     </div>
                     {/* 进度条 */}
                     <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">

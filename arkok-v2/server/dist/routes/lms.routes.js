@@ -15,6 +15,11 @@ class LMSRoutes {
         this.initializeRoutes();
     }
     initializeRoutes() {
+        // 🔍 调试日志：记录所有进入 LMS 路由的请求
+        this.router.use((req, res, next) => {
+            console.log(`🔵 [LMS_ROUTES] ${req.method} ${req.path} - Body:`, JSON.stringify(req.body).slice(0, 200));
+            next();
+        });
         // 应用认证中间件到所有路由
         this.router.use((0, auth_middleware_1.authenticateToken)(this.authService));
         // 临时处理 mistakes 端点
@@ -54,8 +59,8 @@ class LMSRoutes {
         // 🆕 创建任务记录
         this.router.post('/records', async (req, res) => {
             try {
-                const { studentId, type, title, status, category, date, courseInfo, exp } = req.body;
-                console.log(`🆕 [POST /records] 创建记录: ${title} for student ${studentId}, type=${type}`);
+                const { studentId, type, title, status, category, subcategory, date, courseInfo, exp } = req.body;
+                console.log(`🆕 [POST /records] 创建记录: ${title} for student ${studentId}, type=${type}, category=${category}, subcategory=${subcategory}`);
                 if (!studentId || !title) {
                     return res.status(400).json({ success: false, message: '缺少必填字段: studentId 或 title' });
                 }
@@ -65,6 +70,7 @@ class LMSRoutes {
                     title,
                     status: status || 'COMPLETED',
                     category: category || '基础过关',
+                    subcategory: subcategory || '', // 🆕 分类标题
                     date: date || new Date().toISOString().split('T')[0],
                     courseInfo,
                     exp: exp || 5
@@ -135,8 +141,11 @@ class LMSRoutes {
                 // 构建任务数据 (保持与旧版本一致的解析逻辑)
                 if (qcTasks)
                     publishRequest.tasks.push(...qcTasks.map((t) => ({ type: 'QC', title: t.taskName, content: { category: t.category, difficulty: t.difficulty }, expAwarded: t.defaultExp || 5 })));
-                if (normalTasks)
-                    publishRequest.tasks.push(...normalTasks.map((t) => ({ type: 'TASK', title: t.taskName, content: { category: t.category, taskId: t.taskId }, expAwarded: t.defaultExp || 10 })));
+                if (normalTasks) {
+                    console.log('🔍 [DEBUG] normalTasks 原始数据:', normalTasks.slice(0, 2).map((t) => ({ taskName: t.taskName, category: t.category, subcategory: t.subcategory })));
+                    publishRequest.tasks.push(...normalTasks.map((t) => ({ type: 'TASK', title: t.taskName, content: { category: t.category, subcategory: t.subcategory || '', taskId: t.taskId }, expAwarded: t.defaultExp || 10 })));
+                    console.log('🔍 [DEBUG] 构建后 tasks:', publishRequest.tasks.slice(-2).map((t) => ({ title: t.title, content: t.content })));
+                }
                 if (specialTasks)
                     publishRequest.tasks.push(...specialTasks.map((t) => ({ type: 'SPECIAL', title: t.taskName, content: { category: t.category, description: t.description, targetStudentNames: t.targetStudentNames }, expAwarded: t.defaultExp || 15 })));
                 const result = await this.lmsService.publishPlan(publishRequest, io);

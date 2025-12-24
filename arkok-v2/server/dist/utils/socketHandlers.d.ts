@@ -2,6 +2,7 @@ import { Server as SocketIOServer } from 'socket.io';
 export declare function setupSocketHandlers(io: SocketIOServer): void;
 export declare function broadcastToSchool(io: SocketIOServer, schoolId: string, event: string, data: any): void;
 export declare function broadcastToClass(io: SocketIOServer, className: string, event: string, data: any): void;
+export declare function broadcastToStudent(io: SocketIOServer, studentId: string, event: string, data: any): void;
 export declare const SOCKET_EVENTS: {
     readonly SCORE_UPDATE: "score_update";
     readonly BATCH_SCORE_UPDATE: "batch_score_update";

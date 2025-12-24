@@ -66,6 +66,7 @@ class BadgeRoutes {
         this.router.put('/:id', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.updateBadge.bind(this));
         this.router.delete('/:id', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.deleteBadge.bind(this));
         this.router.post('/award', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.awardBadge.bind(this));
+        this.router.post('/award/batch', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.batchAward.bind(this));
         this.router.delete('/revoke', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.revokeBadge.bind(this));
         this.router.get('/student/:studentId', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.getStudentBadges.bind(this));
         this.router.get('/available/:studentId', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.getAvailableBadges.bind(this));
@@ -304,6 +305,40 @@ class BadgeRoutes {
             };
             const statusCode = error instanceof Error && ['勋章不存在', '学生不存在'].includes(error.message) ? 404 : 500;
             res.status(statusCode).json(response);
+        }
+    }
+    /**
+     * 批量授予学生勋章
+     */
+    async batchAward(req, res) {
+        try {
+            const data = req.body;
+            if (!data.studentIds || !data.badgeId || !data.schoolId) {
+                const response = {
+                    success: false,
+                    message: '学生IDs、勋章ID和学校ID不能为空'
+                };
+                res.status(400).json(response);
+                return;
+            }
+            const result = await this.badgeService.batchAwardBadges({
+                ...data,
+                awardedBy: req.user?.userId
+            });
+            const response = {
+                success: true,
+                message: '批量授予勋章成功',
+                data: result
+            };
+            res.status(200).json(response);
+        }
+        catch (error) {
+            console.error('Batch award badge error:', error);
+            const response = {
+                success: false,
+                message: error instanceof Error ? error.message : '批量授予勋章失败'
+            };
+            res.status(500).json(response);
         }
     }
     /**

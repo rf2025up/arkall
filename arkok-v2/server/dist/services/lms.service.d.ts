@@ -1,4 +1,5 @@
 import { PrismaClient, lesson_plans, TaskType } from '@prisma/client';
+import { Server as SocketIOServer } from 'socket.io';
 export interface TaskLibraryItem {
     id: string;
     category: string;
@@ -34,7 +35,12 @@ export interface PublishPlanResult {
 }
 export declare class LMSService {
     private prisma;
-    constructor(prisma: PrismaClient);
+    private io?;
+    constructor(prisma: PrismaClient, io?: SocketIOServer);
+    /**
+     * 🆕 实时同步助手函数
+     */
+    private broadcastStudentUpdate;
     /**
      * 获取任务库
      */
@@ -238,10 +244,7 @@ export declare class LMSService {
     /**
      * 批量更新任务状态
      */
-    updateMultipleRecordStatus(schoolId: string, recordIds: string[], status: any, userId: string, courseInfo?: any): Promise<{
-        success: number;
-        failed: number;
-    }>;
+    updateMultipleRecordStatus(schoolId: string, recordIds: string[], status: any, userId: string, courseInfo?: any): Promise<import(".prisma/client").Prisma.BatchPayload>;
     /**
      * 更新学生课程进度 - 老师手动覆盖，优先级最高
      */
@@ -277,6 +280,7 @@ export declare class LMSService {
         type: TaskType;
         title: string;
         category: string;
+        subcategory?: string;
         exp: number;
         courseInfo?: any;
         isOverridden?: boolean;
@@ -309,6 +313,7 @@ export declare class LMSService {
         title: string;
         status: string;
         category: string;
+        subcategory?: string;
         date: string;
         courseInfo?: any;
         exp: number;

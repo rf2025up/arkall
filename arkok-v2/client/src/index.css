@@ -16,6 +16,20 @@
     box-sizing: border-box;
   }
 
+  img {
+    /* 🔴 禁用 iOS/移动端长按弹出下载菜单，确保自定义长按逻辑（如加分）生效 */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    /* 允许指针事件以便接收点击/长按 */
+    pointer-events: auto;
+    /* 禁用原生拖拽 */
+    -webkit-user-drag: none;
+  }
+
   html {
     scroll-behavior: smooth;
   }

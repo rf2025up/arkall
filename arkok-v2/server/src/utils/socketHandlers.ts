@@ -24,6 +24,18 @@ export function setupSocketHandlers(io: SocketIOServer): void {
       console.log(`📚 Socket ${socket.id} joined class-${className}`);
     });
 
+    // 🆕 加入学生个人房间 (用于家长端实时同步)
+    socket.on('join-student', (studentId: string) => {
+      socket.join(`student-${studentId}`);
+      console.log(`👶 Socket ${socket.id} joined student-${studentId}`);
+    });
+
+    // 🆕 离开学生个人房间
+    socket.on('leave-student', (studentId: string) => {
+      socket.leave(`student-${studentId}`);
+      console.log(`👶 Socket ${socket.id} left student-${studentId}`);
+    });
+
     // 测试连接
     socket.on('ping', () => {
       socket.emit('pong', { timestamp: new Date().toISOString() });
@@ -48,6 +60,11 @@ export function broadcastToSchool(io: SocketIOServer, schoolId: string, event: s
 export function broadcastToClass(io: SocketIOServer, className: string, event: string, data: any): void {
   io.to(`class-${className}`).emit(event, data);
   console.log(`📡 Broadcasted to class-${className}: ${event}`);
+}
+
+export function broadcastToStudent(io: SocketIOServer, studentId: string, event: string, data: any): void {
+  io.to(`student-${studentId}`).emit(event, data);
+  console.log(`📡 Broadcasted to student-${studentId}: ${event}`);
 }
 
 // 常用事件定义

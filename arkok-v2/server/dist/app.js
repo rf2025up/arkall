@@ -40,6 +40,8 @@ const school_routes_1 = __importDefault(require("./routes/school.routes"));
 const dashboard_routes_1 = __importDefault(require("./routes/dashboard.routes"));
 const personalized_tutoring_routes_1 = require("./routes/personalized-tutoring.routes");
 const health_routes_1 = require("./routes/health.routes");
+const parent_routes_1 = __importDefault(require("./routes/parent.routes"));
+const checkin_routes_1 = __importDefault(require("./routes/checkin.routes"));
 // Middleware & Utils
 const errorHandler_1 = require("./middleware/errorHandler");
 const socketHandlers_1 = require("./utils/socketHandlers");
@@ -65,7 +67,7 @@ class App {
         this.challengeService = new challenge_service_1.default(this.prisma, this.io);
         this.pkMatchService = new pkmatch_service_1.default(this.prisma, this.io);
         this.badgeService = new badge_service_1.default(this.prisma, this.io);
-        this.lmsService = new lms_service_1.LMSService(this.prisma);
+        this.lmsService = new lms_service_1.LMSService(this.prisma, this.io);
         this.reportService = new report_service_1.ReportService(this.prisma);
         this.schoolService = new school_service_1.default(this.prisma);
         this.dashboardService = new dashboard_service_1.default(this.prisma);
@@ -111,6 +113,10 @@ class App {
         this.app.use('/api/schools', new school_routes_1.default(this.schoolService, this.authService).getRoutes());
         this.app.use('/api/dashboard', new dashboard_routes_1.default(this.dashboardService, this.authService).getRoutes());
         this.app.use('/api/personalized-tutoring', new personalized_tutoring_routes_1.PersonalizedTutoringRoutes(this.tutoringService, this.authService).getRoutes());
+        // 家长端路由
+        this.app.use('/api/parent', parent_routes_1.default);
+        // 签到路由
+        this.app.use('/api/checkins', new checkin_routes_1.default(this.authService).getRoutes());
         // 静态文件与前端路由
         const clientPath = path_1.default.resolve(__dirname, '../../client/dist');
         this.app.use(express_1.default.static(clientPath));

@@ -20,6 +20,7 @@ import { ReportService } from './services/report.service';
 import SchoolService from './services/school.service';
 import DashboardService from './services/dashboard.service';
 import { PersonalizedTutoringService } from './services/personalized-tutoring.service';
+import PlatformService from './services/platform.service';
 
 // Routes
 import AuthRoutes from './routes/auth.routes';
@@ -39,6 +40,7 @@ import { PersonalizedTutoringRoutes } from './routes/personalized-tutoring.route
 import { healthRoutes } from './routes/health.routes';
 import ParentRoutes from './routes/parent.routes';
 import CheckinRoutes from './routes/checkin.routes';
+import PlatformRoutes from './routes/platform.routes';
 
 // Middleware & Utils
 import { errorHandler } from './middleware/errorHandler';
@@ -66,6 +68,7 @@ export class App {
   public schoolService: SchoolService;
   public dashboardService: DashboardService;
   public tutoringService: PersonalizedTutoringService;
+  public platformService: PlatformService;
 
   constructor() {
     this.app = express();
@@ -87,11 +90,12 @@ export class App {
     this.challengeService = new ChallengeService(this.prisma, this.io);
     this.pkMatchService = new PKMatchService(this.prisma, this.io);
     this.badgeService = new BadgeService(this.prisma, this.io);
-    this.lmsService = new LMSService(this.prisma);
+    this.lmsService = new LMSService(this.prisma, this.io);
     this.reportService = new ReportService(this.prisma);
     this.schoolService = new SchoolService(this.prisma);
     this.dashboardService = new DashboardService(this.prisma);
     this.tutoringService = new PersonalizedTutoringService(this.prisma);
+    this.platformService = new PlatformService(this.prisma);
 
     this.initializeMiddlewares();
     this.initializeRoutes();
@@ -138,6 +142,7 @@ export class App {
     // 边缘路由类化挂载
     this.app.use('/api/schools', new SchoolRoutes(this.schoolService, this.authService).getRoutes());
     this.app.use('/api/dashboard', new DashboardRoutes(this.dashboardService, this.authService).getRoutes());
+    this.app.use('/api/platform', new PlatformRoutes(this.platformService, this.authService).getRoutes());
     this.app.use('/api/personalized-tutoring', new PersonalizedTutoringRoutes(this.tutoringService, this.authService).getRoutes());
 
     // 家长端路由

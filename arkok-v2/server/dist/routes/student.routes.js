@@ -589,8 +589,9 @@ class StudentRoutes {
                 search: req.query.search,
                 page: req.query.page ? parseInt(req.query.page) : undefined,
                 limit: req.query.limit ? parseInt(req.query.limit) : undefined,
-                // 🆕 修复：从认证用户获取teacherId和role
-                teacherId: user?.userId || req.query.teacherId,
+                // 🆕 修复：优先使用 query 中的 teacherId，如果没有则回退到当前登录用户
+                // 这样在切换查看其他老师班级时，传递的 teacherId 才会生效
+                teacherId: req.query.teacherId || user?.userId,
                 scope: req.query.scope,
                 userRole: user?.role,
                 requesterId: user?.userId

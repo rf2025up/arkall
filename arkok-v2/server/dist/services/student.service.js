@@ -62,14 +62,9 @@ class StudentService {
                     console.log(`[TEACHER BINDING] ALL_SCHOOL mode: ignoring teacherId to show all students`);
                 }
             }
-            // 🆕 添加班级过滤功能
-            if (query.className) {
-                whereCondition.className = query.className;
-                console.log(`[TEACHER BINDING] 🔍 Filtering by className: ${query.className}`);
-            }
-            else {
-                console.log(`[TEACHER BINDING] ⚠️ No className filter provided - will return all students for scope: ${scope}`);
-            }
+            // 🆕 只根据 teacherId 分班，不使用 className 过滤
+            // className 仅作为显示标签，不参与查询过滤
+            console.log(`[TEACHER BINDING] ⚠️ Using teacherId only for student filtering (className filter removed)`);
             // 保留搜索功能
             if (query.search) {
                 whereCondition.name = {
@@ -79,6 +74,17 @@ class StudentService {
             }
             const students = await this.prisma.students.findMany({
                 where: whereCondition,
+                select: {
+                    id: true,
+                    name: true,
+                    className: true,
+                    avatarUrl: true,
+                    points: true,
+                    exp: true,
+                    level: true,
+                    teacherId: true,
+                    isActive: true,
+                },
                 orderBy: [
                     { exp: 'desc' },
                     { name: 'asc' },
@@ -128,7 +134,7 @@ class StudentService {
     async getStudentProfile(studentId, schoolId, userRole, userId) {
         try {
             console.log(`🔍 获取学生档案: ${studentId}, 学校: ${schoolId}`);
-            const [student, task_records, pkMatchesAsPlayerA, pkMatchesAsPlayerB, allPkMatches, taskStats, allHabits, studentHabitLogs, latestLessonPlan, latestOverride] = await Promise.all([
+            const [student, task_records, pkMatchesAsPlayerA, pkMatchesAsPlayerB, allPkMatches, taskStats, allHabits, studentHabitLogs, latestLessonPlan, latestOverride, student_badges] = await Promise.all([
                 // 1. 学生基础信息
                 this.prisma.students.findFirst({
                     where: {
@@ -137,6 +143,11 @@ class StudentService {
                         isActive: true,
                         // 权限过滤：如果是老师，只能查看自己名下的学生；如果是管理员，可以查看所有学生
                         ...(userRole === 'TEACHER' && userId ? { teacherId: userId } : {})
+                    },
+                    include: {
+                        teachers: {
+                            select: { name: true }
+                        }
                     }
                 }),
                 // 2. 任务记录（全部，按时间倒序）
@@ -237,6 +248,16 @@ class StudentService {
                 this.prisma.task_records.findFirst({
                     where: { studentId, schoolId, isOverridden: true },
                     orderBy: { updatedAt: 'desc' }
+                }),
+                // 11. 🆕 勋章数据
+                this.prisma.student_badges.findMany({
+                    where: { studentId },
+                    include: {
+                        badges: {
+                            select: { id: true, name: true, icon: true, category: true }
+                        }
+                    },
+                    orderBy: { awardedAt: 'desc' }
                 })
             ]);
             // 验证学生是否存在
@@ -286,6 +307,7 @@ class StudentService {
                     : '0.0'
             };
             // 🆕 处理习惯统计数据 (SSOT)
+            console.log(`🎯 [HABIT_DEBUG] allHabits 数量: ${allHabits.length}, studentHabitLogs 数量: ${studentHabitLogs.length}`);
             const habitStats = allHabits.map(habit => {
                 const logs = studentHabitLogs.filter(log => log.habitId === habit.id);
                 const today = new Date();
@@ -309,6 +331,7 @@ class StudentService {
                     }
                 };
             });
+            console.log(`🎯 [HABIT_DEBUG] 生成的 habitStats 数量: ${habitStats.length}, 有打卡记录的习惯: ${habitStats.filter(h => h.stats.totalCheckIns > 0).length}`);
             // 🆕 计算课程进度 (对齐 LMS Service 逻辑)
             const defaultProgress = {
                 chinese: { unit: '1', lesson: '1', title: '默认课程' },
@@ -370,6 +393,14 @@ class StudentService {
                 habitStats,
                 // 🆕 过关地图数据
                 semesterMap: Object.values(semesterMap),
+                // 🆕 勋章数据
+                badges: student_badges.map(sb => ({
+                    id: sb.badgeId,
+                    name: sb.badges.name,
+                    icon: sb.badges.icon,
+                    category: sb.badges.category,
+                    awardedAt: sb.awardedAt
+                })),
                 // 综合数据
                 summary: {
                     joinDate: student.createdAt,
@@ -473,7 +504,7 @@ class StudentService {
                     schools: {
                         connect: { id: studentData.schoolId }
                     },
-                    avatarUrl: `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(studentData.name)}`,
+                    avatarUrl: '/avatar.jpg',
                     isActive: true,
                     updatedAt: new Date()
                 },
@@ -697,23 +728,9 @@ class StudentService {
      * 🆕 修改：返回按老师分组的班级信息，支持多老师显示
      */
     async getClasses(schoolId) {
-        // 🆕 按老师分组获取学生统计
-        const teacherGroups = await this.prisma.students.groupBy({
-            by: ['teacherId'],
+        // 🆕 获取学校内所有老师
+        const allTeachers = await this.prisma.teachers.findMany({
             where: {
-                schoolId,
-                isActive: true,
-                teacherId: { not: null } // 排除没有归属老师的学生
-            },
-            _count: {
-                id: true
-            }
-        });
-        // 获取对应的老师信息
-        const teacherIds = teacherGroups.map(g => g.teacherId);
-        const teachers = await this.prisma.teachers.findMany({
-            where: {
-                id: { in: teacherIds },
                 schoolId,
                 role: 'TEACHER'
             },
@@ -722,14 +739,26 @@ class StudentService {
                 name: true
             }
         });
+        // 🆕 按老师分组获取学生统计
+        const studentStats = await this.prisma.students.groupBy({
+            by: ['teacherId'],
+            where: {
+                schoolId,
+                isActive: true,
+                teacherId: { in: allTeachers.map(t => t.id) }
+            },
+            _count: {
+                id: true
+            }
+        });
         // 组装数据：每个老师作为一个"班级"
-        const classData = teacherGroups.map(group => {
-            const teacher = teachers.find(t => t.id === group.teacherId);
+        const classData = allTeachers.map(teacher => {
+            const stats = studentStats.find(s => s.teacherId === teacher.id);
             return {
-                className: `${teacher?.name || '未知老师'}的班级`,
-                studentCount: group._count.id,
-                teacherId: group.teacherId,
-                teacherName: teacher?.name || '未知老师'
+                className: `${teacher.name}的班级`,
+                studentCount: stats?._count.id || 0,
+                teacherId: teacher.id,
+                teacherName: teacher.name
             };
         });
         // 添加"全校"选项

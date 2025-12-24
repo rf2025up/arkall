@@ -505,7 +505,7 @@ const BadgePage: React.FC = () => {
                         className={`relative p-2 rounded-2xl flex flex-col items-center gap-1.5 transition-all ${isSelected ? 'bg-blue-50 ring-2 ring-blue-500' : 'bg-slate-50 grayscale opacity-60'
                           }`}
                       >
-                        <img src={student.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover shadow-sm" onError={(e) => { e.currentTarget.src = '/avatar.jpg' }} />
+                        <img src={student.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover shadow-sm" onError={(e) => { e.currentTarget.src = '/avatar.jpg' }} draggable={false} onContextMenu={(e) => e.preventDefault()} />
                         <span className={`text-[10px] font-black truncate w-full text-center ${isSelected ? 'text-blue-700' : 'text-slate-500'}`}>
                           {student.name}
                         </span>

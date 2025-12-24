@@ -191,6 +191,8 @@ const BattleCard: React.FC<{
             src={student.avatar_url}
             alt={student.name}
             className="w-full h-full object-cover"
+            draggable={false}
+            onContextMenu={(e) => e.preventDefault()}
           />
         </motion.div>
 
@@ -468,7 +470,7 @@ const StarshipBattleView: React.FC<StarshipBattleViewProps> = ({
             />
             <span className="text-white font-semibold">
               {battleData.status === 'active' ? '战斗进行中' :
-               battleData.status === 'starting' ? '准备开始' : '战斗结束'}
+                battleData.status === 'starting' ? '准备开始' : '战斗结束'}
             </span>
           </div>
         </motion.div>

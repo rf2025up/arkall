@@ -343,7 +343,8 @@ class HabitRoutes {
             const query = {
                 schoolId: schoolId,
                 search: search,
-                isActive: isActive === 'true',
+                // 🔴 修复：当 isActive 参数未传递时默认查询活跃习惯，而不是返回 false
+                isActive: isActive !== undefined ? isActive === 'true' : true,
                 page: page ? parseInt(page) : undefined,
                 limit: limit ? parseInt(limit) : undefined,
             };

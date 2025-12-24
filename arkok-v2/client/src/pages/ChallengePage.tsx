@@ -294,7 +294,7 @@ const ChallengePage: React.FC = () => {
                   return (
                     <div key={p.id} className="flex items-center justify-between bg-slate-50 rounded-lg px-2 py-1.5">
                       <div className="flex items-center gap-2">
-                        <img src={p.students.avatarUrl || '/avatar.jpg'} className="w-7 h-7 rounded-full" alt="" />
+                        <img src={p.students.avatarUrl || '/avatar.jpg'} className="w-7 h-7 rounded-full" alt="" draggable={false} onContextMenu={(e) => e.preventDefault()} />
                         <span className="text-xs font-bold text-slate-700">{p.students.name}</span>
                       </div>
                       {hasResult ? (
@@ -473,7 +473,7 @@ const ChallengePage: React.FC = () => {
                         : 'bg-white border-transparent'
                         }`}
                     >
-                      <img src={s.avatarUrl || '/avatar.jpg'} className="w-7 h-7 rounded-full shadow-sm" alt={s.name} />
+                      <img src={s.avatarUrl || '/avatar.jpg'} className="w-7 h-7 rounded-full shadow-sm" alt={s.name} draggable={false} onContextMenu={(e) => e.preventDefault()} />
                       <span className="text-[9px] font-bold text-slate-600 truncate w-full text-center">{s.name}</span>
                     </button>
                   ))}

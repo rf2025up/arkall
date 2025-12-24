@@ -12,12 +12,11 @@ class UserRoutes {
     getRoutes() {
         const router = (0, express_1.Router)();
         const userController = new user_controller_1.UserController(this.prisma);
-        // 所有用户路由都需要认证和管理员权限
+        // 所有用户路由都需要认证
         router.use((0, auth_middleware_1.authenticateToken)(this.authService));
-        router.use(auth_middleware_1.requireAdmin);
         // POST /api/users - 创建教师账号 (仅 Admin)
-        router.post('/', userController.createTeacher);
-        // GET /api/users - 获取教师列表 (仅 Admin)
+        router.post('/', auth_middleware_1.requireAdmin, userController.createTeacher);
+        // GET /api/users - 获取教师列表 (Admin 和 Teacher 均可，通过 controller 控制 schoolId 隔离)
         router.get('/', userController.getTeachers);
         // PUT /api/users/:id - 更新教师信息 (仅 Admin)
         router.put('/:id', userController.updateTeacher);

@@ -96,6 +96,8 @@ export declare class StudentService {
         currentLesson: string | null;
         currentLessonTitle: string | null;
         currentUnit: string | null;
+        currentInviteCode: string | null;
+        inviteCodeExpiresAt: Date | null;
     }>;
     /**
      * 更新学生信息

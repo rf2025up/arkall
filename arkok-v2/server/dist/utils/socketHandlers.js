@@ -4,6 +4,7 @@ exports.SOCKET_EVENTS = void 0;
 exports.setupSocketHandlers = setupSocketHandlers;
 exports.broadcastToSchool = broadcastToSchool;
 exports.broadcastToClass = broadcastToClass;
+exports.broadcastToStudent = broadcastToStudent;
 function setupSocketHandlers(io) {
     console.log('🔧 Setting up Socket.IO handlers...');
     // 连接处理器已在App类中处理，这里处理自定义事件
@@ -22,6 +23,16 @@ function setupSocketHandlers(io) {
         socket.on('join-class', (className) => {
             socket.join(`class-${className}`);
             console.log(`📚 Socket ${socket.id} joined class-${className}`);
+        });
+        // 🆕 加入学生个人房间 (用于家长端实时同步)
+        socket.on('join-student', (studentId) => {
+            socket.join(`student-${studentId}`);
+            console.log(`👶 Socket ${socket.id} joined student-${studentId}`);
+        });
+        // 🆕 离开学生个人房间
+        socket.on('leave-student', (studentId) => {
+            socket.leave(`student-${studentId}`);
+            console.log(`👶 Socket ${socket.id} left student-${studentId}`);
         });
         // 测试连接
         socket.on('ping', () => {
@@ -44,6 +55,10 @@ function broadcastToSchool(io, schoolId, event, data) {
 function broadcastToClass(io, className, event, data) {
     io.to(`class-${className}`).emit(event, data);
     console.log(`📡 Broadcasted to class-${className}: ${event}`);
+}
+function broadcastToStudent(io, studentId, event, data) {
+    io.to(`student-${studentId}`).emit(event, data);
+    console.log(`📡 Broadcasted to student-${studentId}: ${event}`);
 }
 // 常用事件定义
 exports.SOCKET_EVENTS = {

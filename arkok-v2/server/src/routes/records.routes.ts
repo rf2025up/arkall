@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { LMSService } from '../services/lms.service';
 import AuthService from '../services/auth.service';
 import { authenticateToken } from '../middleware/auth.middleware';
+import CurriculumService from '../services/curriculum.service';
 
 /**
  * 任务记录路由 (V5.0) - 复用 LMSService 逻辑
@@ -69,8 +70,27 @@ export class RecordsRoutes {
           user.userId
         );
 
-        res.json({ success: result.success > 0, data: result });
+        res.json({ success: result.count > 0, data: result });
       } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
+      }
+    });
+
+    // 🆕 老师手动覆盖学生进度 (最高权限)
+    this.router.post('/progress-override', async (req, res) => {
+      try {
+        const { studentId, schoolId, teacherId, courseInfo } = req.body;
+        console.log(`🚀 [RECORDS] progress-override - studentId=${studentId}, teacherId=${teacherId}`);
+
+        if (!studentId || !schoolId || !teacherId || !courseInfo) {
+          return res.status(400).json({ success: false, message: '缺失必要字段: studentId, schoolId, teacherId 或 courseInfo' });
+        }
+
+        const record = await this.lmsService.updateStudentProgress(schoolId, studentId, teacherId, courseInfo);
+
+        res.status(201).json({ success: true, data: record, message: '学生进度已成功修正' });
+      } catch (error: any) {
+        console.error('❌ [RECORDS] progress-override 失败:', error);
         res.status(500).json({ success: false, message: error.message });
       }
     });
@@ -89,6 +109,22 @@ export class RecordsRoutes {
           message: `学生结算成功，获得 ${result.totalExpAwarded} 经验值`,
           data: result
         });
+      } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
+      }
+    });
+
+    // 🆕 获取学期大纲图谱 (用于前端渲染全学期底图)
+    this.router.get('/curriculum/syllabus', async (req, res) => {
+      try {
+        const { subject, version, grade, semester } = req.query;
+        const syllabus = CurriculumService.getSyllabus({
+          subject: subject as string,
+          version: version as string,
+          grade: grade as string,
+          semester: semester as string
+        });
+        res.json({ success: true, data: syllabus });
       } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });
       }

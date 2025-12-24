@@ -16,6 +16,9 @@ import BadgePage from '../pages/BadgePage';
 import Profile from '../pages/Profile';
 import TeacherManagement from '../pages/TeacherManagement';
 import { ParentLogin, ParentLayout, TodayTimeline, GrowthProfile, SchoolConnect } from '../pages/parent';
+import { PlatformDashboard, CampusManagement } from '../pages/platform';
+import PlatformLayout from '../components/PlatformLayout';
+import PlatformProtectedRoute from '../components/PlatformProtectedRoute';
 
 // 创建路由配置
 export const router = createBrowserRouter([
@@ -130,6 +133,34 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     errorElement: <div className="flex items-center justify-center min-h-screen bg-black text-white">大屏加载错误</div>,
+  },
+  // ==================== 平台超级管理路由 ====================
+  {
+    path: '/platform',
+    element: (
+      <PlatformProtectedRoute>
+        <PlatformLayout />
+      </PlatformProtectedRoute>
+    ),
+    errorElement: <div className="flex items-center justify-center min-h-screen">超级管理端加载错误</div>,
+    children: [
+      {
+        index: true,
+        element: <PlatformDashboard />,
+      },
+      {
+        path: 'campuses',
+        element: <CampusManagement />,
+      },
+      {
+        path: 'library',
+        element: <div className="p-8 bg-white rounded-3xl border border-gray-100 min-h-64 flex items-center justify-center text-gray-400">全局资源分发系统 (开发中)</div>,
+      },
+      {
+        path: 'settings',
+        element: <div className="p-8 bg-white rounded-3xl border border-gray-100 min-h-64 flex items-center justify-center text-gray-400">平台系统设置 (开发中)</div>,
+      },
+    ],
   },
 ]);
 

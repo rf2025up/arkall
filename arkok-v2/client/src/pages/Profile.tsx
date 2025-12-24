@@ -232,6 +232,8 @@ const Profile: React.FC<ProfileProps> = () => {
                 src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=256&h=256&auto=format&fit=crop"
                 alt="教师"
                 className="w-14 h-14 rounded-2xl object-cover ring-2 ring-white/20 bg-gray-100"
+                draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
               />
               <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
             </div>

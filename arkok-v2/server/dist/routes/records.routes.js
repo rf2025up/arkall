@@ -23,8 +23,9 @@ class RecordsRoutes {
         // 🆕 创建单条任务记录 (增量添加)
         this.router.post('/', async (req, res) => {
             try {
-                const { studentId, title, category, exp, type = 'QC' } = req.body;
+                const { studentId, title, category, subcategory, exp, type = 'QC' } = req.body;
                 const user = req.user;
+                console.log(`🆕 [RECORDS] POST / - title=${title}, category=${category}, subcategory=${subcategory}`);
                 if (!studentId || !title || !category) {
                     return res.status(400).json({ success: false, message: '缺失必要字段' });
                 }
@@ -34,6 +35,7 @@ class RecordsRoutes {
                     type: type,
                     title,
                     category,
+                    subcategory: subcategory || '', // 🆕 传递分类标题
                     exp,
                     isOverridden: true
                 });
@@ -50,9 +52,25 @@ class RecordsRoutes {
                 const { status } = req.body;
                 const user = req.user;
                 const result = await this.lmsService.updateMultipleRecordStatus(user.schoolId, [recordId], status, user.userId);
-                res.json({ success: result.success > 0, data: result });
+                res.json({ success: result.count > 0, data: result });
             }
             catch (error) {
+                res.status(500).json({ success: false, message: error.message });
+            }
+        });
+        // 🆕 老师手动覆盖学生进度 (最高权限)
+        this.router.post('/progress-override', async (req, res) => {
+            try {
+                const { studentId, schoolId, teacherId, courseInfo } = req.body;
+                console.log(`🚀 [RECORDS] progress-override - studentId=${studentId}, teacherId=${teacherId}`);
+                if (!studentId || !schoolId || !teacherId || !courseInfo) {
+                    return res.status(400).json({ success: false, message: '缺失必要字段: studentId, schoolId, teacherId 或 courseInfo' });
+                }
+                const record = await this.lmsService.updateStudentProgress(schoolId, studentId, teacherId, courseInfo);
+                res.status(201).json({ success: true, data: record, message: '学生进度已成功修正' });
+            }
+            catch (error) {
+                console.error('❌ [RECORDS] progress-override 失败:', error);
                 res.status(500).json({ success: false, message: error.message });
             }
         });

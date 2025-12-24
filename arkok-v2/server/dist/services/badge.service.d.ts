@@ -88,6 +88,16 @@ export declare class BadgeService {
      */
     awardBadge(data: AwardBadgeRequest): Promise<any>;
     /**
+     * 批量授予学生勋章
+     */
+    batchAwardBadges(data: {
+        studentIds: string[];
+        badgeId: string;
+        schoolId: string;
+        reason?: string;
+        awardedBy?: string;
+    }): Promise<any>;
+    /**
      * 取消学生勋章
      */
     revokeBadge(studentId: string, badgeId: string, schoolId: string): Promise<void>;

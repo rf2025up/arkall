@@ -313,6 +313,18 @@ export class ApiService {
     };
   }
 
+  // 🆕 平台管理API
+  public get platform() {
+    return {
+      getOverview: () => this.get<any>('/platform/overview'),
+      listCampuses: () => this.get<any[]>('/platform/campuses'),
+      updateStatus: (schoolId: string, isActive: boolean) =>
+        this.patch<any>(`/platform/campuses/${schoolId}/status`, { isActive }),
+      updateExpiry: (schoolId: string, expiredAt: string) =>
+        this.patch<any>(`/platform/campuses/${schoolId}/expiry`, { expiredAt })
+    };
+  }
+
   // 🆕 记录相关API
   public get records() {
     return {
@@ -327,6 +339,16 @@ export class ApiService {
 
       passAll: (studentId: string, expBonus: number = 0) =>
         this.patch<any>(`/records/student/${studentId}/pass-all`, { expBonus }),
+
+      updateProgress: (data: {
+        studentId: string;
+        schoolId: string;
+        teacherId: string;
+        courseInfo: any;
+      }) => this.post<any>('/records/progress-override', data),
+
+      getSyllabus: (params: { subject: string; version?: string; grade?: string; semester?: string }) =>
+        this.get<any>('/records/curriculum/syllabus', { params }),
     };
   }
 
@@ -497,6 +519,16 @@ export const API = {
     list: (params?: any) => apiService.users.list(params),
     update: (id: string, data: any) => apiService.users.update(id, data),
     delete: (id: string) => apiService.users.delete(id),
+  },
+
+  // 平台管理专用
+  platform: {
+    getOverview: () => apiService.platform.getOverview(),
+    listCampuses: () => apiService.platform.listCampuses(),
+    updateStatus: (schoolId: string, isActive: boolean) =>
+      apiService.platform.updateStatus(schoolId, isActive),
+    updateExpiry: (schoolId: string, expiredAt: string) =>
+      apiService.platform.updateExpiry(schoolId, expiredAt),
   }
 };
 

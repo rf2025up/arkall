@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import socketService from '../../services/socket.service';
 
 const API_BASE = '/api/parent';
 
@@ -39,30 +40,61 @@ const TodayTimeline: React.FC = () => {
     const [submitting, setSubmitting] = useState(false);
 
     // 获取今日动态
+    const fetchTimeline = async () => {
+        const token = localStorage.getItem('parent_token');
+        if (!token || !studentId) return;
+
+        try {
+            const res = await fetch(`${API_BASE}/timeline/${studentId}/today`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await res.json();
+
+            if (!res.ok) throw new Error(result.error);
+            setData(result);
+            // 同步初始化交互状态
+            if (result.parentLiked) setLiked(true);
+            if (result.parentComment) setServerComment(result.parentComment);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchTimeline = async () => {
-            const token = localStorage.getItem('parent_token');
-            if (!token || !studentId) return;
-
-            try {
-                const res = await fetch(`${API_BASE}/timeline/${studentId}/today`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const result = await res.json();
-
-                if (!res.ok) throw new Error(result.error);
-                setData(result);
-                // 同步初始化交互状态
-                if (result.parentLiked) setLiked(true);
-                if (result.parentComment) setServerComment(result.parentComment);
-            } catch (err: any) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchTimeline();
+    }, [studentId]);
+
+    // 🆕 实时同步逻辑
+    useEffect(() => {
+        if (!studentId) return;
+
+        console.log(`🔌 [PARENT_TIMELINE] 尝试连接 Socket 并加入房间 student-${studentId}`);
+
+        // 我们需要一个 schoolId 来连接，通常家长端登录时会存这个
+        const schoolId = localStorage.getItem('schoolId') || 'default';
+
+        socketService.connect(schoolId).then(() => {
+            socketService.emit('join-student', studentId);
+
+            // 监听数据更新事件
+            const handleDataUpdate = (msg: any) => {
+                console.log('📡 [PARENT_TIMELINE] 收到实时同步指令:', msg);
+                // 如果更新涉及当前学生，则刷新列表
+                // 注意：这里我们简单地全量重拉，以确保时区、逻辑等与后端完全一致
+                if (msg.studentId === studentId || msg.data?.studentId === studentId) {
+                    fetchTimeline();
+                }
+            };
+
+            socketService.on('DATA_UPDATE' as any, handleDataUpdate);
+
+            return () => {
+                socketService.emit('leave-student', studentId);
+                socketService.off('DATA_UPDATE' as any, handleDataUpdate);
+            };
+        });
     }, [studentId]);
 
     // 点赞
@@ -587,8 +619,8 @@ const TodayTimeline: React.FC = () => {
                         onClick={handleComment}
                         disabled={!comment.trim() || submitting}
                         className={`absolute right-2 top-1/2 -translate-y-1/2 font-bold text-sm px-4 py-1.5 rounded-lg transition-all ${!comment.trim() || submitting
-                                ? 'text-gray-300'
-                                : 'text-orange-500 hover:bg-orange-50 active:scale-90'
+                            ? 'text-gray-300'
+                            : 'text-orange-500 hover:bg-orange-50 active:scale-90'
                             }`}
                     >
                         {submitting ? '...' : '发送'}

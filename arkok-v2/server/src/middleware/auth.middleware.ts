@@ -111,14 +111,19 @@ export const requireRole = (roles: string[]) => {
 };
 
 /**
+ * 平台管理员权限检查中间件
+ */
+export const requirePlatformAdmin = requireRole(['PLATFORM_ADMIN']);
+
+/**
  * 管理员权限检查中间件
  */
-export const requireAdmin = requireRole(['ADMIN']);
+export const requireAdmin = requireRole(['ADMIN', 'PLATFORM_ADMIN']);
 
 /**
  * 教师权限检查中间件
  */
-export const requireTeacher = requireRole(['ADMIN', 'TEACHER']);
+export const requireTeacher = requireRole(['ADMIN', 'TEACHER', 'PLATFORM_ADMIN']);
 
 /**
  * 用户信息验证中间件
@@ -135,6 +140,12 @@ export const validateUser = (req: Request, res: Response, next: NextFunction): v
 
   // 验证用户是否属于请求的学校ID（如果URL中包含学校ID）
   const urlSchoolId = req.params.schoolId || req.query.schoolId;
+
+  // 超级管理员 (PLATFORM_ADMIN) 允许跨校区访问，绕过 schoolId 检查
+  if (req.user.role === 'PLATFORM_ADMIN') {
+    return next();
+  }
+
   if (urlSchoolId && urlSchoolId !== req.schoolId) {
     res.status(403).json({
       success: false,

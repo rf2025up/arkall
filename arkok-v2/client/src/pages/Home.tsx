@@ -373,6 +373,8 @@ const Home = () => {
                 <img
                   src={student.avatarUrl || '/avatar.jpg'}
                   alt={student.name}
+                  draggable="false"
+                  onContextMenu={(e) => e.preventDefault()}
                   className={`w-14 h-14 rounded-full object-cover border-2 transition-all ${selectedIds.has(student.id) ? 'border-primary opacity-100' : 'border-gray-100'}`}
                 />
                 {isMultiSelectMode && (
