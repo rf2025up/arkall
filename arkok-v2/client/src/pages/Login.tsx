@@ -114,154 +114,102 @@ const Login: React.FC = () => {
     }
   };
 
-  // 默认管理员账号提示
-  const handleQuickLogin = () => {
-    setFormData({
-      username: 'admin',
-      password: '123456'
-    });
-  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#FFF5F0] flex items-center justify-center p-6 relative overflow-hidden font-sans">
+      {/* 背景流光氛围 - 模拟星云 */}
+      <div className="absolute inset-0 z-0 bg-[radial-gradient(at_10%_10%,rgba(255,153,102,0.3)_0,transparent_50%),radial-gradient(at_90%_90%,rgba(255,94,98,0.3)_0,transparent_50%),radial-gradient(at_50%_50%,rgba(255,255,255,0.8)_0,transparent_100%)]" />
+
+      {/* 漂浮的星球装饰 */}
+      <motion.div
+        animate={{ translateY: [0, -20, 0] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-[10%] left-[10%] w-[100px] h-[100px] rounded-full bg-gradient-to-br from-[#FFD194] to-[#FF9966] blur-lg opacity-60 z-0"
+      />
+      <motion.div
+        animate={{ translateY: [0, -20, 0] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        className="absolute bottom-[15%] right-[15%] w-[60px] h-[60px] rounded-full bg-gradient-to-br from-[#a18cd1] to-[#fbc2eb] blur-lg opacity-60 z-0"
+      />
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="w-full max-w-[400px] bg-white/90 backdrop-blur-[20px] rounded-[24px] p-10 shadow-[0_20px_40px_rgba(0,0,0,0.05)] border border-white/60 text-center relative z-10"
       >
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          {/* 头部 */}
-          <div className="text-center mb-8">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-              className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4"
-            >
-              <User className="w-8 h-8 text-white" />
-            </motion.div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              欢迎回来
-            </h1>
-            <p className="text-gray-600">
-              ArkOK V2 教育管理系统
-            </p>
+        {/* Logo */}
+        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#FF9966] to-[#FF5E62] flex items-center justify-center mx-auto mb-6 text-white shadow-[0_10px_20px_rgba(255,94,98,0.4)]">
+          <User className="w-8 h-8" />
+        </div>
+
+        {/* 标题 */}
+        <h1 className="text-2xl font-bold text-[#1D1D1F] mb-2 tracking-tight">欢迎回来</h1>
+        <p className="text-sm text-[#86868B] mb-8 tracking-wider">星途与伴游戏化激励学习系统</p>
+
+        {/* 错误提示 */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-left"
+          >
+            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+            <span className="text-red-800 text-xs font-medium">{error}</span>
+          </motion.div>
+        )}
+
+        {/* 表单 */}
+        <form onSubmit={handleSubmit} className="space-y-5 text-left">
+          <div className="space-y-2">
+            <label className="block text-[13px] font-semibold text-[#1D1D1F] pl-1">用户名</label>
+            <div className="relative group">
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9CA3AF] group-focus-within:text-[#FF5E62] transition-colors" />
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleInputChange}
+                placeholder="请输入用户名"
+                required
+                disabled={isLoading}
+                className="w-full bg-[#F5F5F7] hover:bg-[#EFEFF2] focus:bg-white border border-transparent focus:border-[#FF9966] rounded-xl py-3.5 pl-12 pr-4 text-sm text-[#1D1D1F] outline-none transition-all focus:ring-4 focus:ring-[#FF9966]/10"
+              />
+            </div>
           </div>
 
-          {/* 快速登录提示 */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-            className="mb-6 p-3 bg-blue-50 rounded-lg border border-blue-200"
-          >
-            <p className="text-sm text-blue-800 mb-2">
-              <strong>快速登录：</strong>点击下方按钮自动填入管理员账号
-            </p>
-            <button
-              type="button"
-              onClick={handleQuickLogin}
-              className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
-            >
-              使用管理员账号
-            </button>
-          </motion.div>
-
-          {/* 错误提示 */}
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2"
-            >
-              <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
-              <span className="text-red-800 text-sm">{error}</span>
-            </motion.div>
-          )}
-
-          {/* 登录表单 */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: 0.3 }}
-            >
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                用户名
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  value={formData.username}
-                  onChange={handleInputChange}
-                  placeholder="请输入用户名"
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                  disabled={isLoading}
-                  autoComplete="username"
-                />
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: 0.4 }}
-            >
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                密码
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="请输入密码"
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                  disabled={isLoading}
-                  autoComplete="current-password"
-                />
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.5 }}
-              className="pt-2"
-            >
-              <button
-                type="submit"
+          <div className="space-y-2">
+            <label className="block text-[13px] font-semibold text-[#1D1D1F] pl-1">密码</label>
+            <div className="relative group">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9CA3AF] group-focus-within:text-[#FF5E62] transition-colors" />
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="请输入密码"
+                required
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    登录中...
-                  </>
-                ) : (
-                  '登录'
-                )}
-              </button>
-            </motion.div>
-          </form>
+                className="w-full bg-[#F5F5F7] hover:bg-[#EFEFF2] focus:bg-white border border-transparent focus:border-[#FF9966] rounded-xl py-3.5 pl-12 pr-4 text-sm text-[#1D1D1F] outline-none transition-all focus:ring-4 focus:ring-[#FF9966]/10"
+              />
+            </div>
+          </div>
 
-          {/* 底部信息 */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3, delay: 0.6 }}
-            className="mt-6 text-center text-xs text-gray-500"
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-3.5 bg-gradient-to-br from-[#FF9966] to-[#FF5E62] text-white font-semibold rounded-2xl shadow-[0_8px_20px_rgba(255,94,98,0.4)] hover:shadow-[0_12px_24px_rgba(255,94,98,0.4)] hover:-translate-y-0.5 active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
           >
-            <p>© 2024 ArkOK V2. All rights reserved.</p>
-          </motion.div>
+            {isLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              '登 录'
+            )}
+          </button>
+        </form>
+
+        <div className="mt-8 text-[12px] text-[#C7C7CC]">
+          © 2025 星途与伴 V1.0. All rights reserved.
         </div>
       </motion.div>
     </div>

@@ -15,7 +15,11 @@ export const PlatformProtectedRoute: React.FC<{ children?: React.ReactNode }> = 
         );
     }
 
-    if (!isAuthenticated || user?.role !== 'PLATFORM_ADMIN') {
+    if (!isAuthenticated) {
+        return <Navigate to="/platform-login" state={{ from: window.location.pathname }} replace />;
+    }
+
+    if (user?.role !== 'PLATFORM_ADMIN') {
         return (
             <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6 font-sans">
                 <motion.div
@@ -33,7 +37,7 @@ export const PlatformProtectedRoute: React.FC<{ children?: React.ReactNode }> = 
                     <h1 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">越权访问</h1>
 
                     <p className="text-gray-500 mb-10 leading-relaxed font-medium">
-                        抱歉，您当前登录的账号不具备超级管理员权限。该控制台仅供 ArkOK 平台方进行跨校区运营管理使用。
+                        抱歉，您当前登录的账号（{user?.username}）不具备超级管理员权限。该控制台仅供 ArkOK 平台方进行跨校区运营管理使用。
                     </p>
 
                     <div className="space-y-4">

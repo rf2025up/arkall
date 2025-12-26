@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Settings, Plus, Trash2, X, ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
+import { Check, Settings, Plus, Trash2, X, ArrowLeft, ArrowRight, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useClass } from '../context/ClassContext';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -75,14 +76,18 @@ const HabitPage: React.FC = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedHabitId, setSelectedHabitId] = useState<string>('');
+
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
   const [checkinFeedback, setCheckinFeedback] = useState<CheckinFeedback>({ show: false, message: '', type: 'success' });
 
-  // Modal States
+  // 习惯管理状态
+  const [selectedHabitId, setSelectedHabitId] = useState<string>('');
   const [isManageOpen, setIsManageOpen] = useState(false);
   const [isAddMode, setIsAddMode] = useState(false);
-  const [editForm, setEditForm] = useState<{ id?: string, name: string, icon: string }>({ name: '', icon: HABIT_ICONS[0] });
+  const [editForm, setEditForm] = useState<{ id?: string, name: string, icon: string }>({
+    name: '',
+    icon: HABIT_ICONS[0]
+  });
 
   // --- 统一数据获取 - 并发优化 ---
   const fetchData = async (forceRefresh = false) => {
@@ -228,62 +233,50 @@ const HabitPage: React.FC = () => {
   };
 
   const handleDeleteHabit = async (id: string) => {
-    if (window.confirm('确定要删除这个习惯吗？')) {
-      try {
-        const response = await apiService.delete(`/habits/${id}`);
-        if (response.success) {
-          apiService.invalidateCache('/habits');
-          const newHabits = habits.filter(h => h.id !== id);
-          setHabits(newHabits);
-          if (selectedHabitId === id && newHabits.length > 0) {
-            setSelectedHabitId(newHabits[0].id);
-          }
-        } else {
-          // 降级处理：直接删除
-          const newHabits = habits.filter(h => h.id !== id);
-          setHabits(newHabits);
-          if (selectedHabitId === id && newHabits.length > 0) {
-            setSelectedHabitId(newHabits[0].id);
-          }
+    const habitName = habits.find(h => h.id === id)?.name || '习惯';
+    try {
+      const response = await apiService.delete(`/habits/${id}`);
+      if (response.success) {
+        apiService.invalidateCache('/habits');
+        const newHabits = habits.filter(h => h.id !== id);
+        setHabits(newHabits);
+        if (selectedHabitId === id && newHabits.length > 0) {
+          setSelectedHabitId(newHabits[0].id);
         }
-      } catch (error) {
-        console.error('删除习惯失败:', error);
+        toast.success(`已删除「${habitName}」`);
+      } else {
         // 降级处理：直接删除
         const newHabits = habits.filter(h => h.id !== id);
         setHabits(newHabits);
         if (selectedHabitId === id && newHabits.length > 0) {
           setSelectedHabitId(newHabits[0].id);
         }
+        toast.success(`已删除「${habitName}」`);
       }
+    } catch (error) {
+      console.error('删除习惯失败:', error);
+      toast.error('删除习惯失败，请重试');
     }
   };
 
   const handleSaveHabit = async () => {
-    if (!editForm.name) return;
+    if (!editForm.name.trim()) return;
 
     try {
       if (isAddMode) {
+        // 新增逻辑
         const response = await apiService.post('/habits', {
-          name: editForm.name,
+          name: editForm.name.trim(),
           icon: editForm.icon,
           schoolId: user?.schoolId || '',
-          expReward: 10 // 默认经验奖励
+          expReward: 10
         });
+
         if (response.success && response.data) {
           apiService.invalidateCache('/habits');
           const newHabit: Habit = {
             id: (response.data as { id?: string }).id || `h-${Date.now()}`,
-            name: editForm.name,
-            icon: editForm.icon
-          };
-          const newHabits = [...habits, newHabit];
-          setHabits(newHabits);
-          setSelectedHabitId(newHabit.id);
-        } else {
-          // 降级处理：直接添加
-          const newHabit: Habit = {
-            id: `h-${Date.now()}`,
-            name: editForm.name,
+            name: editForm.name.trim(),
             icon: editForm.icon
           };
           const newHabits = [...habits, newHabit];
@@ -291,18 +284,18 @@ const HabitPage: React.FC = () => {
           setSelectedHabitId(newHabit.id);
         }
       } else if (editForm.id) {
+        // 编辑逻辑
         const response = await apiService.put(`/habits/${editForm.id}`, {
-          name: editForm.name,
+          name: editForm.name.trim(),
           icon: editForm.icon,
-          schoolId: user?.schoolId || ''  // 后端需要 schoolId 验证权限
+          schoolId: user?.schoolId || ''
         });
+
         if (response.success) {
           apiService.invalidateCache('/habits');
-          const newHabits = habits.map(h => h.id === editForm.id ? { ...h, name: editForm.name, icon: editForm.icon } : h);
-          setHabits(newHabits);
-        } else {
-          // 降级处理：直接更新
-          const newHabits = habits.map(h => h.id === editForm.id ? { ...h, name: editForm.name, icon: editForm.icon } : h);
+          const newHabits = habits.map(h =>
+            h.id === editForm.id ? { ...h, name: editForm.name.trim(), icon: editForm.icon } : h
+          );
           setHabits(newHabits);
         }
       }
@@ -312,20 +305,6 @@ const HabitPage: React.FC = () => {
       setEditForm({ name: '', icon: HABIT_ICONS[0] });
     } catch (error) {
       console.error('保存习惯失败:', error);
-      // 降级处理：直接本地更新
-      if (isAddMode) {
-        const newHabit: Habit = {
-          id: `h-${Date.now()}`,
-          name: editForm.name,
-          icon: editForm.icon
-        };
-        const newHabits = [...habits, newHabit];
-        setHabits(newHabits);
-        setSelectedHabitId(newHabit.id);
-      } else if (editForm.id) {
-        const newHabits = habits.map(h => h.id === editForm.id ? { ...h, name: editForm.name, icon: editForm.icon } : h);
-        setHabits(newHabits);
-      }
       setIsAddMode(false);
       setEditForm({ name: '', icon: HABIT_ICONS[0] });
     }
@@ -344,198 +323,202 @@ const HabitPage: React.FC = () => {
     );
   }
 
+  // 自动移除 Emoji 的正则
+  const filterEmoji = (str: string) => str.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\u200D|\uFE0F|[\u2600-\u26FF]/g, '').trim();
+
   return (
     <ProtectedRoute>
-      {/* V1原版样式：min-h-screen bg-background */}
-      {/* V1增强样式：使用 4tab.html 推荐的橙色渐变风格 */}
-      <div className="min-h-screen bg-[#F7F9FC] pb-24">
+      <div className="min-h-screen w-full bg-[#F5F7FA]">
+        {/* 顶部背景 */}
+        <div
+          className="h-40 absolute top-0 left-0 w-full z-0 rounded-b-3xl"
+          style={{ background: 'linear-gradient(135deg, #FF9A5E 0%, #FF502E 100%)' }}
+        ></div>
 
-        {/* === 统一头部 (橙色渐变) === */}
-        <header
-          className="pt-12 pb-6 px-5 rounded-b-[2.5rem] shadow-xl shadow-orange-500/10 relative overflow-hidden mb-6 z-30"
-          style={{ background: 'linear-gradient(180deg, #FF7E36 0%, #FF9D5C 100%)' }}
-        >
-          {/* 背景装饰 */}
-          <div className="absolute top-0 right-0 p-4 opacity-10">
-            <Settings size={120} className="text-white rotate-12" />
-          </div>
-
-          <div className="relative z-10 flex flex-col gap-4">
-            {/* 顶栏 */}
-            <div className="flex justify-between items-center">
-              <button
-                onClick={() => navigate('/')}
-                className="w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-xl text-white active:scale-90 transition-transform"
-              >
-                <ArrowLeft size={20} />
-              </button>
-              <h1 className="text-lg font-black text-white">习惯打卡</h1>
-              <div className="w-10 h-10" /> {/* 占位保持标题居中 */}
-            </div>
-
-            {/* 功能区：当前习惯选择 (Header 内部) */}
-            <div
-              onClick={() => setIsManageOpen(true)}
-              className="bg-white/20 backdrop-blur-md self-center px-5 py-2 rounded-full border border-white/30 flex items-center gap-2 cursor-pointer active:scale-95 transition-all"
-            >
-              <span className="text-xl">
-                {habits.find(h => h.id === selectedHabitId)?.icon || '📋'}
-              </span>
-              <span className="text-sm font-bold text-white">
-                {habits.find(h => h.id === selectedHabitId)?.name || '选择习惯'}
-              </span>
-              <span className="text-white/60 text-[10px]">▼</span>
-            </div>
-          </div>
+        {/* 导航栏 */}
+        <header className="relative z-10 flex justify-between items-center px-5 pt-12 pb-4 text-white">
+          <button
+            onClick={() => navigate('/')}
+            className="w-10 h-10 flex items-center justify-center opacity-90 active:scale-95"
+          >
+            <X size={24} />
+          </button>
+          <h1 className="text-lg font-bold">习惯打卡</h1>
+          <button
+            onClick={() => navigate('/pk')}
+            className="w-10 h-10 flex items-center justify-center opacity-90 active:scale-95"
+          >
+            <ArrowRight size={24} />
+          </button>
         </header>
 
-        {/* 隐藏的 Select 用于状态变更 (保持原有逻辑) */}
-        <select
-          value={selectedHabitId}
-          onChange={(e) => setSelectedHabitId(e.target.value)}
-          className="hidden"
-        >
-          {habits.map(h => (
-            <option key={String(h.id)} value={String(h.id)}>{h.name}</option>
-          ))}
-        </select>
-
-        {/* === 内容区 - 统一背景卡片 === */}
-        <div className="px-5 relative z-20">
-          <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-6 min-h-[55vh] border border-white">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-1.5 h-4 bg-[#FF7E36] rounded-full"></div>
-              <h3 className="text-sm font-black text-slate-800">选择打卡学员</h3>
+        <main className="p-4 space-y-4 relative z-10 pb-32">
+          {/* 核心打卡卡片 */}
+          <section className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-50">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1.5 h-4 bg-orange-500 rounded-full" />
+              <h2 className="text-sm font-bold text-slate-800">选择习惯</h2>
             </div>
-            <div className="grid grid-cols-4 gap-4">
+
+            {/* 习惯选择下拉 (内联展开列表) */}
+            <div className="relative mb-6">
+              <div
+                onClick={() => setIsManageOpen(!isManageOpen)}
+                className="w-full bg-[#FFF9E0] text-[#FFAA00] rounded-xl p-3.5 flex items-center justify-between border border-[#FFF0E0] cursor-pointer active:scale-[0.99] transition-all"
+              >
+                <span className="font-bold text-sm flex items-center gap-2">
+                  {habits.find(h => h.id === selectedHabitId)?.icon || '📋'}
+                  {filterEmoji(habits.find(h => h.id === selectedHabitId)?.name || '选择习惯')}
+                </span>
+                <Plus size={20} strokeWidth={2.5} className={`opacity-60 transition-transform ${isManageOpen ? 'rotate-45' : ''}`} />
+              </div>
+
+              {/* 展开的习惯列表 */}
+              {isManageOpen && (
+                <div className="mt-2 bg-white rounded-2xl border border-slate-100 shadow-lg overflow-hidden animate-in slide-in-from-top-2">
+                  <div className="flex items-center gap-2 p-4 border-b border-slate-50">
+                    <div className="w-1.5 h-4 bg-blue-500 rounded-full" />
+                    <span className="text-sm font-bold text-slate-800">习惯列表</span>
+                    <span className="text-xs text-slate-400 font-bold">({habits.length})</span>
+                  </div>
+                  <div className="max-h-[300px] overflow-y-auto">
+                    {habits.map(habit => (
+                      <div
+                        key={habit.id}
+                        className="flex items-center justify-between p-4 border-b border-slate-50 last:border-b-0 hover:bg-slate-50 transition-colors"
+                      >
+                        <div
+                          className="flex-1 flex items-center gap-3 cursor-pointer"
+                          onClick={() => {
+                            setSelectedHabitId(habit.id);
+                            setIsManageOpen(false);
+                            setIsAddMode(false);
+                          }}
+                        >
+                          <span className="text-xl">{habit.icon}</span>
+                          <span className="text-sm font-bold text-slate-700">{filterEmoji(habit.name)}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${selectedHabitId === habit.id ? 'border-orange-500 bg-orange-500' : 'border-slate-200'}`}>
+                            {selectedHabitId === habit.id && <Check size={12} className="text-white" strokeWidth={3} />}
+                          </div>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteHabit(habit.id); }}
+                            className="w-7 h-7 flex items-center justify-center bg-slate-50 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-500 transition-colors"
+                          >
+                            <XCircle size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* 新增习惯表单 */}
+                    {isAddMode ? (
+                      <div className="p-4 bg-slate-50 border-t border-slate-100 space-y-3">
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="习惯名称"
+                            className="flex-1 bg-white border-none rounded-xl p-3 text-sm font-bold shadow-sm outline-none focus:ring-1 focus:ring-orange-200"
+                            value={editForm.name}
+                            onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                            autoFocus
+                          />
+                          <select
+                            className="w-14 bg-white border-none rounded-xl p-2 text-xl shadow-sm text-center appearance-none cursor-pointer"
+                            value={editForm.icon}
+                            onChange={e => setEditForm({ ...editForm, icon: e.target.value })}
+                          >
+                            {HABIT_ICONS.map(icon => <option key={icon} value={icon}>{icon}</option>)}
+                          </select>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => { setIsAddMode(false); setEditForm({ name: '', icon: HABIT_ICONS[0] }); }}
+                            className="flex-1 h-10 bg-slate-200 text-slate-500 rounded-xl text-sm font-bold"
+                          >
+                            取消
+                          </button>
+                          <button
+                            onClick={handleSaveHabit}
+                            disabled={!editForm.name.trim()}
+                            className="flex-1 h-10 bg-gradient-to-r from-[#FF9A5E] to-[#FF502E] text-white rounded-xl text-sm font-bold disabled:opacity-50"
+                          >
+                            保存
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        onClick={() => { setIsAddMode(true); setEditForm({ name: '', icon: HABIT_ICONS[0] }); }}
+                        className="p-4 border-t border-slate-100 flex items-center justify-center gap-2 cursor-pointer hover:bg-orange-50 transition-colors"
+                      >
+                        <Plus size={16} className="text-orange-500" />
+                        <span className="text-sm font-bold text-orange-500">新增习惯</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between mb-3 px-1">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-4 bg-orange-500 rounded-full" />
+                <h3 className="text-sm font-bold text-slate-800">选择学生</h3>
+              </div>
+              <button
+                onClick={() => { if (allSelected) { setSelectedStudentIds(new Set()); } else { setSelectedStudentIds(new Set(students.map(s => s.id))); } }}
+                className="text-[11px] font-bold text-slate-400"
+              >
+                {allSelected ? '取消全选' : '一键全选'}
+              </button>
+            </div>
+
+            {/* 学员网格 - 对齐截图 4 列布局 */}
+            <div className="grid grid-cols-4 gap-4 mb-6">
               {students.map(student => {
                 const isSelected = selectedStudentIds.has(student.id);
                 return (
                   <div
                     key={student.id}
                     onClick={() => toggleStudent(student.id)}
-                    className="flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform group"
+                    className={`flex flex-col items-center gap-1.5 cursor-pointer transition-all ${isSelected ? 'scale-105' : ''}`}
                   >
-                    <div className={`relative w-14 h-14 rounded-2xl transition-all duration-300 shadow-sm ${isSelected ? 'ring-4 ring-orange-500 ring-offset-2' : 'bg-slate-50 border border-slate-100'}`}>
-                      <img
-                        src={student.avatarUrl || '/avatar.jpg'}
-                        onError={(e) => { e.currentTarget.src = '/avatar.jpg'; }}
-                        className={`w-full h-full rounded-2xl bg-slate-200 object-cover select-none pointer-events-none ${isSelected ? 'opacity-100' : 'opacity-40 grayscale group-hover:opacity-60'}`}
-                        alt={student.name}
-                        draggable={false}
-                        onContextMenu={(e) => e.preventDefault()}
-                      />
+                    <div className="relative">
+                      <div className={`w-14 h-14 rounded-full p-0.5 border-2 transition-all ${isSelected ? 'border-orange-500 bg-orange-50' : 'border-slate-50 bg-white'}`}>
+                        <img
+                          src={student.avatarUrl}
+                          className={`w-full h-full rounded-full object-cover ${isSelected ? 'opacity-100' : 'opacity-80'}`}
+                        />
+                      </div>
                       {isSelected && (
-                        <div className="absolute -top-2 -right-2 bg-orange-500 rounded-full p-1 border-2 border-white shadow-md">
-                          <Check size={12} className="text-white" strokeWidth={4} />
+                        <div className="absolute -top-1 -right-1 bg-orange-500 text-white rounded-full p-0.5 shadow-sm border-2 border-white">
+                          <Check size={10} strokeWidth={4} />
                         </div>
                       )}
                     </div>
-                    <span className={`text-[10px] text-center font-black truncate w-full ${isSelected ? 'text-orange-600' : 'text-slate-400'}`}>
-                      {student.name}
-                    </span>
+                    <div className="text-center">
+                      <div className={`text-[11px] font-bold truncate w-full ${isSelected ? 'text-orange-600' : 'text-slate-700'}`}>
+                        {student.name}
+                      </div>
+                    </div>
                   </div>
                 )
               })}
             </div>
-            <div className="mt-8 flex justify-between items-center bg-slate-50 p-4 rounded-2xl">
-              <span className="text-[10px] font-bold text-slate-400">本班学生：{students.length} 位</span>
-              <button
-                onClick={() => { if (allSelected) { setSelectedStudentIds(new Set()); } else { setSelectedStudentIds(new Set(students.map(s => s.id))); } }}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${allSelected ? 'bg-slate-200 text-slate-600' : 'bg-orange-500 text-white shadow-lg shadow-orange-200'}`}
-              >
-                {allSelected ? '取消全选' : '一键全选'}
-              </button>
-            </div>
-          </div>
-        </div>
 
-        {/* === Confirm Button (V1增强样式) === */}
-        <div className="fixed bottom-24 left-0 right-0 px-6 z-40 flex justify-center">
-          <button
-            onClick={handleConfirm}
-            disabled={selectedStudentIds.size === 0}
-            className={`w-full max-w-sm py-4 rounded-2xl font-black text-white shadow-2xl transition-all flex items-center justify-center gap-2 ${selectedStudentIds.size > 0
-              ? 'bg-gradient-to-r from-orange-500 to-orange-600 shadow-orange-200 active:scale-95'
-              : 'bg-slate-300 cursor-not-allowed shadow-none'
-              }`}
-          >
-            确认打卡 ({selectedStudentIds.size}人)
-          </button>
-        </div>
+            <button
+              onClick={handleConfirm}
+              disabled={selectedStudentIds.size === 0}
+              className="w-full h-12 bg-gradient-to-r from-[#FF9A5E] to-[#FF502E] text-white rounded-[44px] text-base font-bold shadow-lg shadow-orange-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              提交打卡
+            </button>
+          </section>
+        </main>
 
-        {/* === Manage Habits Modal (V1原版样式) === */}
-        {isManageOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-            <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95">
-              <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h3 className="font-bold text-gray-800">管理习惯</h3>
-                <button onClick={() => setIsManageOpen(false)}>
-                  <X size={20} className="text-gray-400" />
-                </button>
-              </div>
-
-              {/* List */}
-              <div className="p-4 max-h-64 overflow-y-auto space-y-2">
-                {habits.map(h => (
-                  <div key={h.id} className="flex justify-between items-center bg-white border border-gray-100 p-3 rounded-xl">
-                    <div className="flex items-center">
-                      <span className="text-2xl mr-3">{h.icon}</span>
-                      <span className="font-bold text-gray-700">{h.name}</span>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => { setEditForm({ id: h.id, name: h.name, icon: h.icon }); setIsAddMode(false); }}
-                        className="p-1.5 bg-blue-50 text-blue-500 rounded-lg"
-                      >
-                        <Settings size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteHabit(h.id)}
-                        className="p-1.5 bg-red-50 text-red-500 rounded-lg"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Edit/Add Form */}
-              <div className="p-4 bg-gray-50 border-t border-gray-100">
-                <h4 className="text-xs font-bold text-gray-400 mb-2 uppercase">{isAddMode ? '新增习惯' : (editForm.id ? '编辑习惯' : '编辑选定习惯')}</h4>
-                <div className="flex space-x-2 mb-2">
-                  <input
-                    type="text"
-                    placeholder="习惯名称"
-                    value={editForm.name}
-                    onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-                    className="flex-1 p-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-primary"
-                  />
-                  <select
-                    value={editForm.icon}
-                    onChange={e => setEditForm({ ...editForm, icon: e.target.value })}
-                    className="w-16 p-2 rounded-lg border border-gray-200 text-lg outline-none"
-                  >
-                    {HABIT_ICONS.map(ic => <option key={ic} value={ic}>{ic}</option>)}
-                  </select>
-                </div>
-                <div className="flex space-x-2">
-                  {!isAddMode && !editForm.id ? (
-                    <button onClick={() => { setIsAddMode(true); setEditForm({ name: '', icon: HABIT_ICONS[0] }); }} className="w-full py-2 bg-white border border-gray-200 text-gray-600 font-bold rounded-lg text-sm">
-                      + 新增模式
-                    </button>
-                  ) : (
-                    <>
-                      <button onClick={() => { setIsAddMode(false); setEditForm({ name: '', icon: HABIT_ICONS[0], id: undefined }) }} className="flex-1 py-2 bg-white border border-gray-200 text-gray-500 font-bold rounded-lg text-sm">取消</button>
-                      <button onClick={handleSaveHabit} className="flex-1 py-2 bg-primary text-white font-bold rounded-lg text-sm">保存</button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* 习惯管理模态框已移除，改为内联展开列表 */}
 
         {/* === Check-in Success Toast (V1原版样式) === */}
         {checkinFeedback.show && (

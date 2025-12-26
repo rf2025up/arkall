@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { toast } from 'sonner';
 import { X, Check, Search, Settings, Trash2, Plus, ChevronRight, User, Shield, Award, Calendar, BookOpen, Zap, Star, Leaf, ArrowRight, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useClass } from '../context/ClassContext';
@@ -8,6 +9,14 @@ import MessageCenter from '../components/MessageCenter';
 import { FIXED_QC_ITEMS } from '../config/taskCategories';
 
 // --- 类型定义 ---
+
+// --- 类型定义与辅助工具 ---
+
+const GRADE_MAP: Record<string, string> = {
+  '一年级': '1', '二年级': '2', '三年级': '3', '四年级': '4', '五年级': '5', '六年级': '6'
+};
+const getNormGrade = (g?: string) => GRADE_MAP[g || ''] || g || '2';
+const getNormSemester = (s?: string) => s?.includes('下') ? '下' : '上';
 
 // 🚀 API响应类型定义
 interface StudentProgressResponse {
@@ -43,10 +52,16 @@ interface Student {
   id: string;
   name: string;
   avatar: string;
-  lesson: Lesson;
+  lesson: Lesson & {
+    chinese?: Lesson;
+    math?: Lesson;
+    english?: Lesson;
+  };
   tasks: Task[];
-  tutoring?: any[]; // 🆕 添加 1v1 讲解计划
+  tutoring?: any[];
   className?: string;
+  grade?: string;
+  semester?: string;
   level?: number;
   exp?: number;
   totalExp?: number;
@@ -124,16 +139,28 @@ const QCView: React.FC = () => {
     chinese: { unit: string; lesson?: string; title: string };
     math: { unit: string; lesson?: string; title: string };
     english: { unit: string; title: string };
+    grade?: string;
+    semester?: string;
   }>({
     chinese: { unit: "1", lesson: "1", title: "默认课程" },
     math: { unit: "1", lesson: "1", title: "默认课程" },
-    english: { unit: "1", title: "Default Course" }
+    english: { unit: "1", title: "Default Course" },
+    grade: "二年级",
+    semester: "上册"
   });
 
   // 课程进度编辑状态
   const [progressEditMode, setProgressEditMode] = useState(false);
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
   const [isUpdatingProgress, setIsUpdatingProgress] = useState(false);
+  const [isMethodologyModalOpen, setIsMethodologyModalOpen] = useState(false);
+  const [isGrowthModalOpen, setIsGrowthModalOpen] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // 🆕 进度拨盘 (The Dial) 状态
+  const [dialStudentId, setDialStudentId] = useState<string | null>(null);
+  const [dialSubject, setDialSubject] = useState<'chinese' | 'math' | 'english' | null>(null);
+  const [syllabuses, setSyllabuses] = useState<Record<string, any[]>>({}); // 缓存各科大纲 [subject_grade]: items
 
   // 🚀 学科配置 - 直接复制备课页的配置
   const SUBJECT_CONFIG = {
@@ -181,29 +208,114 @@ const QCView: React.FC = () => {
 
       if (response.success && response.data) {
         // 使用正确的类型定义
-        const progressData: StudentProgressResponse = response.data as StudentProgressResponse;
+        const progressData: any = response.data;
         setCourseInfo({
           chinese: progressData.chinese || { unit: "1", lesson: "1", title: "默认课程" },
           math: progressData.math || { unit: "1", lesson: "1", title: "默认课程" },
-          english: progressData.english || { unit: "1", title: "Default Course" }
+          english: progressData.english || { unit: "1", title: "Default Course" },
+          grade: progressData.grade || "二年级",
+          semester: progressData.semester || "上册"
         });
-      } else {
-        console.warn('[QCView] 获取课程进度失败:', response.message);
       }
     } catch (error) {
       console.error('[QCView] 获取学生课程进度异常:', error);
     }
   };
 
-  // 🚀 课程进度变更处理 - 复用备课页的逻辑
-  const handleCourseChange = (sub: keyof typeof courseInfo, field: string, val: string) => {
-    setCourseInfo(prev => ({
-      ...prev,
-      [sub]: {
-        ...prev[sub],
-        [field]: val
+  // 🚀 从缓存的大纲中查找课文标题
+  const findTitleInSyllabus = (subject: 'chinese' | 'math' | 'english', unit: string, lesson?: string) => {
+    // 获取当前学生的年级和学期
+    const student = qcStudents.find(s => s.id === (selectedStudentId || editingStudentId));
+    const studentGrade = getNormGrade(student?.grade || courseInfo.grade);
+    const studentSemester = getNormSemester(student?.semester || courseInfo.semester);
+
+    // 根据学科自动选择教材版本
+    const version = subject === 'english' ? '湘少版' : '人教版';
+    const gradeStr = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'][parseInt(studentGrade) - 1] || '二年级';
+    const semesterStr = studentSemester === '下' ? '下册' : '上册';
+    const key = `${subject}_${gradeStr}_${semesterStr}_${version}`;
+
+    const syllabus = syllabuses[key];
+    if (!syllabus || !Array.isArray(syllabus)) {
+      console.log(`[findTitleInSyllabus] 大纲未缓存: ${key}`);
+      return null;
+    }
+
+    // 在大纲中查找匹配的单元和课程
+    const targetUnit = parseInt(unit) || 1;
+    const targetLesson = lesson ? parseInt(lesson) : 1;
+
+    for (const unitData of syllabus) {
+      if (parseInt(unitData.unit) === targetUnit || unitData.unit === unit) {
+        if (unitData.lessons && Array.isArray(unitData.lessons)) {
+          for (const lessonData of unitData.lessons) {
+            const lessonNum = parseInt(lessonData.lesson) || lessonData.order || 1;
+            if (lessonNum === targetLesson || lessonData.lesson === lesson) {
+              return lessonData.title || lessonData.name || null;
+            }
+          }
+        }
+        // 英语可能直接有 title
+        if (subject === 'english' && unitData.title) {
+          return unitData.title;
+        }
       }
-    }));
+    }
+
+    console.log(`[findTitleInSyllabus] 未找到匹配: subject=${subject}, unit=${unit}, lesson=${lesson}`);
+    return null;
+  };
+
+  // 🚀 课程进度变更处理 - 复用备课页的逻辑
+  const handleCourseChange = async (sub: string, field: string, value: string) => {
+    if (sub === 'grade' || sub === 'semester') {
+      setCourseInfo(prev => {
+        const updated = { ...prev, [sub]: value };
+        saveStudentProgress(updated); // Auto-save grade/semester changes
+        return updated;
+      });
+      return;
+    }
+
+    // 1. 同步更新局部状态
+    setCourseInfo(prev => {
+      const subject = sub as 'chinese' | 'math' | 'english';
+      const updated = {
+        ...prev,
+        [subject]: { ...prev[subject], [field]: value }
+      };
+
+      // 如果改变了单元或课，尝试自动修正标题
+      if (field === 'unit' || field === 'lesson') {
+        const lesson = subject === 'english' ? undefined : (updated[subject] as any).lesson;
+        const title = findTitleInSyllabus(subject, updated[subject].unit, lesson);
+        if (title) updated[subject].title = title;
+      }
+
+      // 🚀 核心闭环：自动触发后端更新
+      saveStudentProgress(updated);
+
+      return updated;
+    });
+  };
+
+  /**
+   * 🆕 异步保存学生进度到后端
+   */
+  const saveStudentProgress = async (info: typeof courseInfo) => {
+    const studentId = selectedStudentId || editingStudentId;
+    if (!studentId || !user) return;
+    try {
+      await apiService.records.updateProgress({
+        studentId: studentId,
+        schoolId: user.schoolId || '',
+        teacherId: user.id || '',
+        courseInfo: info
+      });
+      console.log('✅ [QCView] 学生进度自动保存成功');
+    } catch (error) {
+      console.error('❌ [QCView] 学生进度自动保存失败:', error);
+    }
   };
 
   // 🚀 更新学生课程进度 - 权限高于备课页
@@ -212,11 +324,13 @@ const QCView: React.FC = () => {
       setIsUpdatingProgress(true);
       const response = await apiService.records.updateProgress({
         studentId,
-        subjectProgress: courseInfo
+        schoolId: user?.schoolId || '',
+        teacherId: user?.id || '',
+        courseInfo: courseInfo
       });
       if (response.success) {
-        toast.success("进度修正成功！");
-        setProgressEditMode(false);
+        alert("进度修正成功！");
+        setLessonEditMode(false);
         // 更新本地学生进度显示
         setQcStudents(prev => prev.map(s => {
           if (s.id !== studentId) return s;
@@ -228,25 +342,174 @@ const QCView: React.FC = () => {
           return { ...s, lesson: newLesson };
         }));
       }
-    } catch (err: any) {
-      toast.error("修正失败: " + err.message);
+    } catch (error) {
+      console.error('[QCView] 更新进度失败:', error);
+      alert("更新进度失败，请重试");
     } finally {
       setIsUpdatingProgress(false);
     }
   };
 
-  const handleOpenProgressModal = (e: React.MouseEvent, student: Student) => {
+  // 🚀 获取大纲数据 (用于自动标题填充)
+  const fetchSyllabus = async (subject: string, grade: string = "一年级", semester: string = "上", version?: string) => {
+    // 根据学科自动选择教材版本：语文、数学为人教版(PEP)，英语为湘少版
+    const autoVersion = version || (subject === 'english' ? '湘少版' : '人教版');
+    // 🔧 关键修复：缓存键必须使用标准化后的值，以对齐下拉列表的读取逻辑
+    const normG = getNormGrade(grade);
+    const normS = getNormSemester(semester);
+    const key = `${subject}_${normG}_${normS}_${autoVersion}`;
+
+    if (syllabuses[key]) return syllabuses[key];
+
+    try {
+      const response = await apiService.get('/records/curriculum/syllabus', {
+        subject,
+        grade: normG, // 向后端发送标准化后的值
+        semester: normS,
+        version: autoVersion
+      });
+
+      if (response.success && Array.isArray(response.data)) {
+        setSyllabuses(prev => ({ ...prev, [key]: response.data as any[] }));
+        return response.data;
+      }
+    } catch (error) {
+      console.error('[QCView] 获取大纲失败:', error);
+    }
+    return [];
+  };
+
+  // 🚀 核心联动：当年级或学期变化时，自动获取大纲，确保下拉列表有数据
+  useEffect(() => {
+    const grade = courseInfo.grade;
+    const semester = courseInfo.semester?.includes('下') ? '下' : '上';
+    if (!grade) return;
+
+    console.log(`[QCView] 联动更新：正在拉取 ${grade} ${semester} 的大纲...`);
+    // 并发请求三科大纲
+    fetchSyllabus('chinese', grade, semester);
+    fetchSyllabus('math', grade, semester);
+    fetchSyllabus('english', grade, semester);
+  }, [courseInfo.grade, courseInfo.semester]);
+
+  // 🚀 拨盘调整处理 (The Dial)
+  const handleDialUpdate = async (studentId: string, subject: 'chinese' | 'math' | 'english', field: 'unit' | 'lesson', direction: 'up' | 'down') => {
+    const student = qcStudents.find(s => s.id === studentId);
+    if (!student) return;
+
+    // 获取当前该学科进度 (优先从 courseInfo 取，如果没有则从 student.lesson 取)
+    const currentInfo = studentId === editingStudentId ? courseInfo[subject] : {
+      unit: (student.lesson as any)?.[subject]?.unit || (student.lesson as any)?.unit || "1",
+      lesson: (student.lesson as any)?.[subject]?.lesson || (student.lesson as any)?.lesson || "1",
+      title: (student.lesson as any)?.[subject]?.title || (student.lesson as any)?.title || ""
+    };
+
+    const info = currentInfo as any;
+    let newVal = parseInt(field === 'unit' ? (info.unit || "1") : (info.lesson || "1"));
+    if (isNaN(newVal)) newVal = 1;
+
+    if (direction === 'up') newVal++;
+    else if (direction === 'down' && newVal > 1) newVal--;
+
+    const updatedValue = newVal.toString();
+
+    // 自动寻找标题
+    const finalGrade = studentId === editingStudentId ? courseInfo.grade : (student.grade || courseInfo.grade);
+    const finalSemester = studentId === editingStudentId ? courseInfo.semester : (student.semester || courseInfo.semester);
+
+    const syllabus = await fetchSyllabus(subject, getNormGrade(finalGrade), getNormSemester(finalSemester));
+    let newTitle = currentInfo.title;
+    if (syllabus && syllabus.length > 0) {
+      const match = syllabus.find((item: any) => {
+        const itemUnit = item.unit?.toString();
+        const itemLesson = item.lesson?.toString();
+        const targetUnit = field === 'unit' ? updatedValue : (currentInfo as any).unit;
+        const targetLesson = field === 'lesson' ? updatedValue : ((currentInfo as any).lesson || "1");
+
+        if (field === 'unit') {
+          // 切换单元时，尝试匹配该单元的第一课或直接匹配单元
+          return itemUnit === targetUnit && (!itemLesson || itemLesson === "1");
+        } else {
+          // 切换课时时，匹配当前单元下的特定课时
+          return itemUnit === targetUnit && itemLesson === targetLesson;
+        }
+      });
+      if (match) newTitle = match.title;
+    }
+
+    const newCourseInfo = {
+      ...courseInfo,
+      [subject]: {
+        ...currentInfo,
+        [field]: updatedValue,
+        title: newTitle
+      }
+    };
+
+    // 如果当前正在编辑此学生，更新全局状态
+    if (studentId === editingStudentId) {
+      setCourseInfo(newCourseInfo);
+    }
+
+    // 立即持久化同步 (SSOT 模式)
+    try {
+      await apiService.post('/records/progress-override', {
+        studentId,
+        courseInfo: {
+          ...student.lesson, // 保留其他科目
+          [subject]: {
+            ...currentInfo,
+            [field]: updatedValue,
+            title: newTitle
+          }
+        }
+      });
+
+      // 更新本地学生列表中的进度，实现 UI 实时反馈
+      setQcStudents(prev => prev.map(s => {
+        if (s.id === studentId) {
+          return {
+            ...s,
+            lesson: {
+              ...s.lesson,
+              [subject]: {
+                ...currentInfo,
+                [field]: updatedValue,
+                title: newTitle
+              }
+            } as any
+          };
+        }
+        return s;
+      }));
+    } catch (error) {
+      console.error('[QCView] 拨盘同步失败:', error);
+    }
+  };
+
+  const handleOpenProgressModal = async (e: React.MouseEvent, student: Student) => {
     e.stopPropagation();
     setEditingStudentId(student.id);
-    // 尝试从学生当前 lesson 导出
-    setCourseInfo({
-      chinese: { unit: student.lesson.unit, lesson: student.lesson.lesson || '1', title: student.lesson.title },
-      math: { unit: '1', lesson: '1', title: '' },
-      english: { unit: '1', title: '' }
-    });
-    setProgressEditMode(true);
-    // 异步加载完整进度数据以补全其他学科
     fetchStudentProgress(student.id);
+
+    // 🆕 预加载该学生年级学期的大纲数据，确保 findTitleInSyllabus 能找到课文标题
+    const studentGrade = getNormGrade(student.grade);
+    const studentSemester = getNormSemester(student.semester);
+    const gradeStr = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'][parseInt(studentGrade) - 1] || '二年级';
+    const semesterStr = studentSemester === '下' ? '下册' : '上册';
+
+    // 并行加载语数英大纲
+    Promise.all([
+      fetchSyllabus('chinese', gradeStr, semesterStr),
+      fetchSyllabus('math', gradeStr, semesterStr),
+      fetchSyllabus('english', gradeStr, semesterStr)
+    ]).then(() => {
+      console.log(`✅ [QCView] 大纲预加载完成: ${gradeStr} ${semesterStr}`);
+    }).catch(err => {
+      console.warn('[QCView] 大纲预加载部分失败:', err);
+    });
+
+    setIsQCDrawerOpen(true); // 打开详情抽屉进行精准编辑
   };
 
   // 获取学生任务记录
@@ -437,20 +700,20 @@ const QCView: React.FC = () => {
   const [isQCDrawerOpen, setIsQCDrawerOpen] = useState(false);
   const [isCMSDrawerOpen, setIsCMSDrawerOpen] = useState(false);
 
-  // CMS 状态
+  //CMS 状态已移除 (整合到激励库)
   const [taskDB, setTaskDB] = useState<TaskLibrary>(taskLibrary);
   const [currentCategory, setCurrentCategory] = useState("基础作业");
   const [isManageMode, setIsManageMode] = useState(false);
   const [manualName, setManualName] = useState("");
   const [manualExp, setManualExp] = useState(10);
-  const [lessonEditMode, setLessonEditMode] = useState(false); // 修改进度的弹窗
+  const [lessonEditMode, setLessonEditMode] = useState(false);
 
   // 🆕 抽屉内 Tab 切换状态 - 用于三学科过关标签切换
   const [qcTabSubject, setQcTabSubject] = useState<'chinese' | 'math' | 'english'>('chinese');
 
-  // 🆕 核心教学法和综合成长弹窗状态
-  const [isMethodologyModalOpen, setIsMethodologyModalOpen] = useState(false);
-  const [isGrowthModalOpen, setIsGrowthModalOpen] = useState(false);
+  // 🆕 核心教学法和综合成长弹窗状态 (统称为激励库)
+  // isMethodologyModalOpen 和 isGrowthModalOpen 已在上方声明
+
   const [selectedMethodologyCategory, setSelectedMethodologyCategory] = useState<string | null>(null);
   const [selectedGrowthCategory, setSelectedGrowthCategory] = useState<string | null>(null);
 
@@ -553,8 +816,14 @@ const QCView: React.FC = () => {
 
   const getSelectedStudent = () => qcStudents.find(s => s.id === selectedStudentId);
 
-  const getLessonStr = (l: Lesson) => {
-    return l.lesson ? `第${l.unit}单元 第${l.lesson}课 ${l.title}` : `Unit ${l.unit} ${l.title}`;
+  const getLessonStr = (l: any, subject?: string) => {
+    const targetKey = subject || qcTabSubject;
+    const target = l[targetKey] || l;
+    if (!target) return '未设进度';
+    const unitStr = target.unit || '1';
+    const lessonStr = target.lesson ? `-L${target.lesson}` : '';
+    const titleStr = target.title ? ` ${target.title}` : '';
+    return `U${unitStr}${lessonStr}${titleStr}`;
   };
 
   const calculateTotalExp = () => {
@@ -587,9 +856,18 @@ const QCView: React.FC = () => {
     setSelectedStudentId(sid);
     setIsQCDrawerOpen(true);
 
-    // 🚀 获取该学生的课程进度数据
+    // 🚀 获取该学生的课程进度数据并预加载大纲
     if (student) {
       await fetchStudentProgress(student.id);
+
+      // 预加载当前年级/学期的三科大纲，提升下拉菜单响应速度
+      const g = getNormGrade(student.grade);
+      const s = getNormSemester(student.semester);
+      Promise.all([
+        fetchSyllabus('chinese', g, s),
+        fetchSyllabus('math', g, s),
+        fetchSyllabus('english', g, s)
+      ]);
     }
   };
 
@@ -768,7 +1046,7 @@ const QCView: React.FC = () => {
       }
 
       // 调用 API 进行正式一键结算 (Pass All)
-      const response = await apiService.records.passAll(selectedStudentId);
+      const response = await apiService.records.passAll(selectedStudentId, 0, courseInfo);
 
       if (response.success) {
         // 更新本地状态：标记所有 QC 和 TASK 为已过关
@@ -894,29 +1172,25 @@ const QCView: React.FC = () => {
       const host = window.location.host;
       const apiUrl = `${protocol}//${host}/api`;
 
-      // 获取有完成任务的学生
+      // 获取有完成任务的学生 (支持 PASSED 和 COMPLETED 状态)
       const studentsWithCompletedTasks = qcStudents.filter(s =>
-        s.tasks.filter(t => t.status === 'COMPLETED').length > 0
+        s.tasks.some(t => t.status === 'COMPLETED' || t.status === 'PASSED')
       );
 
       if (studentsWithCompletedTasks.length === 0) {
-        alert('暂无已完成任务的学生需要结算');
+        setToastMsg('暂无需要结算的任务');
+        setTimeout(() => setToastMsg(null), 2000);
         return;
       }
 
-      // 批量结算每个学生的完成任务
+      // 批量结算
       const settlePromises = studentsWithCompletedTasks.map(async (student) => {
-        const response = await fetch(`${apiUrl}/records/student/${student.id}/pass-all`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ expBonus: 0 })
+        // 使用 apiService 统一调用
+        return apiService.patch(`/records/student/${student.id}/pass-all`, {
+          teacherId: user?.id || '',
+          schoolId: user?.schoolId || '',
+          expBonus: 0
         });
-
-        if (!response.ok) {
-          throw new Error(`结算学生${student.name}失败`);
-        }
-
-        return await response.json();
       });
 
       // 等待所有结算完成
@@ -930,16 +1204,16 @@ const QCView: React.FC = () => {
 
       // 显示结算结果
       if (failCount === 0) {
-        alert(`结算成功！\n已结算学生：${successCount}人\n总经验值：${totalExp} EXP\n\n数据已同步到系统！`);
+        alert(`结算成功！\n已结算学生：${successCount}人\n总经验值：${totalExp} 经验\n\n数据已同步到系统！`);
       } else {
-        alert(`结算完成！\n成功结算：${successCount}人\n结算失败：${failCount}人\n总经验值：${totalExp} EXP\n\n部分数据同步失败，请检查网络连接`);
+        alert(`结算完成！\n成功结算：${successCount}人\n结算失败：${failCount}人\n总经验值：${totalExp} 经验\n\n部分数据同步失败，请检查网络连接`);
       }
 
     } catch (error) {
       console.error('结算错误:', error);
       // 降级处理：显示本地结算结果
       const totalExp = calculateTotalExp();
-      alert(`本地结算完成！\n总经验值：${totalExp} EXP\n\n数据将在下次同步时上传到系统`);
+      alert(`本地结算完成！\n总经验值：${totalExp} 经验\n\n数据将在下次同步时上传到系统`);
     }
   };
 
@@ -1105,17 +1379,7 @@ const QCView: React.FC = () => {
                       />
                     </div>
                     <div className="font-bold text-sm text-slate-800">{student.name}</div>
-                    <div className="flex items-center gap-1 mb-2 max-w-full">
-                      <div className="text-[10px] text-gray-400 truncate">
-                        {getLessonStr(student.lesson)}
-                      </div>
-                      <button
-                        onClick={(e) => handleOpenProgressModal(e, student)}
-                        className="p-1 text-slate-300 hover:text-orange-500 transition-colors"
-                      >
-                        <Settings size={10} />
-                      </button>
-                    </div>
+
                     {/* 进度条 */}
                     <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                       <div
@@ -1162,72 +1426,126 @@ const QCView: React.FC = () => {
                 {/* 2. 滚动区域 */}
                 <main className="flex-1 overflow-y-auto px-5 pb-36">
 
-                  {/* 2.1 进度编辑 (移植自备课页) */}
-                  <section className="mt-5 space-y-3">
-                    {/* 语文 */}
-                    <div className="flex items-center gap-3">
-                      <div className="w-1 h-8 rounded-full bg-orange-400"></div>
-                      <div className="text-sm font-bold text-orange-500 w-6">语</div>
-                      <div className="flex-1 flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-orange-300 transition-all">
-                        <input
-                          className="w-6 bg-transparent text-center font-bold text-sm text-slate-800 outline-none"
-                          value={courseInfo.chinese.unit}
-                          onChange={e => handleCourseChange('chinese', 'unit', e.target.value)}
-                        />
-                        <span className="text-xs text-slate-400 font-medium">单元</span>
-                        <input
-                          className="w-6 bg-transparent text-center font-bold text-sm text-slate-800 outline-none"
-                          value={courseInfo.chinese.lesson || ''}
-                          onChange={e => handleCourseChange('chinese', 'lesson', e.target.value)}
-                        />
-                        <span className="text-xs text-slate-400 font-medium">课</span>
-                        <input
-                          className="flex-1 bg-transparent font-medium text-sm text-slate-800 outline-none placeholder:text-slate-300"
-                          value={courseInfo.chinese.title}
-                          placeholder="课程名称..."
-                          onChange={e => handleCourseChange('chinese', 'title', e.target.value)}
-                        />
+                  {/* 2.1 课程进度 (横向胶囊布局 - 移植自备课页) */}
+                  <div className="mt-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                    <div className="flex justify-between items-center mb-3">
+                      <div className="text-[10px] font-extrabold text-slate-400 tracking-widest uppercase flex items-center gap-1.5">
+                        <BookOpen size={12} /> 课程进度
+                      </div>
+                      <div className="flex gap-1.5">
+                        <div className="relative">
+                          <select
+                            value={courseInfo.grade}
+                            onChange={e => setCourseInfo(prev => ({ ...prev, grade: e.target.value }))}
+                            className="text-[10px] font-bold bg-slate-100 text-slate-600 pl-2.5 pr-6 py-1 rounded-lg border-none outline-none appearance-none cursor-pointer hover:bg-slate-200 transition-colors"
+                          >
+                            {['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'].map(g => <option key={g} value={g}>{g}</option>)}
+                          </select>
+                          <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        </div>
+                        <div className="relative">
+                          <select
+                            value={courseInfo.semester}
+                            onChange={e => setCourseInfo(prev => ({ ...prev, semester: e.target.value }))}
+                            className="text-[10px] font-bold bg-slate-100 text-slate-600 pl-2.5 pr-6 py-1 rounded-lg border-none outline-none appearance-none cursor-pointer hover:bg-slate-200 transition-colors"
+                          >
+                            {['上册', '下册'].map(s => <option key={s} value={s}>{s}</option>)}
+                          </select>
+                          <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        </div>
                       </div>
                     </div>
-                    {/* 数学 */}
-                    <div className="flex items-center gap-3">
-                      <div className="w-1 h-8 rounded-full bg-blue-500"></div>
-                      <div className="text-sm font-bold text-blue-600 w-6">数</div>
-                      <div className="flex-1 flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-blue-300 transition-all">
-                        <input
-                          className="w-6 bg-transparent text-center font-bold text-sm text-slate-800 outline-none"
-                          value={courseInfo.math.unit}
-                          onChange={e => handleCourseChange('math', 'unit', e.target.value)}
-                        />
-                        <span className="text-xs text-slate-400 font-medium">章</span>
-                        <input
-                          className="flex-1 bg-transparent font-medium text-sm text-slate-800 outline-none placeholder:text-slate-300"
-                          value={courseInfo.math.title}
-                          placeholder="课程名称..."
-                          onChange={e => handleCourseChange('math', 'title', e.target.value)}
-                        />
+
+                    {/* 三科进度选择 - 横向胶囊 */}
+                    <div className="space-y-2">
+                      {/* 语文 */}
+                      <div className="flex items-center gap-2 p-2 rounded-xl bg-red-50/50">
+                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center font-bold text-xs text-red-500 shadow-sm">语</div>
+                        <div className="flex-1 relative">
+                          <select
+                            className="w-full bg-white/80 border-none outline-none rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 appearance-none cursor-pointer hover:bg-white transition-all shadow-sm"
+                            value={`${courseInfo.chinese.unit}-${courseInfo.chinese.lesson || '1'}`}
+                            onChange={async (e) => {
+                              const [unit, lesson] = e.target.value.split('-');
+                              const syllabus = syllabuses[`chinese_${getNormGrade(courseInfo.grade)}_${getNormSemester(courseInfo.semester)}_人教版`] || [];
+                              const match = syllabus.find((item: any) => item.unit === unit && (item.lesson === lesson || !item.lesson));
+                              if (match) {
+                                const newInfo = { ...courseInfo, chinese: { unit, lesson, title: match.title } };
+                                setCourseInfo(newInfo);
+                                await saveStudentProgress(newInfo);
+                              }
+                            }}
+                          >
+                            <option value="">选择语文进度...</option>
+                            {(syllabuses[`chinese_${getNormGrade(courseInfo.grade)}_${getNormSemester(courseInfo.semester)}_人教版`] || []).map((item: any, idx: number) => (
+                              <option key={idx} value={`${item.unit}-${item.lesson || ''}`}>
+                                第{item.unit}单元{item.lesson ? ` 第${item.lesson}课` : ''} · {item.title}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        </div>
+                      </div>
+
+                      {/* 数学 */}
+                      <div className="flex items-center gap-2 p-2 rounded-xl bg-blue-50/50">
+                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center font-bold text-xs text-blue-500 shadow-sm">数</div>
+                        <div className="flex-1 relative">
+                          <select
+                            className="w-full bg-white/80 border-none outline-none rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 appearance-none cursor-pointer hover:bg-white transition-all shadow-sm"
+                            value={`${courseInfo.math.unit}-${courseInfo.math.lesson || '1'}`}
+                            onChange={async (e) => {
+                              const [unit, lesson] = e.target.value.split('-');
+                              const syllabus = syllabuses[`math_${getNormGrade(courseInfo.grade)}_${getNormSemester(courseInfo.semester)}_人教版`] || [];
+                              const match = syllabus.find((item: any) => item.unit === unit && (item.lesson === lesson || !item.lesson));
+                              if (match) {
+                                const newInfo = { ...courseInfo, math: { unit, lesson, title: match.title } };
+                                setCourseInfo(newInfo);
+                                await saveStudentProgress(newInfo);
+                              }
+                            }}
+                          >
+                            <option value="">选择数学进度...</option>
+                            {(syllabuses[`math_${getNormGrade(courseInfo.grade)}_${getNormSemester(courseInfo.semester)}_人教版`] || []).map((item: any, idx: number) => (
+                              <option key={idx} value={`${item.unit}-${item.lesson || ''}`}>
+                                第{item.unit}章{item.lesson ? ` 第${item.lesson}课` : ''} · {item.title}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        </div>
+                      </div>
+
+                      {/* 英语 */}
+                      <div className="flex items-center gap-2 p-2 rounded-xl bg-purple-50/50">
+                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center font-bold text-xs text-purple-500 shadow-sm">英</div>
+                        <div className="flex-1 relative">
+                          <select
+                            className="w-full bg-white/80 border-none outline-none rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 appearance-none cursor-pointer hover:bg-white transition-all shadow-sm"
+                            value={courseInfo.english.unit}
+                            onChange={async (e) => {
+                              const unit = e.target.value;
+                              const syllabus = syllabuses[`english_${getNormGrade(courseInfo.grade)}_${getNormSemester(courseInfo.semester)}_湘少版`] || [];
+                              const match = syllabus.find((item: any) => item.unit === unit);
+                              if (match) {
+                                const newInfo = { ...courseInfo, english: { unit, lesson: '', title: match.title } };
+                                setCourseInfo(newInfo);
+                                await saveStudentProgress(newInfo);
+                              }
+                            }}
+                          >
+                            <option value="">选择英语进度...</option>
+                            {(syllabuses[`english_${getNormGrade(courseInfo.grade)}_${getNormSemester(courseInfo.semester)}_湘少版`] || []).map((item: any, idx: number) => (
+                              <option key={idx} value={item.unit}>
+                                Unit {item.unit} · {item.title}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        </div>
                       </div>
                     </div>
-                    {/* 英语 */}
-                    <div className="flex items-center gap-3">
-                      <div className="w-1 h-8 rounded-full bg-purple-500"></div>
-                      <div className="text-sm font-bold text-purple-600 w-6">英</div>
-                      <div className="flex-1 flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-purple-300 transition-all">
-                        <span className="text-xs text-slate-400 font-medium">Unit</span>
-                        <input
-                          className="w-8 bg-transparent text-center font-bold text-sm text-slate-800 outline-none"
-                          value={courseInfo.english.unit}
-                          onChange={e => handleCourseChange('english', 'unit', e.target.value)}
-                        />
-                        <input
-                          className="flex-1 bg-transparent font-medium text-sm text-slate-800 outline-none placeholder:text-slate-300"
-                          value={courseInfo.english.title}
-                          placeholder="课程名称..."
-                          onChange={e => handleCourseChange('english', 'title', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  </section>
+                  </div>
 
                   {/* 2.2 分段控制器 Tab (iOS Style) */}
                   <div className="mt-6 bg-slate-100 p-1 rounded-xl flex relative">
@@ -1509,7 +1827,7 @@ const QCView: React.FC = () => {
                       >
                         <div>
                           <div className="text-[13px] font-medium text-slate-800">{t.name}</div>
-                          <div className="text-[11px] font-bold text-amber-500 mt-0.5">+{t.exp} EXP</div>
+                          <div className="text-[11px] font-bold text-amber-500 mt-0.5">+{t.exp} 经验</div>
                         </div>
                         {isManageMode ? (
                           <div
@@ -1845,6 +2163,16 @@ const QCView: React.FC = () => {
             </>
           )
         }
+
+        {/* 🆕 轻量化 Toast 通知 */}
+        {toastMsg && (
+          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-4">
+            <div className="bg-slate-900/90 backdrop-blur-md text-white px-6 py-2.5 rounded-full shadow-2xl flex items-center gap-2 border border-white/10">
+              <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+              <span className="text-sm font-bold tracking-tight">{toastMsg}</span>
+            </div>
+          </div>
+        )}
 
       </div >
     </ProtectedRoute >

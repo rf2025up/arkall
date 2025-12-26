@@ -207,13 +207,18 @@ export class ParentService {
         // 验证家长是否有权限查看该学生
         await this.verifyParentAccess(parentId, studentId);
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
+        // 🆕 强制使用北京时间 (UTC+8) 计算今日范围，避免代理/VPN影响
+        const now = new Date();
+        const beijingOffset = 8 * 60; // UTC+8 in minutes
+        const localOffset = now.getTimezoneOffset(); // Local offset in minutes (negative for east)
+        const beijingTime = new Date(now.getTime() + (beijingOffset + localOffset) * 60 * 1000);
+
+        const todayStr = beijingTime.toISOString().split('T')[0]; // "2025-12-25"
+        const today = new Date(`${todayStr}T00:00:00+08:00`);
+        const tomorrow = new Date(`${todayStr}T23:59:59+08:00`);
 
         // 获取今日所有记录
-        const records = await prisma.task_records.findMany({
+        const allRecords = await prisma.task_records.findMany({
             where: {
                 studentId,
                 createdAt: { gte: today, lt: tomorrow }
@@ -231,6 +236,10 @@ export class ParentService {
                 subject: true
             }
         });
+
+        // 分离已完成记录和待办计划
+        const completedRecords = allRecords.filter(r => r.status === 'COMPLETED');
+        const pendingRecords = allRecords.filter(r => r.status === 'PENDING');
 
         // 获取今日习惯打卡
         const habitLogs = await prisma.habit_logs.findMany({
@@ -269,15 +278,114 @@ export class ParentService {
         });
 
         // 整合时间轴数据
-        // 🆕 过滤掉重复/错误分类的记录：
-        // - "习惯打卡:"开头的 TASK 记录（已有习惯打卡卡片）
-        // - "挑战赛:"开头的 SPECIAL 记录（已有挑战卡片，这是错误分类的重复数据）
-        const filteredRecords = records.filter(r => {
+        const filteredCompleted = completedRecords.filter(r => {
             if (r.title?.startsWith('习惯打卡:')) return false;
             if (r.title?.startsWith('挑战赛:') && r.type === 'SPECIAL') return false;
             return true;
         });
-        const timeline = this.buildTimeline(filteredRecords, habitLogs, pkMatches, badges, studentId);
+
+        // 🆕 移除跨天累计逻辑：只显示当天的记录，确保每次发布后数据干净
+        const timeline = this.buildTimeline(filteredCompleted, habitLogs, pkMatches, badges, studentId);
+
+        // 🆕 注入“今日教学计划”置顶公告 (展示全天计划，包含已过关和待练习)
+        // 🔧 过滤逻辑：只包含从备课页发布的任务，排除 PK/挑战赛等系统自动生成的记录
+        const filterPlanRecords = (records: any[]) => records.filter(r => {
+            const content = (r.content || {}) as any;
+
+            // ✅ 核心过滤：只有备课页发布的记录才有 publisherId
+            if (!content.publisherId) return false;
+
+            // 排除系统记录
+            if (r.title?.startsWith('进度修正')) return false;
+            if (r.title?.startsWith('老师手动调整')) return false;
+            // 排除 PK/挑战赛记录
+            if (r.type === 'CHALLENGE') return false;
+            if (r.title?.includes('PK')) return false;
+            if (r.title?.includes('对决')) return false;
+            // 只保留来自备课页的任务类型
+            return r.task_category === 'PROGRESS' || r.task_category === 'TASK' || r.task_category === 'METHODOLOGY' || r.type === 'QC' || r.type === 'SPECIAL';
+        });
+
+        const allPlanRecords = [
+            ...filterPlanRecords(pendingRecords),
+            ...filterPlanRecords(completedRecords)
+        ];
+
+        // 🆕 获取学生最新的课程进度，用于回填“待过关”任务的具体标题
+        const studentProfile = await prisma.students.findUnique({
+            where: { id: studentId },
+            select: { currentUnit: true, currentLesson: true, currentLessonTitle: true }
+        });
+
+        if (allPlanRecords.length > 0) {
+            const planGroups: Record<string, { title: string; status: string }[]> = {
+                '基础过关': [],
+                '习惯培养': [],
+                '能力训练': [],
+                '定制加餐': []
+            };
+
+            allPlanRecords.forEach(r => {
+                const content = (r.content || {}) as any;
+                const cat = content.category || r.task_category || '';
+                const title = r.title || '';
+
+                // 🚀 获取原始任务标题 (公告栏保持简洁/概括，不显示具体课文进度)
+                const displayTitle = title || '未知任务';
+
+                const taskInfo = {
+                    title: displayTitle,
+                    status: r.status
+                };
+
+                // 🆕 增强分类匹配：优先识别 QC 类型记录
+                const isQcType = r.type === 'QC' || r.task_category === 'PROGRESS';
+                const isBasicsCategory = ['基础过关', 'PROGRESS', 'chinese', 'math', 'english', '语文', '数学', '英语',
+                    '语文基础过关', '数学基础过关', '英语基础过关'].includes(cat) ||
+                    cat.includes('基础过关') || cat.includes('过关');
+
+                // QC 类型或者包含典型基础过关关键词的任务
+                const hasQcKeyword = ['生字', '听写', '课文', '背诵', '口算', '计算', '竖式', '脱式', '默写', '单词']
+                    .some(kw => title.includes(kw));
+
+                if (isQcType || isBasicsCategory || hasQcKeyword) {
+                    planGroups['基础过关'].push(taskInfo);
+                } else if (['习惯打卡', '习惯培养', '习惯养成', 'HABIT', 'TASK', '综合成长'].includes(cat) ||
+                    cat.includes('习惯')) {
+                    planGroups['习惯培养'].push(taskInfo);
+                } else if (['核心教学法', '能力训练', 'METHODOLOGY', '能力培养'].includes(cat) ||
+                    cat.includes('能力') || cat.includes('教学法')) {
+                    planGroups['能力训练'].push(taskInfo);
+                } else {
+                    planGroups['定制加餐'].push(taskInfo);
+                }
+            });
+
+            // 过滤空分组
+            const structuredPlan: any = {};
+            Object.entries(planGroups).forEach(([key, tasks]) => {
+                if (tasks.length > 0) structuredPlan[key] = tasks;
+            });
+
+            const planAnnouncement = {
+                id: `plan-announcement-${today.getTime()}`,
+                type: 'PLAN_ANNOUNCEMENT',
+                category: '今日导学',
+                title: '今日能力培养目标',
+                icon: '📢',
+                content: {
+                    planGroups: structuredPlan,
+                    totalCount: allPlanRecords.length,
+                    completedCount: completedRecords.length,
+                    message: completedRecords.length === allPlanRecords.length
+                        ? "今日所有计划已圆满完成，孩子表现非常棒！"
+                        : `今日已准备 ${allPlanRecords.length} 项核心挑战，已达成 ${completedRecords.length} 项，过关成果实时同步中。`
+                },
+                time: new Date(today.getTime() + 1).toISOString(),
+                cardStyle: 'plan-announcement'
+            };
+            timeline.unshift(planAnnouncement); // 置顶
+        }
 
         // 获取今日点赞和留言状态
         const summary = await prisma.daily_summaries.findFirst({
@@ -288,12 +396,12 @@ export class ParentService {
             }
         });
 
-        // 计算今日积分
-        const todayExp = records.reduce((sum, r) => sum + (r.expAwarded || 0), 0);
+        // 计算今日积分 (仅计算已获得的 XP)
+        const todayExp = completedRecords.reduce((sum, r) => sum + (r.expAwarded || 0), 0);
 
         return {
-            date: today.toISOString().split('T')[0],
-            weekday: ['日', '一', '二', '三', '四', '五', '六'][today.getDay()],
+            date: todayStr,
+            weekday: ['日', '一', '二', '三', '四', '五', '六'][beijingTime.getDay()],
             todayExp,
             parentLiked: !!summary?.parentLiked,
             parentComment: summary?.parentComment || null,
@@ -418,6 +526,11 @@ export class ParentService {
         const otherRecords: any[] = [];
 
         records.forEach(r => {
+            // 🆕 排除内部记录：手动调整进度的记录不作为动态展示给家长
+            if (r.title === '老师手动调整进度' || r.title?.includes('进度修正')) {
+                return;
+            }
+
             // 跳过标题包含 "PK" 的 CHALLENGE 类型记录
             if (r.type === 'CHALLENGE' && r.title && r.title.includes('PK')) {
                 return;
@@ -429,51 +542,60 @@ export class ParentService {
             }
         });
 
-        // 按科目聚合 QC 记录
-        const qcBySubject = new Map<string, any[]>();
+        // 按课程（unit+lesson+subject）聚合 QC 记录
+        const qcBySubject = new Map<string, { subject: string; unit: string; lesson: string; title: string; records: any[]; seenTitles: Set<string> }>();
         qcRecords.forEach(r => {
             const content = (r.content || {}) as any;
             const category = content.category || '';
+            const courseInfo = content.courseInfo || {};
 
             // 识别科目
             let subject = '其他';
-            if (category.includes('语文') || r.title?.includes('生字') || r.title?.includes('课文') || r.title?.includes('听写') || r.title?.includes('背诵')) {
+            if (category.includes('语文') || r.title?.includes('生字') || r.title?.includes('课文') || r.title?.includes('听写') || r.title?.includes('背诵') || r.title?.includes('古诗')) {
                 subject = '语文';
-            } else if (category.includes('数学') || r.title?.includes('口算') || r.title?.includes('计算')) {
+            } else if (category.includes('数学') || r.title?.includes('口算') || r.title?.includes('计算') || r.title?.includes('竖式') || r.title?.includes('脱式')) {
                 subject = '数学';
             } else if (category.includes('英语') || r.title?.includes('单词') || r.title?.includes('Unit')) {
                 subject = '英语';
             }
 
-            if (!qcBySubject.has(subject)) {
-                qcBySubject.set(subject, []);
+            // 🆕 提取 unit/lesson 信息（支持嵌套和扁平格式）
+            let unit = '1', lesson = '1', title = '';
+            if (courseInfo[subject === '语文' ? 'chinese' : subject === '数学' ? 'math' : 'english']) {
+                const subInfo = courseInfo[subject === '语文' ? 'chinese' : subject === '数学' ? 'math' : 'english'];
+                unit = subInfo.unit || '1';
+                lesson = subInfo.lesson || '1';
+                title = subInfo.title || '';
+            } else if (courseInfo.unit) {
+                unit = courseInfo.unit;
+                lesson = courseInfo.lesson || '1';
+                title = courseInfo.title || '';
             }
-            qcBySubject.get(subject)!.push(r);
+
+            // 🆕 使用 subject-unit-lesson 作为分组键，确保不同课程不会混在一起
+            const groupKey = `${subject}-${unit}-${lesson}`;
+
+            if (!qcBySubject.has(groupKey)) {
+                qcBySubject.set(groupKey, { subject, unit, lesson, title, records: [], seenTitles: new Set() });
+            }
+
+            // 🆕 去重：同一课程中，相同标题的过关项只保留一条（最新的）
+            const group = qcBySubject.get(groupKey)!;
+            if (!group.seenTitles.has(r.title)) {
+                group.seenTitles.add(r.title);
+                group.records.push(r);
+            }
         });
 
-        // 为每个科目创建聚合卡片
-        qcBySubject.forEach((subjectRecords, subject) => {
-            // 获取第一条记录的时间作为卡片时间
-            const firstRecord = subjectRecords[0];
-            const content = (firstRecord.content || {}) as any;
-            const courseInfo = content.courseInfo || {};
+        // 为每个课程（unit+lesson）创建聚合卡片
+        qcBySubject.forEach((group, groupKey) => {
+            const { subject, unit, lesson, title, records } = group;
+            if (records.length === 0) return;
 
-            // 获取课程进度信息
-            let progressInfo = null;
-            if (subject === '语文' && courseInfo.chinese) {
-                progressInfo = courseInfo.chinese;
-            } else if (subject === '数学' && courseInfo.math) {
-                progressInfo = courseInfo.math;
-            } else if (subject === '英语' && courseInfo.english) {
-                progressInfo = courseInfo.english;
-            }
+            const firstRecord = records[0];
 
-            const unit = progressInfo?.unit || '1';
-            const lesson = progressInfo?.lesson || '1';
-            const title = progressInfo?.title || '';
-
-            // 构建过关项列表
-            const tasks = subjectRecords.map(r => ({
+            // 构建过关项列表（已去重）
+            const tasks = records.map(r => ({
                 id: r.id,
                 name: r.title,
                 status: r.status,
@@ -482,7 +604,7 @@ export class ParentService {
             }));
 
             timeline.push({
-                id: `qc-${subject}-${firstRecord.id}`,
+                id: `qc-${groupKey}-${firstRecord.id}`,
                 type: 'QC_GROUP',
                 category: '基础过关',  // 大标题：基础过关
                 title: title ? `第${unit}单元 第${lesson}课《${title}》` : `第${unit}单元 第${lesson}课`,  // 卡片内标题：进度
@@ -493,18 +615,126 @@ export class ParentService {
                     lesson,
                     lessonTitle: title,
                     tasks,
-                    totalExp: subjectRecords.reduce((sum, r) => sum + (r.expAwarded || 0), 0),
-                    completedCount: subjectRecords.filter(r => r.status === 'COMPLETED').length,
-                    totalCount: subjectRecords.length
+                    totalExp: records.reduce((sum, r) => sum + (r.expAwarded || 0), 0),
+                    completedCount: records.filter(r => r.status === 'COMPLETED').length,
+                    totalCount: records.length
                 },
-                exp: subjectRecords.reduce((sum, r) => sum + (r.expAwarded || 0), 0),
+                exp: records.reduce((sum, r) => sum + (r.expAwarded || 0), 0),
                 time: firstRecord.createdAt,
                 cardStyle: 'qc-group'
             });
         });
 
-        // 添加其他任务记录
+        // 🆕 按类别聚合其他任务记录（核心教学法、综合成长、定制加餐）
+        const methodologyRecords: any[] = [];
+        const habitRecords: any[] = [];
+        const specialRecords: any[] = [];
+        const genericRecords: any[] = [];
+
         otherRecords.forEach(r => {
+            const content = (r.content || {}) as any;
+            const cat = content.category || r.task_category || '';
+
+            // 排除系统操作记录（移入班级等）不显示在定制加餐中
+            if (r.title?.includes('移入班级') || r.title?.includes('移出班级')) {
+                return;
+            }
+
+            if (r.task_category === 'METHODOLOGY' || cat.includes('能力') || cat.includes('教学法') || cat.includes('核心教学法')) {
+                methodologyRecords.push(r);
+            } else if (r.task_category === 'BADGE') {
+                // 勋章记录跳过 - 已有专门的勋章卡片显示
+                return;
+            } else if (r.task_category === 'TASK' || cat.includes('习惯') || cat.includes('综合成长')) {
+                habitRecords.push(r);
+            } else if (r.type === 'SPECIAL' && !r.title?.includes('手动调整')) {
+                specialRecords.push(r);
+            } else {
+                genericRecords.push(r);
+            }
+        });
+
+        // 核心教学法聚合卡片
+        if (methodologyRecords.length > 0) {
+            const firstRecord = methodologyRecords[0];
+            timeline.push({
+                id: `methodology-group-${firstRecord.id}`,
+                type: 'METHODOLOGY_GROUP',
+                category: '核心教学法',
+                title: '能力训练',
+                icon: '📝',
+                content: {
+                    tasks: methodologyRecords.map(r => ({
+                        id: r.id,
+                        name: r.title,
+                        status: r.status,
+                        exp: r.expAwarded || 0
+                    })),
+                    totalExp: methodologyRecords.reduce((sum, r) => sum + (r.expAwarded || 0), 0),
+                    completedCount: methodologyRecords.filter(r => r.status === 'COMPLETED').length,
+                    totalCount: methodologyRecords.length
+                },
+                exp: methodologyRecords.reduce((sum, r) => sum + (r.expAwarded || 0), 0),
+                time: firstRecord.createdAt,
+                cardStyle: 'methodology-group'
+            });
+        }
+
+        // 综合成长聚合卡片
+        if (habitRecords.length > 0) {
+            const firstRecord = habitRecords[0];
+            timeline.push({
+                id: `habit-task-group-${firstRecord.id}`,
+                type: 'HABIT_TASK_GROUP',
+                category: '综合成长',
+                title: '习惯培养',
+                icon: '🌱',
+                content: {
+                    tasks: habitRecords.map(r => ({
+                        id: r.id,
+                        name: r.title,
+                        status: r.status,
+                        exp: r.expAwarded || 0
+                    })),
+                    totalExp: habitRecords.reduce((sum, r) => sum + (r.expAwarded || 0), 0),
+                    completedCount: habitRecords.filter(r => r.status === 'COMPLETED').length,
+                    totalCount: habitRecords.length
+                },
+                exp: habitRecords.reduce((sum, r) => sum + (r.expAwarded || 0), 0),
+                time: firstRecord.createdAt,
+                cardStyle: 'habit-task-group'
+            });
+        }
+
+        // 定制加餐聚合卡片（只包含备课页发布的 SPECIAL 任务，排除系统操作）
+        if (specialRecords.length > 0) {
+            const firstRecord = specialRecords[0];
+            timeline.push({
+                id: `special-group-${firstRecord.id}`,
+                type: 'SPECIAL_GROUP',
+                category: '定制加餐',
+                title: '个性化任务',
+                icon: '⭐',
+                content: {
+                    tasks: specialRecords.map(r => ({
+                        id: r.id,
+                        name: r.title,
+                        status: r.status,
+                        exp: r.expAwarded || 0,
+                        targetStudent: (r.content as any)?.targetStudentNames?.[0]
+                    })),
+                    totalExp: specialRecords.reduce((sum, r) => sum + (r.expAwarded || 0), 0),
+                    completedCount: specialRecords.filter(r => r.status === 'COMPLETED').length,
+                    totalCount: specialRecords.length
+                },
+                exp: specialRecords.reduce((sum, r) => sum + (r.expAwarded || 0), 0),
+                time: firstRecord.createdAt,
+                cardStyle: 'special-group'
+            });
+        }
+
+        // 其他未分类的记录（单独显示）
+        genericRecords.forEach(r => {
             timeline.push(this.formatTimelineItem(r));
         });
 
@@ -639,11 +869,20 @@ export class ParentService {
                 cardStyle = 'default';
         }
 
+        // 🚀 优先从 content.courseInfo 中获取更具体的课文标题用于时间轴卡片展示
+        let displayTitle = record.title;
+        if (record.status === 'COMPLETED' && content.courseInfo) {
+            const ci = content.courseInfo;
+            if (ci.title && ci.title !== '加载中...') {
+                displayTitle = ci.title;
+            }
+        }
+
         return {
             id: record.id,
             type: record.type,
             category,
-            title: record.title,
+            title: displayTitle,
             icon,
             content: {
                 ...content,

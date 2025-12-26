@@ -30,10 +30,10 @@ export class RecordsRoutes {
     // 🆕 创建单条任务记录 (增量添加)
     this.router.post('/', async (req, res) => {
       try {
-        const { studentId, title, category, subcategory, exp, type = 'QC' } = req.body;
+        const { studentId, title, category, subcategory, exp, type = 'QC', courseInfo } = req.body;
         const user = (req as any).user;
 
-        console.log(`🆕 [RECORDS] POST / - title=${title}, category=${category}, subcategory=${subcategory}`);
+        console.log(`🆕 [RECORDS] POST / - title=${title}, category=${category}, subcategory=${subcategory}, hasCourseInfo=${!!courseInfo}`);
 
         if (!studentId || !title || !category) {
           return res.status(400).json({ success: false, message: '缺失必要字段' });
@@ -47,6 +47,7 @@ export class RecordsRoutes {
           category,
           subcategory: subcategory || '',  // 🆕 传递分类标题
           exp,
+          courseInfo,  // 🆕 传递课程进度信息
           isOverridden: true
         });
 
@@ -99,10 +100,10 @@ export class RecordsRoutes {
     this.router.patch('/student/:studentId/pass-all', async (req, res) => {
       try {
         const { studentId } = req.params;
-        const { expBonus = 0 } = req.body;
+        const { expBonus = 0, courseInfo } = req.body;
         const user = (req as any).user;
 
-        const result = await this.lmsService.settleStudentTasks(user.schoolId, studentId, expBonus);
+        const result = await this.lmsService.settleStudentTasks(user.schoolId, studentId, expBonus, courseInfo);
 
         res.json({
           success: true,

@@ -17,7 +17,7 @@ model badges {
   requirement    Json?
   isActive       Boolean          @default(true)
   createdAt      DateTime         @default(now())
-  updatedAt      DateTime @updatedAt
+  updatedAt      DateTime         @updatedAt
   schools        schools          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   student_badges student_badges[]
 
@@ -100,9 +100,9 @@ model lesson_plans {
   content      Json
   date         DateTime
   isActive     Boolean        @default(true)
-  isGlobal     Boolean        @default(false)
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
+  isGlobal     Boolean        @default(false)
   schools      schools        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   teachers     teachers       @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   task_records task_records[]
@@ -118,27 +118,27 @@ model mistakes {
   category   String?
   notes      String?
   createdAt  DateTime      @default(now())
-  updatedAt  DateTime @updatedAt
+  updatedAt  DateTime      @updatedAt
   aiAnalysis Json?
   schools    schools       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   students   students      @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model pk_matches {
-  id                                     String    @id @default(uuid())
-  schoolId                               String
-  studentA                               String
-  studentB                               String
-  winnerId                               String?
-  status                                 PKStatus  @default(ONGOING)
-  topic                                  String
-  metadata                               Json?
-  createdAt                              DateTime  @default(now())
-  updatedAt                              DateTime @updatedAt
-  schools  schools   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  playerA  students  @relation("pk_matches_studentA", fields: [studentA], references: [id], onDelete: Cascade)
-  playerB  students  @relation("pk_matches_studentB", fields: [studentB], references: [id], onDelete: Cascade)
-  winner   students? @relation("pk_matches_winner", fields: [winnerId], references: [id])
+  id        String    @id @default(uuid())
+  schoolId  String
+  studentA  String
+  studentB  String
+  winnerId  String?
+  status    PKStatus  @default(ONGOING)
+  topic     String
+  metadata  Json?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  schools   schools   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  playerA   students  @relation("pk_matches_studentA", fields: [studentA], references: [id], onDelete: Cascade)
+  playerB   students  @relation("pk_matches_studentB", fields: [studentB], references: [id], onDelete: Cascade)
+  winner    students? @relation("pk_matches_winner", fields: [winnerId], references: [id])
 
   @@index([schoolId, createdAt])
   @@index([studentA, status])
@@ -153,25 +153,23 @@ model schools {
   updatedAt                   DateTime                      @updatedAt
   isActive                    Boolean                       @default(true)
   planType                    PlanType                      @default(FREE)
-  expiredAt                   DateTime?                     @default(dbgenerated("'2026-12-31 23:59:59'::timestamp without time zone"))
   settings                    Json?
   educationalPhilosophy       String                        @default("我们致力于培养面向未来的孩子，视自主学习力为核心武器，通过反馈驱动和最近发展区理论，鼓励孩子注重过程，持续自我迭代。")
+  expiredAt                   DateTime?                     @default(dbgenerated("'2026-12-31 23:59:59'::timestamp without time zone"))
   badges                      badges[]
   challenges                  challenges[]
   habit_logs                  habit_logs[]
   habits                      habits[]
   lesson_plans                lesson_plans[]
   mistakes                    mistakes[]
+  parents                     parents[]
   personalized_tutoring_plans personalized_tutoring_plans[]
   pk_matches                  pk_matches[]
+  student_checkins            student_checkins[]
   students                    students[]
   task_library                task_library[]
   task_records                task_records[]
   teachers                    teachers[]
-  // 家长端关系
-  parents                     parents[]
-  // 签到记录关系
-  student_checkins            student_checkins[]
 }
 
 model student_badges {
@@ -186,75 +184,72 @@ model student_badges {
 }
 
 model students {
-  id                                       String                        @id @default(uuid())
-  schoolId                                 String
-  name                                     String
-  className                                String?
-  level                                    Int                           @default(1)
-  points                                   Int                           @default(0)
-  exp                                      Int                           @default(0)
-  avatarUrl                                String?
-  isActive                                 Boolean                       @default(true)
-  createdAt                                DateTime                      @default(now())
-  updatedAt                                DateTime @updatedAt
-  teamId                                   String?
-  teacherId                                String?
-  currentLesson                            String?
-  currentLessonTitle                       String?
-  currentUnit                              String?
-  currentInviteCode                        String?   // 当前有效的邀请码
-  inviteCodeExpiresAt                      DateTime? // 邀请码过期时间
-  challenge_participants                   challenge_participants[]
-  habit_logs                               habit_logs[]
-  mistakes                                 mistakes[]
-  personalized_tutoring_plans              personalized_tutoring_plans[]
+  id                          String                        @id @default(uuid())
+  schoolId                    String
+  name                        String
+  className                   String?
+  level                       Int                           @default(1)
+  points                      Int                           @default(0)
+  exp                         Int                           @default(0)
+  avatarUrl                   String?
+  isActive                    Boolean                       @default(true)
+  deletedAt                   DateTime?
+  createdAt                   DateTime                      @default(now())
+  updatedAt                   DateTime                      @updatedAt
+  teamId                      String?
+  teacherId                   String?
+  currentLesson               String?
+  currentLessonTitle          String?
+  currentUnit                 String?
+  currentInviteCode           String?
+  inviteCodeExpiresAt         DateTime?
+  campaigns                   campaigns[]
+  challenge_participants      challenge_participants[]
+  daily_summaries             daily_summaries[]
+  habit_logs                  habit_logs[]
+  mistakes                    mistakes[]
+  parent_student_bindings     parent_student_bindings[]
+  personalized_tutoring_plans personalized_tutoring_plans[]
   pk_matches_studentA         pk_matches[]                  @relation("pk_matches_studentA")
   pk_matches_studentB         pk_matches[]                  @relation("pk_matches_studentB")
   pk_matches_winner           pk_matches[]                  @relation("pk_matches_winner")
   student_badges              student_badges[]
-  schools                                  schools                       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  teachers                                 teachers?                     @relation(fields: [teacherId], references: [id])
-  task_records                             task_records[]
-  // 家长端关系
-  parent_student_bindings                  parent_student_bindings[]
-  daily_summaries                          daily_summaries[]
-  campaigns                                campaigns[]
-  // 签到记录关系
-  student_checkins                         student_checkins[]
+  student_checkins            student_checkins[]
+  schools                     schools                       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teachers                    teachers?                     @relation(fields: [teacherId], references: [id])
+  task_records                task_records[]
 
   @@unique([schoolId, name])
 }
 
-// 学生签到记录表
 model student_checkins {
-  id         String   @id @default(uuid())
-  studentId  String
-  schoolId   String
-  checkinDate String   // "2025-12-22" 格式，每天只能签到一次
-  checkedBy  String?  // 操作人（老师ID）
-  createdAt  DateTime @default(now())
-  
-  students   students @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  schools    schools  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  
+  id          String   @id @default(uuid())
+  studentId   String
+  schoolId    String
+  checkinDate String
+  checkedBy   String?
+  createdAt   DateTime @default(now())
+  schools     schools  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  students    students @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
   @@unique([studentId, checkinDate])
   @@index([studentId, checkinDate])
 }
 
 model task_library {
-  id                     String   @id @default(uuid())
-  category               String
-  name                   String
-  description            String?
-  defaultExp             Int      @default(0)
-  type                   TaskType @default(TASK)
-  difficulty             Int?
-  isActive               Boolean  @default(true)
-  isGlobal               Boolean  @default(false)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
-  schoolId               String
-  schools                schools  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  id          String   @id @default(uuid())
+  category    String
+  name        String
+  description String?
+  defaultExp  Int      @default(0)
+  type        TaskType @default(TASK)
+  difficulty  Int?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  schoolId    String
+  isGlobal    Boolean  @default(false)
+  schools     schools  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   @@unique([schoolId, category, name])
 }
@@ -270,7 +265,7 @@ model task_records {
   expAwarded    Int           @default(0)
   submittedAt   DateTime?
   createdAt     DateTime      @default(now())
-  updatedAt     DateTime @updatedAt
+  updatedAt     DateTime      @updatedAt
   lessonPlanId  String?
   task_category TaskCategory  @default(TASK)
   is_current    Boolean       @default(true)
@@ -291,7 +286,7 @@ model teachers {
   email                       String?                       @unique
   role                        Role                          @default(TEACHER)
   createdAt                   DateTime                      @default(now())
-  updatedAt                   DateTime @updatedAt
+  updatedAt                   DateTime                      @updatedAt
   displayName                 String?
   primaryClassName            String?
   challenges                  challenges[]
@@ -350,6 +345,64 @@ model personalized_tutoring_plans {
   @@map("personalized_tutoring_plans")
 }
 
+model parents {
+  id                      String                    @id @default(uuid())
+  schoolId                String
+  phone                   String
+  password                String                    @default("0000")
+  name                    String?
+  identity                String?
+  lastLoginAt             DateTime?
+  isActive                Boolean                   @default(true)
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  daily_summaries         daily_summaries[]
+  parent_student_bindings parent_student_bindings[]
+  schools                 schools                   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([schoolId, phone])
+}
+
+model parent_student_bindings {
+  id          String   @id @default(uuid())
+  parentId    String
+  studentId   String
+  inviteCode  String
+  bindingTime DateTime @default(now())
+  isActive    Boolean  @default(true)
+  parents     parents  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  students    students @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, studentId])
+}
+
+model daily_summaries {
+  id            String   @id @default(uuid())
+  studentId     String
+  parentId      String
+  date          String
+  parentLiked   Boolean  @default(false)
+  parentComment String?
+  teacherRead   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  parents       parents  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  students      students @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, parentId, date])
+}
+
+model campaigns {
+  id        String   @id @default(uuid())
+  studentId String
+  type      String
+  status    String   @default("ACTIVE")
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  students  students @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
 enum ChallengeStatus {
   DRAFT
   ACTIVE
@@ -382,72 +435,6 @@ enum ParticipantResult {
   FAILED
 }
 
-// ==================== 家长端模型 ====================
-
-// 家长账户（支持绑定多个孩子）
-model parents {
-  id                      String                    @id @default(uuid())
-  schoolId                String
-  phone                   String                    // 手机号作为登录账号
-  password                String                    @default("0000") // 默认密码
-  name                    String?                   // 家长姓名
-  identity                String?                   // 身份标签：爸爸/妈妈/爷爷/奶奶/其他
-  lastLoginAt             DateTime?
-  isActive                Boolean                   @default(true)
-  createdAt               DateTime                  @default(now())
-  updatedAt               DateTime                  @updatedAt
-  schools                 schools                   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  parent_student_bindings parent_student_bindings[]
-  daily_summaries         daily_summaries[]
-
-  @@unique([schoolId, phone])
-}
-
-// 家长-学生绑定关系
-model parent_student_bindings {
-  id          String   @id @default(uuid())
-  parentId    String
-  studentId   String
-  inviteCode  String   // 老师生成的邀请码
-  bindingTime DateTime @default(now())
-  isActive    Boolean  @default(true)
-  parents     parents  @relation(fields: [parentId], references: [id], onDelete: Cascade)
-  students    students @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@unique([parentId, studentId])
-}
-
-// 每日家校反馈汇总
-model daily_summaries {
-  id            String   @id @default(uuid())
-  studentId     String
-  parentId      String
-  date          String   // "2025-12-21" 格式
-  parentLiked   Boolean  @default(false)
-  parentComment String?
-  teacherRead   Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  students      students @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  parents       parents  @relation(fields: [parentId], references: [id], onDelete: Cascade)
-
-  @@unique([studentId, parentId, date])
-}
-
-// 裂变活动（暂保留接口，具体逻辑后续设计）
-model campaigns {
-  id        String   @id @default(uuid())
-  studentId String
-  type      String   // "REVIVE" / "INVITE"
-  status    String   @default("ACTIVE") // ACTIVE / COMPLETED / EXPIRED
-  metadata  Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  students  students @relation(fields: [studentId], references: [id], onDelete: Cascade)
-}
-
-// ==================== 家长端模型结束 ====================
-
 enum ParticipantStatus {
   JOINED
   WITHDRAWN
@@ -461,9 +448,9 @@ enum PlanType {
 }
 
 enum Role {
-  PLATFORM_ADMIN
   ADMIN
   TEACHER
+  PLATFORM_ADMIN
 }
 
 enum TaskCategory {

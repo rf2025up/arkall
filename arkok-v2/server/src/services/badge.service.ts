@@ -388,7 +388,7 @@ export class BadgeService {
         id: require('crypto').randomUUID(),
         studentId,
         schoolId,
-        type: 'CHALLENGE', // 勋章授予在 5.0 中属于挑战激励流
+        type: 'TASK', // 勋章授予在记录层级归类为 TASK，具体分类由 task_category: 'BADGE' 决定
         title: `获得勋章: ${badge.name}`,
         content: {
           badgeId: badge.id,
@@ -402,7 +402,7 @@ export class BadgeService {
         status: 'COMPLETED',
         expAwarded: 20,
         updatedAt: new Date(),
-        task_category: 'TASK'
+        task_category: 'BADGE'
       }
     });
 
@@ -492,7 +492,7 @@ export class BadgeService {
             id: require('crypto').randomUUID(),
             studentId,
             schoolId,
-            type: 'CHALLENGE',
+            type: 'TASK',
             title: `获得勋章: ${badge.name}`,
             content: {
               badgeId: badge.id,
@@ -505,7 +505,7 @@ export class BadgeService {
             status: 'COMPLETED',
             expAwarded: 20,
             updatedAt: timestamp,
-            task_category: 'TASK'
+            task_category: 'BADGE'
           }
         });
 

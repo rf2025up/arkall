@@ -343,7 +343,7 @@ const GrowthProfile: React.FC = () => {
                     <div className="flex justify-between items-center mb-3">
                         <h3 className="font-bold text-gray-800 text-base">进击曲线</h3>
                         <span className="text-xs text-orange-500 font-bold">
-                            +{data?.trendData?.totalExp || 0} XP
+                            +{data?.trendData?.totalExp || 0} 经验
                         </span>
                     </div>
 

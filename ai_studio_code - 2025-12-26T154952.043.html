@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>智慧托管 - 教师端</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            /* 品牌色 - 提取自截图 */
+            --primary-gradient: linear-gradient(135deg, #FF9A5E 0%, #FF502E 100%);
+            --primary-color: #FF5E33;
+            --primary-light: #FFF0E9;
+            
+            /* 背景色 */
+            --bg-color: #F5F7FA;
+            --card-bg: #FFFFFF;
+            --input-bg: #F7F8FA;
+            
+            /* 文字颜色 */
+            --text-main: #333333;
+            --text-sub: #909399;
+            --text-orange: #FF6B00;
+
+            /* 辅助色 */
+            --accent-blue-bg: #E8F3FF;
+            --accent-blue-text: #2D8CFF;
+            --accent-yellow-bg: #FFF9E0;
+            --accent-yellow-text: #FFAA00;
+
+            /* 布局参数 */
+            --radius-box: 20px;
+            --radius-btn: 44px;
+            --shadow: 0 4px 20px rgba(255, 94, 51, 0.08);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            color: var(--text-main);
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            min-height: 100vh;
+            background: var(--bg-color);
+            position: relative;
+            padding-bottom: 40px;
+        }
+
+        /* 顶部大橙色背景区 - 还原截图顶部 */
+        .header-bg {
+            height: 160px;
+            background: var(--primary-gradient);
+            border-bottom-left-radius: 24px;
+            border-bottom-right-radius: 24px;
+            position: absolute;
+            top: 0; left: 0; width: 100%;
+            z-index: 0;
+        }
+
+        /* 导航栏 */
+        .nav-bar {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            color: white;
+            padding-top: 50px; /* 避让刘海屏 */
+        }
+        .nav-title { font-size: 18px; font-weight: 600; }
+        .nav-btn { cursor: pointer; opacity: 0.9; }
+
+        /* 卡片通用样式 */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius-box);
+            padding: 20px;
+            margin: 0 16px 16px 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+            position: relative;
+            z-index: 5;
+        }
+
+        /* 标题区 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .section-icon {
+            width: 6px; height: 16px;
+            background: var(--primary-color);
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        .section-action {
+            margin-left: auto;
+            font-size: 13px;
+            color: var(--text-sub);
+            cursor: pointer;
+        }
+
+        /* 仿截图的胶囊选择器/下拉 */
+        .custom-select-wrapper {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        .custom-select {
+            appearance: none;
+            width: 100%;
+            background: var(--primary-light);
+            color: var(--primary-color);
+            border: 1px solid rgba(255, 94, 51, 0.2);
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            outline: none;
+        }
+        .select-arrow {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+            pointer-events: none;
+        }
+
+        /* 文本域仿截图风格 */
+        .styled-input {
+            width: 100%;
+            background: var(--input-bg);
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 14px;
+            color: var(--text-main);
+            margin-bottom: 12px;
+        }
+        .styled-input::placeholder { color: #C0C4CC; }
+
+        /* 学生网格 - 还原最后一张截图 */
+        .student-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px 8px;
+        }
+        .student-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+        }
+        .avatar-ring {
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            padding: 3px;
+            background: white;
+            border: 2px solid transparent;
+            transition: 0.2s;
+            margin-bottom: 6px;
+        }
+        .student-card.active .avatar-ring {
+            border-color: var(--primary-color);
+            background: var(--primary-light);
+        }
+        .avatar {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            background: #eee;
+            object-fit: cover;
+        }
+        .student-info { text-align: center; }
+        .s-name { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 2px; }
+        .s-score { font-size: 10px; color: var(--text-sub); }
+
+        /* 选中时的角标 */
+        .check-mark {
+            position: absolute; top: 0; right: 8px;
+            background: var(--primary-color); color: white;
+            border-radius: 50%; width: 18px; height: 18px;
+            display: none; align-items: center; justify-content: center;
+            border: 2px solid white;
+        }
+        .student-card.active .check-mark { display: flex; }
+
+        /* 底部主按钮 */
+        .fab-btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            width: calc(100% - 32px);
+            margin: 10px 16px;
+            padding: 15px;
+            border-radius: var(--radius-btn);
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(255, 80, 46, 0.25);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            cursor: pointer;
+        }
+        .fab-btn:active { transform: scale(0.98); }
+
+        /* 页面切换动画 */
+        .page { display: none; padding-top: 10px; }
+        .page.active { display: block; animation: fadeUp 0.3s ease-out; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* PK 页面特殊样式 */
+        .pk-card {
+            background: white; border-radius: 16px; padding: 20px;
+            text-align: center; margin-bottom: 16px;
+            border: 1px solid #FFE4D6;
+        }
+        .vs-badge {
+            display: inline-block;
+            background: #FFF0E6; color: #FF5E33;
+            font-weight: 900; font-style: italic;
+            padding: 5px 12px; border-radius: 20px;
+            margin: 0 10px;
+        }
+
+        /* 挑战页面样式 */
+        .challenge-item {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #F9FAFC; padding: 15px; border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        /* 历史记录条目 */
+        .history-item {
+            display: flex; align-items: center; padding: 12px 0;
+            border-bottom: 1px dashed #eee;
+        }
+        .icon-box {
+            width: 40px; height: 40px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            margin-right: 12px;
+            font-size: 18px;
+        }
+        .bg-orange { background: var(--primary-light); color: var(--primary-color); }
+        .bg-blue { background: var(--accent-blue-bg); color: var(--accent-blue-text); }
+        .bg-yellow { background: var(--accent-yellow-bg); color: var(--accent-yellow-text); }
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <!-- 顶部背景图 -->
+    <div class="header-bg"></div>
+
+    <!-- Page 1: 习惯打卡 -->
+    <div id="page1" class="page active">
+        <div class="nav-bar">
+            <div class="nav-btn"><i data-lucide="x" size="24"></i></div> <!-- 退出 -->
+            <div class="nav-title">习惯打卡</div>
+            <div class="nav-btn" onclick="nextPage(2)"><i data-lucide="arrow-right" size="24"></i></div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <div class="section-header">
+                <div class="section-icon"></div>
+                <span class="section-title">选择习惯</span>
+            </div>
+            <div class="custom-select-wrapper">
+                <select class="custom-select">
+                    <option>📚 按时完成作业</option>
+                    <option>🧹 整理桌面整洁</option>
+                    <option>👂 上课认真听讲</option>
+                    <option>💤 午休保持安静</option>
+                </select>
+                <i data-lucide="chevron-down" class="select-arrow" size="20"></i>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-header">
+                <div class="section-icon"></div>
+                <span class="section-title">选择学生</span>
+                <span class="section-action" onclick="toggleAll()">一键全选</span>
+            </div>
+            
+            <div class="student-grid" id="grid1">
+                <!-- 模拟生成学生数据 -->
+                <script>
+                    const students = [
+                        {name: "宁可歆", score: 7380}, {name: "曾欣媛", score: 262},
+                        {name: "李梓函", score: 115}, {name: "王一诺", score: 450},
+                        {name: "张浩宇", score: 320}, {name: "陈思睿", score: 890},
+                        {name: "刘羽沫", score: 550}, {name: "赵子轩", score: 210},
+                        {name: "周雨桐", score: 660}, {name: "吴沐辰", score: 180},
+                        {name: "徐梦瑶", score: 430}, {name: "孙佳琪", score: 390}
+                    ];
+                    
+                    students.forEach((stu, index) => {
+                        document.write(`
+                            <div class="student-card" onclick="this.classList.toggle('active')">
+                                <div class="avatar-ring">
+                                    <img src="https://api.dicebear.com/7.x/notionists/svg?seed=${index+5}" class="avatar">
+                                </div>
+                                <div class="check-mark"><i data-lucide="check" size="10"></i></div>
+                                <div class="student-info">
+                                    <div class="s-name">${stu.name}</div>
+                                    <div class="s-score">${stu.score} 积分</div>
+                                </div>
+                            </div>
+                        `);
+                    });
+                </script>
+            </div>
+        </div>
+
+        <button class="fab-btn">
+            <i data-lucide="check-circle-2"></i> 提交打卡
+        </button>
+    </div>
+
+
+    <!-- Page 2: 荣誉勋章 -->
+    <div id="page2" class="page">
+        <div class="nav-bar">
+            <div class="nav-btn" onclick="nextPage(1)"><i data-lucide="arrow-left" size="24"></i></div>
+            <div class="nav-title">颁发勋章</div>
+            <div class="nav-btn" onclick="nextPage(3)"><i data-lucide="arrow-right" size="24"></i></div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <div class="section-header">
+                <div class="section-icon"></div>
+                <span class="section-title">授予勋章</span>
+            </div>
+            
+            <div class="custom-select-wrapper">
+                <select class="custom-select" style="background: #FFF9E0; color: #FFAA00; border-color: rgba(255, 170, 0, 0.2);">
+                    <option>🏆 进步之星</option>
+                    <option>🌟 劳动模范</option>
+                    <option>💡 小小发明家</option>
+                </select>
+                <i data-lucide="chevron-down" class="select-arrow" style="color: #FFAA00" size="20"></i>
+            </div>
+            
+            <textarea class="styled-input" rows="3" placeholder="写一句鼓励的话... (例如: 你的进步老师都看在眼里!)"></textarea>
+
+            <div class="section-header" style="margin-top: 15px;">
+                <span class="section-title" style="font-size: 14px;">授予对象</span>
+            </div>
+            <div class="student-grid" style="grid-template-columns: repeat(5, 1fr);">
+                <script>
+                    for(let i=0; i<5; i++) {
+                        document.write(`
+                            <div class="student-card" onclick="this.classList.toggle('active')">
+                                <div class="avatar-ring" style="width: 44px; height: 44px;">
+                                    <img src="https://api.dicebear.com/7.x/notionists/svg?seed=${i+20}" class="avatar">
+                                </div>
+                                <div class="check-mark"><i data-lucide="check" size="10"></i></div>
+                                <div class="student-info"><div class="s-name" style="font-size:11px;">学生${i+1}</div></div>
+                            </div>
+                        `);
+                    }
+                </script>
+            </div>
+            
+            <button class="fab-btn" style="background: #FFAA00; box-shadow: 0 8px 24px rgba(255, 170, 0, 0.25); margin: 20px 0 0 0; width: 100%;">确认颁发</button>
+        </div>
+
+        <div class="card">
+            <div class="section-header">
+                <span class="section-title">最近记录</span>
+            </div>
+            <div class="history-item">
+                <div class="icon-box bg-yellow"><i data-lucide="award"></i></div>
+                <div style="flex:1">
+                    <div style="font-weight:600; font-size:14px;">进步之星</div>
+                    <div style="color:var(--text-sub); font-size:12px;">给 宁可歆 等3人</div>
+                </div>
+                <span style="font-size:12px; color:#ccc;">10:42</span>
+            </div>
+            <div class="history-item" style="border:none;">
+                <div class="icon-box bg-blue"><i data-lucide="thumbs-up"></i></div>
+                <div style="flex:1">
+                    <div style="font-weight:600; font-size:14px;">乐于助人</div>
+                    <div style="color:var(--text-sub); font-size:12px;">给 张浩宇</div>
+                </div>
+                <span style="font-size:12px; color:#ccc;">09:15</span>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Page 3: PK 对决 -->
+    <div id="page3" class="page">
+        <div class="nav-bar">
+            <div class="nav-btn" onclick="nextPage(2)"><i data-lucide="arrow-left" size="24"></i></div>
+            <div class="nav-title">PK 对决</div>
+            <div class="nav-btn" onclick="nextPage(4)"><i data-lucide="arrow-right" size="24"></i></div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <input type="text" class="styled-input" placeholder="输入对决主题 (如: 口算比拼)" style="font-weight: bold; font-size: 16px; text-align: center;">
+            
+            <div style="display: flex; align-items: center; justify-content: space-between; margin: 20px 0;">
+                <div class="student-card">
+                     <div class="avatar-ring" style="width: 60px; height: 60px; border: 3px solid #FF5E33;">
+                        <img src="https://api.dicebear.com/7.x/notionists/svg?seed=5" class="avatar">
+                    </div>
+                    <div style="margin-top: 5px; font-weight: bold;">张浩宇</div>
+                </div>
+                
+                <div class="vs-badge">VS</div>
+                
+                <div class="student-card">
+                     <div class="avatar-ring" style="width: 60px; height: 60px; border: 3px solid #2D8CFF;">
+                        <img src="https://api.dicebear.com/7.x/notionists/svg?seed=8" class="avatar">
+                    </div>
+                    <div style="margin-top: 5px; font-weight: bold;">陈思睿</div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <input type="number" class="styled-input" placeholder="奖励积分" style="margin:0; text-align: center;">
+                <input type="number" class="styled-input" placeholder="奖励经验" style="margin:0; text-align: center;">
+            </div>
+            
+            <button class="fab-btn" style="margin: 20px 0 0 0; width: 100%;">开始对决</button>
+        </div>
+
+        <div class="card">
+            <div class="section-header">
+                <span class="section-title">正在进行</span>
+            </div>
+            <div class="pk-card">
+                <div style="font-size: 12px; color: var(--text-sub); margin-bottom: 8px;">主题：古诗背诵</div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <img src="https://api.dicebear.com/7.x/notionists/svg?seed=12" style="width: 30px; height: 30px; border-radius: 50%;">
+                        <span style="font-size: 14px; font-weight: bold;">宁可歆</span>
+                    </div>
+                    <div style="color: var(--primary-color); font-weight: bold;">正在PK...</div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <span style="font-size: 14px; font-weight: bold;">李梓函</span>
+                        <img src="https://api.dicebear.com/7.x/notionists/svg?seed=13" style="width: 30px; height: 30px; border-radius: 50%;">
+                    </div>
+                </div>
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    <button class="styled-input" style="background: #FFE4D6; color: #FF5E33; font-weight: bold;">左边赢</button>
+                    <button class="styled-input" style="background: #F2F4F8; color: #999;">平局</button>
+                    <button class="styled-input" style="background: #E8F3FF; color: #2D8CFF; font-weight: bold;">右边赢</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Page 4: 挑战任务 -->
+    <div id="page4" class="page">
+        <div class="nav-bar">
+            <div class="nav-btn" onclick="nextPage(3)"><i data-lucide="arrow-left" size="24"></i></div>
+            <div class="nav-title">挑战任务</div>
+            <div class="nav-btn"><i data-lucide="more-horizontal" size="24"></i></div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <div class="section-header">
+                <div class="section-icon" style="background: #2D8CFF;"></div>
+                <span class="section-title">发布挑战</span>
+            </div>
+            <input type="text" class="styled-input" placeholder="挑战名称 (如: 21天阅读挑战)">
+            <textarea class="styled-input" rows="2" placeholder="挑战规则说明..."></textarea>
+            
+            <div class="section-header" style="margin-top: 10px;">
+                <span class="section-title" style="font-size: 14px;">参与人员</span>
+            </div>
+            <div style="display: flex; overflow-x: scroll; gap: 10px; padding-bottom: 5px;">
+                <script>
+                    for(let i=0; i<8; i++) {
+                        document.write(`<img src="https://api.dicebear.com/7.x/notionists/svg?seed=${i*3}" style="width:40px; height:40px; border-radius:50%; border:1px solid #eee; flex-shrink:0;">`);
+                    }
+                </script>
+            </div>
+            <button class="fab-btn" style="background: #2D8CFF; box-shadow: 0 8px 24px rgba(45, 140, 255, 0.25); margin: 20px 0 0 0; width: 100%;">发布</button>
+        </div>
+
+        <div class="card">
+            <div class="section-header">
+                <span class="section-title">已发布挑战</span>
+            </div>
+            <div class="challenge-item">
+                <div>
+                    <div style="font-weight: 600;">保持安静自习1小时</div>
+                    <div style="font-size: 12px; color: var(--text-sub); margin-top: 4px;">参与: 全员 (12人)</div>
+                </div>
+                <div style="display: flex; gap: 5px;">
+                    <div style="padding: 6px 12px; background: #E0F9EA; color: #00B578; border-radius: 8px; font-size: 12px; font-weight: bold;">成功</div>
+                    <div style="padding: 6px 12px; background: #FFF0F0; color: #FF3B30; border-radius: 8px; font-size: 12px; font-weight: bold;">失败</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    lucide.createIcons();
+
+    function nextPage(id) {
+        document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+        document.getElementById('page' + id).classList.add('active');
+        window.scrollTo(0,0);
+    }
+
+    function toggleAll() {
+        const cards = document.querySelectorAll('#grid1 .student-card');
+        const hasActive = document.querySelector('#grid1 .student-card.active');
+        cards.forEach(card => {
+            if(hasActive) card.classList.remove('active');
+            else card.classList.add('active');
+        });
+    }
+</script>
+
+</body>
+</html>

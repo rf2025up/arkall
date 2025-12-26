@@ -337,8 +337,8 @@ export class ApiService {
         type?: string;
       }) => this.post<any>('/records', data),
 
-      passAll: (studentId: string, expBonus: number = 0) =>
-        this.patch<any>(`/records/student/${studentId}/pass-all`, { expBonus }),
+      passAll: (studentId: string, expBonus: number = 0, courseInfo?: any) =>
+        this.patch<any>(`/records/student/${studentId}/pass-all`, { expBonus, courseInfo }),
 
       updateProgress: (data: {
         studentId: string;
@@ -529,6 +529,10 @@ export const API = {
       apiService.platform.updateStatus(schoolId, isActive),
     updateExpiry: (schoolId: string, expiredAt: string) =>
       apiService.platform.updateExpiry(schoolId, expiredAt),
+    createCampus: (data: { name: string; adminUsername: string; adminName: string; planType?: string }) =>
+      apiService.post('/platform/campuses', data),
+    globalSearch: (query: string, type: 'student' | 'teacher' = 'student', limit: number = 20) =>
+      apiService.get(`/platform/search?q=${encodeURIComponent(query)}&type=${type}&limit=${limit}`),
   }
 };
 

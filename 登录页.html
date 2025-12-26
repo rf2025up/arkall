@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 星途与伴</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            /* 品牌色：流光渐变橙 */
+            --primary-gradient: linear-gradient(135deg, #FF9966 0%, #FF5E62 100%);
+            --primary-shadow: rgba(255, 94, 98, 0.4);
+            
+            /* 文字颜色 */
+            --text-main: #1D1D1F;
+            --text-secondary: #86868B;
+            
+            /* 卡片与背景 */
+            --bg-color: #FFF5F0;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --input-bg: #F5F5F7;
+            --border-color: #E5E5EA;
+        }
+
+        * {
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 背景流光氛围 - 模拟星云 */
+        .ambient-light {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(at 10% 10%, rgba(255, 153, 102, 0.3) 0, transparent 50%),
+                radial-gradient(at 90% 90%, rgba(255, 94, 98, 0.3) 0, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(255, 255, 255, 0.8) 0, transparent 100%);
+        }
+
+        /* 漂浮的星球装饰（可选，增加游戏感） */
+        .planet {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FFD194, #FF9966);
+            filter: blur(8px);
+            opacity: 0.6;
+            animation: float 6s ease-in-out infinite;
+        }
+        .planet-1 { width: 100px; height: 100px; top: 10%; left: 10%; animation-delay: 0s; }
+        .planet-2 { width: 60px; height: 60px; bottom: 15%; right: 15%; animation-delay: 2s; background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        /* 登录卡片主体 */
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            text-align: center;
+            animation: fadeInUp 0.6s ease-out;
+            margin: 20px;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 顶部 Logo */
+        .logo-wrapper {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px auto;
+            color: white;
+            box-shadow: 0 10px 20px var(--primary-shadow);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 8px 0;
+            letter-spacing: -0.5px;
+        }
+
+        p.subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0 0 32px 0;
+            letter-spacing: 0.5px;
+        }
+
+        /* 表单区域 */
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            padding-left: 4px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9CA3AF;
+            pointer-events: none;
+            transition: color 0.3s;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px 14px 48px; /* 留出图标位置 */
+            border-radius: 12px;
+            border: 1px solid transparent;
+            background: var(--input-bg);
+            font-size: 15px;
+            color: var(--text-main);
+            transition: all 0.2s;
+        }
+
+        input:hover {
+            background: #EFEFF2;
+        }
+
+        input:focus {
+            background: #FFFFFF;
+            border-color: #FF9966; /* 聚焦时边框变橙 */
+            box-shadow: 0 0 0 4px rgba(255, 153, 102, 0.1);
+        }
+
+        input:focus + .input-icon {
+            color: #FF5E62;
+        }
+
+        /* 登录按钮 */
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 14px;
+            background: var(--primary-gradient);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 8px 20px var(--primary-shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 24px var(--primary-shadow);
+        }
+
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* 底部 */
+        .footer-text {
+            margin-top: 32px;
+            font-size: 12px;
+            color: #C7C7CC;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 氛围背景 -->
+    <div class="ambient-light"></div>
+    <div class="planet planet-1"></div>
+    <div class="planet planet-2"></div>
+
+    <div class="login-card">
+        <!-- Logo -->
+        <div class="logo-wrapper">
+            <!-- 火箭图标，象征星途 -->
+            <i data-lucide="rocket" size="32"></i>
+        </div>
+
+        <!-- 标题 -->
+        <h1>欢迎回来</h1>
+        <p class="subtitle">星途与伴游戏化激励学习系统</p>
+
+        <!-- 表单 -->
+        <form onsubmit="event.preventDefault(); window.location.href='edu_app.html'">
+            <div class="form-group">
+                <label>用户名</label>
+                <div class="input-wrapper">
+                    <input type="text" placeholder="请输入用户名" required>
+                    <div class="input-icon"><i data-lucide="user" size="20"></i></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>密码</label>
+                <div class="input-wrapper">
+                    <input type="password" placeholder="请输入密码" required>
+                    <div class="input-icon"><i data-lucide="lock" size="20"></i></div>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">登 录</button>
+        </form>
+
+        <div class="footer-text">
+            © 2025 星途与伴 V1.0. All rights reserved.
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ChevronLeft, Plus, Trophy, Target, Users, Zap, Crown, Star, Sparkles, ArrowRight, X, Swords, CheckCircle2, UserCheck, Award, Loader2, Search, Calendar, MessageSquare, Clock, XCircle, ArrowLeft } from 'lucide-react'
@@ -67,6 +67,24 @@ const ChallengePage: React.FC = () => {
     rewardExp: 50,
     studentIds: [] as string[]
   })
+
+  // 学生选择下拉框 ref (用于点击外部关闭)
+  const studentDropdownRef = useRef<HTMLDivElement>(null);
+
+  // 点击外部关闭学生选择下拉
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (studentDropdownRef.current && !studentDropdownRef.current.contains(event.target as Node)) {
+        setShowCreateModal(false);
+      }
+    };
+    if (showCreateModal) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCreateModal]);
 
   // 初始数据加载
   const fetchData = async (forceRefresh = false) => {
@@ -226,318 +244,267 @@ const ChallengePage: React.FC = () => {
   }
 
   // 🆕 紧凑型挑战卡片 - 直接显示参与者和成功/失败按钮
-  const ChallengeCard = ({ challenge }: { challenge: Challenge }) => {
-    const isCompleted = challenge.status === 'COMPLETED'
-    const [cardParticipants, setCardParticipants] = useState<Participant[]>([])
-    const [loadingParticipants, setLoadingParticipants] = useState(false)
+  // 🆕 iOS 极简风格挑战卡片 - 横向高密度布局
+  // 子组件：挑战参与者判定列表 (高密度 iOS 风格)
+  const ChallengeParticipants: React.FC<{ challengeId: string, rewardExp: number }> = ({ challengeId, rewardExp }) => {
+    const [cardParticipants, setCardParticipants] = useState<Participant[]>([]);
+    const [loadingP, setLoadingP] = useState(false);
 
-    // 加载该挑战的参与者
-    const loadCardParticipants = async () => {
-      if (cardParticipants.length > 0) return // 已加载
-      setLoadingParticipants(true)
-      try {
-        const res = await apiService.get(`/challenges/${challenge.id}/participants?schoolId=${userInfo?.schoolId}`)
-        if (res.success) {
-          setCardParticipants((res.data as any[]).map((p: any) => ({
-            ...p,
-            students: {
-              ...p.students,
-              avatarUrl: p.students?.avatarUrl || p.students?.avatar_url || '/avatar.jpg'
-            }
-          })))
-        }
-      } catch (error) {
-        console.error('Load participants error:', error)
-      } finally {
-        setLoadingParticipants(false)
-      }
-    }
-
-    // 🆕 组件挂载时立即加载参与者（不需要点击展开）
     useEffect(() => {
-      if (!isCompleted) {
-        loadCardParticipants()
-      }
-    }, [])
+      const load = async () => {
+        setLoadingP(true);
+        try {
+          const res = await apiService.get(`/challenges/${challengeId}/participants?schoolId=${userInfo?.schoolId}`);
+          if (res.success) {
+            setCardParticipants((res.data as any[]).map((p: any) => ({
+              ...p,
+              students: {
+                ...p.students,
+                avatarUrl: p.students?.avatarUrl || p.students?.avatar_url || '/avatar.jpg'
+              }
+            })));
+          }
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setLoadingP(false);
+        }
+      };
+      load();
+    }, [challengeId]);
+
+    if (loadingP) return <div className="text-[10px] font-bold text-slate-300 py-2 text-center">读取选手中...</div>;
+    if (cardParticipants.length === 0) return <div className="text-[10px] font-bold text-slate-300 py-2 text-center">暂无选手</div>;
 
     return (
-      <div className={`bg-white rounded-3xl p-4 shadow-xl shadow-slate-200/50 border-2 transition-all ${isCompleted ? 'border-slate-100 opacity-60' : 'border-slate-50'}`}>
-        {/* 卡片头部 */}
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isCompleted ? 'bg-slate-100' : 'bg-purple-100'}`}>
-            <Target size={18} className={isCompleted ? 'text-slate-400' : 'text-purple-600'} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-bold text-slate-800 truncate">{challenge.title}</h3>
-            <div className="flex items-center gap-2 text-[10px] text-slate-400">
-              <span className="font-bold text-amber-500">+{challenge.rewardExp} EXP</span>
-              <span>·</span>
-              <span>{challenge.participantCount}人</span>
-            </div>
-          </div>
-          <div className={`px-2 py-0.5 rounded-full text-[9px] font-black ${isCompleted ? 'bg-slate-100 text-slate-500' : 'bg-green-100 text-green-600'}`}>
-            {isCompleted ? '已结束' : '进行中'}
-          </div>
-        </div>
-
-        {/* 🆕 直接显示参与者和判定按钮 */}
-        {!isCompleted && (
-          <div className="mt-3 pt-3 border-t border-slate-50">
-            {loadingParticipants ? (
-              <div className="py-4 text-center text-slate-400 text-xs">加载中...</div>
-            ) : cardParticipants.length === 0 ? (
-              <div className="py-4 text-center text-slate-400 text-xs">暂无参与者</div>
-            ) : (
-              <div className="space-y-2">
-                {cardParticipants.map(p => {
-                  const hasResult = p.result === 'COMPLETED' || p.result === 'FAILED'
-                  return (
-                    <div key={p.id} className="flex items-center justify-between bg-slate-50 rounded-lg px-2 py-1.5">
-                      <div className="flex items-center gap-2">
-                        <img src={p.students.avatarUrl || '/avatar.jpg'} className="w-7 h-7 rounded-full" alt="" draggable={false} onContextMenu={(e) => e.preventDefault()} />
-                        <span className="text-xs font-bold text-slate-700">{p.students.name}</span>
-                      </div>
-                      {hasResult ? (
-                        <span className={`text-[10px] font-black px-2 py-1 rounded-full ${p.result === 'COMPLETED' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                          {p.result === 'COMPLETED' ? '✅ 成功' : '❌ 失败'}
-                        </span>
-                      ) : (
-                        <div className="flex gap-1">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleQuickSettle(challenge.id, p.studentId, 'COMPLETED') }}
-                            className="text-[9px] font-black px-2 py-1 rounded-full bg-green-500 text-white active:scale-95"
-                          >
-                            成功
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleQuickSettle(challenge.id, p.studentId, 'FAILED') }}
-                            className="text-[9px] font-black px-2 py-1 rounded-full bg-red-500 text-white active:scale-95"
-                          >
-                            失败
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
+      <div className="space-y-2">
+        {cardParticipants.map(p => {
+          const hasResult = p.result === 'COMPLETED' || p.result === 'FAILED';
+          return (
+            <div key={p.id} className="flex items-center justify-between bg-[#F8F9FB] rounded-xl p-2.5">
+              <div className="flex items-center gap-2">
+                <img src={p.students.avatarUrl} className="w-7 h-7 rounded-full object-cover" />
+                <span className="text-[11px] font-bold text-slate-700">{p.students.name}</span>
               </div>
-            )}
-          </div>
-        )}
+
+              {hasResult ? (
+                <span className={`text-[10px] font-bold px-2 py-1 rounded-md ${p.result === 'COMPLETED' ? 'text-green-500 bg-green-50' : 'text-slate-300 bg-slate-100'}`}>
+                  {p.result === 'COMPLETED' ? '成功' : '未达成'}
+                </span>
+              ) : (
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => handleQuickSettle(challengeId, p.studentId, 'COMPLETED')}
+                    className="h-7 px-4 bg-slate-800 text-white rounded-lg text-[10px] font-bold active:scale-95"
+                  >
+                    成功
+                  </button>
+                  <button
+                    onClick={() => handleQuickSettle(challengeId, p.studentId, 'FAILED')}
+                    className="h-7 px-4 bg-slate-100 text-slate-400 rounded-lg text-[10px] font-bold active:scale-95"
+                  >
+                    失败
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
-    )
-  }
+    );
+  };
 
   return (
-    <div className="min-h-screen w-full bg-[#F7F9FC] pb-24">
-      {/* === 统一头部 (橙色渐变) === */}
-      <header
-        className="pt-12 pb-16 px-5 rounded-b-[2.5rem] shadow-xl shadow-orange-500/10 relative overflow-hidden z-30"
-        style={{ background: 'linear-gradient(180deg, #FF7E36 0%, #FF9D5C 100%)' }}
-      >
-        {/* 背景装饰 */}
-        <div className="absolute top-0 right-0 p-4 opacity-10">
-          <Target size={140} className="text-white rotate-12" />
-        </div>
+    <div className="min-h-screen w-full bg-[#F5F7FA]">
+      {/* 顶部背景 */}
+      <div
+        className="h-40 absolute top-0 left-0 w-full z-0 rounded-b-3xl"
+        style={{ background: 'linear-gradient(135deg, #FF9A5E 0%, #FF502E 100%)' }}
+      ></div>
 
-        <div className="relative z-10 flex flex-col gap-6">
-          {/* 顶栏 */}
-          <div className="flex justify-between items-center">
-            <button
-              onClick={() => navigate('/')}
-              className="w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-xl text-white active:scale-90 transition-transform"
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <h1 className="text-lg font-black text-white">挑战赛场</h1>
-            <div className="w-10 h-10" /> {/* 占位平衡 */}
-          </div>
-
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-white text-orange-600 w-full py-4 rounded-2xl text-sm font-black shadow-lg shadow-orange-900/20 active:scale-95 transition-all flex items-center justify-center gap-2 border border-white"
-          >
-            <Plus size={18} /> 发布新挑战
-          </button>
-        </div>
+      {/* 导航栏 */}
+      <header className="relative z-10 flex justify-between items-center px-5 pt-12 pb-4 text-white">
+        <button
+          onClick={() => navigate('/')}
+          className="w-10 h-10 flex items-center justify-center opacity-90 active:scale-95"
+        >
+          <X size={24} />
+        </button>
+        <h1 className="text-lg font-bold">挑战任务</h1>
+        <button
+          onClick={() => navigate('/habits')}
+          className="w-10 h-10 flex items-center justify-center opacity-90 active:scale-95"
+        >
+          <ArrowRight size={24} />
+        </button>
       </header>
 
-      {/* 状态概览岛 */}
-      <div className="px-5 -mt-8 relative z-40">
-        <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 flex justify-around items-center shadow-xl shadow-orange-200/20 border border-white/80">
-          <div className="text-center">
-            <div className="text-2xl font-black text-orange-600 leading-none mb-1">
-              {challenges.filter(c => c.status === 'ACTIVE').length}
+      <main className="p-4 space-y-4 relative z-10">
+        {/* 发布挑战卡片 - 表单始终显示 */}
+        <section className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-50">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-4 bg-purple-500 rounded-full" />
+              <h2 className="text-sm font-bold text-slate-800">发布新挑战</h2>
             </div>
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">进行中</div>
+            <X
+              size={20}
+              className="text-slate-400 cursor-pointer hover:text-slate-600"
+              onClick={() => setNewChallenge({ ...newChallenge, title: '', description: '', studentIds: [] })}
+            />
           </div>
-          <div className="w-px h-8 bg-slate-100" />
-          <div className="text-center">
-            <div className="text-2xl font-black text-slate-800 leading-none mb-1">
-              {challenges.filter(c => c.status === 'COMPLETED').length}
-            </div>
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">已结束</div>
-          </div>
-          <div className="w-px h-8 bg-slate-100" />
-          <div className="text-center">
-            <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-500 border border-orange-100/50 flex items-center justify-center shadow-sm mx-auto mb-1">
-              <Trophy size={18} />
-            </div>
-            <div className="text-[10px] font-bold text-orange-600">荣誉墙</div>
-          </div>
-        </div>
-      </div>
 
-      <main className="p-5 space-y-6">
-        {/* 标题 */}
-        <div className="flex items-center gap-2 px-1">
-          <div className="w-1.5 h-5 bg-orange-500 rounded-full" />
-          <h2 className="text-base font-black text-slate-800">所有挑战任务</h2>
-        </div>
+          <div className="space-y-4">
+            <input
+              type="text"
+              placeholder="挑战名称 (例如：每日朗读打卡)"
+              value={newChallenge.title}
+              onChange={e => setNewChallenge({ ...newChallenge, title: e.target.value })}
+              className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-bold text-slate-700 placeholder:text-slate-300 focus:ring-1 focus:ring-purple-200"
+            />
+            <textarea
+              placeholder="具体要求..."
+              value={newChallenge.description}
+              onChange={(e) => setNewChallenge({ ...newChallenge, description: e.target.value })}
+              rows={2}
+              className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-bold text-slate-700 placeholder:text-slate-300 focus:ring-1 focus:ring-purple-200 resize-none"
+            />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {challenges.map(c => (
-            <ChallengeCard key={c.id} challenge={c} />
-          ))}
-          {challenges.length === 0 && !loading && (
-            <div className="col-span-full py-12 text-center bg-white rounded-3xl border border-dashed border-slate-200">
-              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Target size={28} className="text-slate-300" />
+            {/* 学生选择 - 习惯页风格展开列表 */}
+            <div className="relative" ref={studentDropdownRef}>
+              <div
+                onClick={() => setShowCreateModal(!showCreateModal)}
+                className="w-full bg-purple-50 text-purple-600 rounded-xl p-3 flex items-center justify-between border border-purple-100 cursor-pointer active:scale-[0.99] transition-all"
+              >
+                <span className="font-bold text-sm">
+                  {newChallenge.studentIds.length > 0 ? `已选 ${newChallenge.studentIds.length} 位学生` : '选择参与学生'}
+                </span>
+                <Plus size={18} strokeWidth={2.5} className={`opacity-60 transition-transform ${showCreateModal ? 'rotate-45' : ''}`} />
               </div>
-              <p className="text-slate-400 font-bold text-sm">暂无挑战，快去发布一个吧！</p>
+
+              {showCreateModal && (
+                <div className="mt-2 bg-white rounded-2xl border border-slate-100 shadow-lg overflow-hidden animate-in slide-in-from-top-2">
+                  <div className="flex items-center justify-between p-3 border-b border-slate-50">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-4 bg-purple-500 rounded-full" />
+                      <span className="text-sm font-bold text-slate-800">学生列表</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (newChallenge.studentIds.length === students.length) {
+                          setNewChallenge({ ...newChallenge, studentIds: [] });
+                        } else {
+                          setNewChallenge({ ...newChallenge, studentIds: students.map(s => s.id) });
+                        }
+                      }}
+                      className="text-[10px] font-bold text-purple-500"
+                    >
+                      {newChallenge.studentIds.length === students.length ? '取消全选' : '一键全选'}
+                    </button>
+                  </div>
+                  <div className="max-h-[180px] overflow-y-auto">
+                    {students.map(s => {
+                      const isSelected = newChallenge.studentIds.includes(s.id);
+                      return (
+                        <div
+                          key={s.id}
+                          onClick={() => {
+                            const ids = isSelected
+                              ? newChallenge.studentIds.filter(id => id !== s.id)
+                              : [...newChallenge.studentIds, s.id];
+                            setNewChallenge({ ...newChallenge, studentIds: ids });
+                          }}
+                          className="flex items-center justify-between p-3 border-b border-slate-50 last:border-b-0 cursor-pointer hover:bg-slate-50 transition-colors"
+                        >
+                          <span className="text-sm font-bold text-slate-700">{s.name}</span>
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'border-purple-500 bg-purple-500' : 'border-slate-200'}`}>
+                            {isSelected && <CheckCircle2 size={12} className="text-white" strokeWidth={3} />}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 奖励设置 - 紧凑横排 */}
+            <div className="flex gap-2">
+              <div className="flex-1 bg-slate-50 rounded-lg flex items-center px-3 py-2 gap-1">
+                <Star size={12} className="text-amber-400 fill-amber-400" />
+                <span className="text-[10px] text-slate-400 font-bold">经验</span>
+                <input
+                  type="number"
+                  value={newChallenge.rewardExp}
+                  onChange={(e) => setNewChallenge({ ...newChallenge, rewardExp: parseInt(e.target.value) || 0 })}
+                  className="w-12 bg-transparent border-none text-sm font-bold text-slate-700 text-right focus:ring-0 outline-none"
+                />
+              </div>
+              <div className="flex-1 bg-slate-50 rounded-lg flex items-center px-3 py-2 gap-1">
+                <Trophy size={12} className="text-purple-500" />
+                <span className="text-[10px] text-slate-400 font-bold">积分</span>
+                <input
+                  type="number"
+                  value={newChallenge.rewardPoints}
+                  onChange={(e) => setNewChallenge({ ...newChallenge, rewardPoints: parseInt(e.target.value) || 0 })}
+                  className="w-12 bg-transparent border-none text-sm font-bold text-slate-700 text-right focus:ring-0 outline-none"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={handleCreateChallenge}
+              disabled={createLoading || !newChallenge.title.trim() || newChallenge.studentIds.length === 0}
+              className="w-full h-11 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-[44px] text-sm font-bold shadow-lg shadow-purple-200 active:scale-[0.98] transition-all disabled:opacity-50"
+            >
+              {createLoading ? '发布中...' : '发布挑战'}
+            </button>
+          </div>
+        </section>
+
+        <div className="space-y-1.5">
+          {challenges.map(c => (
+            <div key={c.id} className="bg-white rounded-lg p-2.5 shadow-sm border border-slate-50 flex flex-col gap-1.5">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-6 h-6 rounded-md bg-orange-50 flex items-center justify-center text-orange-600 text-[9px] font-bold">
+                    {c.type === 'CLASS' ? '班' : '个'}
+                  </div>
+                  <div>
+                    <h3 className="text-[11px] font-bold text-slate-800">{c.title}</h3>
+                    <span className="text-[8px] font-bold text-slate-300">{c.participantCount}位选手</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {c.description && (
+                    <span className="text-[9px] text-slate-400 max-w-[120px] truncate">{c.description}</span>
+                  )}
+                  {c.status === 'COMPLETED' && (
+                    <span className="text-[8px] font-bold text-slate-300 bg-slate-50 px-1 py-0.5 rounded">已结束</span>
+                  )}
+                </div>
+              </div>
+
+              {/* 判定列表 (紧凑型) */}
+              {c.status !== 'COMPLETED' && (
+                <ChallengeParticipants challengeId={c.id} rewardExp={c.rewardExp} />
+              )}
+            </div>
+          ))}
+
+          {challenges.length === 0 && !loading && (
+            <div className="py-16 text-center text-slate-300">
+              <Target size={40} className="mx-auto mb-2 opacity-20" />
+              <p className="text-xs font-bold">暂无活动中的挑战</p>
             </div>
           )}
         </div>
       </main>
 
-      {/* 发布挑战模态框 - 增强 Z-Index 并添加滚动支持 */}
-      {showCreateModal && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-[2rem] p-5 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
-            <h3 className="text-lg font-black text-slate-800 mb-3 flex items-center gap-2 shrink-0">
-              <Plus className="text-purple-600" /> 发布新挑战
-            </h3>
-
-            <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-4 py-1">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">挑战名称</label>
-                <input
-                  type="text"
-                  placeholder="例如：每日朗读打卡"
-                  value={newChallenge.title}
-                  onChange={e => setNewChallenge({ ...newChallenge, title: e.target.value })}
-                  className="w-full bg-slate-50 border-none rounded-2xl p-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">具体要求</label>
-                <textarea
-                  placeholder="详细描述挑战的具体规则..."
-                  value={newChallenge.description}
-                  onChange={(e) => setNewChallenge({ ...newChallenge, description: e.target.value })}
-                  rows={3}
-                  className="w-full bg-slate-50 border-none rounded-2xl p-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-purple-500 resize-none"
-                />
-              </div>
-
-              {/* 学生选择网格 - 仅在 PERSONAL 或 CLASS 下作为补充 */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">参与学生</label>
-                  <button
-                    onClick={() => {
-                      if (newChallenge.studentIds.length === students.length) {
-                        setNewChallenge({ ...newChallenge, studentIds: [] });
-                      } else {
-                        setNewChallenge({ ...newChallenge, studentIds: students.map(s => s.id) });
-                      }
-                    }}
-                    className="text-[10px] font-black text-blue-500 uppercase tracking-widest hover:underline"
-                  >
-                    {newChallenge.studentIds.length === students.length ? '全部取消' : '一键全选'}
-                  </button>
-                </div>
-                <div className="grid grid-cols-5 gap-1.5 max-h-[120px] overflow-y-auto p-1.5 bg-slate-50 rounded-xl">
-                  {students.map(s => (
-                    <button
-                      key={s.id}
-                      onClick={() => {
-                        const ids = newChallenge.studentIds.includes(s.id)
-                          ? newChallenge.studentIds.filter(id => id !== s.id)
-                          : [...newChallenge.studentIds, s.id];
-                        setNewChallenge({ ...newChallenge, studentIds: ids });
-                      }}
-                      className={`flex flex-col items-center gap-0.5 p-1 rounded-lg border transition-all ${newChallenge.studentIds.includes(s.id)
-                        ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-400'
-                        : 'bg-white border-transparent'
-                        }`}
-                    >
-                      <img src={s.avatarUrl || '/avatar.jpg'} className="w-7 h-7 rounded-full shadow-sm" alt={s.name} draggable={false} onContextMenu={(e) => e.preventDefault()} />
-                      <span className="text-[9px] font-bold text-slate-600 truncate w-full text-center">{s.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">经验奖励</label>
-                  <input
-                    type="number"
-                    value={newChallenge.rewardExp}
-                    onChange={(e) => setNewChallenge({ ...newChallenge, rewardExp: parseInt(e.target.value) })}
-                    className="w-full bg-slate-50 border-none rounded-2xl p-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-purple-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">积分奖励</label>
-                  <input
-                    type="number"
-                    value={newChallenge.rewardPoints}
-                    onChange={(e) => setNewChallenge({ ...newChallenge, rewardPoints: parseInt(e.target.value) })}
-                    className="w-full bg-slate-50 border-none rounded-2xl p-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-purple-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">挑战类型</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {['PERSONAL', 'CLASS'].map(type => (
-                    <button
-                      key={type}
-                      onClick={() => setNewChallenge({ ...newChallenge, type: type as 'PERSONAL' | 'CLASS' })}
-                      className={`py-2 rounded-xl border-2 font-black text-[10px] transition-all ${newChallenge.type === type ? 'border-purple-600 bg-purple-50 text-purple-700' : 'border-slate-50 bg-slate-50 text-slate-500'
-                        }`}
-                    >
-                      {type === 'PERSONAL' ? '个人' : '全班'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-5 pt-3 border-t border-slate-50 shrink-0">
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="flex-1 py-3 bg-slate-100 text-slate-500 font-bold rounded-2xl active:scale-95 transition-all text-sm"
-              >
-                取消
-              </button>
-              <button
-                onClick={handleCreateChallenge}
-                disabled={createLoading}
-                className="flex-1 py-3 bg-purple-600 text-white font-bold rounded-2xl shadow-lg shadow-purple-200 active:scale-95 transition-all text-sm disabled:opacity-50"
-              >
-                {createLoading ? '发布中...' : '立即发布'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 挑战发布模态框已移除，改为内联展开表单 */}
     </div>
   )
 }
+
 
 export default ChallengePage

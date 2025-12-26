@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { UserPlus, Trash2, Edit, Users, School, Calendar, Mail, Key, Shield, X, Check } from 'lucide-react';
+import MessageCenter from '../components/MessageCenter';
 
 interface Teacher {
   id: string;
@@ -276,23 +277,35 @@ const TeacherManagement: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <Users className="w-8 h-8 text-blue-600" />
+    <div className="min-h-screen bg-[#F5F7FA]">
+      {/* 🆕 “精致沉浸·精准排版” Header (对齐过关页风格) */}
+      <div
+        className="pt-10 pb-6 px-6 rounded-b-[30px] shadow-lg shadow-orange-200/20 overflow-hidden mb-6 relative"
+        style={{ background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' }}
+      >
+        {/* 背景装饰 */}
+        <div className="absolute inset-0 pointer-events-none opacity-40">
+          <div className="absolute -top-1/4 -right-1/4 w-full h-full bg-white/10 blur-[80px] rounded-full" />
+        </div>
+
+        <div className="relative z-10">
+          {/* Header Row: Title on left, Add Button on right */}
+          <div className="flex justify-between items-center">
+            <div className="flex items-baseline gap-2">
+              <h1 className="text-2xl font-black text-white tracking-tight drop-shadow-sm flex items-center gap-2">
+                <Users className="w-6 h-6" />
                 教师管理
               </h1>
-              <p className="text-gray-600 mt-1">管理学校教师账号和权限</p>
+              <span className="text-[10px] font-bold text-white/50 tracking-[0.2em] uppercase">
+                Management
+              </span>
             </div>
+
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors"
+              className="bg-white text-orange-600 px-5 py-2.5 rounded-full flex items-center gap-2 hover:bg-orange-50 active:scale-95 transition-all text-xs font-black shadow-md shadow-orange-900/10"
             >
-              <UserPlus size={20} />
+              <UserPlus size={16} strokeWidth={3} />
               添加教师
             </button>
           </div>
@@ -313,128 +326,100 @@ const TeacherManagement: React.FC = () => {
       )}
 
       {/* Teachers List */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-5 pt-2 pb-12">
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-gray-600">加载中...</span>
+          <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+            <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+            <p className="text-sm">同步校内名录...</p>
           </div>
         ) : teachers.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-            <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">暂无教师</h3>
+          <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 p-12 text-center">
+            <Users className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-gray-900 mb-2">暂无教师</h3>
             <p className="text-gray-500 mb-6">开始添加第一位教师吧</p>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors mx-auto"
+              className="bg-orange-500 text-white px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-orange-600 transition-colors mx-auto font-bold shadow-lg shadow-orange-100"
             >
               <UserPlus size={20} />
               添加教师
             </button>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      教师信息
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      主班级
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      创建时间
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      操作
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {teachers.map((teacher) => (
-                    <tr key={teacher.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="flex items-center">
-                            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                              <span className="text-sm font-medium text-blue-600">
-                                {teacher.name.charAt(0)}
-                              </span>
-                            </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">
-                                {teacher.displayName || teacher.name}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                @{teacher.username}
-                              </div>
-                            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {teachers.map((teacher) => (
+              <div key={teacher.id} className="bg-white rounded-3xl p-5 shadow-sm border border-gray-50 flex flex-col relative overflow-hidden group hover:shadow-md transition-all">
+                {/* 背景装饰 */}
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gray-50 rounded-full -mr-12 -mt-12 group-hover:bg-orange-50 transition-colors pointer-events-none" />
+
+                <div className="flex items-start justify-between relative z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center text-orange-600 font-black text-xl shadow-inner">
+                      {teacher.name.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-black text-gray-900 text-base">{teacher.displayName || teacher.name}</h3>
+                        {teacher.role === 'ADMIN' && (
+                          <div className="p-1 rounded-md bg-orange-500 text-white" title="校区管理员">
+                            <Shield size={12} fill="currentColor" />
                           </div>
-                          <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
-                            {teacher.email && (
-                              <div className="flex items-center gap-1">
-                                <Mail size={12} />
-                                {teacher.email}
-                              </div>
-                            )}
-                            <div className="flex items-center gap-1">
-                              <Shield size={12} />
-                              {teacher.role === 'ADMIN' ? '管理员' : '教师'}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {teacher.primaryClassName ? (
-                          <div className="flex items-center">
-                            <School className="w-4 h-4 text-gray-400 mr-2" />
-                            <span className="text-sm text-gray-900">{teacher.primaryClassName}</span>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-gray-500">未分配</span>
                         )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div className="flex items-center">
-                          <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                          {new Date(teacher.createdAt).toLocaleDateString('zh-CN')}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center gap-2 justify-end">
-                          <button
-                            onClick={() => handleEditTeacher(teacher)}
-                            className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
-                            title="编辑教师"
-                          >
-                            <Edit size={16} />
-                            编辑
-                          </button>
-                          <button
-                            onClick={() => handleResetPassword(teacher.id, teacher.displayName || teacher.name)}
-                            className="text-yellow-600 hover:text-yellow-900 flex items-center gap-1"
-                            title="重置密码"
-                          >
-                            <Key size={16} />
-                            重置密码
-                          </button>
-                          <button
-                            onClick={() => handleDeleteTeacher(teacher.id, teacher.displayName || teacher.name)}
-                            className="text-red-600 hover:text-red-900 flex items-center gap-1"
-                            title="删除教师"
-                          >
-                            <Trash2 size={16} />
-                            删除
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                      <p className="text-xs text-gray-400 font-medium">@{teacher.username}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 grid grid-cols-2 gap-3 text-[11px] font-bold uppercase tracking-wider relative z-10">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-gray-400">主理班级</span>
+                    <div className="flex items-center gap-1.5 text-gray-700">
+                      <School size={14} className="text-orange-500" />
+                      {teacher.primaryClassName || <span className="text-gray-300">未分配</span>}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-gray-400">入职时间</span>
+                    <div className="flex items-center gap-1.5 text-gray-700">
+                      <Calendar size={14} className="text-blue-500" />
+                      {new Date(teacher.createdAt).toLocaleDateString('zh-CN')}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-gray-50 flex items-center justify-between relative z-10">
+                  <div className="flex items-center gap-1 text-[10px] text-gray-400 font-bold">
+                    <Mail size={12} />
+                    {teacher.email || '暂无邮箱'}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleEditTeacher(teacher)}
+                      className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 text-blue-500 hover:bg-blue-50 transition-colors"
+                      title="编辑"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleResetPassword(teacher.id, teacher.displayName || teacher.name)}
+                      className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 text-orange-500 hover:bg-orange-50 transition-colors"
+                      title="重置密码"
+                    >
+                      <Key size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTeacher(teacher.id, teacher.displayName || teacher.name)}
+                      className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 text-red-500 hover:bg-red-50 transition-colors"
+                      title="删除"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

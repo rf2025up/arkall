@@ -205,11 +205,11 @@ export class LMSService {
       } else {
         // 如果是 Date 对象，使用本地时间格式化
         const d = dateValue as Date;
-        dateStr = `${d.getFullYear()} -${String(d.getMonth() + 1).padStart(2, '0')} -${String(d.getDate()).padStart(2, '0')} `;
+        dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       }
-      console.log(`📅[LMS_PUBLISH] 使用日期: ${dateStr} `);
-      const startOfDay = new Date(`${dateStr} T00:00:00 +08:00`);
-      const endOfDay = new Date(`${dateStr} T23: 59: 59 +08:00`);
+      console.log(`📅[LMS_PUBLISH] 使用日期: ${dateStr}`);
+      const startOfDay = new Date(`${dateStr}T00:00:00+08:00`);
+      const endOfDay = new Date(`${dateStr}T23:59:59+08:00`);
 
       // 🆕 从 courseInfo 中提取单元和课，用于注入任务记录（学期地图汇总关键数据）
       const courseInfo = content?.courseInfo || {};
@@ -264,10 +264,7 @@ export class LMSService {
 
       for (const student of boundStudents) {
         for (const task of (tasks as any[])) {
-          // 🚀 核心重构：基础过关项 (QC) 不再随教学计划分发，转为过关页静态自持
-          if (task.type === 'QC') {
-            continue;
-          }
+          // 🆕 QC 项现在会被创建为 PENDING 状态，等待过关页点击后变为 COMPLETED
 
           // 🆕 核心逻辑：精准分发“定制加餐” (SPECIAL 类型)
           if (task.type === 'SPECIAL') {
@@ -302,6 +299,8 @@ export class LMSService {
             lessonPlanId: lessonPlan.id,
             type: task.type,
             title: task.title,
+            // 🆕 QC 类型使用 'PROGRESS' 分类，其他类型使用映射后的分类
+            task_category: task.type === 'QC' ? 'PROGRESS' : this.mapToTaskCategory(category),
             content: {
               ...task.content,  // 已包含 category, subcategory
               taskDate: dateStr,
@@ -309,6 +308,8 @@ export class LMSService {
               unit: taskUnit,
               lesson: taskLesson,
               taskName: task.title,
+              // 🆕 为 QC 记录注入完整的 courseInfo，确保课文标题可以显示
+              courseInfo: task.type === 'QC' ? courseInfo : undefined,
               updatedAt: new Date().toISOString()
             },
             status: 'PENDING',
@@ -372,10 +373,23 @@ export class LMSService {
         orderBy: { updatedAt: 'desc' }
       });
 
+      const getGradeFromClass = (className: string | null) => {
+        if (!className) return '二年级';
+        if (className.includes('一')) return '一年级';
+        if (className.includes('二')) return '二年级';
+        if (className.includes('三')) return '三年级';
+        if (className.includes('四')) return '四年级';
+        if (className.includes('五')) return '五年级';
+        if (className.includes('六')) return '六年级';
+        return '二年级';
+      };
+
       const defaultProgress = {
         chinese: { unit: '1', lesson: '1', title: '默认课程' },
         math: { unit: '1', lesson: '1', title: '默认课程' },
-        english: { unit: '1', title: 'Default' }
+        english: { unit: '1', title: 'Default' },
+        grade: getGradeFromClass(student?.className || null),
+        semester: '上册'
       };
 
       const planInfo = (teacherPlan?.content as any)?.courseInfo || defaultProgress;
@@ -823,7 +837,7 @@ export class LMSService {
   /**
    * 🆕 结算学生当日所有任务 - V2 正式版
    */
-  async settleStudentTasks(schoolId: string, studentId: string, expBonus: number = 0) {
+  async settleStudentTasks(schoolId: string, studentId: string, expBonus: number = 0, courseInfo?: any) {
     console.log(`💰[LMS_SERVICE] 开始结算学生 ${studentId} 的所有完成任务...`);
 
     // 1. 先将该学生所有待办项（QC 项、核心教学法、综合成长）标记为已完成
@@ -876,6 +890,7 @@ export class LMSService {
             taskCount: completedTasks.length,
             totalExpAwarded: totalExp,
             expBonus,
+            courseInfo, // 🆕 注入当前进度信息
             teacherMessage: `完成了今日所有 ${completedTasks.length} 项学业任务，额外获得 ${expBonus} 经验奖励，表现非常出色！`
           },
           status: 'COMPLETED',

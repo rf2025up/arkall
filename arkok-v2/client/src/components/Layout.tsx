@@ -10,7 +10,7 @@ export function Layout() {
   const { user, logout } = useAuth();
 
   // 判断是否需要显示顶部导航（某些页面自带顶部）
-  const showTopNav = !['/', '/student/', '/prep', '/qc', '/profile', '/habits', '/badges', '/pk', '/challenges'].some(path =>
+  const showTopNav = !['/', '/student/', '/prep', '/qc', '/profile', '/habits', '/badges', '/pk', '/challenges', '/teachers', '/students-manage'].some(path =>
     location.pathname === path ||
     location.pathname.startsWith('/student/') ||
     location.pathname.startsWith('/prep') ||
@@ -19,7 +19,9 @@ export function Layout() {
     location.pathname.startsWith('/habits') ||
     location.pathname.startsWith('/badges') ||
     location.pathname.startsWith('/pk') ||
-    location.pathname.startsWith('/challenges')
+    location.pathname.startsWith('/challenges') ||
+    location.pathname.startsWith('/teachers') ||
+    location.pathname.startsWith('/students-manage')
   );
 
   return (
@@ -41,7 +43,6 @@ export function Layout() {
             <h1 className="text-xl font-bold text-white tracking-wide">
               {getPageTitle(location.pathname)}
             </h1>
-            <MessageCenter variant="header" />
           </div>
         </div>
       )}
@@ -66,7 +67,7 @@ function getPageTitle(pathname: string): string {
   if (pathname.startsWith('/challenges')) return '挑战记录';
   if (pathname.startsWith('/pk')) return 'PK 对决';
   if (pathname.startsWith('/badges')) return '勋章墙';
-  return 'ArkOK';
+  return '';
 }
 
 export default Layout;

@@ -238,6 +238,16 @@ const TodayTimeline: React.FC = () => {
                         decorIcon: '🏅',
                         decorColor: 'text-yellow-500/5'
                     };
+                case 'PLAN_ANNOUNCEMENT':
+                    return {
+                        nodeColor: 'border-blue-500 bg-blue-50',
+                        nodeShadow: 'rgba(59,130,246,0.15)',
+                        titleColor: 'text-blue-700',
+                        timeColor: 'text-blue-600 bg-blue-100',
+                        cardBg: 'bg-gradient-to-br from-blue-50 to-white border-blue-200',
+                        decorIcon: '📢',
+                        decorColor: 'text-blue-500/10'
+                    };
                 case 'CHALLENGE':
                     return {
                         nodeColor: 'border-pink-500 bg-pink-50',
@@ -287,7 +297,16 @@ const TodayTimeline: React.FC = () => {
 
                 // 尝试从不同格式解析
                 if (typeof courseInfo === 'object') {
-                    // 检查科目对应的进度
+                    // 🆕 优先检查扁平格式 (直接包含 unit/lesson/title)
+                    if (courseInfo.unit || courseInfo.lesson || courseInfo.title) {
+                        return {
+                            unit: courseInfo.unit || '?',
+                            lesson: courseInfo.lesson || '?',
+                            title: courseInfo.title || ''
+                        };
+                    }
+
+                    // 降级：检查科目嵌套格式 (courseInfo.chinese.unit 等)
                     const subject = item.content?.subject || item.content?.category || '';
                     let progress = null;
 
@@ -344,7 +363,7 @@ const TodayTimeline: React.FC = () => {
                             {/* 汇总信息 */}
                             <div className="flex justify-between items-center pt-2 border-t border-gray-100 text-xs text-gray-500">
                                 <span>已完成 {item.content.completedCount}/{item.content.totalCount}</span>
-                                <span className="text-orange-500 font-bold">+{item.content.totalExp} XP</span>
+                                <span className="text-orange-500 font-bold">+{item.content.totalExp} 经验</span>
                             </div>
                         </div>
                     )}
@@ -389,7 +408,7 @@ const TodayTimeline: React.FC = () => {
                                 <span className="font-bold ml-1">{item.content.opponent}</span>
                             </span>
                             {item.content.exp > 0 && (
-                                <span className="text-orange-500 font-bold text-sm font-mono ml-auto">+{item.content.exp} XP</span>
+                                <span className="text-orange-500 font-bold text-sm font-mono ml-auto">+{item.content.exp} 经验</span>
                             )}
                         </div>
                     )}
@@ -418,8 +437,50 @@ const TodayTimeline: React.FC = () => {
                         </div>
                     )}
 
+                    {/* 置顶公告 (PLAN_ANNOUNCEMENT) */}
+                    {item.type === 'PLAN_ANNOUNCEMENT' && (
+                        <div className="space-y-4">
+                            {/* 🆕 待过关清单 - 三支柱分组展示 */}
+                            {item.content?.planGroups && Object.entries(item.content.planGroups).map(([groupName, tasks]: [string, any], groupIdx) => (
+                                <div key={groupName} className="bg-white/60 rounded-xl p-3 border border-blue-100/50 shadow-sm">
+                                    <div className="text-[10px] text-blue-500 font-bold mb-2 uppercase tracking-wider flex items-center justify-between">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className={`w-1 h-3 rounded-full ${groupIdx === 0 ? 'bg-red-400' : groupIdx === 1 ? 'bg-green-400' : 'bg-orange-400'}`}></span>
+                                            {groupName}
+                                        </div>
+                                        <span className="text-[9px] bg-blue-50 px-1.5 py-0.5 rounded-full text-blue-400 border border-blue-100">
+                                            {groupName === '基础过关' ? '待过关' : '待练习'}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        {tasks.map((task: any, idx: number) => (
+                                            <div key={idx} className={`flex items-center gap-2 text-xs transition-all ${task.status === 'COMPLETED' ? 'text-green-600/60' : 'text-blue-900/70 font-medium'}`}>
+                                                {task.status === 'COMPLETED' ? (
+                                                    <span className="w-4 h-4 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-[10px]">✓</span>
+                                                ) : (
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-200"></div>
+                                                )}
+                                                <span className={task.status === 'COMPLETED' ? 'line-through-none' : ''}>
+                                                    {task.title}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+
+                            <p className="text-[11px] text-blue-800/60 leading-relaxed font-medium italic bg-blue-50/50 p-2 rounded-lg border border-blue-100/30 text-center">
+                                "{item.content?.message}"
+                            </p>
+                            <div className="flex items-center justify-center gap-2 text-[10px] text-blue-400">
+                                <span className="flex h-1.5 w-1.5 rounded-full bg-blue-400 animate-ping"></span>
+                                进入实时把关模式
+                            </div>
+                        </div>
+                    )}
+
                     {/* 任务描述 + 完成状态（同行） */}
-                    {item.type !== 'BADGE' && item.type !== 'QC' && item.type !== 'QC_GROUP' && item.type !== 'HABIT' && item.type !== 'PK' && (
+                    {item.type !== 'BADGE' && item.type !== 'QC' && item.type !== 'QC_GROUP' && item.type !== 'HABIT' && item.type !== 'PK' && item.type !== 'PLAN_ANNOUNCEMENT' && (
                         <div className="flex items-center justify-between gap-2 text-sm">
                             <span className="text-gray-600 flex-1">
                                 {item.content?.description || item.title}
@@ -501,7 +562,7 @@ const TodayTimeline: React.FC = () => {
                         <div className="flex justify-between items-start mb-2">
                             <h3 className="text-sm font-bold text-gray-800">{item.title}</h3>
                             {item.exp && item.exp > 0 && item.type !== 'PK' && (
-                                <span className="text-orange-500 font-bold text-xs font-mono">+{item.exp} XP</span>
+                                <span className="text-orange-500 font-bold text-xs font-mono">+{item.exp} 经验</span>
                             )}
                         </div>
 
@@ -575,57 +636,18 @@ const TodayTimeline: React.FC = () => {
                 </div>
             </div>
 
-            {/* 底部反馈区 */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-4px_25px_rgba(0,0,0,0.08)] rounded-t-[2rem] p-5 z-20 pb-safe">
-                {/* 已有留言显示 */}
-                {serverComment && (
-                    <div className="mb-4 px-4 py-3 bg-orange-50/50 rounded-2xl border border-orange-100/50 animate-in fade-in slide-in-from-bottom-2">
-                        <div className="flex gap-2 items-start">
-                            <span className="text-orange-400 text-xs mt-0.5">💬</span>
-                            <div className="flex-1">
-                                <div className="text-[10px] text-orange-400 font-bold mb-1 uppercase tracking-wider">我的留言</div>
-                                <div className="text-sm text-gray-700 leading-relaxed">{serverComment}</div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* 点赞按钮 */}
-                <div className="flex gap-3 mb-4">
-                    <button
-                        onClick={handleLike}
-                        className={`flex-1 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 ${liked
-                            ? 'bg-orange-50 text-orange-500 border border-orange-400'
-                            : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
-                            }`}
-                    >
-                        <span className="text-xl animate-bounce-slow">{liked ? '❤️' : '👍'}</span>
-                        <span className="text-sm">{liked ? '已收到，谢谢老师！' : '为孩子今日表现点赞'}</span>
-                    </button>
-                </div>
-
-                {/* 留言框 */}
-                <div className="relative">
-                    <input
-                        type="text"
-                        value={comment}
-                        onChange={(e) => setComment(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleComment()}
-                        className="w-full bg-gray-50 border border-gray-100 rounded-xl pl-4 pr-16 py-3 text-sm focus:outline-none focus:border-orange-300 focus:bg-white transition-all shadow-inner"
-                        placeholder={serverComment ? "继续补充留言..." : "想对老师说点什么..."}
-                        disabled={submitting}
-                    />
-                    <button
-                        onClick={handleComment}
-                        disabled={!comment.trim() || submitting}
-                        className={`absolute right-2 top-1/2 -translate-y-1/2 font-bold text-sm px-4 py-1.5 rounded-lg transition-all ${!comment.trim() || submitting
-                            ? 'text-gray-300'
-                            : 'text-orange-500 hover:bg-orange-50 active:scale-90'
-                            }`}
-                    >
-                        {submitting ? '...' : '发送'}
-                    </button>
-                </div>
+            {/* 底部反馈区 - 仅点赞 */}
+            <div className="fixed bottom-16 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-100 px-4 py-3 z-20">
+                <button
+                    onClick={handleLike}
+                    className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 border ${liked
+                        ? 'bg-orange-50 text-orange-500 border-orange-300'
+                        : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                        }`}
+                >
+                    <span className="text-xl">{liked ? '❤️' : '👍'}</span>
+                    <span className="text-sm">{liked ? '已收到，谢谢老师！' : '为孩子今日表现点赞'}</span>
+                </button>
             </div>
         </div>
     );

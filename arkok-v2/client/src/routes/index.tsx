@@ -15,8 +15,10 @@ import PKPage from '../pages/PKPage';
 import BadgePage from '../pages/BadgePage';
 import Profile from '../pages/Profile';
 import TeacherManagement from '../pages/TeacherManagement';
+import StudentManagement from '../pages/StudentManagement';
+import TutoringStudio from '../pages/TutoringStudio';
 import { ParentLogin, ParentLayout, TodayTimeline, GrowthProfile, SchoolConnect } from '../pages/parent';
-import { PlatformDashboard, CampusManagement } from '../pages/platform';
+import { PlatformDashboard, CampusManagement, PlatformLogin } from '../pages/platform';
 import PlatformLayout from '../components/PlatformLayout';
 import PlatformProtectedRoute from '../components/PlatformProtectedRoute';
 
@@ -26,6 +28,11 @@ export const router = createBrowserRouter([
     path: '/login',
     element: <Login />,
     errorElement: <div className="flex items-center justify-center min-h-screen">登录页面加载错误</div>,
+  },
+  {
+    path: '/platform-login',
+    element: <PlatformLogin />,
+    errorElement: <div className="flex items-center justify-center min-h-screen">平台登录页面加载错误</div>,
   },
   {
     path: '/',
@@ -87,6 +94,14 @@ export const router = createBrowserRouter([
       {
         path: 'teachers',
         element: <TeacherManagement />,
+      },
+      {
+        path: 'students-manage',
+        element: <StudentManagement />,
+      },
+      {
+        path: 'tutoring-studio',
+        element: <TutoringStudio />,
       },
     ],
   },

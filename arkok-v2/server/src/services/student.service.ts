@@ -438,10 +438,23 @@ export class StudentService {
       console.log(`🎯 [HABIT_DEBUG] 生成的 habitStats 数量: ${habitStats.length}, 有打卡记录的习惯: ${habitStats.filter(h => h.stats.totalCheckIns > 0).length}`);
 
       // 🆕 计算课程进度 (对齐 LMS Service 逻辑)
+      const getGradeFromClass = (className: string | null) => {
+        if (!className) return '二年级';
+        if (className.includes('一')) return '一年级';
+        if (className.includes('二')) return '二年级';
+        if (className.includes('三')) return '三年级';
+        if (className.includes('四')) return '四年级';
+        if (className.includes('五')) return '五年级';
+        if (className.includes('六')) return '六年级';
+        return '二年级';
+      };
+
       const defaultProgress = {
         chinese: { unit: '1', lesson: '1', title: '默认课程' },
         math: { unit: '1', lesson: '1', title: '默认课程' },
-        english: { unit: '1', title: 'Default' }
+        english: { unit: '1', title: 'Default' },
+        grade: getGradeFromClass(student?.className || null),
+        semester: '上册'
       };
 
       const planInfo = (latestLessonPlan?.content as any)?.courseInfo || defaultProgress;
@@ -699,7 +712,7 @@ export class StudentService {
   }
 
   /**
-   * 删除学生（软删除）
+   * 删除学生（软删除，进入回收站）
    */
   async deleteStudent(id: string, schoolId: string): Promise<void> {
     await this.prisma.students.update({
@@ -710,6 +723,7 @@ export class StudentService {
       },
       data: {
         isActive: false,
+        deletedAt: new Date(), // 记录删除时间
         updatedAt: new Date()
       }
     });
@@ -722,6 +736,61 @@ export class StudentService {
         timestamp: new Date().toISOString()
       }
     });
+  }
+
+  /**
+   * 获取回收站中的学生（删除不满 30 天）
+   */
+  async getTrashBinStudents(schoolId: string): Promise<any[]> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    return this.prisma.students.findMany({
+      where: {
+        schoolId,
+        isActive: false,
+        deletedAt: {
+          gte: thirtyDaysAgo
+        }
+      },
+      include: {
+        teachers: {
+          select: { name: true }
+        }
+      },
+      orderBy: {
+        deletedAt: 'desc'
+      }
+    });
+  }
+
+  /**
+   * 恢复被删除的学生
+   */
+  async restoreStudent(id: string, schoolId: string): Promise<any> {
+    const student = await this.prisma.students.update({
+      where: {
+        id,
+        schoolId,
+        isActive: false
+      },
+      data: {
+        isActive: true,
+        deletedAt: null, // 清空删除时间
+        updatedAt: new Date()
+      }
+    });
+
+    // 广播学生恢复事件
+    this.broadcastToSchool(schoolId, {
+      type: 'STUDENT_RESTORED',
+      data: {
+        student,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+    return student;
   }
 
   /**

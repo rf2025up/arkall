@@ -128,6 +128,78 @@ export class PlatformRoutes {
             }
         });
 
+        /**
+         * POST /api/platform/campuses
+         * 创建新校区及管理员账号
+         */
+        router.post('/campuses', async (req, res) => {
+            try {
+                const { name, adminUsername, adminName, planType } = req.body;
+
+                if (!name || !adminUsername || !adminName) {
+                    return res.status(400).json({
+                        success: false,
+                        message: '校区名称、管理员用户名和姓名为必填项'
+                    });
+                }
+
+                const result = await this.platformService.createCampus({
+                    name,
+                    adminUsername,
+                    adminName,
+                    planType
+                });
+
+                res.json({
+                    success: true,
+                    data: result,
+                    message: `校区「${name}」创建成功，管理员初始密码为 0000`
+                });
+            } catch (error) {
+                console.error('❌ Error in POST /api/platform/campuses:', error);
+                res.status(500).json({
+                    success: false,
+                    message: (error as Error).message || '创建校区失败'
+                });
+            }
+        });
+
+        /**
+         * GET /api/platform/search
+         * 全局搜索学生或教师
+         */
+        router.get('/search', async (req, res) => {
+            try {
+                const { q, type = 'student', limit = '20' } = req.query;
+
+                if (!q || typeof q !== 'string') {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Query parameter "q" is required'
+                    });
+                }
+
+                let results;
+                if (type === 'teacher') {
+                    results = await this.platformService.searchTeachersGlobal(q, parseInt(limit as string));
+                } else {
+                    results = await this.platformService.searchStudentsGlobal(q, parseInt(limit as string));
+                }
+
+                res.json({
+                    success: true,
+                    data: results
+                });
+            } catch (error) {
+                console.error('❌ Error in GET /api/platform/search:', error);
+                res.status(500).json({
+                    success: false,
+                    message: 'Search failed',
+                    error: (error as Error).message
+                });
+            }
+        });
+
         return router;
     }
 }

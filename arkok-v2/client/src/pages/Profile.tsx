@@ -28,6 +28,7 @@ const Profile: React.FC<ProfileProps> = () => {
   const menuItems = user?.role === 'ADMIN'
     ? [
       { icon: Users, label: '教师管理', color: 'text-orange-500', onClick: () => navigate('/teachers') },
+      { icon: GraduationCap, label: '学员管理', color: 'text-blue-500', onClick: () => navigate('/students-manage') },
       ...baseMenuItems
     ]
     : baseMenuItems;
@@ -242,7 +243,7 @@ const Profile: React.FC<ProfileProps> = () => {
                 {viewMode === 'SPECIFIC_CLASS' ? `代管理：${managedTeacherName || '未知'}班级` : user?.name || '龙老师'}
               </h2>
               <p className="text-white/60 text-[9px] font-bold tracking-widest uppercase mt-0.5">
-                {viewMode === 'SPECIFIC_CLASS' ? 'COLLABORATIVE PROXY MODE' : `ID: ${user?.id?.slice(-8) || '12345678'}`}
+                {viewMode === 'SPECIFIC_CLASS' ? 'COLLABORATIVE PROXY MODE' : `STAFF ID: ${user?.id?.slice(-8) || '12345678'}`}
               </p>
             </div>
 
@@ -277,7 +278,7 @@ const Profile: React.FC<ProfileProps> = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
           <div className="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-black text-gray-800 text-lg tracking-tight">切换管理视角</h3>
+              <h3 className="font-black text-gray-800 text-lg tracking-tight">视角切换</h3>
               <div onClick={() => setPermOpen(false)} className="p-2 bg-gray-50 text-gray-400 rounded-xl">
                 <X size={20} />
               </div>

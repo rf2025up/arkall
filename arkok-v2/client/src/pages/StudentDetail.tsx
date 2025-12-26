@@ -15,7 +15,7 @@ import InviteCardModal from '../components/InviteCardModal';
 import ParentBindingList from '../components/ParentBindingList';
 
 // 本周数据过滤工具函数（周一到周日）
-const filterThisWeek = <T extends { created_at?: string; date?: string }>(items: T[]): T[] => {
+const filterThisWeek = <T extends { created_at?: string; date?: string; createdAt?: string; awardedAt?: string }>(items: T[]): T[] => {
   const now = new Date();
   const currentDay = now.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
   const monday = new Date(now);
@@ -40,7 +40,7 @@ const filterThisWeek = <T extends { created_at?: string; date?: string }>(items:
   sunday.setHours(23, 59, 59, 999);
 
   return items.filter(item => {
-    const dateToCheck = item.created_at || item.date;
+    const dateToCheck = item.created_at || item.createdAt || item.date || item.awardedAt;
     if (!dateToCheck) return false;
 
     const itemDate = new Date(dateToCheck);
@@ -259,26 +259,30 @@ const StudentDetail: React.FC = () => {
     });
   }, [allTaskRecords]);
 
-  // B. 派生挑战记录 - 只包含真正的挑战类型，不包含定制加餐等特殊任务
+  // B. 派生挑战记录 - 只包含真正的挑战类型
   const studentChallenges = React.useMemo(() => {
-    return allTaskRecords
-      // 🔴 修复：只过滤 CHALLENGE 类型，SPECIAL/PERSONALIZED 不应该出现在挑战记录中
-      .filter(record => record.type === 'CHALLENGE')
-      .map((record, index) => ({
-        id: index,
-        title: record.title,
-        result: record.status === 'COMPLETED' ? 'success' :
-          (record.status === 'PENDING' || record.status === 'SUBMITTED' || record.status === 'JOINED') ? 'in_progress' : ('fail' as 'success' | 'fail' | 'in_progress'),
-        date: new Date(record.createdAt).toLocaleDateString('zh-CN'),
-        rewardPoints: record.expAwarded || 0,
-        rewardExp: Math.floor(record.expAwarded / 2) || 0
-      }));
+    const filtered = allTaskRecords.filter(record =>
+      record.type === 'CHALLENGE' &&
+      (record as any).task_category !== 'BADGE' // 排除勋章授予产生的挑战类型记录
+    );
+    // 只显示本周挑战
+    return filterThisWeek(filtered).map((record, index) => ({
+      id: index,
+      title: record.title,
+      result: record.status === 'COMPLETED' ? 'success' :
+        (record.status === 'PENDING' || record.status === 'SUBMITTED' || record.status === 'JOINED') ? 'in_progress' : ('fail' as 'success' | 'fail' | 'in_progress'),
+      date: new Date(record.createdAt).toLocaleDateString('zh-CN'),
+      rewardPoints: record.expAwarded || 0,
+      rewardExp: Math.floor(record.expAwarded / 2) || 0,
+      createdAt: record.createdAt // 传递给 filter 识别
+    }));
   }, [allTaskRecords]);
 
   // C. 派生 PK 记录
   const studentPKRecords = React.useMemo(() => {
     if (!studentProfile?.pkRecords) return [];
-    return studentProfile.pkRecords.map((pk: any, index: number) => ({
+    // 只显示本周 PK
+    return filterThisWeek(studentProfile.pkRecords).map((pk: any, index: number) => ({
       id: index + 1,
       result: (pk.isWinner ? 'win' : 'lose') as 'win' | 'lose',
       topic: pk.topic || '对战',
@@ -754,6 +758,86 @@ const StudentDetail: React.FC = () => {
       })),
     // 🚀 基于学生课程进度生成动态学期地图
     // 数据源：课程标题来自 student.progress，过关项目来自 QC 任务记录
+    // 🚀 基于学生课程进度生成动态学习地图 (分科目数据推导 - 2025新版)
+    semesterMap: (() => {
+      // 1. 根据当前选中的科目确定数据源
+      const progress = studentProfile?.student?.progress;
+      const currentSubjectInfo = progress ? (progress as any)[timelineSubject] : null;
+
+      // 2. 根据科目设定基础网格数量 (不再写死 40，动态适配新教材)
+      // 默认提供一个基础数量，后续根据记录中发现的最大索引进行微调
+      let gridCount = 45;
+      if (timelineSubject === 'chinese') gridCount = 40;
+      else if (timelineSubject === 'english') gridCount = 35;
+
+      // 3. 过滤当前科目的记录
+      const relevantRecords = allTaskRecords.filter(record => {
+        const type = record.type.toUpperCase();
+        const status = record.status.toUpperCase();
+        if (status !== 'COMPLETED') return false;
+        if (!['QC', 'METHODOLOGY', 'SPECIAL'].includes(type)) return false;
+
+        const content = (record.content || {}) as any;
+        const category = content.category || '';
+        const title = record.title || '';
+
+        if (timelineSubject === 'chinese') return category.includes('语文') || title.includes('生字') || title.includes('课文');
+        if (timelineSubject === 'math') return category.includes('数学') || title.includes('口算') || title.includes('计算');
+        if (timelineSubject === 'english') return category.includes('英语') || title.includes('单词') || title.includes('Unit');
+        return false;
+      });
+
+      // 4. 重构网格生成与染色
+      const grid = Array.from({ length: gridCount }, (_, i) => ({
+        id: i,
+        status: 'pending' as 'pending' | 'done',
+        type: 'NONE' as 'NONE' | 'QC' | 'METHODOLOGY' | 'SPECIAL',
+        achievements: [] as { name: string; date: string; type: string }[]
+      }));
+
+      relevantRecords.forEach(record => {
+        const content = (record.content || {}) as any;
+        const taskType = record.type.toUpperCase() as 'QC' | 'METHODOLOGY' | 'SPECIAL';
+
+        let u: string | undefined;
+        let l: string | undefined;
+
+        if (content.unit) {
+          u = content.unit;
+          l = content.lesson || '1';
+        } else {
+          u = record.title?.match(/第(\d+)单元/)?.[1];
+          l = record.title?.match(/第(\d+)课/)?.[1] || '1';
+        }
+
+        if (u) {
+          const unitIdx = parseInt(u) - 1;
+          const lessonNum = parseInt(l || '1');
+          // 2025新教材均匀分布逻辑：每单元分配 5 个格子进行可视化
+          const gridIdx = unitIdx * 5 + (lessonNum % 5);
+
+          if (gridIdx >= 0 && gridIdx < gridCount) {
+            const cell = grid[gridIdx];
+            cell.status = 'done';
+
+            const typePriority = { 'QC': 3, 'METHODOLOGY': 2, 'SPECIAL': 1, 'NONE': 0 };
+            if (typePriority[taskType] > typePriority[cell.type]) {
+              cell.type = taskType;
+            }
+
+            cell.achievements.push({
+              name: record.title,
+              date: new Date(record.createdAt).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }),
+              type: taskType
+            });
+          }
+        }
+      });
+
+      return grid;
+    })(),
+
+    // 🚀 旧版时间轴逻辑 (保留以驱动下方列表展示)
     timeline: (() => {
       const timeline = {
         chinese: [] as TimelineLesson[],
@@ -761,149 +845,61 @@ const StudentDetail: React.FC = () => {
         english: [] as TimelineLesson[]
       };
 
-      // 获取学生的课程进度信息
       const progress = studentProfile?.student?.progress;
+      const qcRecords = allTaskRecords.filter(r => r.type.toUpperCase() === 'QC' && r.status === 'COMPLETED');
 
-      // 获取所有 QC 类型的已完成任务记录
-      const qcRecords = allTaskRecords.filter(r =>
-        r.type.toUpperCase() === 'QC' && r.status === 'COMPLETED'
-      );
-
-      // 辅助函数：根据学科过滤 QC 记录，并按同名去重（只保留最新一条）
       const filterBySubject = (subjectKey: string) => {
-        // 先按学科过滤
         const filtered = qcRecords.filter(record => {
           const content = (record.content || {}) as any;
           const category = content.category || '';
-
-          if (subjectKey === 'chinese') {
-            return category.includes('语文') ||
-              record.title.includes('生字') ||
-              record.title.includes('课文') ||
-              record.title.includes('听写') ||
-              record.title.includes('背诵') ||
-              record.title.includes('古诗');
-          } else if (subjectKey === 'math') {
-            return category.includes('数学') ||
-              record.title.includes('口算') ||
-              record.title.includes('计算') ||
-              record.title.includes('竖式') ||
-              record.title.includes('脱式') ||
-              record.title.includes('公式');
-          } else if (subjectKey === 'english') {
-            return category.includes('英语') ||
-              record.title.includes('单词') ||
-              record.title.includes('句型') ||
-              record.title.includes('Unit');
-          }
+          if (subjectKey === 'chinese') return category.includes('语文') || record.title.includes('生字') || record.title.includes('听写');
+          if (subjectKey === 'math') return category.includes('数学') || record.title.includes('口算') || record.title.includes('计算');
+          if (subjectKey === 'english') return category.includes('英语') || record.title.includes('单词') || record.title.includes('Unit');
           return false;
         });
-
-        // 按 title 去重，只保留最新的一条记录（以 createdAt 为准）
         const latestByTitle = new Map<string, typeof filtered[0]>();
         filtered.forEach(record => {
           const existing = latestByTitle.get(record.title);
-          if (!existing || new Date(record.createdAt) > new Date(existing.createdAt)) {
-            latestByTitle.set(record.title, record);
-          }
+          if (!existing || new Date(record.createdAt) > new Date(existing.createdAt)) latestByTitle.set(record.title, record);
         });
-
         return Array.from(latestByTitle.values());
       };
 
-      // 生成语文课程节点
       if (progress?.chinese) {
-        const chineseRecords = filterBySubject('chinese');
-        const unit = parseInt(progress.chinese.unit) || 1;
-        const lesson = parseInt(progress.chinese.lesson || '1') || 1;
-        const title = progress.chinese.title || '未命名课程';
-
-        timeline.chinese.push({
-          id: 1,
-          unit,
-          lesson,
-          title,
-          status: chineseRecords.length > 0 ? 'done' : 'pending',
-          tasks: chineseRecords.map(record => ({
-            id: record.id,
-            name: record.title,
-            status: 'passed' as const,
-            attempts: ((record.content as any)?.attempts as number) || 0,
-            date: new Date(record.createdAt).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
-          }))
-        });
+        const records = filterBySubject('chinese');
+        timeline.chinese.push({ id: 1, unit: parseInt(progress.chinese.unit) || 1, lesson: parseInt(progress.chinese.lesson || '1') || 1, title: progress.chinese.title || '未命名课程', status: records.length > 0 ? 'done' : 'pending', tasks: records.map(r => ({ id: r.id, name: r.title, status: 'passed' as const, attempts: (r.content as any)?.attempts || 0, date: new Date(r.createdAt).toLocaleDateString() })) });
       }
-
-      // 生成数学课程节点
       if (progress?.math) {
-        const mathRecords = filterBySubject('math');
-        const unit = parseInt(progress.math.unit) || 1;
-        const lesson = parseInt(progress.math.lesson || '1') || 1;
-        const title = progress.math.title || '未命名课程';
-
-        timeline.math.push({
-          id: 2,
-          unit,
-          lesson,
-          title,
-          status: mathRecords.length > 0 ? 'done' : 'pending',
-          tasks: mathRecords.map(record => ({
-            id: record.id,
-            name: record.title,
-            status: 'passed' as const,
-            attempts: ((record.content as any)?.attempts as number) || 0,
-            date: new Date(record.createdAt).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
-          }))
-        });
+        const records = filterBySubject('math');
+        timeline.math.push({ id: 2, unit: parseInt(progress.math.unit) || 1, lesson: parseInt(progress.math.lesson || '1') || 1, title: progress.math.title || '未命名课程', status: records.length > 0 ? 'done' : 'pending', tasks: records.map(r => ({ id: r.id, name: r.title, status: 'passed' as const, attempts: (r.content as any)?.attempts || 0, date: new Date(r.createdAt).toLocaleDateString() })) });
       }
-
-      // 生成英语课程节点
       if (progress?.english) {
-        const englishRecords = filterBySubject('english');
-        const unit = parseInt(progress.english.unit) || 1;
-        const title = progress.english.title || '未命名课程';
-
-        timeline.english.push({
-          id: 3,
-          unit,
-          lesson: 1, // 英语没有 lesson 字段
-          title,
-          status: englishRecords.length > 0 ? 'done' : 'pending',
-          tasks: englishRecords.map(record => ({
-            id: record.id,
-            name: record.title,
-            status: 'passed' as const,
-            attempts: ((record.content as any)?.attempts as number) || 0,
-            date: new Date(record.createdAt).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
-          }))
-        });
+        const records = filterBySubject('english');
+        timeline.english.push({ id: 3, unit: parseInt(progress.english.unit) || 1, lesson: 1, title: progress.english.title || '未命名课程', status: records.length > 0 ? 'done' : 'pending', tasks: records.map(r => ({ id: r.id, name: r.title, status: 'passed' as const, attempts: (r.content as any)?.attempts || 0, date: new Date(r.createdAt).toLocaleDateString() })) });
       }
-
-      console.log('[StudentDetail] 学期地图生成完成 (基于 student.progress):', {
-        chinese: timeline.chinese.length,
-        math: timeline.math.length,
-        english: timeline.english.length,
-        progressSource: progress ? 'student.progress' : 'fallback'
-      });
 
       return timeline;
     })()
   };
 
-  // 🚀 基于任务记录的过程任务数据 - 只包含核心教法、综合成长、定制加餐、习惯打卡等
+  // 🚀 基于任务记录的过程任务数据 - 只包含核心教法、综合成长、个性加餐
   const processTasks = allTaskRecords
     .filter(record => {
       const taskType = record.type.toUpperCase();
       const taskStatus = record.status.toUpperCase();
-      return (taskType === 'TASK' || taskType === 'METHODOLOGY' || taskType === 'SPECIAL' || taskType === 'DAILY') &&
-        (taskStatus === 'PENDING' || taskStatus === 'COMPLETED');
+      // 🆕 核心优化：仅展示“已达成”(COMPLETED)记录，隐藏“进行中”(PENDING)
+      // 同时过滤掉系统自动生成的“老师手动调整进度”冗余记录
+      // 且排除勋章记录 (已由独立面板展示)
+      return (taskType === 'TASK' || taskType === 'METHODOLOGY' || taskType === 'SPECIAL') &&
+        taskStatus === 'COMPLETED' &&
+        record.title !== '老师手动调整进度' &&
+        (record as any).task_category !== 'BADGE';
     })
     .map(record => {
       const taskType = record.type.toUpperCase();
       let category = '综合成长';
       if (taskType === 'METHODOLOGY') category = '核心教法';
-      else if (taskType === 'SPECIAL') category = '成长奖励';
-      else if (taskType === 'DAILY') category = '习惯打卡';
+      else if (taskType === 'SPECIAL') category = '个性加餐';
 
       // 提取教师备注/理由
       let teacherNote = '';
@@ -1592,21 +1588,98 @@ const StudentDetail: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 进度条 & 筛选 - V1原版样式 */}
-                <div className="bg-white p-4 rounded-2xl border border-slate-100 mb-4 shadow-sm">
-                  <div className="flex justify-between items-center mb-2">
-                    <div className="text-xs text-slate-500 font-bold">总体进度: <span className="text-blue-600 font-black">85%</span></div>
-                    <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer font-bold">
-                      <input type="checkbox" checked={showPendingOnly} onChange={e => setShowPendingOnly(e.target.checked)} className="rounded text-blue-600 focus:ring-0 w-3.5 h-3.5 border-slate-300" />
-                      只看待补
-                    </label>
+                {/* Growing Map Grid - 🆕 2025新版分科目动态色系地图 */}
+                <div className="bg-white p-5 rounded-3xl border border-slate-100 mb-6 shadow-sm">
+                  <div className="grid grid-cols-7 gap-1.5">
+                    {academicData.semesterMap.map((cell: any) => {
+                      // 🚀 动态色系方案 (语/数/英 差异化)
+                      const colors: Record<string, any> = {
+                        chinese: {
+                          done: 'bg-orange-500 border-orange-400 shadow-md shadow-orange-100 scale-105 z-10',
+                          method: 'bg-rose-400 border-rose-300 scale-105 z-10',
+                          special: 'bg-amber-400 border-amber-300 scale-105 z-10',
+                          pending: 'bg-orange-50/50 border-orange-100/30 text-orange-200'
+                        },
+                        math: {
+                          done: 'bg-blue-500 border-blue-400 shadow-md shadow-blue-100 scale-105 z-10',
+                          method: 'bg-cyan-400 border-cyan-300 scale-105 z-10',
+                          special: 'bg-indigo-400 border-indigo-300 scale-105 z-10',
+                          pending: 'bg-blue-50/50 border-blue-100/30 text-blue-200'
+                        },
+                        english: {
+                          done: 'bg-green-500 border-green-400 shadow-md shadow-green-100 scale-105 z-10',
+                          method: 'bg-emerald-400 border-emerald-300 scale-105 z-10',
+                          special: 'bg-teal-400 border-teal-300 scale-105 z-10',
+                          pending: 'bg-green-50/50 border-green-100/30 text-green-200'
+                        }
+                      };
+
+                      const subjectColors = colors[timelineSubject] || colors.math;
+                      let cellClass = cell.status === 'done'
+                        ? (cell.type === 'METHODOLOGY' ? subjectColors.method : (cell.type === 'SPECIAL' ? subjectColors.special : subjectColors.done))
+                        : subjectColors.pending;
+
+                      return (
+                        <div
+                          key={cell.id}
+                          className={`group relative aspect-square rounded-lg border flex items-center justify-center transition-all ${cellClass}`}
+                        >
+                          {cell.status === 'done' ? (
+                            <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse shadow-sm" />
+                          ) : (
+                            <span className="text-[9px] font-black opacity-40">{cell.id + 1}</span>
+                          )}
+
+                          {/* Tooltip on Hover */}
+                          {cell.status === 'done' && (
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50">
+                              <div className="bg-slate-800 text-white rounded-xl p-3 shadow-xl whitespace-nowrap min-w-[120px]">
+                                <div className="text-[10px] font-black opacity-60 mb-1 leading-none uppercase">ID: {cell.id + 1} 达成详情</div>
+                                <div className="space-y-1">
+                                  {cell.achievements.map((ach: any, idx: number) => (
+                                    <div key={idx} className="flex justify-between items-center gap-4 text-xs">
+                                      <div className="flex items-center gap-1.5">
+                                        <div className={`w-1.5 h-1.5 rounded-full bg-white opacity-80`} />
+                                        <span className="font-bold">{ach.name}</span>
+                                      </div>
+                                      <span className="text-[10px] opacity-60">{ach.date}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-800"></div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 w-[85%] rounded-full shadow-inner animate-pulse duration-2000"></div>
+                  <div className="mt-4 grid grid-cols-2 gap-y-2 px-2">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3 h-3 rounded-md bg-emerald-500"></div>
+                      <span className="text-[10px] text-slate-500 font-bold">已过关(QC)</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3 h-3 rounded-md bg-indigo-500"></div>
+                      <span className="text-[10px] text-slate-500 font-bold">核心教法</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3 h-3 rounded-md bg-purple-500"></div>
+                      <span className="text-[10px] text-slate-500 font-bold">个性加餐</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3 h-3 rounded-md bg-slate-100 border border-slate-200"></div>
+                      <span className="text-[10px] text-slate-500 font-bold">待探索</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Timeline List - V1原版样式 */}
+                {/* Timeline List - V1原版样式 (改为辅助展示) */}
+                <div className="flex items-center gap-2 mb-4 px-1">
+                  <BookOpen size={14} className="text-slate-400" />
+                  <span className="text-xs font-black text-slate-500 uppercase tracking-wider">最近过关流水</span>
+                </div>
+
                 <div className="relative pl-6 space-y-6">
                   <div className="absolute left-[11px] top-2 bottom-0 w-0.5 bg-slate-200/60 rounded-full"></div>
 

@@ -1,0 +1,15 @@
+
+> arkok-v2-server@2.0.0 dev
+> ts-node-dev --respawn --transpile-only src/index.ts
+
+[INFO] 14:31:47 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+🚀 Starting ArkOK V2 Server...
+🌍 Environment: development
+🔌 Port: 3000
+🔧 Setting up Socket.IO handlers...
+🔌 Socket.io 服务已初始化
+✅ Database connected successfully
+🚀 ArkOK V2 Server running on port 3000
+2025-12-26T06:31:59.824Z - GET /api/health
+
+🛑 SIGTERM received, shutting down gracefully...

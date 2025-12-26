@@ -102,7 +102,7 @@ export class BadgeRoutes {
         schoolId: schoolId as string,
         search: search as string,
         category: category as string,
-        isActive: isActive === 'true',
+        isActive: isActive !== undefined ? isActive === 'true' : undefined,
         page: page ? parseInt(page as string) : undefined,
         limit: limit ? parseInt(limit as string) : undefined,
       };
