@@ -164,6 +164,7 @@ export class ApiService {
    * 🆕 强制失效特定缓存 (用于突变后)
    */
   public invalidateCache(partialKey?: string) {
+    console.log(`[CACHE] 🧩 Before invalidation, existing keys:`, Array.from(this.cache.keys()));
     if (!partialKey) {
       this.cache.clear();
       console.log('[CACHE] 🧹 All cleared');

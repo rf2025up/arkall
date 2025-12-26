@@ -1020,87 +1020,116 @@ export class StudentService {
    */
   async transferStudents(studentIds: string[], targetTeacherId: string, schoolId: string, updatedBy: string): Promise<any[]> {
     console.log(`[TEACHER BINDING] Transferring ${studentIds.length} students to teachers: ${targetTeacherId}`);
+    console.log(`[TEACHER BINDING] DEBUG: schoolId=${schoolId}, updatedBy=${updatedBy}`);
 
-    // 验证学生是否属于该学校
-    const students = await this.prisma.students.findMany({
-      where: {
-        id: { in: studentIds },
-        schoolId,
-        isActive: true
+    try {
+      // 验证学生是否属于该学校
+      const students = await this.prisma.students.findMany({
+        where: {
+          id: { in: studentIds },
+          schoolId,
+          isActive: true
+        }
+      });
+
+      console.log(`[TEACHER BINDING] DEBUG: Found ${students.length} valid students`);
+
+      if (students.length !== studentIds.length) {
+        console.error('[TEACHER BINDING] ERROR: Student count mismatch', { expected: studentIds.length, found: students.length });
+        throw new Error('部分学生不存在或不属于该学校');
       }
-    });
 
-    if (students.length !== studentIds.length) {
-      throw new Error('部分学生不存在或不属于该学校');
-    }
+      // 🆕 验证目标老师是否存在且属于同一学校
+      const targetTeacher = await this.prisma.teachers.findFirst({
+        where: {
+          id: targetTeacherId,
+          schoolId: schoolId
+        }
+      });
 
-    // 🆕 验证目标老师是否存在且属于同一学校
-    const targetTeacher = await this.prisma.teachers.findFirst({
-      where: {
-        id: targetTeacherId,
-        schoolId: schoolId
+      console.log(`[TEACHER BINDING] DEBUG: Target teacher found: ${!!targetTeacher}`);
+
+      if (!targetTeacher) {
+        console.error(`[TEACHER BINDING] ERROR: Target teacher not found. ID: ${targetTeacherId}`);
+        throw new Error('目标老师不存在或不属于同一学校');
       }
-    });
 
-    if (!targetTeacher) {
-      throw new Error('目标老师不存在或不属于同一学校');
-    }
+      const newClassName = targetTeacher.primaryClassName || targetTeacher.name + '班';
+      console.log(`[TEACHER BINDING] DEBUG: New class name will be: ${newClassName}`);
 
-    // 批量更新学生的老师归属
-    const updatedStudents = await this.prisma.$transaction(
-      studentIds.map(studentId =>
-        this.prisma.students.update({
-          where: { id: studentId, schoolId },
+      // 批量更新学生的老师归属
+      console.log('[TEACHER BINDING] DEBUG: Starting transaction to update students...');
+
+      const updatedStudents = await this.prisma.$transaction(async (tx) => {
+        const updates = await Promise.all(studentIds.map(studentId =>
+          tx.students.update({
+            where: { id: studentId, schoolId },
+            data: {
+              teacherId: targetTeacherId,  // 🆕 核心变更：更新老师归属
+              className: newClassName  // 🔒 修复：同步更新班级名
+            }
+          })
+        ));
+
+        console.log('[TEACHER BINDING] DEBUG: Students updated. Creating task records...');
+
+        // 🆕 创建师生关系转移记录
+        await Promise.all(studentIds.map(studentId =>
+          tx.task_records.create({
+            data: {
+              id: require('crypto').randomUUID(),
+              studentId,
+              schoolId,
+              type: 'SPECIAL',
+              title: '移入班级',
+              content: {
+                action: 'TEACHER_TRANSFER',
+                fromTeacherId: students.find(s => s.id === studentId)?.teacherId,
+                toTeacherId: targetTeacherId,
+                toTeacherName: targetTeacher.name,
+                updatedBy,
+                transferType: 'STUDENT_MOVED_TO_TEACHER'
+              },
+              status: 'COMPLETED',
+              expAwarded: 0,
+              updatedAt: new Date()
+            }
+          })
+        ));
+
+        return updates;
+      });
+
+      console.log('[TEACHER BINDING] DEBUG: Transaction committed successfuly.');
+
+      // 🆕 广播师生关系转移事件
+      try {
+        this.broadcastToSchool(schoolId, {
+          type: 'STUDENTS_TRANSFERRED',
           data: {
-            teacherId: targetTeacherId,  // 🆕 核心变更：更新老师归属
-            className: targetTeacher.primaryClassName || targetTeacher.name + '班'  // 🔒 修复：同步更新班级名
+            studentIds,
+            targetTeacherId,
+            targetTeacherName: targetTeacher.name,
+            updatedBy,
+            timestamp: new Date().toISOString(),
+            updatedStudents,
+            transferType: 'TEACHER_BINDING'  // 标识这是师生关系转移
           }
-        })
-      )
-    );
-
-    // 🆕 创建师生关系转移记录
-    await this.prisma.$transaction(
-      studentIds.map(studentId =>
-        this.prisma.task_records.create({
-          data: {
-            id: require('crypto').randomUUID(),
-            studentId,
-            schoolId,
-            type: 'SPECIAL',
-            title: '移入班级',
-            content: {
-              action: 'TEACHER_TRANSFER',
-              fromTeacherId: students.find(s => s.id === studentId)?.teacherId,
-              toTeacherId: targetTeacherId,
-              toTeacherName: targetTeacher.name,
-              updatedBy,
-              transferType: 'STUDENT_MOVED_TO_TEACHER'
-            },
-            status: 'COMPLETED',
-            expAwarded: 0,
-            updatedAt: new Date()
-          }
-        })
-      )
-    );
-
-    // 🆕 广播师生关系转移事件
-    this.broadcastToSchool(schoolId, {
-      type: 'STUDENTS_TRANSFERRED',
-      data: {
-        studentIds,
-        targetTeacherId,
-        targetTeacherName: targetTeacher.name,
-        updatedBy,
-        timestamp: new Date().toISOString(),
-        updatedStudents,
-        transferType: 'TEACHER_BINDING'  // 标识这是师生关系转移
+        });
+      } catch (broadcastError) {
+        console.warn('[TEACHER BINDING] ⚠️ Warning: Failed to broadcast transfer event:', broadcastError);
+        // Do not throw here, as the critical transaction has committed.
       }
-    });
 
-    console.log(`[TEACHER BINDING] ✅ Successfully transferred ${studentIds.length} students to ${targetTeacher.name}`);
-    return updatedStudents;
+      console.log(`[TEACHER BINDING] ✅ Successfully transferred ${studentIds.length} students to ${targetTeacher.name}`);
+      return updatedStudents;
+    } catch (error) {
+      console.error('[TEACHER BINDING] ❌ CRITICAL ERROR in transferStudents:', error);
+      if (error instanceof Error) {
+        console.error('Error stack:', error.stack);
+      }
+      throw error;
+    }
   }
 
   /**

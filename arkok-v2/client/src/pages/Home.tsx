@@ -258,7 +258,15 @@ const Home = () => {
         setTimeout(() => setToastMsg(null), 2000);
         setSelectedIds(new Set());
         setIsMultiSelectMode(false);
-        await fetchStudents(true);
+
+        // 🆕 自动切换到"我的班级"视图，确保用户立即看到转入的学生
+        if (viewMode !== 'MY_STUDENTS') {
+          console.log('[TRANSFER] Auto-switching to MY_STUDENTS view after successful transfer');
+          switchViewMode('MY_STUDENTS');
+          // Note: switchViewMode will trigger useEffect which calls fetchStudents()
+        } else {
+          await fetchStudents(true);
+        }
       }
     } catch (error) {
       console.error(error);
@@ -374,7 +382,13 @@ const Home = () => {
                   src={student.avatarUrl || '/avatar.jpg'}
                   alt={student.name}
                   draggable="false"
-                  onContextMenu={(e) => e.preventDefault()}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    if (!isMultiSelectMode) {
+                      setScoringStudent(student);
+                      setIsSheetOpen(true);
+                    }
+                  }}
                   className={`w-14 h-14 rounded-full object-cover border-2 transition-all ${selectedIds.has(student.id) ? 'border-primary opacity-100' : 'border-gray-100'}`}
                 />
                 {isMultiSelectMode && (
