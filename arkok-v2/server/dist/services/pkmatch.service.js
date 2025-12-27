@@ -221,14 +221,15 @@ class PKMatchService {
                 }
             }
         });
-        // 创建基础任务记录给两个学生 (CHALLENGE类型)
+        // 创建基础任务记录给两个学生 (PK类型)
         await this.prisma.task_records.createMany({
             data: [
                 {
                     id: require('crypto').randomUUID(),
                     studentId: studentA,
                     schoolId,
-                    type: 'CHALLENGE',
+                    type: 'PK',
+                    task_category: 'PK',
                     title: `PK对战 - ${topic}`,
                     content: {
                         matchId: match.id,
@@ -244,7 +245,8 @@ class PKMatchService {
                     id: require('crypto').randomUUID(),
                     studentId: studentB,
                     schoolId,
-                    type: 'CHALLENGE',
+                    type: 'PK',
+                    task_category: 'PK',
                     title: `PK对战 - ${topic}`,
                     content: {
                         matchId: match.id,
@@ -653,13 +655,14 @@ class PKMatchService {
                     points: { increment: pointsReward }
                 }
             });
-            // 创建汇总记录 (SPECIAL类型) - 用于学情时间轴汇总
+            // 创建汇总记录 (PK_RESULT类型) - 用于学情时间轴汇总
             await this.prisma.task_records.create({
                 data: {
                     id: require('crypto').randomUUID(),
                     studentId: match.winnerId,
                     schoolId: match.schoolId,
-                    type: 'SPECIAL',
+                    type: 'PK_RESULT',
+                    task_category: 'PK',
                     title: `PK对决获胜: ${match.topic}`,
                     content: {
                         matchId: match.id,
@@ -691,7 +694,8 @@ class PKMatchService {
                         id: require('crypto').randomUUID(),
                         studentId: sid,
                         schoolId: match.schoolId,
-                        type: 'SPECIAL',
+                        type: 'PK_RESULT',
+                        task_category: 'PK',
                         title: `PK对决平局: ${match.topic}`,
                         content: { matchId: match.id, topic: match.topic, result: 'DRAW' },
                         expAwarded: halfExp,
@@ -701,12 +705,12 @@ class PKMatchService {
                 });
             }
         }
-        // 2. 同时更新之前的 CHALLENGE 任务状态为已完成
+        // 2. 同时更新之前的 PK 任务状态为已完成
         await this.prisma.task_records.updateMany({
             where: {
                 schoolId: match.schoolId,
                 studentId: { in: [match.studentA, match.studentB] },
-                type: 'CHALLENGE',
+                type: 'PK',
                 content: { path: ['matchId'], equals: match.id }
             },
             data: {

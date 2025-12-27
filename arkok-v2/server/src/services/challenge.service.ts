@@ -436,6 +436,7 @@ export class ChallengeService {
         studentId,
         schoolId,
         type: 'CHALLENGE',
+        task_category: 'CHALLENGE',
         title: `参加挑战: ${challenge.title}`,
         content: {
           challengeId,
@@ -445,8 +446,7 @@ export class ChallengeService {
           taskDate: new Date().toISOString().split('T')[0]
         },
         status: 'PENDING',
-        updatedAt: new Date(),
-        task_category: 'TASK'
+        updatedAt: new Date()
       }
     });
 
@@ -827,6 +827,13 @@ export class ChallengeService {
 
   /**
    * 给予挑战奖励
+   *
+   * ⚠️ 业务规则：
+   * 1. 参加挑战：创建记录（PENDING），不加分
+   * 2. 完成挑战：更新记录（COMPLETED），加分
+   *
+   * 本方法只在完成挑战时调用，只负责加分，不创建新记录
+   * 记录的更新由 updateChallengeParticipant 第 545-562 行处理
    */
   private async grantChallengeRewards(studentId: string, challenge: any, participant: any): Promise<void> {
     // 更新学生积分和经验 (兼容字段名)
@@ -842,28 +849,7 @@ export class ChallengeService {
       }
     });
 
-    // 创建挑战成长记录 (SPECIAL类型，用于汇总)
-    await this.prisma.task_records.create({
-      data: {
-        id: require('crypto').randomUUID(),
-        studentId,
-        schoolId: challenge.schoolId,
-        type: 'SPECIAL',
-        title: `挑战赛: ${challenge.title}`,
-        content: {
-          challengeId: challenge.id,
-          challengeTitle: challenge.title,
-          result: participant.result,
-          notes: participant.notes,
-          rewardExp: expToAdd,
-          rewardPoints: pointsToAdd
-        },
-        status: 'COMPLETED',
-        expAwarded: expToAdd,
-        updatedAt: new Date(),
-        task_category: 'TASK'
-      }
-    });
+    // ✅ 不创建 task_records，因为参加时已经创建了，完成时会更新状态
   }
 
   /**

@@ -170,6 +170,7 @@ model schools {
   task_library                task_library[]
   task_records                task_records[]
   teachers                    teachers[]
+  reward_configs              reward_configs[]
 }
 
 model student_badges {
@@ -458,7 +459,11 @@ enum TaskCategory {
   METHODOLOGY
   TASK
   PERSONALIZED
+  SPECIAL
+  CHALLENGE
+  PK
   BADGE
+  HABIT
 }
 
 enum TaskStatus {
@@ -477,4 +482,28 @@ enum TaskType {
   QC
   TASK
   SPECIAL
+  BADGE     // V5.0宪法: 勋章颁发记录类型
+  PK        // V5.0宪法: PK对决记录类型
+  PK_RESULT // V5.0宪法: PK对决结算记录类型
+  HABIT     // V5.0宪法: 习惯打卡记录类型
+}
+
+// 积分经验配置表 - V5.1 新增
+model reward_configs {
+  id           String   @id @default(uuid())
+  schoolId     String
+  module       String   // 模块：LMS, BADGE, PK, CHALLENGE, HABIT, TUTORING, MANUAL
+  category     String?  // 子分类：QC, PROJECT, METHODOLOGY 等
+  action       String   // 动作类型：QC_COMPLETE, PROJECT_COMPLETE, BADGE_AWARD, PK_WIN 等
+  expReward    Int      @default(0)
+  pointsReward Int      @default(0)
+  description  String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  schools      schools  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([schoolId, module, action])
+  @@index([schoolId])
+  @@index([module])
 }

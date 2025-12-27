@@ -38,20 +38,85 @@ ArkOK V2 是一套基于**“过程反馈驱动”**的智慧教育 SaaS 平台�
 
 ---
 
-## 3. 业务功能体系与“成长长河”引擎
+## 3. 业务功能体系与"成长长河"引擎
 
 ### 3.1 核心数据流向：SSOT (单事实来源)
-全站 9 大模块的数据最终必须**汇流 (Sink)** 入 `task_records` 表，驱动个人详情页“成长长河 (Growth River)”时间线。
+全站 **9 大模块**的数据最终必须**汇流 (Sink)** 入 `task_records` 表，驱动个人详情页"成长长河 (Growth River)"时间线。
 
-| 业务源模块 | 核心准则 | 汇总逻辑 (task_records) |
-| :--- | :--- | :--- |
-| **基础过关 (QC)** | 驱动学业进度 | 全学期地图的唯一数据源 (`type: QC`) |
-| **教学法/成长/加餐** | 任务反馈 | 汇总至成长时间线 (`type: TASK`) |
-| **习惯打卡 (Habit)** | 连续粘性 | 打卡即生成 `type: HABIT` 流水 |
-| **勋章颁发 (Badge)** | 成就感 | 颁发瞬间记录 `type: BADGE` |
-| **PK 对决 (PK)** | 强反馈 | 匹配结算后生成 `type: PK` |
-| **挑战 (Challenge)** | 团队协作 | 参与即生成 `type: CHALLENGE` |
-| **1v1 讲解 (Tutoring)** | **单态触发** | **仅讲解完成**时生成，不记录进行态 |
+#### 3.1.1 完整模块汇流表
+
+| 业务源模块 | 数据源表 | type 字段 | task_category 字段 | 核心准则 | 汇总逻辑 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **1. LMS 进度系统** | lesson_plans | QC, PROJECT | PROGRESS | 驱动学业进度 | 全学期地图的唯一数据源 |
+| **2. 勋章系统** | badges | BADGE | BADGE | 成就感 | 颁发瞬间记录 |
+| **3. PK 对决** | pk_matches | PK, PK_RESULT | PK | 强反馈 | 参与记录 + 结算记录 |
+| **4. 挑战赛** | challenges | CHALLENGE, SPECIAL | CHALLENGE | 团队协作 | 参加记录 + 完成记录 |
+| **5. 习惯打卡** | habit_logs | HABIT | HABIT | 连续粘性 | 每日打卡即生成流水 |
+| **6. 个性化辅导** | personalized_tutoring_plans | SPECIAL | SPECIAL | **单态触发** | **仅完成时生成**，不记录进行态 |
+| **7. 手动任务** | (teacher 手动创建) | TASK, METHODOLOGY | TASK, METHODOLOGY | 任务反馈 | 汇总至成长时间线 |
+| **8. 学生转移** | students | (无) | - | 师生关系变更 | **0 exp**，仅记录转移历史 |
+| **9. 其他操作** | - | DAILY | TASK | 日常行为 | 习惯打卡等日常操作 |
+
+#### 3.1.2 Type / Task_Category 双重分类系统
+
+**设计原则**：实现清晰的一一对应映射，避免数据污染。
+
+**Type（8 种精确业务类型）**：
+```typescript
+enum TaskType {
+  QC,           // 质量检查
+  PROJECT,      // 项目作业
+  TASK,         // 常规任务
+  METHODOLOGY,  // 学习方法
+  SPECIAL,      // 特殊活动
+  CHALLENGE,    // 挑战赛
+  BADGE,        // 勋章
+  HABIT,        // 习惯打卡
+  PK,           // PK 对决参与
+  PK_RESULT     // PK 对决结算
+}
+```
+
+**Task_Category（9 种分类）**：
+```typescript
+enum TaskCategory {
+  PROGRESS,      // 进度类（QC/PROJECT）
+  METHODOLOGY,   // 方法类
+  TASK,          // 任务类
+  SPECIAL,       // 特殊类
+  CHALLENGE,     // 挑战类
+  PK,            // PK 类
+  BADGE,         // 勋章类
+  HABIT          // 习惯类
+}
+```
+
+**映射关系（一一对应）**：
+```
+QC           → PROGRESS
+PROJECT      → PROGRESS
+TASK         → TASK
+METHODOLOGY  → METHODOLOGY
+SPECIAL      → SPECIAL / CHALLENGE
+CHALLENGE    → CHALLENGE
+PK           → PK
+PK_RESULT    → PK
+BADGE        → BADGE
+HABIT        → HABIT
+```
+
+#### 3.1.3 前端面板过滤规则
+
+**个人详情页 (StudentDetail.tsx)**：
+- **任务达人面板**：`type ∈ ['TASK', 'METHODOLOGY', 'SPECIAL']`
+- **挑战面板**：`type='CHALLENGE' && task_category='CHALLENGE'`（严格匹配，排除 PK/勋章污染）
+- **PK 面板**：`type ∈ ['PK', 'PK_RESULT']`
+- **勋章面板**：`type='BADGE'`
+
+**家长端 (TodayTimeline.tsx)**：
+- 按日期聚合 `task_records`
+- 跳过：`task_category ∈ ['PK', 'BADGE', 'HABIT']`（这些从独立表获取）
+- 显示卡片类型：`QC_GROUP`, `TASK`, `METHODOLOGY`, `SPECIAL`, `CHALLENGE`, `PLAN_ANNOUNCEMENT`
 
 ### 3.2 覆盖逻辑 (Override Policy)
 - **同日覆盖**: 老师在同日多次发布备课计划时，系统原子化清理当日旧记录（保留 `isOverridden: true` 的手动微调项）。
@@ -64,12 +129,209 @@ ArkOK V2 是一套基于**“过程反馈驱动”**的智慧教育 SaaS 平台�
 ### 4.1 积分 (Points) vs 经验值 (EXP)
 - **积分**: 可正可负，用于商城消费或排行，反映当前活跃度。
 - **经验值**: **只增不减**，反映学生长期积累的学业高度。
-- **等级公式**: `Level = Math.floor(EXP / 100) + 1`。
+- **等级公式**: `Level = Math.floor(Math.sqrt(EXP) / 10) + 1`（开方算法，非线性增长）
 
-### 4.2 积分类别定义
+### 4.2 完整加分规则体系（9 大模块）
+
+#### 4.2.1 LMS 进度系统
+**数据源**: `curriculum` 表
+**Service**: `lms.service.ts:316, 742`
+
+**加分规则**:
+```typescript
+expAwarded: task.expAwarded  // 从 curriculum 表的 exp 字段获取
+```
+
+| 任务类型 | 典型奖励 | 示例 |
+|---------|---------|------|
+| QC 任务 | 5 exp | "生字词听写", "课文背诵" |
+| PROJECT 任务 | 30-50 exp | "阅读理解自主讲解" |
+
+---
+
+#### 4.2.2 勋章系统
+**数据源**: `badges` 表
+**Service**: `badge.service.ts:403, 506`
+
+**加分规则**:
+```typescript
+expAwarded: 20  // 固定 20 exp，不可配置
+pointsAwarded: 0  // 不奖励 points
+```
+
+**特点**: 每个勋章固定奖励 20 exp，在 `task_records` 中创建记录：`type='BADGE'`, `task_category='BADGE'`
+
+**示例**: "获得勋章: 速度之星" → +20 exp
+
+---
+
+#### 4.2.3 PK 对决系统
+**数据源**: `pk_matches` 表（metadata 字段）
+**Service**: `pkmatch.service.ts:760-823`
+
+**加分规则**:
+```typescript
+// 获胜方
+expReward = metadata.expReward || 50;  // 默认 50 exp
+pointsReward = metadata.pointsReward || 20;  // 默认 20 points
+
+// 平局情况
+halfExp = Math.floor(expReward / 2);  // 25 exp
+halfPoints = Math.floor(pointsReward / 2);  // 10 points
+```
+
+**记录创建**:
+1. PK 参与记录：`type='PK'`, `expAwarded=0`（仅记录参与）
+2. PK 结果记录：`type='PK_RESULT'`, `expAwarded=50/25`（获胜或平局）
+
+**示例**:
+- "PK对决获胜: 阅读" → +50 exp, +20 points
+- "PK对决平局: 复盘比赛" → +25 exp, +10 points
+
+---
+
+#### 4.2.4 挑战赛系统
+**数据源**: `challenges` 表（rewardExp, rewardPoints 字段）
+**Service**: `challenge.service.ts:439, 852`
+
+**加分规则**:
+```typescript
+// 参加挑战
+type: 'CHALLENGE',
+task_category: 'CHALLENGE',
+expAwarded: challenge.rewardExp  // 默认 50 exp
+
+// 完成挑战（额外奖励）
+type: 'SPECIAL',
+task_category: 'CHALLENGE',
+expAwarded: challenge.rewardExp  // 额外 50 exp
+```
+
+**特点**: 同一个挑战最多获得 2 次加分（参加 + 完成）
+
+**示例**:
+- "参加挑战: 30秒背诵" → +50 exp
+- "挑战赛: 30秒背诵" → +50 exp（完成奖励）
+
+---
+
+#### 4.2.5 习惯打卡系统
+**数据源**: `habits` 表（expReward, pointsReward 字段）
+**Service**: `habit.service.ts:179`
+
+**加分规则**:
+```typescript
+// 创建习惯时配置
+expReward: number  // 默认 5
+pointsReward?: number  // 可选
+
+// 打卡时从 habit 获取奖励
+expAwarded: habit.expReward
+pointsAwarded: habit.pointsReward
+```
+
+**典型值**: 默认 5 exp，可配置 10-20 exp
+
+**示例**: "习惯打卡: 字字开花" → +10 exp
+
+---
+
+#### 4.2.6 个性化辅导系统
+**数据源**: `personalized_tutoring_plans` 表（expReward, pointsReward 字段）
+**Service**: `personalized-tutoring.service.ts:363-383`
+
+**加分规则**:
+```typescript
+// 创建辅导计划时配置
+expReward: 50  // 默认 50
+pointsReward: 20  // 默认 20
+
+// 完成辅导时发放
+await studentService.updateStudentExp(studentId, plan.expReward, 'personalized_tutoring_complete');
+await studentService.updateStudentPoints(studentId, plan.pointsReward, 'personalized_tutoring_complete');
+```
+
+**特点**: 完成后直接更新 `students` 表的 `exp` 和 `points` 字段，标记 `expAwarded=true` 和 `pointsAwarded=true`
+
+**示例**: "完成1v1讲解：数学专题" → +50 exp, +20 points
+
+---
+
+#### 4.2.7 手动任务（Teacher 手动创建）
+**数据源**: 老师手动创建
+**Service**: `lms.service.ts:742`
+
+**加分规则**:
+```typescript
+// QC 任务
+expAwarded: 5  // 固定
+
+// 方法任务
+expAwarded: 5-10  // 根据内容决定
+
+// 常规任务
+expAwarded: 5-10  // 根据内容决定
+```
+
+**典型值**: QC 任务 5 exp，方法任务 5 exp，常规任务 5-10 exp
+
+**示例**:
+- "书写工整" → +10 exp
+- "课文背诵" → +5 exp
+- "用'分步法'讲解数学题" → +5 exp
+
+---
+
+#### 4.2.8 学生转移
+**数据源**: `students` 表（转班/转老师）
+**Service**: `student.service.ts:1094`
+
+**加分规则**:
+```typescript
+expAwarded: 0  // 不加分，仅记录
+```
+
+**特点**: 仅在 `task_records` 创建记录，不增加 exp 或 points，用于追踪学生转移历史
+
+**示例**: "学生转移到李老师班级" → +0 exp
+
+---
+
+#### 4.2.9 其他操作
+**数据源**: 日常行为
+**Service**: 各个 service
+
+**加分规则**:
+```typescript
+// 习惯打卡（每日打卡）
+type: 'DAILY',
+task_category: 'TASK',
+expAwarded: 10  // 固定 10 exp
+```
+
+**示例**:
+- "桌面整洁" → +10 exp
+- "课外阅读30分钟" → +5 exp
+
+---
+
+### 4.3 Points 使用汇总
+
+Points 积分系统相对简单，仅在以下模块中使用：
+
+| 模块 | Points 加分 | 说明 |
+|------|------------|------|
+| PK 对决获胜 | +20 points | 默认值，可配置 |
+| PK 对决平局 | +10 points | 默认值的一半 |
+| 个性化辅导完成 | +20 points | 默认值，可配置 |
+| **其他模块** | **0 points** | 仅 exp，不奖励 points |
+
+**注意**: 大部分模块只奖励 exp，不奖励 points。Points 主要用于 PK 对决和个性化辅导。
+
+### 4.4 积分类别定义
 1. **学习成果类**: 课堂表现、高价值作业。
 2. **自主管理类**: 整理、纪律、时间管理。
-3. **负向细则**: 违纪、迟到、损坏公物（仅扣除积分，不扣除经验值）。
+3. **负向细则**: 迟到、违纪、损坏公物（仅扣除积分，不扣除经验值）。
 
 ---
 

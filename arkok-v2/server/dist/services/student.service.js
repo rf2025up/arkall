@@ -333,10 +333,29 @@ class StudentService {
             });
             console.log(`🎯 [HABIT_DEBUG] 生成的 habitStats 数量: ${habitStats.length}, 有打卡记录的习惯: ${habitStats.filter(h => h.stats.totalCheckIns > 0).length}`);
             // 🆕 计算课程进度 (对齐 LMS Service 逻辑)
+            const getGradeFromClass = (className) => {
+                if (!className)
+                    return '二年级';
+                if (className.includes('一'))
+                    return '一年级';
+                if (className.includes('二'))
+                    return '二年级';
+                if (className.includes('三'))
+                    return '三年级';
+                if (className.includes('四'))
+                    return '四年级';
+                if (className.includes('五'))
+                    return '五年级';
+                if (className.includes('六'))
+                    return '六年级';
+                return '二年级';
+            };
             const defaultProgress = {
                 chinese: { unit: '1', lesson: '1', title: '默认课程' },
                 math: { unit: '1', lesson: '1', title: '默认课程' },
-                english: { unit: '1', title: 'Default' }
+                english: { unit: '1', title: 'Default' },
+                grade: getGradeFromClass(student?.className || null),
+                semester: '上册'
             };
             const planInfo = latestLessonPlan?.content?.courseInfo || defaultProgress;
             const overrideInfo = latestOverride?.content?.courseInfo;
@@ -561,7 +580,7 @@ class StudentService {
         return student;
     }
     /**
-     * 删除学生（软删除）
+     * 删除学生（软删除，进入回收站）
      */
     async deleteStudent(id, schoolId) {
         await this.prisma.students.update({
@@ -572,6 +591,7 @@ class StudentService {
             },
             data: {
                 isActive: false,
+                deletedAt: new Date(), // 记录删除时间
                 updatedAt: new Date()
             }
         });
@@ -583,6 +603,56 @@ class StudentService {
                 timestamp: new Date().toISOString()
             }
         });
+    }
+    /**
+     * 获取回收站中的学生（删除不满 30 天）
+     */
+    async getTrashBinStudents(schoolId) {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        return this.prisma.students.findMany({
+            where: {
+                schoolId,
+                isActive: false,
+                deletedAt: {
+                    gte: thirtyDaysAgo
+                }
+            },
+            include: {
+                teachers: {
+                    select: { name: true }
+                }
+            },
+            orderBy: {
+                deletedAt: 'desc'
+            }
+        });
+    }
+    /**
+     * 恢复被删除的学生
+     */
+    async restoreStudent(id, schoolId) {
+        const student = await this.prisma.students.update({
+            where: {
+                id,
+                schoolId,
+                isActive: false
+            },
+            data: {
+                isActive: true,
+                deletedAt: null, // 清空删除时间
+                updatedAt: new Date()
+            }
+        });
+        // 广播学生恢复事件
+        this.broadcastToSchool(schoolId, {
+            type: 'STUDENT_RESTORED',
+            data: {
+                student,
+                timestamp: new Date().toISOString()
+            }
+        });
+        return student;
     }
     /**
      * 批量添加积分/经验
@@ -782,71 +852,99 @@ class StudentService {
      */
     async transferStudents(studentIds, targetTeacherId, schoolId, updatedBy) {
         console.log(`[TEACHER BINDING] Transferring ${studentIds.length} students to teachers: ${targetTeacherId}`);
-        // 验证学生是否属于该学校
-        const students = await this.prisma.students.findMany({
-            where: {
-                id: { in: studentIds },
-                schoolId,
-                isActive: true
+        console.log(`[TEACHER BINDING] DEBUG: schoolId=${schoolId}, updatedBy=${updatedBy}`);
+        try {
+            // 验证学生是否属于该学校
+            const students = await this.prisma.students.findMany({
+                where: {
+                    id: { in: studentIds },
+                    schoolId,
+                    isActive: true
+                }
+            });
+            console.log(`[TEACHER BINDING] DEBUG: Found ${students.length} valid students`);
+            if (students.length !== studentIds.length) {
+                console.error('[TEACHER BINDING] ERROR: Student count mismatch', { expected: studentIds.length, found: students.length });
+                throw new Error('部分学生不存在或不属于该学校');
             }
-        });
-        if (students.length !== studentIds.length) {
-            throw new Error('部分学生不存在或不属于该学校');
+            // 🆕 验证目标老师是否存在且属于同一学校
+            const targetTeacher = await this.prisma.teachers.findFirst({
+                where: {
+                    id: targetTeacherId,
+                    schoolId: schoolId
+                }
+            });
+            console.log(`[TEACHER BINDING] DEBUG: Target teacher found: ${!!targetTeacher}`);
+            if (!targetTeacher) {
+                console.error(`[TEACHER BINDING] ERROR: Target teacher not found. ID: ${targetTeacherId}`);
+                throw new Error('目标老师不存在或不属于同一学校');
+            }
+            const newClassName = targetTeacher.primaryClassName || targetTeacher.name + '班';
+            console.log(`[TEACHER BINDING] DEBUG: New class name will be: ${newClassName}`);
+            // 批量更新学生的老师归属
+            console.log('[TEACHER BINDING] DEBUG: Starting transaction to update students...');
+            const updatedStudents = await this.prisma.$transaction(async (tx) => {
+                const updates = await Promise.all(studentIds.map(studentId => tx.students.update({
+                    where: { id: studentId, schoolId },
+                    data: {
+                        teacherId: targetTeacherId, // 🆕 核心变更：更新老师归属
+                        className: newClassName // 🔒 修复：同步更新班级名
+                    }
+                })));
+                console.log('[TEACHER BINDING] DEBUG: Students updated. Creating task records...');
+                // 🆕 创建师生关系转移记录
+                await Promise.all(studentIds.map(studentId => tx.task_records.create({
+                    data: {
+                        id: require('crypto').randomUUID(),
+                        studentId,
+                        schoolId,
+                        type: 'SPECIAL',
+                        title: '移入班级',
+                        content: {
+                            action: 'TEACHER_TRANSFER',
+                            fromTeacherId: students.find(s => s.id === studentId)?.teacherId,
+                            toTeacherId: targetTeacherId,
+                            toTeacherName: targetTeacher.name,
+                            updatedBy,
+                            transferType: 'STUDENT_MOVED_TO_TEACHER'
+                        },
+                        status: 'COMPLETED',
+                        expAwarded: 0,
+                        updatedAt: new Date()
+                    }
+                })));
+                return updates;
+            });
+            console.log('[TEACHER BINDING] DEBUG: Transaction committed successfuly.');
+            // 🆕 广播师生关系转移事件
+            try {
+                this.broadcastToSchool(schoolId, {
+                    type: 'STUDENTS_TRANSFERRED',
+                    data: {
+                        studentIds,
+                        targetTeacherId,
+                        targetTeacherName: targetTeacher.name,
+                        updatedBy,
+                        timestamp: new Date().toISOString(),
+                        updatedStudents,
+                        transferType: 'TEACHER_BINDING' // 标识这是师生关系转移
+                    }
+                });
+            }
+            catch (broadcastError) {
+                console.warn('[TEACHER BINDING] ⚠️ Warning: Failed to broadcast transfer event:', broadcastError);
+                // Do not throw here, as the critical transaction has committed.
+            }
+            console.log(`[TEACHER BINDING] ✅ Successfully transferred ${studentIds.length} students to ${targetTeacher.name}`);
+            return updatedStudents;
         }
-        // 🆕 验证目标老师是否存在且属于同一学校
-        const targetTeacher = await this.prisma.teachers.findFirst({
-            where: {
-                id: targetTeacherId,
-                schoolId: schoolId
+        catch (error) {
+            console.error('[TEACHER BINDING] ❌ CRITICAL ERROR in transferStudents:', error);
+            if (error instanceof Error) {
+                console.error('Error stack:', error.stack);
             }
-        });
-        if (!targetTeacher) {
-            throw new Error('目标老师不存在或不属于同一学校');
+            throw error;
         }
-        // 批量更新学生的老师归属
-        const updatedStudents = await this.prisma.$transaction(studentIds.map(studentId => this.prisma.students.update({
-            where: { id: studentId, schoolId },
-            data: {
-                teacherId: targetTeacherId, // 🆕 核心变更：更新老师归属
-                className: targetTeacher.primaryClassName || targetTeacher.name + '班' // 🔒 修复：同步更新班级名
-            }
-        })));
-        // 🆕 创建师生关系转移记录
-        await this.prisma.$transaction(studentIds.map(studentId => this.prisma.task_records.create({
-            data: {
-                id: require('crypto').randomUUID(),
-                studentId,
-                schoolId,
-                type: 'SPECIAL',
-                title: '移入班级',
-                content: {
-                    action: 'TEACHER_TRANSFER',
-                    fromTeacherId: students.find(s => s.id === studentId)?.teacherId,
-                    toTeacherId: targetTeacherId,
-                    toTeacherName: targetTeacher.name,
-                    updatedBy,
-                    transferType: 'STUDENT_MOVED_TO_TEACHER'
-                },
-                status: 'COMPLETED',
-                expAwarded: 0,
-                updatedAt: new Date()
-            }
-        })));
-        // 🆕 广播师生关系转移事件
-        this.broadcastToSchool(schoolId, {
-            type: 'STUDENTS_TRANSFERRED',
-            data: {
-                studentIds,
-                targetTeacherId,
-                targetTeacherName: targetTeacher.name,
-                updatedBy,
-                timestamp: new Date().toISOString(),
-                updatedStudents,
-                transferType: 'TEACHER_BINDING' // 标识这是师生关系转移
-            }
-        });
-        console.log(`[TEACHER BINDING] ✅ Successfully transferred ${studentIds.length} students to ${targetTeacher.name}`);
-        return updatedStudents;
     }
     /**
      * 计算等级

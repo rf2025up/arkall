@@ -208,9 +208,10 @@ export class ApiService {
     }
   }
 
-  async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
+  async delete<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
     try {
-      const response: AxiosResponse<ApiResponse<T>> = await this.api.delete(endpoint);
+      const config = data ? { data } : undefined;
+      const response: AxiosResponse<ApiResponse<T>> = await this.api.delete(endpoint, config);
       return response.data;
     } catch (error) {
       console.error(`[AUTH FIX] DELETE ${endpoint} failed:`, error);
@@ -322,7 +323,11 @@ export class ApiService {
       updateStatus: (schoolId: string, isActive: boolean) =>
         this.patch<any>(`/platform/campuses/${schoolId}/status`, { isActive }),
       updateExpiry: (schoolId: string, expiredAt: string) =>
-        this.patch<any>(`/platform/campuses/${schoolId}/expiry`, { expiredAt })
+        this.patch<any>(`/platform/campuses/${schoolId}/expiry`, { expiredAt }),
+      createCampus: (data: { name: string; adminUsername: string; adminName: string; planType?: string }) =>
+        this.post<any>('/platform/campuses', data),
+      globalSearch: (query: string, type: 'student' | 'teacher' = 'student', limit: number = 20) =>
+        this.get<any>(`/platform/search?q=${encodeURIComponent(query)}&type=${type}&limit=${limit}`)
     };
   }
 

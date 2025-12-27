@@ -330,17 +330,8 @@ export class BadgeService {
       throw new Error('学生不存在');
     }
 
-    // 检查是否已经获得过该勋章
-    const existingAward = await this.prisma.student_badges.findFirst({
-      where: {
-        studentId,
-        badgeId
-      }
-    });
-
-    if (existingAward) {
-      throw new Error('学生已获得过该勋章');
-    }
+    // ✅ 移除重复检查限制，允许同一勋章多次授予
+    // 这样可以鼓励学生持续获得同一个勋章的认可
 
     // 创建勋章授予记录
     const studentBadge = await this.prisma.student_badges.create({
@@ -388,7 +379,7 @@ export class BadgeService {
         id: require('crypto').randomUUID(),
         studentId,
         schoolId,
-        type: 'TASK', // 勋章授予在记录层级归类为 TASK，具体分类由 task_category: 'BADGE' 决定
+        type: 'BADGE', // V5.0宪法: 勋章颁发记录 type: BADGE
         title: `获得勋章: ${badge.name}`,
         content: {
           badgeId: badge.id,
@@ -401,8 +392,7 @@ export class BadgeService {
         },
         status: 'COMPLETED',
         expAwarded: 20,
-        updatedAt: new Date(),
-        task_category: 'BADGE'
+        updatedAt: new Date()
       }
     });
 
@@ -439,22 +429,11 @@ export class BadgeService {
     });
     if (!badge) throw new Error('勋章不存在或已停用');
 
-    // 2. 检查这些学生是否已经拥有该勋章 (过滤掉已拥有的)
-    const existingAwards = await this.prisma.student_badges.findMany({
-      where: {
-        badgeId,
-        studentId: { in: studentIds }
-      },
-      select: { studentId: true }
-    });
-    const existingStudentIds = new Set(existingAwards.map(a => a.studentId));
-    const targetStudentIds = studentIds.filter(id => !existingStudentIds.has(id));
+    // ✅ 移除重复检查限制，允许同一勋章多次授予
+    // 这样可以鼓励学生持续获得同一个勋章的认可
+    const targetStudentIds = studentIds;
 
-    if (targetStudentIds.length === 0) {
-      return { success: true, message: '选择的学生均已拥有该勋章', awardedCount: 0 };
-    }
-
-    // 3. 事务处理
+    // 2. 事务处理
     const result = await this.prisma.$transaction(async (tx) => {
       const records = [];
       const timestamp = new Date();
@@ -492,7 +471,8 @@ export class BadgeService {
             id: require('crypto').randomUUID(),
             studentId,
             schoolId,
-            type: 'TASK',
+            type: 'BADGE',
+            task_category: 'BADGE',
             title: `获得勋章: ${badge.name}`,
             content: {
               badgeId: badge.id,
@@ -504,8 +484,7 @@ export class BadgeService {
             },
             status: 'COMPLETED',
             expAwarded: 20,
-            updatedAt: timestamp,
-            task_category: 'BADGE'
+            updatedAt: timestamp
           }
         });
 

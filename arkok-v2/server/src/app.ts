@@ -21,6 +21,7 @@ import SchoolService from './services/school.service';
 import DashboardService from './services/dashboard.service';
 import { PersonalizedTutoringService } from './services/personalized-tutoring.service';
 import PlatformService from './services/platform.service';
+import { RewardService } from './services/reward.service';
 
 // Routes
 import AuthRoutes from './routes/auth.routes';
@@ -41,6 +42,7 @@ import { healthRoutes } from './routes/health.routes';
 import ParentRoutes from './routes/parent.routes';
 import CheckinRoutes from './routes/checkin.routes';
 import PlatformRoutes from './routes/platform.routes';
+import rewardRoutes from './routes/reward.routes';
 
 // Middleware & Utils
 import { errorHandler } from './middleware/errorHandler';
@@ -69,6 +71,7 @@ export class App {
   public dashboardService: DashboardService;
   public tutoringService: PersonalizedTutoringService;
   public platformService: PlatformService;
+  public rewardService: RewardService;
 
   constructor() {
     this.app = express();
@@ -90,7 +93,8 @@ export class App {
     this.challengeService = new ChallengeService(this.prisma, this.io);
     this.pkMatchService = new PKMatchService(this.prisma, this.io);
     this.badgeService = new BadgeService(this.prisma, this.io);
-    this.lmsService = new LMSService(this.prisma, this.io);
+    this.rewardService = new RewardService(this.prisma);
+    this.lmsService = new LMSService(this.prisma, this.rewardService, this.io);
     this.reportService = new ReportService(this.prisma);
     this.schoolService = new SchoolService(this.prisma);
     this.dashboardService = new DashboardService(this.prisma);
@@ -147,6 +151,9 @@ export class App {
 
     // 家长端路由
     this.app.use('/api/parent', ParentRoutes);
+
+    // 积分经验配置路由
+    this.app.use('/api/reward', rewardRoutes);
 
     // 签到路由
     this.app.use('/api/checkins', new CheckinRoutes(this.authService).getRoutes());

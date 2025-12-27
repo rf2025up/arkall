@@ -70,6 +70,16 @@ phase1_environment_cleanup() {
         exit 1
     fi
 
+    # 1.5 同步数据库表结构（新增 reward_configs 表）
+    log "同步数据库表结构..."
+    cd "$SERVER_DIR"
+    if npx prisma db push --skip-generate; then
+        success "数据库表结构同步成功（含 reward_configs 表）"
+    else
+        error "数据库同步失败，请检查数据库连接"
+        exit 1
+    fi
+
     # 2. 检查并安装缺失依赖
     log "检查核心依赖..."
     if ! npm list exceljs >/dev/null 2>&1; then

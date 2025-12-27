@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.authLogger = exports.validateUser = exports.requireTeacher = exports.requireAdmin = exports.requireRole = exports.optionalAuth = exports.authenticateToken = void 0;
+exports.authLogger = exports.validateUser = exports.requireTeacher = exports.requireAdmin = exports.requirePlatformAdmin = exports.requireRole = exports.optionalAuth = exports.authenticateToken = void 0;
 /**
  * 认证中间件工厂函数
  */
@@ -85,13 +85,17 @@ const requireRole = (roles) => {
 };
 exports.requireRole = requireRole;
 /**
+ * 平台管理员权限检查中间件
+ */
+exports.requirePlatformAdmin = (0, exports.requireRole)(['PLATFORM_ADMIN']);
+/**
  * 管理员权限检查中间件
  */
-exports.requireAdmin = (0, exports.requireRole)(['ADMIN']);
+exports.requireAdmin = (0, exports.requireRole)(['ADMIN', 'PLATFORM_ADMIN']);
 /**
  * 教师权限检查中间件
  */
-exports.requireTeacher = (0, exports.requireRole)(['ADMIN', 'TEACHER']);
+exports.requireTeacher = (0, exports.requireRole)(['ADMIN', 'TEACHER', 'PLATFORM_ADMIN']);
 /**
  * 用户信息验证中间件
  */
@@ -106,6 +110,10 @@ const validateUser = (req, res, next) => {
     }
     // 验证用户是否属于请求的学校ID（如果URL中包含学校ID）
     const urlSchoolId = req.params.schoolId || req.query.schoolId;
+    // 超级管理员 (PLATFORM_ADMIN) 允许跨校区访问，绕过 schoolId 检查
+    if (req.user.role === 'PLATFORM_ADMIN') {
+        return next();
+    }
     if (urlSchoolId && urlSchoolId !== req.schoolId) {
         res.status(403).json({
             success: false,

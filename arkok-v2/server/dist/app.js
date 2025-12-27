@@ -24,6 +24,8 @@ const report_service_1 = require("./services/report.service");
 const school_service_1 = __importDefault(require("./services/school.service"));
 const dashboard_service_1 = __importDefault(require("./services/dashboard.service"));
 const personalized_tutoring_service_1 = require("./services/personalized-tutoring.service");
+const platform_service_1 = __importDefault(require("./services/platform.service"));
+const reward_service_1 = require("./services/reward.service");
 // Routes
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const student_routes_1 = __importDefault(require("./routes/student.routes"));
@@ -42,6 +44,8 @@ const personalized_tutoring_routes_1 = require("./routes/personalized-tutoring.r
 const health_routes_1 = require("./routes/health.routes");
 const parent_routes_1 = __importDefault(require("./routes/parent.routes"));
 const checkin_routes_1 = __importDefault(require("./routes/checkin.routes"));
+const platform_routes_1 = __importDefault(require("./routes/platform.routes"));
+const reward_routes_1 = __importDefault(require("./routes/reward.routes"));
 // Middleware & Utils
 const errorHandler_1 = require("./middleware/errorHandler");
 const socketHandlers_1 = require("./utils/socketHandlers");
@@ -67,11 +71,13 @@ class App {
         this.challengeService = new challenge_service_1.default(this.prisma, this.io);
         this.pkMatchService = new pkmatch_service_1.default(this.prisma, this.io);
         this.badgeService = new badge_service_1.default(this.prisma, this.io);
-        this.lmsService = new lms_service_1.LMSService(this.prisma, this.io);
+        this.rewardService = new reward_service_1.RewardService(this.prisma);
+        this.lmsService = new lms_service_1.LMSService(this.prisma, this.rewardService, this.io);
         this.reportService = new report_service_1.ReportService(this.prisma);
         this.schoolService = new school_service_1.default(this.prisma);
         this.dashboardService = new dashboard_service_1.default(this.prisma);
         this.tutoringService = new personalized_tutoring_service_1.PersonalizedTutoringService(this.prisma);
+        this.platformService = new platform_service_1.default(this.prisma);
         this.initializeMiddlewares();
         this.initializeRoutes();
         this.initializeErrorHandling();
@@ -112,9 +118,12 @@ class App {
         // 边缘路由类化挂载
         this.app.use('/api/schools', new school_routes_1.default(this.schoolService, this.authService).getRoutes());
         this.app.use('/api/dashboard', new dashboard_routes_1.default(this.dashboardService, this.authService).getRoutes());
+        this.app.use('/api/platform', new platform_routes_1.default(this.platformService, this.authService).getRoutes());
         this.app.use('/api/personalized-tutoring', new personalized_tutoring_routes_1.PersonalizedTutoringRoutes(this.tutoringService, this.authService).getRoutes());
         // 家长端路由
         this.app.use('/api/parent', parent_routes_1.default);
+        // 积分经验配置路由
+        this.app.use('/api/reward', reward_routes_1.default);
         // 签到路由
         this.app.use('/api/checkins', new checkin_routes_1.default(this.authService).getRoutes());
         // 静态文件与前端路由

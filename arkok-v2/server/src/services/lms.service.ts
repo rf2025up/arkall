@@ -2,6 +2,7 @@ import { PrismaClient, lesson_plans, task_records, TaskType, students } from '@p
 import { broadcastToSchool, broadcastToStudent, SOCKET_EVENTS } from '../utils/socketHandlers';
 import { Server as SocketIOServer } from 'socket.io';
 import CurriculumService from './curriculum.service';
+import { RewardService } from './reward.service';
 
 export interface TaskLibraryItem {
   id: string;
@@ -43,9 +44,11 @@ export interface PublishPlanResult {
 export class LMSService {
   private prisma: PrismaClient;
   private io?: SocketIOServer;
+  private rewardService: RewardService;
 
-  constructor(prisma: PrismaClient, io?: SocketIOServer) {
+  constructor(prisma: PrismaClient, rewardService: RewardService, io?: SocketIOServer) {
     this.prisma = prisma;
+    this.rewardService = rewardService;
     this.io = io;
   }
 
@@ -729,7 +732,19 @@ export class LMSService {
     // 🛡️ 映射分类
     const mappedCategory = this.mapToTaskCategory(category);
 
-    console.log(`📝[LMS_SERVICE] 为学生 ${studentId} 创建单条任务: ${title} (${category}/${subcategory} -> ${mappedCategory})`);
+    // 🆕 从配置表获取经验值（仅针对核心教学法和综合成长类任务）
+    let finalExp = exp;
+    if (category === '核心教学法' || category === '综合成长') {
+      const configExp = await this.rewardService.getExpForTask(schoolId, category, subcategory || '', title);
+      if (configExp !== null) {
+        finalExp = configExp;
+        console.log(`✅ [LMS_SERVICE] 从配置表获取经验值: ${title} = ${finalExp} EXP (原值: ${exp})`);
+      } else {
+        console.log(`⚠️ [LMS_SERVICE] 未找到配置，使用默认经验值: ${title} = ${exp} EXP`);
+      }
+    }
+
+    console.log(`📝[LMS_SERVICE] 为学生 ${studentId} 创建单条任务: ${title} (${category}/${subcategory} -> ${mappedCategory}) EXP=${finalExp}`);
 
     const record = await this.prisma.task_records.create({
       data: {
@@ -739,7 +754,7 @@ export class LMSService {
         type,
         title,
         task_category: mappedCategory, // 使用映射后的枚举值
-        expAwarded: exp,
+        expAwarded: finalExp,
         // 🚨 修正：前端依赖 content.category 来进行中文分组过滤，必须保留原始字段名为 category
         // 🔴 关键：必须包含 taskDate 字段，否则 getBatchDailyRecords 查询不到
         content: courseInfo

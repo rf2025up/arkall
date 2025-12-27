@@ -92,6 +92,7 @@ export declare class StudentService {
         points: number;
         exp: number;
         avatarUrl: string | null;
+        deletedAt: Date | null;
         teamId: string | null;
         currentLesson: string | null;
         currentLessonTitle: string | null;
@@ -104,9 +105,17 @@ export declare class StudentService {
      */
     updateStudent(data: UpdateStudentRequest): Promise<any>;
     /**
-     * 删除学生（软删除）
+     * 删除学生（软删除，进入回收站）
      */
     deleteStudent(id: string, schoolId: string): Promise<void>;
+    /**
+     * 获取回收站中的学生（删除不满 30 天）
+     */
+    getTrashBinStudents(schoolId: string): Promise<any[]>;
+    /**
+     * 恢复被删除的学生
+     */
+    restoreStudent(id: string, schoolId: string): Promise<any>;
     /**
      * 批量添加积分/经验
      */

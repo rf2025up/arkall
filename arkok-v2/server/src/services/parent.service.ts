@@ -531,10 +531,11 @@ export class ParentService {
                 return;
             }
 
-            // 跳过标题包含 "PK" 的 CHALLENGE 类型记录
-            if (r.type === 'CHALLENGE' && r.title && r.title.includes('PK')) {
+            // 跳过PK类型记录（PK数据从独立的pk_matches表来）
+            if (r.task_category === 'PK' || r.type === 'PK' || r.type === 'PK_RESULT') {
                 return;
             }
+
             if (r.type === 'QC') {
                 qcRecords.push(r);
             } else {
@@ -640,17 +641,38 @@ export class ParentService {
                 return;
             }
 
-            if (r.task_category === 'METHODOLOGY' || cat.includes('能力') || cat.includes('教学法') || cat.includes('核心教学法')) {
-                methodologyRecords.push(r);
-            } else if (r.task_category === 'BADGE') {
-                // 勋章记录跳过 - 已有专门的勋章卡片显示
-                return;
-            } else if (r.task_category === 'TASK' || cat.includes('习惯') || cat.includes('综合成长')) {
-                habitRecords.push(r);
-            } else if (r.type === 'SPECIAL' && !r.title?.includes('手动调整')) {
-                specialRecords.push(r);
-            } else {
-                genericRecords.push(r);
+            // 根据task_category分类（清晰的一一对应）
+            switch (r.task_category) {
+                case 'METHODOLOGY':
+                    methodologyRecords.push(r);
+                    break;
+                case 'TASK':
+                    habitRecords.push(r);
+                    break;
+                case 'SPECIAL':
+                    if (!r.title?.includes('手动调整')) {
+                        specialRecords.push(r);
+                    }
+                    break;
+                case 'BADGE':
+                case 'PK':
+                case 'PK_RESULT':
+                case 'HABIT':
+                    // 这些类型的数据从独立表来，跳过
+                    return;
+                case 'CHALLENGE':
+                    // 挑战记录单独显示
+                    genericRecords.push(r);
+                    break;
+                default:
+                    // 兼容旧数据，使用category字段判断
+                    if (cat.includes('能力') || cat.includes('教学法') || cat.includes('核心教学法')) {
+                        methodologyRecords.push(r);
+                    } else if (cat.includes('习惯') || cat.includes('综合成长')) {
+                        habitRecords.push(r);
+                    } else {
+                        genericRecords.push(r);
+                    }
             }
         });
 

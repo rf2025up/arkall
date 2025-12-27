@@ -126,6 +126,13 @@ export declare class ChallengeService {
     getChallengeStats(schoolId: string): Promise<ChallengeStatsResponse>;
     /**
      * 给予挑战奖励
+     *
+     * ⚠️ 业务规则：
+     * 1. 参加挑战：创建记录（PENDING），不加分
+     * 2. 完成挑战：更新记录（COMPLETED），加分
+     *
+     * 本方法只在完成挑战时调用，只负责加分，不创建新记录
+     * 记录的更新由 updateChallengeParticipant 第 545-562 行处理
      */
     private grantChallengeRewards;
     /**

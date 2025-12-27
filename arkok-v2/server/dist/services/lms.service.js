@@ -1,10 +1,15 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LMSService = void 0;
 const socketHandlers_1 = require("../utils/socketHandlers");
+const curriculum_service_1 = __importDefault(require("./curriculum.service"));
 class LMSService {
-    constructor(prisma, io) {
+    constructor(prisma, rewardService, io) {
         this.prisma = prisma;
+        this.rewardService = rewardService;
         this.io = io;
     }
     /**
@@ -147,11 +152,11 @@ class LMSService {
             else {
                 // 如果是 Date 对象，使用本地时间格式化
                 const d = dateValue;
-                dateStr = `${d.getFullYear()} -${String(d.getMonth() + 1).padStart(2, '0')} -${String(d.getDate()).padStart(2, '0')} `;
+                dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             }
-            console.log(`📅[LMS_PUBLISH] 使用日期: ${dateStr} `);
-            const startOfDay = new Date(`${dateStr} T00:00:00 +08:00`);
-            const endOfDay = new Date(`${dateStr} T23: 59: 59 +08:00`);
+            console.log(`📅[LMS_PUBLISH] 使用日期: ${dateStr}`);
+            const startOfDay = new Date(`${dateStr}T00:00:00+08:00`);
+            const endOfDay = new Date(`${dateStr}T23:59:59+08:00`);
             // 🆕 从 courseInfo 中提取单元和课，用于注入任务记录（学期地图汇总关键数据）
             const courseInfo = content?.courseInfo || {};
             let newTaskCount = 0;
@@ -199,10 +204,7 @@ class LMSService {
             const crypto = require('crypto');
             for (const student of boundStudents) {
                 for (const task of tasks) {
-                    // 🚀 核心重构：基础过关项 (QC) 不再随教学计划分发，转为过关页静态自持
-                    if (task.type === 'QC') {
-                        continue;
-                    }
+                    // 🆕 QC 项现在会被创建为 PENDING 状态，等待过关页点击后变为 COMPLETED
                     // 🆕 核心逻辑：精准分发“定制加餐” (SPECIAL 类型)
                     if (task.type === 'SPECIAL') {
                         const targetStudentNames = task.content?.targetStudentNames;
@@ -235,6 +237,8 @@ class LMSService {
                         lessonPlanId: lessonPlan.id,
                         type: task.type,
                         title: task.title,
+                        // 🆕 QC 类型使用 'PROGRESS' 分类，其他类型使用映射后的分类
+                        task_category: task.type === 'QC' ? 'PROGRESS' : this.mapToTaskCategory(category),
                         content: {
                             ...task.content, // 已包含 category, subcategory
                             taskDate: dateStr,
@@ -242,6 +246,8 @@ class LMSService {
                             unit: taskUnit,
                             lesson: taskLesson,
                             taskName: task.title,
+                            // 🆕 为 QC 记录注入完整的 courseInfo，确保课文标题可以显示
+                            courseInfo: task.type === 'QC' ? courseInfo : undefined,
                             updatedAt: new Date().toISOString()
                         },
                         status: 'PENDING',
@@ -298,10 +304,29 @@ class LMSService {
                 where: { studentId, schoolId, isOverridden: true },
                 orderBy: { updatedAt: 'desc' }
             });
+            const getGradeFromClass = (className) => {
+                if (!className)
+                    return '二年级';
+                if (className.includes('一'))
+                    return '一年级';
+                if (className.includes('二'))
+                    return '二年级';
+                if (className.includes('三'))
+                    return '三年级';
+                if (className.includes('四'))
+                    return '四年级';
+                if (className.includes('五'))
+                    return '五年级';
+                if (className.includes('六'))
+                    return '六年级';
+                return '二年级';
+            };
             const defaultProgress = {
                 chinese: { unit: '1', lesson: '1', title: '默认课程' },
                 math: { unit: '1', lesson: '1', title: '默认课程' },
-                english: { unit: '1', title: 'Default' }
+                english: { unit: '1', title: 'Default' },
+                grade: getGradeFromClass(student?.className || null),
+                semester: '上册'
             };
             const planInfo = teacherPlan?.content?.courseInfo || defaultProgress;
             const overrideInfo = override?.content?.courseInfo;
@@ -537,7 +562,24 @@ class LMSService {
                 studentId,
                 type: 'SPECIAL',
                 title: '老师手动调整进度',
-                content: { courseInfo, teacherId, updatedAt: new Date().toISOString() },
+                content: {
+                    courseInfo: {
+                        chinese: {
+                            ...courseInfo.chinese,
+                            title: courseInfo.chinese.title || curriculum_service_1.default.getTitle({ subject: 'chinese', unit: courseInfo.chinese.unit, lesson: courseInfo.chinese.lesson }) || '默认课程'
+                        },
+                        math: {
+                            ...courseInfo.math,
+                            title: courseInfo.math.title || curriculum_service_1.default.getTitle({ subject: 'math', unit: courseInfo.math.unit, lesson: courseInfo.math.lesson }) || '默认课程'
+                        },
+                        english: {
+                            ...courseInfo.english,
+                            title: courseInfo.english.title || curriculum_service_1.default.getTitle({ subject: 'english', unit: courseInfo.english.unit }) || 'Default'
+                        }
+                    },
+                    teacherId,
+                    updatedAt: new Date().toISOString()
+                },
                 status: 'COMPLETED',
                 isOverridden: true,
                 updatedAt: new Date()
@@ -576,7 +618,19 @@ class LMSService {
         const { schoolId, studentId, type, title, category, subcategory, exp, courseInfo, isOverridden = true } = data;
         // 🛡️ 映射分类
         const mappedCategory = this.mapToTaskCategory(category);
-        console.log(`📝[LMS_SERVICE] 为学生 ${studentId} 创建单条任务: ${title} (${category}/${subcategory} -> ${mappedCategory})`);
+        // 🆕 从配置表获取经验值（仅针对核心教学法和综合成长类任务）
+        let finalExp = exp;
+        if (category === '核心教学法' || category === '综合成长') {
+            const configExp = await this.rewardService.getExpForTask(schoolId, category, subcategory || '', title);
+            if (configExp !== null) {
+                finalExp = configExp;
+                console.log(`✅ [LMS_SERVICE] 从配置表获取经验值: ${title} = ${finalExp} EXP (原值: ${exp})`);
+            }
+            else {
+                console.log(`⚠️ [LMS_SERVICE] 未找到配置，使用默认经验值: ${title} = ${exp} EXP`);
+            }
+        }
+        console.log(`📝[LMS_SERVICE] 为学生 ${studentId} 创建单条任务: ${title} (${category}/${subcategory} -> ${mappedCategory}) EXP=${finalExp}`);
         const record = await this.prisma.task_records.create({
             data: {
                 id: require('crypto').randomUUID(),
@@ -585,7 +639,7 @@ class LMSService {
                 type,
                 title,
                 task_category: mappedCategory, // 使用映射后的枚举值
-                expAwarded: exp,
+                expAwarded: finalExp,
                 // 🚨 修正：前端依赖 content.category 来进行中文分组过滤，必须保留原始字段名为 category
                 // 🔴 关键：必须包含 taskDate 字段，否则 getBatchDailyRecords 查询不到
                 content: courseInfo
@@ -627,7 +681,7 @@ class LMSService {
         const subjectInfo = courseInfo?.[subject] || {};
         const unit = subjectInfo.unit || '';
         const lesson = subjectInfo.lesson || '';
-        const lessonTitle = subjectInfo.title || '';
+        const lessonTitle = subjectInfo.title || curriculum_service_1.default.getTitle({ subject, unit, lesson }) || '';
         // 构建 content 对象，包含完整的进度信息
         // 🚨 关键：必须包含 taskDate 字段，否则 getBatchDailyRecords 查询不到
         const content = {
@@ -637,7 +691,10 @@ class LMSService {
             unit,
             lesson,
             lessonPlanTitle: lessonTitle, // 课文名字
-            courseInfo,
+            courseInfo: {
+                ...courseInfo,
+                [subject]: { ...subjectInfo, title: lessonTitle }
+            },
             taskDate: date, // 🔴 新增：确保批量查询能找到这条记录
             createdAt: new Date().toISOString()
         };
@@ -661,7 +718,7 @@ class LMSService {
     /**
      * 🆕 结算学生当日所有任务 - V2 正式版
      */
-    async settleStudentTasks(schoolId, studentId, expBonus = 0) {
+    async settleStudentTasks(schoolId, studentId, expBonus = 0, courseInfo) {
         console.log(`💰[LMS_SERVICE] 开始结算学生 ${studentId} 的所有完成任务...`);
         // 1. 先将该学生所有待办项（QC 项、核心教学法、综合成长）标记为已完成
         // 遵循宪法：使用 isOverridden 标记手动结算
@@ -709,6 +766,7 @@ class LMSService {
                         taskCount: completedTasks.length,
                         totalExpAwarded: totalExp,
                         expBonus,
+                        courseInfo, // 🆕 注入当前进度信息
                         teacherMessage: `完成了今日所有 ${completedTasks.length} 项学业任务，额外获得 ${expBonus} 经验奖励，表现非常出色！`
                     },
                     status: 'COMPLETED',

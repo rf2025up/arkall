@@ -235,7 +235,9 @@ const HabitPage: React.FC = () => {
   const handleDeleteHabit = async (id: string) => {
     const habitName = habits.find(h => h.id === id)?.name || '习惯';
     try {
-      const response = await apiService.delete(`/habits/${id}`);
+      const response = await apiService.delete(`/habits/${id}`, {
+        schoolId: user?.schoolId || ''
+      });
       if (response.success) {
         apiService.invalidateCache('/habits');
         const newHabits = habits.filter(h => h.id !== id);

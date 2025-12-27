@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Shield, Bell, Info, LogOut, Sparkles, Users, GraduationCap, ChevronDown, UserPlus, Check, X } from 'lucide-react';
+import { ChevronRight, Shield, Bell, Info, LogOut, Sparkles, Users, GraduationCap, ChevronDown, UserPlus, Check, X, Gift } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useClass } from '../context/ClassContext';
 import apiService from '../services/api.service';
@@ -20,6 +20,7 @@ const Profile: React.FC<ProfileProps> = () => {
   // 基础菜单项
   const baseMenuItems = [
     { icon: Users, label: '切换班级', color: 'text-orange-500' },
+    { icon: Gift, label: '积分经验管理', color: 'text-orange-500', onClick: () => navigate('/reward-management') },
     { icon: Shield, label: '隐私与安全', color: 'text-orange-500' },
     { icon: Bell, label: '通知设置', color: 'text-orange-500' },
   ];

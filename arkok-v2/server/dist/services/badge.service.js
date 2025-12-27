@@ -231,16 +231,8 @@ class BadgeService {
         if (!student) {
             throw new Error('学生不存在');
         }
-        // 检查是否已经获得过该勋章
-        const existingAward = await this.prisma.student_badges.findFirst({
-            where: {
-                studentId,
-                badgeId
-            }
-        });
-        if (existingAward) {
-            throw new Error('学生已获得过该勋章');
-        }
+        // ✅ 移除重复检查限制，允许同一勋章多次授予
+        // 这样可以鼓励学生持续获得同一个勋章的认可
         // 创建勋章授予记录
         const studentBadge = await this.prisma.student_badges.create({
             data: {
@@ -285,7 +277,7 @@ class BadgeService {
                 id: require('crypto').randomUUID(),
                 studentId,
                 schoolId,
-                type: 'CHALLENGE', // 勋章授予在 5.0 中属于挑战激励流
+                type: 'BADGE', // V5.0宪法: 勋章颁发记录 type: BADGE
                 title: `获得勋章: ${badge.name}`,
                 content: {
                     badgeId: badge.id,
@@ -298,8 +290,7 @@ class BadgeService {
                 },
                 status: 'COMPLETED',
                 expAwarded: 20,
-                updatedAt: new Date(),
-                task_category: 'TASK'
+                updatedAt: new Date()
             }
         });
         // 准备广播数据
@@ -331,20 +322,10 @@ class BadgeService {
         });
         if (!badge)
             throw new Error('勋章不存在或已停用');
-        // 2. 检查这些学生是否已经拥有该勋章 (过滤掉已拥有的)
-        const existingAwards = await this.prisma.student_badges.findMany({
-            where: {
-                badgeId,
-                studentId: { in: studentIds }
-            },
-            select: { studentId: true }
-        });
-        const existingStudentIds = new Set(existingAwards.map(a => a.studentId));
-        const targetStudentIds = studentIds.filter(id => !existingStudentIds.has(id));
-        if (targetStudentIds.length === 0) {
-            return { success: true, message: '选择的学生均已拥有该勋章', awardedCount: 0 };
-        }
-        // 3. 事务处理
+        // ✅ 移除重复检查限制，允许同一勋章多次授予
+        // 这样可以鼓励学生持续获得同一个勋章的认可
+        const targetStudentIds = studentIds;
+        // 2. 事务处理
         const result = await this.prisma.$transaction(async (tx) => {
             const records = [];
             const timestamp = new Date();
@@ -379,7 +360,8 @@ class BadgeService {
                         id: require('crypto').randomUUID(),
                         studentId,
                         schoolId,
-                        type: 'CHALLENGE',
+                        type: 'BADGE',
+                        task_category: 'BADGE',
                         title: `获得勋章: ${badge.name}`,
                         content: {
                             badgeId: badge.id,
@@ -391,8 +373,7 @@ class BadgeService {
                         },
                         status: 'COMPLETED',
                         expAwarded: 20,
-                        updatedAt: timestamp,
-                        task_category: 'TASK'
+                        updatedAt: timestamp
                     }
                 });
                 records.push(sb);

@@ -112,9 +112,17 @@ const BadgePage: React.FC = () => {
             ? bRes.data || bRes
             : (bRes.data as any)?.badges || [];
           setBadges(badgeList as Badge[]);
-          if (!selectedBadgeId && badgeList.length > 0) {
-            setSelectedBadgeId(badgeList[0].id);
-            setAwardForm(prev => ({ ...prev, badgeId: badgeList[0].id }));
+          // ✅ 保持当前选中的勋章，如果不存在则选择第一个
+          if (badgeList.length > 0) {
+            const currentBadgeExists = badgeList.find((b: any) => b.id === selectedBadgeId);
+            if (!currentBadgeExists && !selectedBadgeId) {
+              // 只有当当前选中的勋章不存在且 selectedBadgeId 为空时，才选择第一个
+              setSelectedBadgeId(badgeList[0].id);
+              setAwardForm(prev => ({ ...prev, badgeId: badgeList[0].id }));
+            } else if (currentBadgeExists) {
+              // ✅ 确保 awardForm.badgeId 与 selectedBadgeId 同步
+              setAwardForm(prev => ({ ...prev, badgeId: selectedBadgeId }));
+            }
           }
         }
         if (sRes.success || (sRes as any)._fromCache) {
@@ -201,6 +209,7 @@ const BadgePage: React.FC = () => {
           if (newBadgeData && newBadgeData.id) {
             setBadges(prev => [...prev, { ...newBadgeData, awardedCount: 0 }]);
             setSelectedBadgeId(newBadgeData.id);
+            setAwardForm(prev => ({ ...prev, badgeId: newBadgeData.id })); // ✅ 同步更新 awardForm.badgeId
           } else {
             fetchData(true);
           }
@@ -241,6 +250,14 @@ const BadgePage: React.FC = () => {
       return
     }
 
+    // 🔍 调试：输出选中的勋章信息
+    const selectedBadge = badges.find(b => b.id === awardForm.badgeId);
+    console.log('[DEBUG] 选中的勋章:', {
+      awardFormBadgeId: awardForm.badgeId,
+      selectedBadgeId: selectedBadgeId,
+      selectedBadge: selectedBadge
+    });
+
     setAwardLoading(true)
     try {
       // 🚀 [性能优化] 改用后端原生的批量授予接口，取代循环调用
@@ -255,10 +272,16 @@ const BadgePage: React.FC = () => {
       if (res.success) {
         const successCount = (res.data as any)?.awardedCount || 0;
         apiService.invalidateCache(); // 全局失效或精细失效
-        fetchData(true);
         setShowAwardModal(false);
-        setAwardForm({ badgeId: '', studentIds: [], reason: '' });
-        toast.success(`成功为 ${successCount} 位学生授予勋章`);
+        // ✅ 保持当前选中的勋章，只清空学生选择和理由
+        setAwardForm(prev => ({
+          ...prev,
+          studentIds: [],
+          reason: ''
+        }));
+        // ✅ 重新加载数据以获取最新的勋章统计
+        fetchData(true);
+        toast.success(`成功为 ${successCount} 位学生授予「${selectedBadge?.name}」勋章`);
       } else {
         toast.error(res.message || '授予失败');
       }
@@ -396,6 +419,7 @@ const BadgePage: React.FC = () => {
                         className="flex-1 flex items-center gap-3 cursor-pointer"
                         onClick={() => {
                           setSelectedBadgeId(badge.id);
+                          setAwardForm(prev => ({ ...prev, badgeId: badge.id })); // ✅ 同步更新 awardForm.badgeId
                           setIsManageOpen(false);
                           setIsEditMode(false);
                         }}

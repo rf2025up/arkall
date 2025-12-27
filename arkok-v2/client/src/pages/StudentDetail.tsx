@@ -263,7 +263,7 @@ const StudentDetail: React.FC = () => {
   const studentChallenges = React.useMemo(() => {
     const filtered = allTaskRecords.filter(record =>
       record.type === 'CHALLENGE' &&
-      (record as any).task_category !== 'BADGE' // 排除勋章授予产生的挑战类型记录
+      (record as any).task_category === 'CHALLENGE'  // 严格匹配，排除PK和BADGE
     );
     // 只显示本周挑战
     return filterThisWeek(filtered).map((record, index) => ({

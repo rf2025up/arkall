@@ -41,6 +41,8 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcrypt = __importStar(require("bcryptjs"));
 const JWT_SECRET = process.env.JWT_SECRET || 'arkok-v2-super-secret-jwt-key-2024';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+const SYSTEM_SCHOOL_ID = '00000000-0000-0000-0000-000000000000';
+const SYSTEM_SCHOOL_NAME = '平台系统管理';
 class AuthService {
     constructor(prisma) {
         this.prisma = prisma;
@@ -62,7 +64,7 @@ class AuthService {
                 // 验证密码
                 let passwordValid = false;
                 // 特殊处理admin账号（兼容历史数据）
-                if (username === 'admin' && password === '123456') {
+                if (username === 'superadmin' && password === '123456') {
                     passwordValid = dbUser.password === '123456' || await bcrypt.compare(password, dbUser.password);
                 }
                 else {
@@ -102,7 +104,7 @@ class AuthService {
                 }
             }
             // 兼容性：如果没有找到数据库用户，尝试admin硬编码逻辑
-            if (username === 'admin' && password === '123456') {
+            if (username === 'superadmin' && password === '123456') {
                 // 查找或创建默认用户
                 let user = await this.prisma.teachers.findFirst({
                     where: { username },
@@ -112,31 +114,31 @@ class AuthService {
                 });
                 if (!user) {
                     // 如果用户不存在，创建默认用户
-                    // 首先查找或创建默认学校
-                    let school = await this.prisma.schools.findFirst({
-                        where: { name: 'Default Migration School' }
+                    // 首先查找或创建平台系统校区
+                    let school = await this.prisma.schools.findUnique({
+                        where: { id: SYSTEM_SCHOOL_ID }
                     });
                     if (!school) {
                         school = await this.prisma.schools.create({
                             data: {
-                                id: require('crypto').randomUUID(),
-                                name: 'Default Migration School',
-                                planType: 'FREE',
+                                id: SYSTEM_SCHOOL_ID,
+                                name: SYSTEM_SCHOOL_NAME,
+                                planType: 'ENTERPRISE',
                                 isActive: true,
                                 updatedAt: new Date()
                             }
                         });
                     }
-                    // 创建默认用户
+                    // 创建默认超级管理员用户
                     user = await this.prisma.teachers.create({
                         data: {
                             id: require('crypto').randomUUID(),
                             username,
                             password: '123456', // 实际应用中应该加密
-                            name: '管理员',
-                            email: 'admin@arkok.com',
-                            role: 'ADMIN',
-                            schoolId: school.id,
+                            name: '系统管理员',
+                            email: 'superadmin@arkok.com',
+                            role: 'PLATFORM_ADMIN',
+                            schoolId: SYSTEM_SCHOOL_ID,
                             updatedAt: new Date()
                         },
                         include: {

@@ -17,6 +17,7 @@ import Profile from '../pages/Profile';
 import TeacherManagement from '../pages/TeacherManagement';
 import StudentManagement from '../pages/StudentManagement';
 import TutoringStudio from '../pages/TutoringStudio';
+import RewardManagement from '../pages/RewardManagement';
 import { ParentLogin, ParentLayout, TodayTimeline, GrowthProfile, SchoolConnect } from '../pages/parent';
 import { PlatformDashboard, CampusManagement, PlatformLogin } from '../pages/platform';
 import PlatformLayout from '../components/PlatformLayout';
@@ -90,6 +91,10 @@ export const router = createBrowserRouter([
       {
         path: 'profile',
         element: <Profile />,
+      },
+      {
+        path: 'reward-management',
+        element: <RewardManagement />,
       },
       {
         path: 'teachers',

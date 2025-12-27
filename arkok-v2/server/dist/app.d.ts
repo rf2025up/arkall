@@ -13,6 +13,8 @@ import { ReportService } from './services/report.service';
 import SchoolService from './services/school.service';
 import DashboardService from './services/dashboard.service';
 import { PersonalizedTutoringService } from './services/personalized-tutoring.service';
+import PlatformService from './services/platform.service';
+import { RewardService } from './services/reward.service';
 export declare class App {
     app: express.Application;
     server: any;
@@ -30,6 +32,8 @@ export declare class App {
     schoolService: SchoolService;
     dashboardService: DashboardService;
     tutoringService: PersonalizedTutoringService;
+    platformService: PlatformService;
+    rewardService: RewardService;
     constructor();
     private initializeMiddlewares;
     private initializeRoutes;

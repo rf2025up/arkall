@@ -25,6 +25,10 @@ export declare const optionalAuth: (authService: AuthService) => (req: Request, 
  */
 export declare const requireRole: (roles: string[]) => (req: Request, res: Response, next: NextFunction) => void;
 /**
+ * 平台管理员权限检查中间件
+ */
+export declare const requirePlatformAdmin: (req: Request, res: Response, next: NextFunction) => void;
+/**
  * 管理员权限检查中间件
  */
 export declare const requireAdmin: (req: Request, res: Response, next: NextFunction) => void;

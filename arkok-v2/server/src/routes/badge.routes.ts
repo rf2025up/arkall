@@ -79,6 +79,10 @@ export class BadgeRoutes {
      *       200:
      *         description: 获取勋章列表成功
      */
+    // 静态路由必须在动态路由之前，否则会被 :id 等参数路由拦截
+    this.router.get('/stats', authenticateToken(this.authService), validateUser, this.getBadgeStats.bind(this));
+    this.router.get('/student/:studentId', authenticateToken(this.authService), validateUser, this.getStudentBadges.bind(this));
+    this.router.get('/available/:studentId', authenticateToken(this.authService), validateUser, this.getAvailableBadges.bind(this));
     this.router.get('/', authenticateToken(this.authService), validateUser, this.getBadges.bind(this));
     this.router.get('/:id', authenticateToken(this.authService), validateUser, this.getBadgeById.bind(this));
     this.router.post('/', authenticateToken(this.authService), validateUser, this.createBadge.bind(this));
@@ -87,9 +91,6 @@ export class BadgeRoutes {
     this.router.post('/award', authenticateToken(this.authService), validateUser, this.awardBadge.bind(this));
     this.router.post('/award/batch', authenticateToken(this.authService), validateUser, this.batchAward.bind(this));
     this.router.delete('/revoke', authenticateToken(this.authService), validateUser, this.revokeBadge.bind(this));
-    this.router.get('/student/:studentId', authenticateToken(this.authService), validateUser, this.getStudentBadges.bind(this));
-    this.router.get('/available/:studentId', authenticateToken(this.authService), validateUser, this.getAvailableBadges.bind(this));
-    this.router.get('/stats', authenticateToken(this.authService), validateUser, this.getBadgeStats.bind(this));
   }
 
   /**

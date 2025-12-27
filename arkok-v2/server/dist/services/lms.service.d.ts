@@ -1,5 +1,6 @@
 import { PrismaClient, lesson_plans, TaskType } from '@prisma/client';
 import { Server as SocketIOServer } from 'socket.io';
+import { RewardService } from './reward.service';
 export interface TaskLibraryItem {
     id: string;
     category: string;
@@ -36,7 +37,8 @@ export interface PublishPlanResult {
 export declare class LMSService {
     private prisma;
     private io?;
-    constructor(prisma: PrismaClient, io?: SocketIOServer);
+    private rewardService;
+    constructor(prisma: PrismaClient, rewardService: RewardService, io?: SocketIOServer);
     /**
      * 🆕 实时同步助手函数
      */
@@ -84,6 +86,7 @@ export declare class LMSService {
             title: string;
             content: import("@prisma/client/runtime/library").JsonValue;
             date: Date;
+            isGlobal: boolean;
         })[];
         total: number;
     }>;
@@ -128,6 +131,7 @@ export declare class LMSService {
         title: string;
         content: import("@prisma/client/runtime/library").JsonValue;
         date: Date;
+        isGlobal: boolean;
     }>;
     /**
      * 删除教学计划
@@ -142,6 +146,7 @@ export declare class LMSService {
         title: string;
         content: import("@prisma/client/runtime/library").JsonValue;
         date: Date;
+        isGlobal: boolean;
     }>;
     /**
      * 获取学校统计信息
@@ -339,7 +344,7 @@ export declare class LMSService {
     /**
      * 🆕 结算学生当日所有任务 - V2 正式版
      */
-    settleStudentTasks(schoolId: string, studentId: string, expBonus?: number): Promise<{
+    settleStudentTasks(schoolId: string, studentId: string, expBonus?: number, courseInfo?: any): Promise<{
         success: boolean;
         count: number;
         totalExpAwarded: number;

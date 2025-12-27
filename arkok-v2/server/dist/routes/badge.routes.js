@@ -60,6 +60,10 @@ class BadgeRoutes {
          *       200:
          *         description: 获取勋章列表成功
          */
+        // 静态路由必须在动态路由之前，否则会被 :id 等参数路由拦截
+        this.router.get('/stats', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.getBadgeStats.bind(this));
+        this.router.get('/student/:studentId', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.getStudentBadges.bind(this));
+        this.router.get('/available/:studentId', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.getAvailableBadges.bind(this));
         this.router.get('/', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.getBadges.bind(this));
         this.router.get('/:id', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.getBadgeById.bind(this));
         this.router.post('/', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.createBadge.bind(this));
@@ -68,9 +72,6 @@ class BadgeRoutes {
         this.router.post('/award', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.awardBadge.bind(this));
         this.router.post('/award/batch', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.batchAward.bind(this));
         this.router.delete('/revoke', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.revokeBadge.bind(this));
-        this.router.get('/student/:studentId', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.getStudentBadges.bind(this));
-        this.router.get('/available/:studentId', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.getAvailableBadges.bind(this));
-        this.router.get('/stats', (0, auth_middleware_1.authenticateToken)(this.authService), auth_middleware_1.validateUser, this.getBadgeStats.bind(this));
     }
     /**
      * 获取勋章列表
@@ -82,7 +83,7 @@ class BadgeRoutes {
                 schoolId: schoolId,
                 search: search,
                 category: category,
-                isActive: isActive === 'true',
+                isActive: isActive !== undefined ? isActive === 'true' : undefined,
                 page: page ? parseInt(page) : undefined,
                 limit: limit ? parseInt(limit) : undefined,
             };
