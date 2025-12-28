@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星途与伴 - 托管机构数字化赋能白皮书</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --brand-orange: #FF7A00;
+            --deep-orange: #FF5E62;
+            --text-main: #2D2D2F;
+            --text-secondary: #5D5D5F;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --bg-color: #FFF8F4;
+            --gradient-primary: linear-gradient(135deg, #FF9966 0%, #FF5E62 100%);
+        }
+
+        * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-main); line-height: 1.6; }
+
+        /* 动态背景 */
+        .bg-decoration { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4; animation: float 20s infinite ease-in-out; }
+        .orb-1 { width: 500px; height: 500px; background: #FFD194; top: -100px; right: -150px; }
+        .orb-2 { width: 400px; height: 400px; background: #FF9966; bottom: -50px; left: -100px; animation-delay: -5s; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(30px); } }
+
+        /* 通用布局 */
+        .container { max-width: 1000px; margin: 0 auto; padding: 0 24px; position: relative; }
+        
+        /* 顶部 Hero 区 */
+        .hero { text-align: center; padding: 100px 0 60px; }
+        .tag { display: inline-block; background: #FFF0E5; color: var(--brand-orange); padding: 6px 16px; border-radius: 50px; font-weight: 700; font-size: 14px; margin-bottom: 24px; border: 1px solid rgba(255,122,0,0.2); }
+        .hero h1 { font-size: clamp(32px, 5vw, 56px); font-weight: 900; margin: 0 0 20px; line-height: 1.2; background: -webkit-linear-gradient(0deg, #FF7A00, #FF5E62); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 18px; color: var(--text-secondary); max-width: 700px; margin: 0 auto; }
+
+        /* 痛点直击区 */
+        .pain-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 40px 0; }
+        .pain-card { background: rgba(255,255,255,0.6); border: 1px solid #FFE6D5; padding: 24px; border-radius: 20px; text-align: left; }
+        .pain-card h4 { margin: 0 0 10px; color: #333; display: flex; align-items: center; gap: 8px; }
+        .pain-card p { font-size: 14px; margin: 0; color: #666; }
+        .icon-box { background: #FFEBEB; color: #FF4D4F; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+
+        /* 核心模块卡片 */
+        .module { background: var(--card-bg); border-radius: 32px; padding: 50px; margin-bottom: 40px; box-shadow: 0 20px 40px rgba(255,122,0,0.06); border: 1px solid rgba(255,255,255,0.8); transition: transform 0.3s; position: relative; overflow: hidden; }
+        .module:hover { transform: translateY(-5px); }
+        
+        .module-header { display: flex; gap: 20px; margin-bottom: 30px; align-items: flex-start; }
+        .module-icon { width: 60px; height: 60px; background: var(--gradient-primary); border-radius: 20px; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0; box-shadow: 0 10px 20px rgba(255,94,98,0.3); }
+        .module-title h2 { margin: 0; font-size: 28px; color: #111; }
+        .module-title span { display: block; font-size: 14px; color: var(--brand-orange); text-transform: uppercase; font-weight: 700; margin-bottom: 5px; letter-spacing: 1px; }
+        
+        .content-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; }
+        .highlight-box { background: #FFF9F5; border-radius: 20px; padding: 25px; border-left: 4px solid var(--brand-orange); }
+        .highlight-box strong { color: #333; display: block; margin-bottom: 8px; font-size: 18px; }
+
+        .feature-list { list-style: none; padding: 0; margin: 0; }
+        .feature-list li { margin-bottom: 15px; display: flex; gap: 12px; font-size: 15px; color: #444; }
+        .feature-list li svg { color: var(--brand-orange); flex-shrink: 0; }
+
+        /* 角色价值区 */
+        .roles-section { text-align: center; margin: 80px 0; }
+        .roles-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 40px; }
+        .role-card { background: white; padding: 30px 20px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: 0.3s; }
+        .role-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(255,122,0,0.15); }
+        .role-icon { width: 50px; height: 50px; margin: 0 auto 20px; background: #FFF0E5; color: var(--brand-orange); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .role-card h3 { margin: 0 0 10px; font-size: 18px; }
+        .role-card p { font-size: 13px; color: #666; line-height: 1.6; margin: 0; }
+
+        /* CTA */
+        .cta { text-align: center; background: var(--gradient-primary); color: white; padding: 80px 20px; border-radius: 40px; margin-top: 60px; }
+        .cta h2 { font-size: 36px; margin: 0 0 20px; }
+        .btn { background: white; color: var(--deep-orange); border: none; padding: 18px 48px; border-radius: 16px; font-size: 18px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.1); transition: 0.3s; margin-top: 20px; }
+        .btn:hover { transform: scale(1.05); box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+
+        @media (max-width: 768px) {
+            .content-grid { grid-template-columns: 1fr; }
+            .roles-grid { grid-template-columns: 1fr 1fr; }
+            .hero h1 { font-size: 36px; }
+            .module { padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-decoration">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+    </div>
+
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero">
+            <div class="tag">2025 托管机构差异化增长引擎</div>
+            <h1>拒绝同质化竞争<br>打造“看得见”的专业教育服务</h1>
+            <p>从“催骂吼”的对抗场，到“比学赶超”的竞技场。<br>星途与伴，专为中国托管教育场景设计的行为塑造与服务外化系统。</p>
+            
+            <!-- 痛点直击 -->
+            <div class="pain-section">
+                <div class="pain-card">
+                    <h4><div class="icon-box"><i data-lucide="frown"></i></div> 班级氛围差</h4>
+                    <p>孩子被动学习，老师靠吼靠催，师生关系紧张，充满对抗情绪。</p>
+                </div>
+                <div class="pain-card">
+                    <h4><div class="icon-box"><i data-lucide="eye-off"></i></div> 家长看不见</h4>
+                    <p>服务过程无形，家长只看结果，机构的用心和专业无法被感知。</p>
+                </div>
+                <div class="pain-card">
+                    <h4><div class="icon-box"><i data-lucide="bar-chart-2"></i></div> 管理无数据</h4>
+                    <p>校长两眼一抹黑，换个老师就像换个机构，教学质量无法标准化。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模块 1: 游戏化积分 -->
+        <div class="module">
+            <div class="module-header">
+                <div class="module-icon"><i data-lucide="gamepad-2"></i></div>
+                <div class="module-title">
+                    <span>Gamification System</span>
+                    <h2>把“枯燥”变成“挑战”：游戏化行为塑造</h2>
+                </div>
+            </div>
+            <div class="content-grid">
+                <div>
+                    <h3 style="margin-top:0">基于“最近发展区”的挑战设计</h3>
+                    <p style="color:#555; margin-bottom:20px;">
+                        我们不只是发积分，而是根据孩子的能力范围（最近发展区）设计适量提升的挑战。从“被动完成任务”转变为“主动升级打怪”。
+                    </p>
+                    <div class="highlight-box">
+                        <strong><i data-lucide="zap" style="vertical-align:middle; color:var(--brand-orange)"></i> 真实案例：计算粗心矫正</strong>
+                        <p style="margin:0; font-size:14px; color:#666;">
+                            针对“十错八”的孩子，我们不搞题海战术。系统发布任务：<b>“连续5天，每天仅做5道题但必须全对”</b>。<br>
+                            看似降低难度，实则通过<b>21天全对挑战</b>，将“细心”从偶然行为固化为内在习惯。
+                        </p>
+                    </div>
+                </div>
+                <div>
+                    <ul class="feature-list">
+                        <li><i data-lucide="check-circle-2"></i> <b>沉浸式PK竞技：</b> 古诗、单词、口算一键开启对战，营造“比学赶超”的班风。</li>
+                        <li><i data-lucide="check-circle-2"></i> <b>数字化荣誉勋章：</b> 类似线下的奖状，但反馈更即时，满足孩子的成就感。</li>
+                        <li><i data-lucide="check-circle-2"></i> <b>习惯可视化：</b> 坐姿、书写、检查作业，所有抽象习惯变成可量化的经验值。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模块 2: 备课过关与服务外化 -->
+        <div class="module">
+            <div class="module-header">
+                <div class="module-icon"><i data-lucide="layers"></i></div>
+                <div class="module-title">
+                    <span>Service Standardization</span>
+                    <h2>把“服务”变成“产品”：全学期过关地图</h2>
+                </div>
+            </div>
+            <div class="content-grid">
+                <div>
+                    <p style="color:#555;">
+                        托管是服务业，核心痛点是<b>“如何让家长感知到我们的专业”</b>。通过系统，我们将抽象的教育理念具象化为每一天的代办任务和过关记录。
+                    </p>
+                    <ul class="feature-list" style="margin-top:20px;">
+                        <li>
+                            <i data-lucide="map"></i> 
+                            <div>
+                                <b>全学期数据留痕：</b> 
+                                <br><span style="font-size:13px; color:#888;">每一课的生字、错题、掌握情况自动汇总。中途换老师？新老师一秒上手，无缝衔接。</span>
+                            </div>
+                        </li>
+                        <li>
+                            <i data-lucide="clipboard-check"></i> 
+                            <div>
+                                <b>一键“点选”式备课：</b> 
+                                <br><span style="font-size:13px; color:#888;">老师只需点选任务（如：今日专注力训练），系统自动分发。像完成Checklist一样交付高质量教育。</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="highlight-box" style="background: #FFF5F7; border-left-color: #FF5E62;">
+                    <strong>给家长的“定心丸”</strong>
+                    <p style="margin:0; font-size:14px; color:#666;">
+                        为什么我们要公示计划？<br>
+                        当家长看到我们也关注试卷分析、错题重练、考前加餐，并且有清晰的时间轴时，他们买单的不仅是看管，而是<b>“有规划的成长”</b>和<b>“安全感”</b>。
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模块 3: 裂变与增长 -->
+        <div class="module">
+            <div class="module-header">
+                <div class="module-icon"><i data-lucide="trending-up"></i></div>
+                <div class="module-title">
+                    <span>Viral Growth</span>
+                    <h2>让口碑“自动传播”：挑战复活机制</h2>
+                </div>
+            </div>
+            <div class="content-grid">
+                <div style="grid-column: span 2;">
+                    <p style="font-size: 16px; color:#444;">
+                        如何让不爱发朋友圈的家长主动为你宣传？我们利用<b>“损失厌恶”</b>心理与<b>“晒娃”</b>需求。
+                    </p>
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+                        <div style="flex: 1; min-width: 300px; background: white; padding: 20px; border-radius: 16px; border: 1px dashed #FF9966;">
+                            <h4 style="margin-top:0; color:var(--brand-orange)">场景还原</h4>
+                            <p style="font-size:14px; color:#666;">孩子坚持了20天的好习惯挑战，第21天如果不小心中断了怎么办？</p>
+                        </div>
+                        <div style="flex: 1; min-width: 300px; background: var(--gradient-primary); color: white; padding: 20px; border-radius: 16px;">
+                            <h4 style="margin-top:0; color:white">裂变解法</h4>
+                            <p style="font-size:14px; opacity: 0.9;">系统允许“家长助力复活”。家长发圈求赞，既帮助了孩子，又向朋友圈展示了机构对孩子品格培养的坚持。<b>这是最高级的软广。</b></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 角色价值总结 -->
+        <div class="roles-section">
+            <h2 style="font-size: 32px; margin-bottom: 10px;">为什么大家都爱用？</h2>
+            <p style="color: #666;">解决每一个角色的核心焦虑</p>
+            <div class="roles-grid">
+                <div class="role-card">
+                    <div class="role-icon"><i data-lucide="baby"></i></div>
+                    <h3>对孩子</h3>
+                    <p>枯燥作业变游戏<br>被动学习变主动挑战<br>获取即时正反馈</p>
+                </div>
+                <div class="role-card">
+                    <div class="role-icon"><i data-lucide="user-check"></i></div>
+                    <h3>对老师</h3>
+                    <p>减少“催骂吼”<br>备课流程标准化<br>积分管理自动化</p>
+                </div>
+                <div class="role-card">
+                    <div class="role-icon"><i data-lucide="heart-handshake"></i></div>
+                    <h3>对家长</h3>
+                    <p>看见服务过程<br>感知机构专业度<br>获得安心与信任</p>
+                </div>
+                <div class="role-card">
+                    <div class="role-icon"><i data-lucide="crown"></i></div>
+                    <h3>对校长</h3>
+                    <p>实时掌握教学进度<br>解决人员流动风险<br>打造差异化竞争力</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="cta">
+            <h2>让每一次教育服务都有回响</h2>
+            <p style="font-size: 18px; opacity: 0.9;">别让你的用心被埋没。立即开启星途与伴，重塑机构竞争力。</p>
+            <button class="btn">申请系统演示</button>
+        </div>
+
+        <p style="text-align: center; color: #999; font-size: 12px; margin-bottom: 40px;">© 2025 星途与伴 · 赋能中国托管教育</p>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

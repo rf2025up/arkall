@@ -86,6 +86,21 @@ export class PlatformService {
     }
 
     /**
+     * 更新校区信息（名称、套餐、到期时间）
+     */
+    async updateCampus(schoolId: string, data: { name?: string; planType?: string; expiredAt?: Date }) {
+        const updateData: any = {};
+        if (data.name !== undefined) updateData.name = data.name;
+        if (data.planType !== undefined) updateData.planType = data.planType;
+        if (data.expiredAt !== undefined) updateData.expiredAt = data.expiredAt;
+
+        return this.prisma.schools.update({
+            where: { id: schoolId },
+            data: updateData
+        });
+    }
+
+    /**
      * 创建新校区及其管理员账号
      */
     async createCampus(params: {
@@ -94,7 +109,7 @@ export class PlatformService {
         adminName: string;
         planType?: string;
     }) {
-        const { name, adminUsername, adminName, planType = 'STANDARD' } = params;
+        const { name, adminUsername, adminName, planType = 'FREE' } = params;
 
         // 1. 检查管理员用户名是否已存在
         const existingUser = await this.prisma.teachers.findUnique({

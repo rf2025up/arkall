@@ -258,6 +258,39 @@ const TodayTimeline: React.FC = () => {
                         decorIcon: '⚡',
                         decorColor: 'text-pink-500/5'
                     };
+                // 🆕 核心教学法分组
+                case 'METHODOLOGY_GROUP':
+                    return {
+                        nodeColor: 'border-orange-500 bg-orange-50',
+                        nodeShadow: 'rgba(249,115,22,0.15)',
+                        titleColor: 'text-orange-700',
+                        timeColor: 'text-orange-600 bg-orange-100',
+                        cardBg: 'bg-gradient-to-br from-white to-orange-50 border-orange-200',
+                        decorIcon: '📝',
+                        decorColor: 'text-orange-500/5'
+                    };
+                // 🆕 综合成长分组
+                case 'HABIT_TASK_GROUP':
+                    return {
+                        nodeColor: 'border-indigo-500 bg-indigo-50',
+                        nodeShadow: 'rgba(99,102,241,0.15)',
+                        titleColor: 'text-indigo-700',
+                        timeColor: 'text-indigo-600 bg-indigo-100',
+                        cardBg: 'bg-gradient-to-br from-white to-indigo-50 border-indigo-200',
+                        decorIcon: '🌱',
+                        decorColor: 'text-indigo-500/5'
+                    };
+                // 🆕 定制加餐分组  
+                case 'SPECIAL_GROUP':
+                    return {
+                        nodeColor: 'border-purple-500 bg-purple-50',
+                        nodeShadow: 'rgba(139,92,246,0.15)',
+                        titleColor: 'text-purple-700',
+                        timeColor: 'text-purple-600 bg-purple-100',
+                        cardBg: 'bg-gradient-to-br from-white to-purple-50 border-purple-200',
+                        decorIcon: '⭐',
+                        decorColor: 'text-purple-500/5'
+                    };
                 default:
                     return {
                         nodeColor: 'border-gray-500 bg-gray-50',
@@ -371,6 +404,99 @@ const TodayTimeline: React.FC = () => {
                         </div>
                     )}
 
+                    {/* 🆕 核心教学法分组卡片 (METHODOLOGY_GROUP) */}
+                    {item.type === 'METHODOLOGY_GROUP' && item.content?.tasks && (
+                        <div className="space-y-2">
+                            <div className="space-y-2">
+                                {item.content.tasks.map((task: any) => (
+                                    <div
+                                        key={task.id}
+                                        className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-orange-100"
+                                    >
+                                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-sm ${task.status === 'COMPLETED'
+                                            ? 'bg-orange-500 text-white'
+                                            : 'bg-gray-200 text-gray-400'
+                                            }`}>
+                                            {task.status === 'COMPLETED' ? '✓' : '○'}
+                                        </span>
+                                        <span className={`flex-1 text-sm ${task.status === 'COMPLETED' ? 'text-gray-800' : 'text-gray-400'}`}>
+                                            {task.name}
+                                        </span>
+                                        {task.exp > 0 && (
+                                            <span className="text-xs text-orange-500 font-bold">+{task.exp}</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex justify-between items-center pt-2 border-t border-gray-100 text-xs text-gray-500">
+                                <span>已完成 {item.content.completedCount}/{item.content.totalCount}</span>
+                                <span className="text-orange-500 font-bold">+{item.content.totalExp} 经验</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 🆕 综合成长分组卡片 (HABIT_TASK_GROUP) */}
+                    {item.type === 'HABIT_TASK_GROUP' && item.content?.tasks && (
+                        <div className="space-y-2">
+                            <div className="space-y-2">
+                                {item.content.tasks.map((task: any) => (
+                                    <div
+                                        key={task.id}
+                                        className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-indigo-100"
+                                    >
+                                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-sm ${task.status === 'COMPLETED'
+                                            ? 'bg-indigo-500 text-white'
+                                            : 'bg-gray-200 text-gray-400'
+                                            }`}>
+                                            {task.status === 'COMPLETED' ? '✓' : '○'}
+                                        </span>
+                                        <span className={`flex-1 text-sm ${task.status === 'COMPLETED' ? 'text-gray-800' : 'text-gray-400'}`}>
+                                            {task.name}
+                                        </span>
+                                        {task.exp > 0 && (
+                                            <span className="text-xs text-indigo-500 font-bold">+{task.exp}</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex justify-between items-center pt-2 border-t border-gray-100 text-xs text-gray-500">
+                                <span>已完成 {item.content.completedCount}/{item.content.totalCount}</span>
+                                <span className="text-indigo-500 font-bold">+{item.content.totalExp} 经验</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 🆕 定制加餐分组卡片 (SPECIAL_GROUP) */}
+                    {item.type === 'SPECIAL_GROUP' && item.content?.tasks && (
+                        <div className="space-y-2">
+                            <div className="space-y-2">
+                                {item.content.tasks.map((task: any) => (
+                                    <div
+                                        key={task.id}
+                                        className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-purple-100"
+                                    >
+                                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-sm ${task.status === 'COMPLETED'
+                                            ? 'bg-purple-500 text-white'
+                                            : 'bg-gray-200 text-gray-400'
+                                            }`}>
+                                            {task.status === 'COMPLETED' ? '✓' : '○'}
+                                        </span>
+                                        <span className={`flex-1 text-sm ${task.status === 'COMPLETED' ? 'text-gray-800' : 'text-gray-400'}`}>
+                                            {task.name}
+                                        </span>
+                                        {task.exp > 0 && (
+                                            <span className="text-xs text-purple-500 font-bold">+{task.exp}</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex justify-between items-center pt-2 border-t border-gray-100 text-xs text-gray-500">
+                                <span>已完成 {item.content.completedCount}/{item.content.totalCount}</span>
+                                <span className="text-purple-500 font-bold">+{item.content.totalExp} 经验</span>
+                            </div>
+                        </div>
+                    )}
+
                     {/* 基础过关(QC)类型的特殊展示 - 单条记录兼容 */}
                     {item.type === 'QC' && (
                         <div className="space-y-2">
@@ -416,13 +542,12 @@ const TodayTimeline: React.FC = () => {
                         </div>
                     )}
 
-                    {/* 习惯打卡 - 一行紧凑展示 */}
+                    {/* 习惯打卡 - 只显示连续天数，标题已在卡片头部 */}
                     {item.type === 'HABIT' && (
                         <div className="flex items-center gap-2 text-gray-700 text-sm">
                             <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-600 font-bold">习惯</span>
-                            <span className="flex-1">{item.title || item.content?.notes}</span>
                             {item.content?.streakDays > 0 && (
-                                <span className="text-xs text-orange-500">🔥 {item.content.streakDays}天</span>
+                                <span className="text-xs text-orange-500 font-bold">🔥 连续 {item.content.streakDays} 天</span>
                             )}
                         </div>
                     )}
@@ -502,12 +627,15 @@ const TodayTimeline: React.FC = () => {
                         </div>
                     )}
 
-                    {/* 任务描述 + 完成状态（同行） */}
+                    {/* 任务描述 + 完成状态（同行） - 只在有独立描述时显示 */}
                     {item.type !== 'BADGE' && item.type !== 'QC' && item.type !== 'QC_GROUP' && item.type !== 'HABIT' && item.type !== 'PK' && item.type !== 'PLAN_ANNOUNCEMENT' && (
                         <div className="flex items-center justify-between gap-2 text-sm">
-                            <span className="text-gray-600 flex-1">
-                                {item.content?.description || item.title}
-                            </span>
+                            {/* 🆕 修复：只有当 description 存在且与 title 不同时才显示 */}
+                            {item.content?.description && item.content.description !== item.title && (
+                                <span className="text-gray-600 flex-1">
+                                    {item.content.description}
+                                </span>
+                            )}
                             {/* 挑战类型显示成功/失败 - 🆕 只有成功或失败，无"进行中" */}
                             {item.type === 'CHALLENGE' && (
                                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${item.content?.status === 'COMPLETED' || item.content?.result === 'SUCCESS'

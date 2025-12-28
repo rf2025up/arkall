@@ -129,6 +129,36 @@ export class PlatformRoutes {
         });
 
         /**
+         * PATCH /api/platform/campuses/:schoolId
+         * 更新校区信息（名称、套餐、到期时间）
+         */
+        router.patch('/campuses/:schoolId', async (req, res) => {
+            try {
+                const { schoolId } = req.params;
+                const { name, planType, expiredAt } = req.body;
+
+                const updateData: { name?: string; planType?: string; expiredAt?: Date } = {};
+                if (name) updateData.name = name;
+                if (planType) updateData.planType = planType;
+                if (expiredAt) updateData.expiredAt = new Date(expiredAt);
+
+                const updated = await this.platformService.updateCampus(schoolId, updateData);
+                res.json({
+                    success: true,
+                    data: updated,
+                    message: '校区信息更新成功'
+                });
+            } catch (error) {
+                console.error('❌ Error in PATCH /api/platform/campuses/:schoolId:', error);
+                res.status(500).json({
+                    success: false,
+                    message: '更新校区信息失败',
+                    error: (error as Error).message
+                });
+            }
+        });
+
+        /**
          * POST /api/platform/campuses
          * 创建新校区及管理员账号
          */

@@ -324,6 +324,8 @@ export class ApiService {
         this.patch<any>(`/platform/campuses/${schoolId}/status`, { isActive }),
       updateExpiry: (schoolId: string, expiredAt: string) =>
         this.patch<any>(`/platform/campuses/${schoolId}/expiry`, { expiredAt }),
+      updateCampus: (schoolId: string, data: { name?: string; planType?: string; expiredAt?: string }) =>
+        this.patch<any>(`/platform/campuses/${schoolId}`, data),
       createCampus: (data: { name: string; adminUsername: string; adminName: string; planType?: string }) =>
         this.post<any>('/platform/campuses', data),
       globalSearch: (query: string, type: 'student' | 'teacher' = 'student', limit: number = 20) =>

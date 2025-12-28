@@ -173,19 +173,13 @@ const PrepView: React.FC = () => {
   // 2. 习惯把关 (Habits) - 状态与标题全动态
   const [habitsConfig, setHabitsConfig] = useState({
     title: '习惯养成',
-    categories: [
-      { name: '作业习惯', items: ['作业自主检查', '错题红笔订正', '书写工整', '坐姿端正'] },
-      { name: '效能管理', items: ['限时挑战', '桌面整洁', '离校整理', '时间规划'] }
-    ]
+    categories: [] as { name: string; items: string[] }[]
   });
 
   // 3. 能力训练 (Abilities)
   const [abilitiesConfig, setAbilitiesConfig] = useState({
     title: '能力训练',
-    categories: [
-      { name: '认知训练', items: ['专注力训练', '逻辑推理', '信息提取', '关键标注'] },
-      { name: '综合素质', items: ['阅读表达', '古文积累', '口头背诵'] }
-    ]
+    categories: [] as { name: string; items: string[] }[]
   });
 
   // 4. 定制任务与加餐
@@ -353,65 +347,89 @@ const PrepView: React.FC = () => {
     setError(null);
 
     try {
-      // 直接调用正式API
       console.log('📡 [PREP_VIEW] 正在调用任务库API: /lms/task-library');
       const response = await apiService.get('/lms/task-library');
-
-      console.log('📊 [PREP_VIEW] API响应:', { success: response.success, dataLength: Array.isArray(response.data) ? response.data.length : 0, message: response.message });
 
       if (response.success && response.data) {
         const tasks = response.data as TaskLibraryItem[];
         console.log('✅ [PREP_VIEW] 任务库获取成功，任务数量:', tasks.length);
-        console.log('📋 [PREP_VIEW] 任务列表预览:', tasks.map(t => ({ name: t.name, category: t.category, exp: t.defaultExp })));
 
-        // 🆕 核心教学法分类 - 基于教学白皮书的9大维度
-        const methodologyCategories = [
-          '基础学习方法论',
-          '数学思维与解题策略',
-          '语文学科能力深化',
-          '英语应用与输出',
-          '阅读深度与分享',
-          '自主学习与规划',
-          '课堂互动与深度参与',
-          '家庭联结与知识迁移',
-          '高阶输出与创新'
-        ];
+        // 1. 过滤分类
+        const habitTasks = tasks.filter(task => task.educationalDomain === 'HABIT' && task.isActive);
+        const abilityTasks = tasks.filter(task => task.educationalDomain === 'METHODOLOGY' && task.isActive);
+        const growthTasks = tasks.filter(task => task.educationalDomain === 'GROWTH' && task.isActive);
 
-        console.log('📊 [PREP_VIEW] 实际任务分类:', [...new Set(tasks.map(t => t.category))]);
+        // 2. 更新 习惯养成 (将 HABIT 和 GROWTH 合并到习惯面板)
+        const combinedHabitTasks = [...habitTasks, ...growthTasks];
+        const habitGroups: Record<string, string[]> = {};
+        combinedHabitTasks.forEach(task => {
+          if (!habitGroups[task.educationalSubcategory]) {
+            habitGroups[task.educationalSubcategory] = [];
+          }
+          if (!habitGroups[task.educationalSubcategory].includes(task.name)) {
+            habitGroups[task.educationalSubcategory].push(task.name);
+          }
+        });
 
-        // 核心教学法任务 - 使用educationalDomain字段（教育体系分类）
-        const methodologyTasks = tasks.filter(task =>
-          task.educationalDomain === '核心教学法'
-        );
+        setHabitsConfig({
+          title: '习惯养成',
+          categories: Object.entries(habitGroups).map(([name, items]) => ({ name, items }))
+        });
 
-        // 综合成长任务 - 使用educationalDomain字段（教育体系分类）
-        const growthTasks = tasks.filter(task => task.educationalDomain === '综合成长');
+        // 3. 更新 能力训练
+        const abilityGroups: Record<string, string[]> = {};
+        abilityTasks.forEach(task => {
+          if (!abilityGroups[task.educationalSubcategory]) {
+            abilityGroups[task.educationalSubcategory] = [];
+          }
+          if (!abilityGroups[task.educationalSubcategory].includes(task.name)) {
+            abilityGroups[task.educationalSubcategory].push(task.name);
+          }
+        });
 
-        // 基础作业/过关任务 - 使用educationalDomain字段（教育体系分类）
-        const basicTasks = tasks.filter(task => task.educationalDomain === '基础作业');
-
-        console.log(`🎯 [PREP_VIEW] 核心教学法任务数量: ${methodologyTasks.length}/${tasks.length}`);
-        console.log(`🌱 [PREP_VIEW] 综合成长任务数量: ${growthTasks.length}/${tasks.length}`);
-        console.log(`📚 [PREP_VIEW] 基础作业任务数量: ${basicTasks.length}/${tasks.length}`);
+        setAbilitiesConfig({
+          title: '能力训练',
+          categories: Object.entries(abilityGroups).map(([name, items]) => ({ name, items }))
+        });
 
         setTaskLibrary(tasks);
-
-        // 生成QC项目
         generateQCItemsFromLibrary(tasks);
-      } else {
-        console.warn('⚠️ [PREP_VIEW] 获取任务库失败，使用默认QC项目:', response.message);
-        setError(response.message || '获取任务库失败');
-        // 即使API失败，也生成默认QC项目
-        generateQCItemsFromLibrary([]);
       }
     } catch (err) {
-      console.warn('⚠️ [PREP_VIEW] 获取任务库异常，使用默认QC项目:', err);
-      setError('网络错误，获取任务库失败');
-      // 即使异常，也生成默认QC项目
-      generateQCItemsFromLibrary([]);
+      console.warn('⚠️ [PREP_VIEW] 获取任务库异常:', err);
+      setError('获取任务库失败');
     } finally {
       setIsLoading(false);
-      console.log('🏁 [PREP_VIEW] 任务库获取流程结束');
+    }
+  };
+
+  // 🆕 管理功能：添加任务项
+  const handleAddLibraryItem = async (domain: string, sub: string, name: string) => {
+    if (!name.trim()) return;
+    try {
+      await apiService.post('/lms/task-library', {
+        educationalDomain: domain,
+        educationalSubcategory: sub,
+        name: name.trim(),
+        type: 'TASK',
+        defaultExp: 10
+      });
+      toast.success('添加成功');
+      fetchTaskLibrary();
+    } catch (error: any) {
+      toast.error(error.message || '添加失败');
+    }
+  };
+
+  // 🆕 管理功能：删除任务项
+  const handleDeleteLibraryItem = async (taskId: string) => {
+    if (!window.confirm('确定要删除该任务项吗？')) return;
+    try {
+      await apiService.delete(`/lms/task-library/${taskId}`);
+      toast.success('删除成功');
+      fetchTaskLibrary();
+    } catch (error: any) {
+      toast.error(error.message || '删除失败');
     }
   };
 
@@ -607,38 +625,6 @@ const PrepView: React.FC = () => {
     }));
   };
 
-  const deleteHabitItem = (catName: string, item: string) => {
-    if (!window.confirm(`确定删除"${item}"？`)) return;
-    setHabitsConfig(prev => ({
-      ...prev,
-      categories: prev.categories.map(cat =>
-        cat.name === catName
-          ? { ...cat, items: cat.items.filter(i => i !== item) }
-          : cat
-      )
-    }));
-    setSelectedHabits(prev => ({
-      ...prev,
-      [catName]: (prev[catName] || []).filter(i => i !== item)
-    }));
-  };
-
-  const deleteAbilityItem = (catName: string, item: string) => {
-    if (!window.confirm(`确定删除"${item}"？`)) return;
-    setAbilitiesConfig(prev => ({
-      ...prev,
-      categories: prev.categories.map(cat =>
-        cat.name === catName
-          ? { ...cat, items: cat.items.filter(i => i !== item) }
-          : cat
-      )
-    }));
-    setSelectedAbilities(prev => ({
-      ...prev,
-      [catName]: (prev[catName] || []).filter(i => i !== item)
-    }));
-  };
-
   // 6. 新增标签功能
   const addBasicItem = (sub: string) => {
     const name = prompt('输入新标签名称:');
@@ -655,30 +641,40 @@ const PrepView: React.FC = () => {
     }));
   };
 
+  // 2. 习惯养成管理
   const addHabitItem = (catName: string) => {
-    const name = prompt('输入新标签名称:');
-    if (!name?.trim()) return;
-    setHabitsConfig(prev => ({
-      ...prev,
-      categories: prev.categories.map(cat =>
-        cat.name === catName
-          ? { ...cat, items: [...cat.items, name.trim()] }
-          : cat
-      )
-    }));
+    const val = window.prompt(`在【${catName}】下新增习惯项目:`);
+    if (val) {
+      // 识别是否属于 GROWTH 分类
+      const domain = (catName.includes('阅读') || catName.includes('表达') || catName.includes('合')) ? 'GROWTH' : 'HABIT';
+      handleAddLibraryItem(domain, catName, val);
+    }
   };
 
+  const deleteHabitItem = (catName: string, itemName: string) => {
+    const task = taskLibrary.find(t => t.name === itemName && t.educationalSubcategory === catName);
+    if (task) {
+      handleDeleteLibraryItem(task.id);
+    } else {
+      toast.error('未找到对应任务项');
+    }
+  };
+
+  // 3. 能力训练管理
   const addAbilityItem = (catName: string) => {
-    const name = prompt('输入新标签名称:');
-    if (!name?.trim()) return;
-    setAbilitiesConfig(prev => ({
-      ...prev,
-      categories: prev.categories.map(cat =>
-        cat.name === catName
-          ? { ...cat, items: [...cat.items, name.trim()] }
-          : cat
-      )
-    }));
+    const val = window.prompt(`在【${catName}】下新增能力训练项:`);
+    if (val) {
+      handleAddLibraryItem('METHODOLOGY', catName, val);
+    }
+  };
+
+  const deleteAbilityItem = (catName: string, itemName: string) => {
+    const task = taskLibrary.find(t => t.name === itemName && t.educationalSubcategory === catName);
+    if (task) {
+      handleDeleteLibraryItem(task.id);
+    } else {
+      toast.error('未找到对应任务项');
+    }
   };
 
   // 打开习惯把关库
@@ -1022,7 +1018,9 @@ const PrepView: React.FC = () => {
         <div className="bg-white rounded-[24px] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
           <div className="text-[11px] font-extrabold text-slate-400 mb-5 tracking-widest uppercase flex items-center gap-2">
             <Stethoscope size={14} /> 习惯把关
-            <span className="text-[9px] text-slate-300 font-normal ml-auto">长按删除</span>
+            {user?.role === 'ADMIN' && (
+              <span className="text-[9px] text-slate-300 font-normal ml-auto">已开启校长管理权限</span>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -1036,26 +1034,36 @@ const PrepView: React.FC = () => {
                   {cat.items.map((item: string) => {
                     const isSelected = selectedHabits[cat.name]?.includes(item);
                     return (
-                      <button
-                        key={item}
-                        onClick={() => toggleHabits(cat.name, item)}
-                        onContextMenu={(e) => { e.preventDefault(); deleteHabitItem(cat.name, item); }}
-                        className={`py-2 px-3.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ${isSelected
-                          ? 'bg-orange-50 text-orange-600 border-orange-200'
-                          : 'bg-slate-100 text-slate-500 border-transparent hover:bg-slate-200'
-                          }`}
-                      >
-                        {item}
-                      </button>
+                      <div key={item} className="relative group">
+                        <button
+                          onClick={() => toggleHabits(cat.name, item)}
+                          className={`py-2 px-3.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ${isSelected
+                            ? 'bg-orange-50 text-orange-600 border-orange-200'
+                            : 'bg-slate-100 text-slate-500 border-transparent hover:bg-slate-200'
+                            }`}
+                        >
+                          {item}
+                        </button>
+                        {user?.role === 'ADMIN' && (
+                          <button
+                            onClick={() => deleteHabitItem(cat.name, item)}
+                            className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center scale-0 group-hover:scale-100 transition-transform shadow-sm"
+                          >
+                            <span className="text-[10px]">×</span>
+                          </button>
+                        )}
+                      </div>
                     )
                   })}
                   {/* 新增按钮 */}
-                  <button
-                    onClick={() => addHabitItem(cat.name)}
-                    className="py-2 px-3 rounded-xl text-xs font-bold bg-slate-50 text-slate-400 border border-dashed border-slate-200 hover:bg-slate-100 hover:text-slate-600 transition-all"
-                  >
-                    <Plus size={14} />
-                  </button>
+                  {user?.role === 'ADMIN' && (
+                    <button
+                      onClick={() => addHabitItem(cat.name)}
+                      className="py-2 px-3 rounded-xl text-xs font-bold bg-slate-50 text-slate-400 border border-dashed border-slate-200 hover:bg-slate-100 hover:text-slate-600 transition-all"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -1066,7 +1074,9 @@ const PrepView: React.FC = () => {
         <div className="bg-white rounded-[24px] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
           <div className="text-[11px] font-extrabold text-slate-400 mb-5 tracking-widest uppercase flex items-center gap-2">
             <Sparkles size={14} /> 能力训练
-            <span className="text-[9px] text-slate-300 font-normal ml-auto">长按删除</span>
+            {user?.role === 'ADMIN' && (
+              <span className="text-[9px] text-slate-300 font-normal ml-auto">已开启校长管理权限</span>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -1080,26 +1090,36 @@ const PrepView: React.FC = () => {
                   {cat.items.map((item: string) => {
                     const isSelected = selectedAbilities[cat.name]?.includes(item);
                     return (
-                      <button
-                        key={item}
-                        onClick={() => toggleAbilities(cat.name, item)}
-                        onContextMenu={(e) => { e.preventDefault(); deleteAbilityItem(cat.name, item); }}
-                        className={`py-2 px-3.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ${isSelected
-                          ? 'bg-blue-50 text-blue-600 border-blue-200'
-                          : 'bg-slate-100 text-slate-500 border-transparent hover:bg-slate-200'
-                          }`}
-                      >
-                        {item}
-                      </button>
+                      <div key={item} className="relative group">
+                        <button
+                          onClick={() => toggleAbilities(cat.name, item)}
+                          className={`py-2 px-3.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ${isSelected
+                            ? 'bg-blue-50 text-blue-600 border-blue-200'
+                            : 'bg-slate-100 text-slate-500 border-transparent hover:bg-slate-200'
+                            }`}
+                        >
+                          {item}
+                        </button>
+                        {user?.role === 'ADMIN' && (
+                          <button
+                            onClick={() => deleteAbilityItem(cat.name, item)}
+                            className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center scale-0 group-hover:scale-100 transition-transform shadow-sm"
+                          >
+                            <span className="text-[10px]">×</span>
+                          </button>
+                        )}
+                      </div>
                     )
                   })}
                   {/* 新增按钮 */}
-                  <button
-                    onClick={() => addAbilityItem(cat.name)}
-                    className="py-2 px-3 rounded-xl text-xs font-bold bg-slate-50 text-slate-400 border border-dashed border-slate-200 hover:bg-slate-100 hover:text-slate-600 transition-all"
-                  >
-                    <Plus size={14} />
-                  </button>
+                  {user?.role === 'ADMIN' && (
+                    <button
+                      onClick={() => addAbilityItem(cat.name)}
+                      className="py-2 px-3 rounded-xl text-xs font-bold bg-slate-50 text-slate-400 border border-dashed border-slate-200 hover:bg-slate-100 hover:text-slate-600 transition-all"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

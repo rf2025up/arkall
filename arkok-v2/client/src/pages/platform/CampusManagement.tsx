@@ -39,7 +39,7 @@ export function CampusManagement() {
         name: '',
         adminUsername: '',
         adminName: '',
-        planType: 'STANDARD'
+        planType: 'FREE'
     });
 
     useEffect(() => {
@@ -89,7 +89,7 @@ export function CampusManagement() {
             if (response.success) {
                 toast.success(`校区「${createForm.name}」创建成功！`);
                 setIsCreateModalOpen(false);
-                setCreateForm({ name: '', adminUsername: '', adminName: '', planType: 'STANDARD' });
+                setCreateForm({ name: '', adminUsername: '', adminName: '', planType: 'FREE' });
                 fetchCampuses();
             } else {
                 toast.error(response.message || '创建失败');
@@ -98,6 +98,57 @@ export function CampusManagement() {
             toast.error('创建失败: ' + err.message);
         } finally {
             setIsCreating(false);
+        }
+    };
+
+    // 编辑校区弹窗状态
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editingCampus, setEditingCampus] = useState<Campus | null>(null);
+    const [editForm, setEditForm] = useState({
+        name: '',
+        planType: 'FREE',
+        expiredAt: ''
+    });
+
+    const openEditModal = (campus: Campus) => {
+        setEditingCampus(campus);
+        setEditForm({
+            name: campus.name,
+            planType: campus.planType,
+            expiredAt: campus.expiredAt ? campus.expiredAt.split('T')[0] : ''
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const handleEditCampus = async () => {
+        if (!editingCampus || !editForm.name.trim()) {
+            toast.error('校区名称不能为空');
+            return;
+        }
+
+        setIsEditing(true);
+        try {
+            const response = await apiService.platform.updateCampus(editingCampus.id, {
+                name: editForm.name,
+                planType: editForm.planType,
+                expiredAt: editForm.expiredAt || undefined
+            });
+            if (response.success) {
+                toast.success(`校区「${editForm.name}」更新成功！`);
+                setIsEditModalOpen(false);
+                setCampuses(prev => prev.map(c =>
+                    c.id === editingCampus.id
+                        ? { ...c, name: editForm.name, planType: editForm.planType, expiredAt: editForm.expiredAt || null }
+                        : c
+                ));
+            } else {
+                toast.error(response.message || '更新失败');
+            }
+        } catch (err: any) {
+            toast.error('更新失败: ' + err.message);
+        } finally {
+            setIsEditing(false);
         }
     };
 
@@ -182,7 +233,10 @@ export function CampusManagement() {
                                     >
                                         {campus.isActive ? '一键禁停' : '恢复激活'}
                                     </button>
-                                    <button className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors">
+                                    <button
+                                        onClick={() => openEditModal(campus)}
+                                        className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-colors"
+                                    >
                                         <Edit2 size={18} />
                                     </button>
                                 </div>
@@ -263,9 +317,9 @@ export function CampusManagement() {
                                     onChange={e => setCreateForm({ ...createForm, planType: e.target.value })}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 text-sm font-medium focus:ring-2 focus:ring-orange-500/30 outline-none appearance-none"
                                 >
-                                    <option value="STANDARD">标准版 (STANDARD)</option>
+                                    <option value="FREE">免费版 (FREE)</option>
+                                    <option value="PRO">专业版 (PRO)</option>
                                     <option value="ENTERPRISE">企业版 (ENTERPRISE)</option>
-                                    <option value="TRIAL">试用版 (TRIAL)</option>
                                 </select>
                             </div>
                         </div>
@@ -288,6 +342,91 @@ export function CampusManagement() {
                                     <>
                                         <Check size={18} />
                                         创建校区
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+
+            {/* 编辑校区弹窗 */}
+            {isEditModalOpen && editingCampus && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-6">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white w-full max-w-md rounded-[32px] p-8 shadow-2xl"
+                    >
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center">
+                                    <Edit2 className="text-white" size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-gray-900 text-xl">编辑校区</h3>
+                                    <p className="text-xs text-gray-500">修改校区信息</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setIsEditModalOpen(false)} className="p-2 bg-gray-100 text-gray-400 rounded-xl hover:bg-gray-200">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">校区名称</label>
+                                <input
+                                    type="text"
+                                    value={editForm.name}
+                                    onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                                    className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 text-sm font-medium focus:ring-2 focus:ring-blue-500/30 outline-none"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">套餐类型</label>
+                                <select
+                                    value={editForm.planType}
+                                    onChange={e => setEditForm({ ...editForm, planType: e.target.value })}
+                                    className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 text-sm font-medium focus:ring-2 focus:ring-blue-500/30 outline-none appearance-none"
+                                >
+                                    <option value="FREE">免费版 (FREE)</option>
+                                    <option value="PRO">专业版 (PRO)</option>
+                                    <option value="ENTERPRISE">企业版 (ENTERPRISE)</option>
+                                </select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">服务到期时间</label>
+                                <input
+                                    type="date"
+                                    value={editForm.expiredAt}
+                                    onChange={e => setEditForm({ ...editForm, expiredAt: e.target.value })}
+                                    className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 text-sm font-medium focus:ring-2 focus:ring-blue-500/30 outline-none"
+                                />
+                                <p className="text-xs text-gray-400">留空表示永久有效</p>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 flex gap-3">
+                            <button
+                                onClick={() => setIsEditModalOpen(false)}
+                                className="flex-1 py-3.5 rounded-2xl bg-gray-100 text-gray-500 font-bold text-sm hover:bg-gray-200 transition-all"
+                            >
+                                取消
+                            </button>
+                            <button
+                                onClick={handleEditCampus}
+                                disabled={isEditing}
+                                className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold text-sm shadow-lg shadow-blue-200 hover:scale-105 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {isEditing ? (
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                ) : (
+                                    <>
+                                        <Check size={18} />
+                                        保存更改
                                     </>
                                 )}
                             </button>
