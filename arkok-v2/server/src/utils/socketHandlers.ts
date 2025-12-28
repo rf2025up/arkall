@@ -87,6 +87,9 @@ export const SOCKET_EVENTS = {
   STUDENT_LEFT: 'student_left',
   STUDENT_UPDATED: 'student_updated',
 
+  // 🆕 通用数据更新 (家长端实时同步)
+  DATA_UPDATE: 'DATA_UPDATE',
+
   // 系统相关
   SYSTEM_NOTIFICATION: 'system_notification',
   HEALTH_CHECK: 'health_check'

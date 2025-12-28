@@ -104,6 +104,71 @@ export class LMSRoutes {
       }
     });
 
+
+
+    // 🆕 任务库管理：创建新任务 (支持 4 大类 + 子标题)
+    this.router.post('/task-library', async (req, res) => {
+      try {
+        const { name, educationalDomain, educationalSubcategory, defaultExp, type } = req.body;
+        const user = (req as any).user;
+
+        // 验证必填项
+        if (!name || !educationalDomain || !educationalSubcategory) {
+          return res.status(400).json({
+            success: false,
+            message: '缺少必填字段: name, educationalDomain 或 educationalSubcategory'
+          });
+        }
+
+        const task = await this.lmsService.createTaskLibraryItem({
+          schoolId: user.schoolId || 'default',
+          name,
+          educationalDomain,
+          educationalSubcategory,
+          defaultExp: defaultExp || 5,
+          type: type || 'TASK',
+          isActive: true,
+          userRole: user.role
+        });
+
+        res.json({ success: true, data: task, message: '任务创建成功' });
+      } catch (error) {
+        console.error('❌ Error in POST /api/lms/task-library:', error);
+        res.status(500).json({ success: false, message: '创建任务库项目失败', error: (error as Error).message });
+      }
+    });
+
+    // 🆕 任务库管理：修改任务 (PUT)
+    this.router.put('/task-library/:id', async (req, res) => {
+      try {
+        const { id } = req.params;
+        const data = req.body;
+        const user = (req as any).user;
+
+        const updated = await this.lmsService.updateTaskLibraryItem(id, data, user.role);
+
+        res.json({ success: true, data: updated, message: '任务更新成功' });
+      } catch (error) {
+        console.error('❌ Error in PUT /api/lms/task-library/:id:', error);
+        res.status(500).json({ success: false, message: '更新任务失败', error: (error as Error).message });
+      }
+    });
+
+    // 🆕 任务库管理：删除任务
+    this.router.delete('/task-library/:id', async (req, res) => {
+      try {
+        const { id } = req.params;
+        const user = (req as any).user;
+
+        await this.lmsService.deleteTaskLibraryItem(id, user.schoolId, user.role);
+
+        res.json({ success: true, message: '任务删除成功' });
+      } catch (error) {
+        console.error('❌ Error in DELETE /api/lms/task-library/:id:', error);
+        res.status(500).json({ success: false, message: '删除任务失败', error: (error as Error).message });
+      }
+    });
+
     // 任务库获取
     this.router.get('/task-library', async (req, res) => {
       try {

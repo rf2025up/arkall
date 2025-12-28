@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, AlertCircle, Loader2 } from 'lucide-react';
+import { User, Lock, AlertCircle, Loader2, ArrowRight, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { LoginRequest } from '../types/auth';
 import { API } from '../services/api.service';
@@ -207,6 +207,21 @@ const Login: React.FC = () => {
             )}
           </button>
         </form>
+
+        {/* 体验入口 */}
+        <div className="mt-8 pt-8 border-t border-slate-50">
+          <button
+            onClick={() => navigate('/experience')}
+            className="w-full py-3 border-2 border-orange-100 text-orange-500 font-black rounded-2xl hover:bg-orange-50 hover:border-orange-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
+          >
+            <Sparkles size={18} className="animate-pulse" />
+            免注册一键体验演练场
+            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          </button>
+          <p className="mt-3 text-[10px] text-slate-400 font-bold">
+            包含校长看板、老师备课、家长动态全流程演示
+          </p>
+        </div>
 
         <div className="mt-8 text-[12px] text-[#C7C7CC]">
           © 2025 星途与伴 V1.0. All rights reserved.

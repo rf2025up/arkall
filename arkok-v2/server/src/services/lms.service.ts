@@ -6,13 +6,16 @@ import { RewardService } from './reward.service';
 
 export interface TaskLibraryItem {
   id: string;
-  category: string;
+  educationalDomain: string;      // 'METHODOLOGY' | 'HABIT' | 'GROWTH' | 'PROGRESS' | 'PERSONALIZED'
+  educationalSubcategory: string; // '数学思维' | '作业规范' 等
+  category: string;               // 兼容性字段
   name: string;
   description?: string;
   defaultExp: number;
   type: TaskType;
   difficulty?: number;
   isActive: boolean;
+  schoolId: string;
 }
 
 export interface PublishPlanRequest {
@@ -99,13 +102,16 @@ export class LMSService {
 
       return tasks.map(task => ({
         id: task.id,
+        educationalDomain: task.educationalDomain,
+        educationalSubcategory: task.educationalSubcategory,
         category: task.category,
         name: task.name,
         description: task.description || '',
         defaultExp: task.defaultExp,
         type: task.type,
         difficulty: task.difficulty || 0,
-        isActive: task.isActive
+        isActive: task.isActive,
+        schoolId: task.schoolId
       }));
     } catch (error) {
       console.error('❌ [LMS_SERVICE] 获取任务库失败:', error);
@@ -114,23 +120,131 @@ export class LMSService {
     }
   }
 
+  async createTaskLibraryItem(data: {
+    schoolId: string;
+    name: string;
+    educationalDomain: string;
+    educationalSubcategory: string;
+    defaultExp: number;
+    type: string;
+    isActive: boolean;
+    userRole: string; // 🆕 增加角色校验
+  }) {
+    console.log(`📝 [LMS_SERVICE] Creating task library item: ${data.name} in ${data.educationalDomain}`);
+
+    // 🆕 核心权限校验：只有 校长 (ADMIN) 或 平台管理员 (PLATFORM_ADMIN) 可以创建
+    if (data.userRole !== 'ADMIN' && data.userRole !== 'PLATFORM_ADMIN') {
+      throw new Error('权限不足：只有校长可以创建任务项');
+    }
+
+    // 检查是否已存在同名同分类
+    const existing = await this.prisma.task_library.findFirst({
+      where: {
+        schoolId: data.schoolId,
+        educationalDomain: data.educationalDomain,
+        educationalSubcategory: data.educationalSubcategory,
+        name: data.name,
+        isActive: true
+      }
+    });
+
+    if (existing) throw new Error('该任务已存在');
+
+    return this.prisma.task_library.create({
+      data: {
+        id: require('crypto').randomUUID(),
+        schoolId: data.schoolId,
+        name: data.name,
+        educationalDomain: data.educationalDomain,
+        educationalSubcategory: data.educationalSubcategory,
+        category: data.educationalSubcategory, // 同步到旧字段以保持兼容
+        defaultExp: data.defaultExp,
+        type: data.type as TaskType,
+        isActive: data.isActive,
+        updatedAt: new Date()
+      }
+    });
+  }
+
+  /**
+   * 🆕 更新任务库项目
+   */
+  async updateTaskLibraryItem(id: string, data: Partial<TaskLibraryItem>, userRole: string) {
+    console.log(`📝 [LMS_SERVICE] Updating task library item: ${id}`);
+
+    // 权限校验
+    if (userRole !== 'ADMIN' && userRole !== 'PLATFORM_ADMIN') {
+      throw new Error('权限不足：只有校长可以修改任务项');
+    }
+
+    const item = await this.prisma.task_library.findUnique({ where: { id } });
+    if (!item) throw new Error('任务不存在');
+
+    return this.prisma.task_library.update({
+      where: { id },
+      data: {
+        educationalDomain: data.educationalDomain || item.educationalDomain,
+        educationalSubcategory: data.educationalSubcategory || item.educationalSubcategory,
+        category: data.educationalSubcategory || item.category,
+        name: data.name || item.name,
+        description: data.description !== undefined ? data.description : item.description,
+        defaultExp: data.defaultExp !== undefined ? data.defaultExp : item.defaultExp,
+        isActive: data.isActive !== undefined ? data.isActive : item.isActive,
+        updatedAt: new Date()
+      }
+    });
+  }
+
+  /**
+   * 🆕 删除任务库项目 (软删除)
+   */
+  async deleteTaskLibraryItem(id: string, schoolId: string, userRole: string) {
+    console.log(`🗑️ [LMS_SERVICE] Deleting task library item: ${id}`);
+
+    // 🆕 核心权限校验
+    if (userRole !== 'ADMIN' && userRole !== 'PLATFORM_ADMIN') {
+      throw new Error('权限不足：只有校长可以删除任务项');
+    }
+
+    const item = await this.prisma.task_library.findUnique({ where: { id } });
+    if (!item) throw new Error('任务不存在');
+
+    // 权限检查：非平台管理员不能删除系统级任务 (schoolId='system' or 'default')
+    if (item.schoolId === 'default' || item.schoolId === 'system' || item.isGlobal) {
+      if (userRole !== 'PLATFORM_ADMIN') {
+        throw new Error('无法删除系统预置任务');
+      }
+    } else {
+      // 只能删除本校的任务
+      if (item.schoolId !== schoolId && userRole !== 'PLATFORM_ADMIN') {
+        throw new Error('无权删除其他学校的任务');
+      }
+    }
+
+    // 软删除
+    return this.prisma.task_library.update({
+      where: { id },
+      data: { isActive: false, updatedAt: new Date() }
+    });
+  }
+
   /**
    * 初始化默认任务库
    */
   private async initializeDefaultTaskLibrary(): Promise<void> {
     const defaultTasks = [
       // 语文过关项
-      { id: require('crypto').randomUUID(), schoolId: 'default', name: '生字听写', category: '语文过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '本课生字听写训练', updatedAt: new Date() },
-      { id: require('crypto').randomUUID(), schoolId: 'default', name: '课文背诵', category: '语文过关', defaultExp: 10, difficulty: 3, type: 'QC' as const, description: '流利背诵课文段落', updatedAt: new Date() },
-      { id: require('crypto').randomUUID(), schoolId: 'default', name: '古诗默写', category: '语文过关', defaultExp: 12, difficulty: 3, type: 'QC' as const, description: '古诗默写与理解', updatedAt: new Date() },
+      { id: require('crypto').randomUUID(), schoolId: 'default', name: '生字听写', educationalDomain: 'PROGRESS', educationalSubcategory: '语文过关', category: '语文过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '本课生字听写训练', updatedAt: new Date() },
+      { id: require('crypto').randomUUID(), schoolId: 'default', name: '课文背诵', educationalDomain: 'PROGRESS', educationalSubcategory: '语文过关', category: '语文过关', defaultExp: 10, difficulty: 3, type: 'QC' as const, description: '流利背诵课文段落', updatedAt: new Date() },
+      { id: require('crypto').randomUUID(), schoolId: 'default', name: '古诗默写', educationalDomain: 'PROGRESS', educationalSubcategory: '语文过关', category: '语文过关', defaultExp: 12, difficulty: 3, type: 'QC' as const, description: '古诗默写与理解', updatedAt: new Date() },
 
       // 数学过关项
-      { id: require('crypto').randomUUID(), schoolId: 'default', name: '口算达标', category: '数学过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '10分钟口算练习', updatedAt: new Date() },
-      { id: require('crypto').randomUUID(), schoolId: 'default', name: '竖式计算', category: '数学过关', defaultExp: 12, difficulty: 3, type: 'QC' as const, description: '多位数竖式计算', updatedAt: new Date() },
+      { id: require('crypto').randomUUID(), schoolId: 'default', name: '口算达标', educationalDomain: 'PROGRESS', educationalSubcategory: '数学过关', category: '数学过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '10分钟口算练习', updatedAt: new Date() },
+      { id: require('crypto').randomUUID(), schoolId: 'default', name: '竖式计算', educationalDomain: 'PROGRESS', educationalSubcategory: '数学过关', category: '数学过关', defaultExp: 12, difficulty: 3, type: 'QC' as const, description: '多位数竖式计算', updatedAt: new Date() },
 
       // 英语过关项
-      { id: require('crypto').randomUUID(), schoolId: 'default', name: '单词默写', category: '英语过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '本单元单词默写', updatedAt: new Date() },
-      { id: require('crypto').randomUUID(), schoolId: 'default', name: '听力理解', category: '英语过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '英语听力理解训练', updatedAt: new Date() }
+      { id: require('crypto').randomUUID(), schoolId: 'default', name: '单词默写', educationalDomain: 'PROGRESS', educationalSubcategory: '英语过关', category: '英语过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '本单元单词默写', updatedAt: new Date() },
+      { id: require('crypto').randomUUID(), schoolId: 'default', name: '听力理解', educationalDomain: 'PROGRESS', educationalSubcategory: '英语过关', category: '英语过关', defaultExp: 8, difficulty: 2, type: 'QC' as const, description: '英语听力理解训练', updatedAt: new Date() }
     ];
 
     console.log(`🌱[LMS_SERVICE] 正在创建 ${defaultTasks.length} 个默认任务...`);
@@ -153,9 +267,9 @@ export class LMSService {
   private getDefaultTaskLibrary(): TaskLibraryItem[] {
     console.log('🔄 [LMS_SERVICE] 使用内存默认任务库数据');
     return [
-      { id: 'def-1', category: '语文过关', name: '生字听写', defaultExp: 8, type: 'QC', difficulty: 2, isActive: true },
-      { id: 'def-2', category: '数学过关', name: '口算达标', defaultExp: 8, type: 'QC', difficulty: 2, isActive: true },
-      { id: 'def-3', category: '英语过关', name: '单词默写', defaultExp: 8, type: 'QC', difficulty: 2, isActive: true }
+      { id: 'def-1', educationalDomain: 'PROGRESS', educationalSubcategory: '语文过关', category: '语文过关', name: '生字听写', defaultExp: 8, type: 'QC' as const, difficulty: 2, isActive: true, schoolId: 'default' },
+      { id: 'def-2', educationalDomain: 'PROGRESS', educationalSubcategory: '数学过关', category: '数学过关', name: '口算达标', defaultExp: 8, type: 'QC' as const, difficulty: 2, isActive: true, schoolId: 'default' },
+      { id: 'def-3', educationalDomain: 'PROGRESS', educationalSubcategory: '英语过关', category: '英语过关', name: '单词默写', defaultExp: 8, type: 'QC' as const, difficulty: 2, isActive: true, schoolId: 'default' }
     ];
   }
 
@@ -340,13 +454,26 @@ export class LMSService {
         totalExpAwarded: tasks.reduce((sum, t) => sum + t.expAwarded, 0) * boundStudents.length
       };
 
-      // 广播
+      // 广播给老师
       io.to(`teacher_${teacherId} `).emit(SOCKET_EVENTS.PLAN_PUBLISHED, {
         lessonPlanId: lessonPlan.id,
         title,
         taskStats,
         affectedClasses: Array.from(affectedClasses)
       });
+
+      // 🆕 广播给所有受影响学生的房间，让家长端实时更新
+      for (const student of boundStudents) {
+        io.to(`student-${student.id}`).emit(SOCKET_EVENTS.DATA_UPDATE, {
+          type: 'PLAN_PUBLISHED',
+          studentId: student.id,
+          data: {
+            lessonPlanId: lessonPlan.id,
+            title,
+            taskCount: tasks.length
+          }
+        });
+      }
 
       return { lessonPlan, taskStats, affectedClasses: Array.from(affectedClasses) };
     } catch (error) {

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useClass } from '../context/ClassContext';
-import { Check, CheckSquare, ListChecks, BookOpen, AlertCircle, User, UserPlus, Trophy, Medal, Swords, Flag, ChevronDown, Users, Calendar, Bell, Plus } from 'lucide-react';
+import { Check, CheckSquare, ListChecks, BookOpen, AlertCircle, User, UserPlus, Trophy, Medal, Swords, Flag, ChevronDown, Users, Calendar, Bell, Plus, Sparkles, Smartphone } from 'lucide-react';
 import { Student, StudentListResponse, ScoreUpdateEvent } from '../types/student';
 import ActionSheet from '../components/ActionSheet';
 import { AddStudentModal } from '../components/AddStudentModal';
@@ -347,6 +347,29 @@ const Home = () => {
 
       {/* 学生列表区域 */}
       <div className="px-5 pt-6 pb-28">
+        {/* 校长专属：品牌赋能入口 */}
+        {user?.role === 'ADMIN' && (
+          <div
+            onClick={() => navigate('/empowerment')}
+            className="mb-8 p-6 rounded-[32px] bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-xl shadow-orange-200 relative overflow-hidden group active:scale-[0.98] transition-all cursor-pointer"
+          >
+            <div className="absolute right-[-20px] top-[-20px] opacity-10 group-hover:scale-110 transition-transform">
+              <Sparkles size={120} />
+            </div>
+            <div className="relative z-10 text-left">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-white/20 p-1 rounded-lg"><Smartphone size={16} /></div>
+                <span className="text-xs font-bold opacity-80 tracking-widest uppercase">Empowerment Center</span>
+              </div>
+              <h3 className="text-xl font-black mb-2 italic">校长赋能中心</h3>
+              <p className="text-xs opacity-90 leading-relaxed font-bold">
+                全学期过关地图、家长端动态预览、口碑裂变引擎...<br />
+                让机构的专业服务“清晰可见”。
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="flex justify-between items-center mb-4 px-1">
           <h3 className="font-bold text-gray-800 text-sm">学生名册</h3>
           <button

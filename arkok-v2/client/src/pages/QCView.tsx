@@ -1,7 +1,7 @@
 // VERSION: 2025-12-27-1915
 import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
-import { X, Check, Search, Settings, Trash2, Plus, ChevronRight, User, Shield, Award, Calendar, BookOpen, Zap, Star, Leaf, ArrowRight, ChevronDown } from 'lucide-react';
+import { X, Check, Search, Settings, Trash2, Plus, ChevronRight, User, Shield, Award, Calendar, BookOpen, Zap, Star, Leaf, ArrowRight, ChevronDown, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useClass } from '../context/ClassContext';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -110,6 +110,20 @@ interface TaskLibraryItem {
   isActive: boolean;
 }
 
+// 🆕 API响应转换为TaskLibrary格式 (Moved outside component)
+const convertApiToTaskLibrary = (apiData: TaskLibraryItem[]): TaskLibrary => {
+  return apiData.reduce((acc, task) => {
+    if (!acc[task.category]) {
+      acc[task.category] = [];
+    }
+    acc[task.category].push({
+      name: task.name,
+      exp: task.defaultExp
+    });
+    return acc;
+  }, {} as TaskLibrary);
+};
+
 const QCView: React.FC = () => {
   const { user, token } = useAuth();
   const { currentClass, viewMode, managedTeacherName, isProxyMode } = useClass(); // 🆕 获取完整视图状态，包含代理模式标志
@@ -137,6 +151,119 @@ const QCView: React.FC = () => {
   }, []);
   const [isTasksLoading, setIsTasksLoading] = useState(false);
   const [tasksError, setTasksError] = useState<string | null>(null);
+
+
+
+  // 🆕 基础过关项状态管理
+  const [customTaskLibrary, setCustomTaskLibrary] = useState<TaskLibraryItem[]>([]);
+  const [activeBasicQCItems, setActiveBasicQCItems] = useState<string[]>([]);
+  const [isBasicQCDrawerOpen, setIsBasicQCDrawerOpen] = useState(false);
+
+  // 🆕 加载任务库 (动态 4 大类 + 基础过关)
+  const fetchTaskLibrary = async () => {
+    try {
+      setIsTasksLoading(true);
+      const response = await apiService.get('/lms/task-library');
+      if (response.success && Array.isArray(response.data)) {
+        const tasks = response.data as TaskLibraryItem[];
+        setCustomTaskLibrary(tasks);
+
+        // 1. 处理基础过关 (PROGRESS)
+        const progressTasks = tasks.filter(t => t.educationalDomain === 'PROGRESS' || t.category.includes('过关'));
+        if (typeof convertApiToTaskLibrary === 'function') {
+          const convertedLibrary = convertApiToTaskLibrary(progressTasks);
+          setTaskLibrary(convertedLibrary);
+          setTaskDB(convertedLibrary);
+        }
+
+        // 2. 处理核心教学法 (METHODOLOGY)
+        const methodologyTasks = tasks.filter(t => t.educationalDomain === 'METHODOLOGY');
+        const methodGroups: Record<string, string[]> = {};
+        methodologyTasks.forEach(t => {
+          if (!methodGroups[t.educationalSubcategory]) methodGroups[t.educationalSubcategory] = [];
+          methodGroups[t.educationalSubcategory].push(t.name);
+        });
+        setMethodologyCategories(Object.entries(methodGroups).map(([name, items]) => ({ name, items })));
+
+        // 3. 处理综合成长 & 习惯养成 (GROWTH & HABIT)
+        const growthHabitTasks = tasks.filter(t => t.educationalDomain === 'GROWTH' || t.educationalDomain === 'HABIT');
+        const growthGroups: Record<string, string[]> = {};
+        growthHabitTasks.forEach(t => {
+          if (!growthGroups[t.educationalSubcategory]) growthGroups[t.educationalSubcategory] = [];
+          growthGroups[t.educationalSubcategory].push(t.name);
+        });
+        setGrowthCategories(Object.entries(growthGroups).map(([name, items]) => ({ name, items })));
+      }
+
+      // 加载本地Active配置
+      const savedActive = localStorage.getItem(`ARKOK_ACTIVE_BASIC_QC_${user?.schoolId}`);
+      if (savedActive) {
+        setActiveBasicQCItems(JSON.parse(savedActive));
+      } else {
+        const allDefaults = [
+          ...SUBJECT_DEFAULT_QC['chinese'],
+          ...SUBJECT_DEFAULT_QC['math'],
+          ...SUBJECT_DEFAULT_QC['english']
+        ];
+        setActiveBasicQCItems(allDefaults);
+      }
+    } catch (error) {
+      console.error('[QCView] Failed to fetch task library:', error);
+      setTasksError('获取任务库失败');
+    } finally {
+      setIsTasksLoading(false);
+    }
+  };
+
+  // 🆕 添加自定义任务项
+  const addLibraryItem = async (domain: string, sub: string, name: string) => {
+    try {
+      const response = await apiService.post('/lms/task-library', {
+        name,
+        educationalDomain: domain,
+        educationalSubcategory: sub,
+        defaultExp: 5,
+        type: domain === 'PROGRESS' ? 'QC' : 'TASK'
+      });
+
+      if (response.success) {
+        toast.success('添加成功');
+        await fetchTaskLibrary();
+        if (domain === 'PROGRESS') toggleActiveQCItem(name);
+      }
+    } catch (error) {
+      console.error('Failed to add library item:', error);
+      toast.error('添加失败');
+    }
+  };
+
+  // 🆕 删除任务项
+  const deleteLibraryItem = async (taskId: string) => {
+    if (!confirm('确定要删除这个任务项吗？')) return;
+    try {
+      const response = await apiService.delete(`/lms/task-library/${taskId}`);
+      if (response.success) {
+        toast.success('已删除');
+        fetchTaskLibrary();
+      }
+    } catch (error) {
+      console.error('Failed to delete item:', error);
+      toast.error('删除失败');
+    }
+  };
+
+  // 🆕 切换激活状态 (Today's Must-Do)
+  const toggleActiveQCItem = (name: string) => {
+    setActiveBasicQCItems(prev => {
+      const newItems = prev.includes(name)
+        ? prev.filter(item => item !== name)
+        : [...prev, name];
+
+      // 持久化
+      localStorage.setItem(`ARKOK_ACTIVE_BASIC_QC_${user?.schoolId}`, JSON.stringify(newItems));
+      return newItems;
+    });
+  };
 
   // 🚀 课程进度状态管理 - 直接使用备课页的数据结构
   const [courseInfo, setCourseInfo] = useState<{
@@ -797,70 +924,17 @@ const QCView: React.FC = () => {
     { name: '家庭联结类', items: ['与家人共读30分钟（可亲子读、兄弟姐妹读、给长辈读）', '帮家里完成一项力所及的家务（摆碗筷、倒垃圾/整理鞋柜等）'] }
   ]);
 
-  // 加载配置（每次打开弹窗时从 localStorage 刷新）
+  // 加载配置已迁移至 fetchTaskLibrary
   useEffect(() => {
-    const loadCategories = () => {
-      try {
-        const methodData = localStorage.getItem('arkok_methodology_categories');
-        const growthData = localStorage.getItem('arkok_growth_categories');
-        if (methodData) setMethodologyCategories(JSON.parse(methodData));
-        if (growthData) setGrowthCategories(JSON.parse(growthData));
-      } catch (e) {
-        console.error('加载配置失败', e);
-      }
-    };
-    loadCategories();
-  }, [isMethodologyModalOpen, isGrowthModalOpen]);
+    fetchTaskLibrary();
+  }, [token]);
 
   // 获取任务库 (复用PrepView逻辑)
-  const fetchTaskLibrary = async () => {
-    if (!token) {
-      console.warn('[QCView] 获取任务库失败：未找到认证token');
-      return;
-    }
 
-    setIsTasksLoading(true);
-    setTasksError(null);
-
-    try {
-      const response = await apiService.get('/lms/task-library');
-
-      if (response.success && response.data) {
-        const tasks = response.data as TaskLibraryItem[];
-
-        // 转换为TaskLibrary格式
-        const convertedLibrary = convertApiToTaskLibrary(tasks);
-        setTaskLibrary(convertedLibrary);
-        setTaskDB(convertedLibrary); // 同时更新CMS的任务库
-      } else {
-        setTasksError(response.message || '获取任务库失败');
-      }
-    } catch (err) {
-      console.error('[QCView] 获取任务库异常:', err);
-      setTasksError('网络错误，获取任务库失败');
-      // API失败时不使用降级数据，保持空状态
-      setTaskLibrary(EMPTY_TASK_LIBRARY);
-      setTaskDB(EMPTY_TASK_LIBRARY);
-    } finally {
-      setIsTasksLoading(false);
-    }
-  };
 
   // --- 辅助函数 ---
 
-  // API响应转换为TaskLibrary格式
-  const convertApiToTaskLibrary = (apiData: TaskLibraryItem[]): TaskLibrary => {
-    return apiData.reduce((acc, task) => {
-      if (!acc[task.category]) {
-        acc[task.category] = [];
-      }
-      acc[task.category].push({
-        name: task.name,
-        exp: task.defaultExp
-      });
-      return acc;
-    }, {} as TaskLibrary);
-  };
+
 
   // 🆕 动态生成排序后的分类列表
   const getSortedCategories = (taskLibrary: TaskLibrary): string[] => {
@@ -1669,15 +1743,14 @@ const QCView: React.FC = () => {
                     ))}
                   </div>
 
-                  {/* 2.3 基础过关清单 */}
+                  {/* 2.3 基础过关清单 (带抽屉管理) */}
                   <section className="mt-6 bg-white rounded-2xl p-1.5 border border-slate-100 shadow-sm">
                     <div className="flex justify-between items-center px-3 py-2">
                       <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">今日必达 (基础)</span>
+
+                      {/* 抽屉触发按钮 */}
                       <button
-                        onClick={() => {
-                          const name = prompt('输入过关项名称:');
-                          if (name) toggleQCPassByManual(selectedStudentId, name, qcTabSubject);
-                        }}
+                        onClick={() => setIsBasicQCDrawerOpen(true)}
                         className={`w-7 h-7 rounded-full flex items-center justify-center active:scale-95 transition-all ${qcTabSubject === 'chinese' ? 'bg-orange-50 text-orange-500 hover:bg-orange-100' :
                           qcTabSubject === 'math' ? 'bg-blue-50 text-blue-500 hover:bg-blue-100' :
                             'bg-purple-50 text-purple-500 hover:bg-purple-100'
@@ -1694,22 +1767,22 @@ const QCView: React.FC = () => {
                         const currentUnit = currentProgress?.unit || '1';
                         const currentLesson = currentProgress?.lesson || '1';
 
-                        // 🆕 动态合并：默认项 + 学生任务记录中该科目的自定义 QC 项
-                        const categoryMap: Record<string, string> = {
-                          chinese: '语文基础过关',
-                          math: '数学基础过关',
-                          english: '英语基础过关'
-                        };
-                        const currentCategory = categoryMap[qcTabSubject];
+                        // 🆕 必须是 "激活" (Active) 的项才显示
+                        // 来源：活跃列表 (从 LocalStorage 加载) ∩ (默认项 U 自定义项)
+                        // 但为了简化，我们直接遍历 activeBasicQCItems，并过滤出属于当前科目的项
 
-                        // 从学生任务中提取该科目的所有 QC 项名称（去重）
-                        const dynamicItems = (student?.tasks || [])
-                          .filter(t => t.type === 'QC' && (t.category === currentCategory || t.category?.includes(qcTabSubject === 'chinese' ? '语文' : qcTabSubject === 'math' ? '数学' : '英语')))
+                        const currentSubjectCategory = qcTabSubject === 'chinese' ? '语文基础过关' : qcTabSubject === 'math' ? '数学基础过关' : '英语基础过关';
+                        const defaultItems = SUBJECT_DEFAULT_QC[qcTabSubject];
+
+                        // 计算当前科目下所有可用的项 (默认 + 自定义)
+                        const availableCustomNames = customTaskLibrary
+                          .filter(t => t.category === currentSubjectCategory && t.isActive)
                           .map(t => t.name);
 
-                        // 合并默认项和动态项（去重，保持顺序：默认项在前）
-                        const defaultItems = SUBJECT_DEFAULT_QC[qcTabSubject];
-                        const allItems = [...defaultItems, ...dynamicItems.filter(item => !defaultItems.includes(item))];
+                        const allAvailableItems = [...defaultItems, ...availableCustomNames];
+
+                        // 最终显示列表：属于当前科目 AND 在激活列表中的项
+                        const allItems = allAvailableItems.filter(item => activeBasicQCItems.includes(item));
 
                         return allItems.map(itemName => {
                           // 🆕 只匹配当前进度的任务（unit/lesson 匹配）
@@ -1748,6 +1821,11 @@ const QCView: React.FC = () => {
                                   // 如果没有记录，先创建一个 PENDING 状态的记录
                                   if (!existingTask) {
                                     // 🆕 获取当前科目进度
+                                    const categoryMap: Record<string, string> = {
+                                      chinese: '语文基础过关',
+                                      math: '数学基础过关',
+                                      english: '英语基础过关'
+                                    };
                                     const currentSubjectProgress = courseInfo[qcTabSubject as keyof typeof courseInfo] as { unit: string; lesson?: string } | undefined;
                                     const response = await apiService.post('/lms/records', {
                                       studentId: selectedStudentId,
@@ -2220,82 +2298,90 @@ const QCView: React.FC = () => {
                       {/* 细项列表 */}
                       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-50">
                         {cat.items.map((item, itemIdx) => {
-                          // 检查该项是否已添加到学生任务列表
+                          const taskItem = customTaskLibrary.find(t => t.name === item && t.educationalSubcategory === cat.name);
                           const selectedStudent = getSelectedStudent();
-                          // 🔴 修复：只检查PENDING状态的任务，已完成的任务可以重新添加
                           const isAdded = selectedStudent?.tasks.some(t =>
                             t.status === 'PENDING' &&
                             t.name === item &&
-                            (t.category === '核心教学法' || t.educationalDomain === '核心教学法')
+                            (t.educationalDomain === 'METHODOLOGY' || t.category === '核心教学法')
                           );
                           return (
-                            <div
-                              key={itemIdx}
-                              onClick={async () => {
-                                if (selectedStudentId) {
-                                  if (isAdded) {
-                                    // 已添加 -> 取消（从任务列表移除）
-                                    // 注意：这里可能需要后端删除接口，目前仅前端同步
-                                    setQcStudents(prev => prev.map(s =>
-                                      s.id === selectedStudentId
-                                        ? { ...s, tasks: s.tasks.filter(t => !(t.name === item && (t.id.startsWith('temp-methodology-') || t.type === 'TASK'))) }
-                                        : s
-                                    ));
-                                  } else {
-                                    // 未添加 -> 同步到后端
-                                    try {
-                                      console.log(`📤 [METHODOLOGY] Sending POST to /records for: ${item}`);
-                                      const response = await apiService.records.create({
-                                        studentId: selectedStudentId,
-                                        title: item,
-                                        category: '核心教学法',     // 🆕 大类
-                                        subcategory: cat.name,      // 🆕 分类标题
-                                        exp: 5,
-                                        type: 'TASK'
-                                      });
+                            <div key={itemIdx} className="relative group">
+                              <div
+                                onClick={async () => {
+                                  if (selectedStudentId) {
+                                    if (isAdded) {
+                                      setQcStudents(prev => prev.map(s =>
+                                        s.id === selectedStudentId
+                                          ? { ...s, tasks: s.tasks.filter(t => !(t.name === item && (t.id.startsWith('temp-') || t.type === 'TASK'))) }
+                                          : s
+                                      ));
+                                    } else {
+                                      try {
+                                        const response = await apiService.records.create({
+                                          studentId: selectedStudentId,
+                                          title: item,
+                                          category: '核心教学法',
+                                          subcategory: cat.name,
+                                          exp: 5,
+                                          type: 'TASK'
+                                        });
 
-                                      console.log(`📥 [METHODOLOGY] Response:`, response);
-
-                                      if (response.success) {
-                                        const serverRecord = response.data;
-                                        console.log(`✅ [METHODOLOGY] Success! Record:`, serverRecord);
-                                        const newTask: Task = {
-                                          id: serverRecord.id, // 使用后端返回的真实 ID
-                                          recordId: serverRecord.id,
-                                          name: serverRecord.title,
-                                          type: 'TASK',
-                                          status: 'PENDING',
-                                          exp: serverRecord.expAwarded || 5,
-                                          attempts: 0,
-                                          category: '核心教学法', // 🔴 关键：确保面板过滤能找到这条任务
-                                          educationalDomain: '核心教学法' // 🔴 备用过滤字段
-                                        };
-
-                                        setQcStudents(prev => prev.map(s =>
-                                          s.id === selectedStudentId
-                                            ? { ...s, tasks: [...s.tasks, newTask] }
-                                            : s
-                                        ));
-                                      } else {
-                                        console.error(`❌ [METHODOLOGY] Failed:`, response.message);
+                                        if (response.success) {
+                                          const serverRecord = response.data;
+                                          const newTask: Task = {
+                                            id: serverRecord.id,
+                                            recordId: serverRecord.id,
+                                            name: serverRecord.title,
+                                            type: 'TASK',
+                                            status: 'PENDING',
+                                            exp: serverRecord.expAwarded || 5,
+                                            attempts: 0,
+                                            category: '核心教学法',
+                                            educationalDomain: 'METHODOLOGY'
+                                          };
+                                          setQcStudents(prev => prev.map(s =>
+                                            s.id === selectedStudentId ? { ...s, tasks: [...s.tasks, newTask] } : s
+                                          ));
+                                          toast.success('已添加');
+                                        }
+                                      } catch (e) {
+                                        console.error(e);
                                       }
-                                    } catch (err) {
-                                      console.error('Failed to create methodology task:', err);
-                                      alert('任务添加失败，请检查网络');
                                     }
                                   }
-                                }
-                              }}
-                              className={`px-4 py-3 flex items-center justify-between cursor-pointer transition-colors ${isAdded ? 'bg-red-50' : 'hover:bg-red-50'}`}
-                            >
-                              <span className={`text-sm ${isAdded ? 'text-red-600 font-bold' : 'text-gray-700'}`}>{item}</span>
-                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isAdded ? 'bg-red-500 border-red-500' : 'border-gray-300'}`}>
-                                {isAdded && <Check size={12} className="text-white" />}
+                                }}
+                                className={`p-4 rounded-xl border transition-all active:scale-[0.98] flex items-center justify-between ${isAdded
+                                  ? 'bg-slate-800 text-white border-slate-800 shadow-lg shadow-slate-200'
+                                  : 'bg-white text-slate-600 border-slate-100 hover:border-slate-300'
+                                  }`}
+                              >
+                                <span className="text-sm font-bold">{item}</span>
+                                {isAdded ? <CheckCircle2 size={16} /> : <Plus size={16} className="text-slate-300" />}
                               </div>
+                              {user?.role === 'ADMIN' && taskItem && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); deleteLibraryItem(taskItem.id); }}
+                                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center scale-0 group-hover:scale-100 transition-transform shadow-sm z-20"
+                                >
+                                  <span className="text-[10px]">×</span>
+                                </button>
+                              )}
                             </div>
                           );
                         })}
                       </div>
+                      {user?.role === 'ADMIN' && (
+                        <div
+                          onClick={() => {
+                            const val = window.prompt(`在【${cat.name}】下新增“核心教学法”项目:`);
+                            if (val) addLibraryItem('METHODOLOGY', cat.name, val);
+                          }}
+                          className="mt-2 p-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 text-slate-400 text-xs font-bold flex items-center justify-center gap-1 hover:bg-slate-100 transition-all cursor-pointer"
+                        >
+                          <Plus size={14} /> 新增
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -2332,75 +2418,90 @@ const QCView: React.FC = () => {
                       {/* 细项列表 */}
                       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-50">
                         {cat.items.map((item, itemIdx) => {
-                          // 检查该项是否已添加到学生任务列表
+                          const taskItem = customTaskLibrary.find(t => t.name === item && t.educationalSubcategory === cat.name);
                           const selectedStudent = getSelectedStudent();
-                          // 🔴 修复：只检查PENDING状态的任务，已完成的任务可以重新添加
                           const isAdded = selectedStudent?.tasks.some(t =>
                             t.status === 'PENDING' &&
                             t.name === item &&
-                            (t.category === '综合成长' || t.educationalDomain === '综合成长')
+                            (t.educationalDomain === 'GROWTH' || t.educationalDomain === 'HABIT' || t.category === '综合成长')
                           );
                           return (
-                            <div
-                              key={itemIdx}
-                              onClick={async () => {
-                                if (selectedStudentId) {
-                                  if (isAdded) {
-                                    // 已添加 -> 取消（从任务列表移除）
-                                    setQcStudents(prev => prev.map(s =>
-                                      s.id === selectedStudentId
-                                        ? { ...s, tasks: s.tasks.filter(t => !(t.name === item && (t.id.startsWith('temp-growth-') || t.type === 'TASK'))) }
-                                        : s
-                                    ));
-                                  } else {
-                                    // 未添加 -> 同步到后端
-                                    try {
-                                      const response = await apiService.records.create({
-                                        studentId: selectedStudentId,
-                                        title: item,
-                                        category: '综合成长',       // 🆕 大类
-                                        subcategory: cat.name,      // 🆕 分类标题
-                                        exp: 5,
-                                        type: 'TASK'
-                                      });
+                            <div key={itemIdx} className="relative group">
+                              <div
+                                onClick={async () => {
+                                  if (selectedStudentId) {
+                                    if (isAdded) {
+                                      setQcStudents(prev => prev.map(s =>
+                                        s.id === selectedStudentId
+                                          ? { ...s, tasks: s.tasks.filter(t => !(t.name === item && (t.id.startsWith('temp-') || t.type === 'TASK'))) }
+                                          : s
+                                      ));
+                                    } else {
+                                      try {
+                                        const response = await apiService.records.create({
+                                          studentId: selectedStudentId,
+                                          title: item,
+                                          category: '综合成长',
+                                          subcategory: cat.name,
+                                          exp: 5,
+                                          type: 'TASK'
+                                        });
 
-                                      if (response.success) {
-                                        const serverRecord = response.data;
-                                        const newTask: Task = {
-                                          id: serverRecord.id, // 使用后端返回的真实 ID
-                                          recordId: serverRecord.id,
-                                          name: serverRecord.title,
-                                          type: 'TASK',
-                                          status: 'PENDING',
-                                          exp: serverRecord.expAwarded || 5,
-                                          attempts: 0,
-                                          category: '综合成长', // 🔴 关键：确保面板过滤能找到这条任务
-                                          educationalDomain: '综合成长' // 🔴 备用过滤字段
-                                        };
-
-                                        setQcStudents(prev => prev.map(s =>
-                                          s.id === selectedStudentId
-                                            ? { ...s, tasks: [...s.tasks, newTask] }
-                                            : s
-                                        ));
+                                        if (response.success) {
+                                          const serverRecord = response.data;
+                                          const newTask: Task = {
+                                            id: serverRecord.id,
+                                            recordId: serverRecord.id,
+                                            name: serverRecord.title,
+                                            type: 'TASK',
+                                            status: 'PENDING',
+                                            exp: serverRecord.expAwarded || 5,
+                                            attempts: 0,
+                                            category: '综合成长',
+                                            educationalDomain: 'GROWTH'
+                                          };
+                                          setQcStudents(prev => prev.map(s =>
+                                            s.id === selectedStudentId ? { ...s, tasks: [...s.tasks, newTask] } : s
+                                          ));
+                                          toast.success('已添加');
+                                        }
+                                      } catch (e) {
+                                        console.error(e);
                                       }
-                                    } catch (err) {
-                                      console.error('Failed to create growth task:', err);
-                                      alert('任务添加失败，请检查网络');
                                     }
                                   }
-                                }
-                              }}
-                              className={`px-4 py-3 flex items-center justify-between cursor-pointer transition-colors ${isAdded ? 'bg-green-50' : 'hover:bg-green-50'}`}
-                            >
-                              <span className={`text-sm ${isAdded ? 'text-green-600 font-bold' : 'text-gray-700'}`}>{item}</span>
-                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isAdded ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}>
-                                {isAdded && <Check size={12} className="text-white" />}
+                                }}
+                                className={`p-4 rounded-xl border transition-all active:scale-[0.98] flex items-center justify-between ${isAdded
+                                  ? 'bg-green-600 text-white border-green-600 shadow-lg shadow-green-100'
+                                  : 'bg-white text-slate-600 border-slate-100 hover:border-slate-300'
+                                  }`}
+                              >
+                                <span className="text-sm font-bold">{item}</span>
+                                {isAdded ? <CheckCircle2 size={16} /> : <Plus size={16} className="text-slate-300" />}
                               </div>
+                              {user?.role === 'ADMIN' && taskItem && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); deleteLibraryItem(taskItem.id); }}
+                                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center scale-0 group-hover:scale-100 transition-transform shadow-sm z-20"
+                                >
+                                  <span className="text-[10px]">×</span>
+                                </button>
+                              )}
                             </div>
                           );
                         })}
                       </div>
+                      {user?.role === 'ADMIN' && (
+                        <div
+                          onClick={() => {
+                            const val = window.prompt(`在【${cat.name}】下新增“综合成长”项目:`);
+                            if (val) addLibraryItem('GROWTH', cat.name, val);
+                          }}
+                          className="mt-2 p-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 text-slate-400 text-xs font-bold flex items-center justify-center gap-1 hover:bg-slate-100 transition-all cursor-pointer"
+                        >
+                          <Plus size={14} /> 新增
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -2408,6 +2509,98 @@ const QCView: React.FC = () => {
             </>
           )
         }
+
+
+        {/* 🆕 基础过关项管理抽屉 */}
+        {isBasicQCDrawerOpen && (
+          <div className="fixed inset-0 z-[60] flex flex-col justify-end pointer-events-none">
+            <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px] pointer-events-auto transition-opacity" onClick={() => setIsBasicQCDrawerOpen(false)} />
+            <div className="bg-white w-full rounded-t-3xl shadow-2xl safe-pb pointer-events-auto transform transition-transform duration-300 flex flex-col max-h-[85vh]">
+              {/* 抽屉把手 */}
+              <div className="flex justify-center pt-3 pb-1 cursor-pointer" onClick={() => setIsBasicQCDrawerOpen(false)}>
+                <div className="w-12 h-1.5 bg-slate-200 rounded-full" />
+              </div>
+
+              {/* 抽屉头部 */}
+              <div className="px-6 pb-4 flex justify-between items-center border-b border-slate-50">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800">
+                    {qcTabSubject === 'chinese' ? '语文' : qcTabSubject === 'math' ? '数学' : '英语'}基础过关库
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">点按添加/移除今日必达项</p>
+                </div>
+
+                {/* 自定义添加输入框 */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="新自定义项..."
+                    className="w-32 h-9 px-3 text-sm bg-slate-50 border border-slate-200 rounded-full focus:outline-none focus:border-indigo-500 transition-all"
+                    onKeyDown={async (e) => {
+                      if (e.key === 'Enter') {
+                        const input = e.currentTarget;
+                        const val = input.value.trim();
+                        if (val) {
+                          const categoryMap = { chinese: '语文基础过关', math: '数学基础过关', english: '英语基础过关' };
+                          const subcategory = categoryMap[qcTabSubject as keyof typeof categoryMap];
+                          await addLibraryItem('PROGRESS', subcategory, val);
+                          input.value = '';
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* 抽屉内容：列表 */}
+              <div className="p-6 overflow-y-auto min-h-[40vh]">
+                <div className="grid grid-cols-2 gap-3">
+                  {/* 1. 系统默认项 */}
+                  {SUBJECT_DEFAULT_QC[qcTabSubject].map(item => (
+                    <div
+                      key={item}
+                      onClick={() => toggleActiveQCItem(item)}
+                      className={`relative p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between group ${activeBasicQCItems.includes(item)
+                        ? 'border-indigo-500 bg-indigo-50/50'
+                        : 'border-slate-100 bg-white hover:border-slate-200'
+                        }`}
+                    >
+                      <span className={`font-medium ${activeBasicQCItems.includes(item) ? 'text-indigo-700' : 'text-slate-600'}`}>{item}</span>
+                      {activeBasicQCItems.includes(item) && <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />}
+                    </div>
+                  ))}
+
+                  {/* 2. 自定义项 */}
+                  {customTaskLibrary
+                    .filter(t => t.category === (qcTabSubject === 'chinese' ? '语文基础过关' : qcTabSubject === 'math' ? '数学基础过关' : '英语基础过关') && t.isActive)
+                    .map(t => (
+                      <div
+                        key={t.id}
+                        onClick={() => toggleActiveQCItem(t.name)}
+                        className={`relative p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between group ${activeBasicQCItems.includes(t.name)
+                          ? 'border-purple-500 bg-purple-50/50'
+                          : 'border-slate-100 bg-white hover:border-slate-200'
+                          }`}
+                      >
+                        <div className="flex flex-col">
+                          <span className={`font-medium ${activeBasicQCItems.includes(t.name) ? 'text-purple-700' : 'text-slate-600'}`}>{t.name}</span>
+                          <span className="text-[10px] text-purple-400 bg-purple-50 self-start px-1 rounded mt-1">自定义</span>
+                        </div>
+
+                        {/* 删除按钮 (只在自定义项显示) */}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteLibraryItem(t.id); }}
+                          className="absolute -top-2 -right-2 bg-slate-200 text-slate-500 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 hover:text-red-500"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 🆕 轻量化 Toast 通知 */}
         {toastMsg && (

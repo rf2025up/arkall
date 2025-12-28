@@ -18,6 +18,8 @@ import TeacherManagement from '../pages/TeacherManagement';
 import StudentManagement from '../pages/StudentManagement';
 import TutoringStudio from '../pages/TutoringStudio';
 import RewardManagement from '../pages/RewardManagement';
+import EmpowermentHub from '../pages/EmpowermentHub';
+import ExperienceAccounts from '../pages/ExperienceAccounts';
 import { ParentLogin, ParentLayout, TodayTimeline, GrowthProfile, SchoolConnect } from '../pages/parent';
 import { PlatformDashboard, CampusManagement, PlatformLogin } from '../pages/platform';
 import PlatformLayout from '../components/PlatformLayout';
@@ -29,6 +31,10 @@ export const router = createBrowserRouter([
     path: '/login',
     element: <Login />,
     errorElement: <div className="flex items-center justify-center min-h-screen">登录页面加载错误</div>,
+  },
+  {
+    path: '/experience',
+    element: <ExperienceAccounts />,
   },
   {
     path: '/platform-login',
@@ -55,6 +61,10 @@ export const router = createBrowserRouter([
       {
         path: 'dashboard',
         element: <Dashboard />,
+      },
+      {
+        path: 'empowerment',
+        element: <EmpowermentHub />,
       },
       {
         path: 'prep',
