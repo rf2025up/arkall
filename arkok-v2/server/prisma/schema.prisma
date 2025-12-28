@@ -295,7 +295,7 @@ model task_records {
 
 model teachers {
   id                          String                        @id @default(uuid())
-  schoolId                    String
+  schoolId                    String?                       // 🆕 可空，支持 PLATFORM_ADMIN 跨校区穿透
   username                    String                        @unique
   password                    String
   name                        String
@@ -309,7 +309,7 @@ model teachers {
   lesson_plans                lesson_plans[]
   personalized_tutoring_plans personalized_tutoring_plans[]
   students                    students[]
-  schools                     schools                       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  schools                     schools?                      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 }
 
 model personalized_tutoring_plans {
