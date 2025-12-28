@@ -1,3 +1,4 @@
+// VERSION: 2025-12-27-1915
 import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { X, Check, Search, Settings, Trash2, Plus, ChevronRight, User, Shield, Award, Calendar, BookOpen, Zap, Star, Leaf, ArrowRight, ChevronDown } from 'lucide-react';
@@ -40,6 +41,9 @@ interface Task {
   taskId?: string;
   category?: string; // 🚀 添加分类标签字段
   educationalDomain?: string; // 🚀 教育体系分类 (用于匹配核心教学法等)
+  settledAt?: string | null; // 🆕 结算时间戳，null 表示未结算
+  unit?: string; // 🆕 任务关联的单元号（用于按进度过滤）
+  lesson?: string; // 🆕 任务关联的课程号（用于按进度过滤）
 }
 
 interface Lesson {
@@ -145,8 +149,8 @@ const QCView: React.FC = () => {
     chinese: { unit: "1", lesson: "1", title: "默认课程" },
     math: { unit: "1", lesson: "1", title: "默认课程" },
     english: { unit: "1", title: "Default Course" },
-    grade: "二年级",
-    semester: "上册"
+    grade: undefined,  // 🔧 不再硬编码，等待从学生数据初始化
+    semester: undefined
   });
 
   // 课程进度编辑状态
@@ -203,6 +207,11 @@ const QCView: React.FC = () => {
       return;
     }
 
+    // 🔧 先从已加载的学生列表中读取年级信息作为备选
+    const student = qcStudents.find(s => s.id === studentId);
+    const fallbackGrade = student?.grade || courseInfo.grade;
+    const fallbackSemester = student?.semester || courseInfo.semester;
+
     try {
       const response = await apiService.get(`/lms/student-progress?studentId=${studentId}`);
 
@@ -213,12 +222,25 @@ const QCView: React.FC = () => {
           chinese: progressData.chinese || { unit: "1", lesson: "1", title: "默认课程" },
           math: progressData.math || { unit: "1", lesson: "1", title: "默认课程" },
           english: progressData.english || { unit: "1", title: "Default Course" },
-          grade: progressData.grade || "二年级",
-          semester: progressData.semester || "上册"
+          grade: progressData.grade || fallbackGrade,
+          semester: progressData.semester || fallbackSemester
         });
+      } else {
+        // 🔧 API返回无数据时，使用学生自身的年级信息
+        setCourseInfo(prev => ({
+          ...prev,
+          grade: fallbackGrade,
+          semester: fallbackSemester
+        }));
       }
     } catch (error) {
       console.error('[QCView] 获取学生课程进度异常:', error);
+      // 🔧 异常时也使用备选年级
+      setCourseInfo(prev => ({
+        ...prev,
+        grade: fallbackGrade,
+        semester: fallbackSemester
+      }));
     }
   };
 
@@ -313,6 +335,11 @@ const QCView: React.FC = () => {
         courseInfo: info
       });
       console.log('✅ [QCView] 学生进度自动保存成功');
+
+      // 🆕 同步更新本地 qcStudents 列表，防止 useEffect 基于旧数据回滚 UI
+      setQcStudents(prev => prev.map(s =>
+        s.id === studentId ? { ...s, grade: info.grade, semester: info.semester } : s
+      ));
     } catch (error) {
       console.error('❌ [QCView] 学生进度自动保存失败:', error);
     }
@@ -643,21 +670,36 @@ const QCView: React.FC = () => {
 
         const studentRecords = recordsByStudent[student.id] || [];
 
-        // 将后端记录转换为前端需要的格式
-        const tasks = studentRecords.map((record: any) => ({
-          id: record.id,
-          recordId: record.id,
-          name: record.title,
-          type: record.type.toUpperCase(),
-          category: record.content?.category || '', // 🆕 提取分类标签
-          educationalDomain: record.content?.educationalDomain || '', // 🆕 提取教育领域
-          status: record.status === 'PENDING' ? 'PENDING' :
-            record.status === 'SUBMITTED' ? 'PENDING' :
-              record.status === 'COMPLETED' ? 'PASSED' : 'PENDING',
-          exp: record.expAwarded || 5,
-          attempts: (record.content?.attempts) || 0,
-          isAuto: record.type === 'SPECIAL'
-        }));
+        // 🆕 核心优化：按名称去重任务记录，并合并尝试次数
+        const taskMap = new Map<string, any>();
+        studentRecords.forEach((record: any) => {
+          const key = `${record.type.toUpperCase()}_${record.title}`;
+          const current = taskMap.get(key);
+          if (current) {
+            // 已存在，合并数据
+            // 经验值取单次奖励（去重），尝试次数累加
+            current.attempts += (record.attempts || 0);
+          } else {
+            // 新记录
+            taskMap.set(key, {
+              id: record.id,
+              recordId: record.id,
+              name: record.title,
+              type: record.type.toUpperCase(),
+              category: record.content?.category || '',
+              educationalDomain: record.content?.educationalDomain || '',
+              status: record.status === 'COMPLETED' ? 'PASSED' : record.status,
+              exp: record.expAwarded || 5,
+              attempts: record.attempts || 0,
+              isAuto: record.type === 'SPECIAL',
+              settledAt: record.settledAt || null,
+              // 🆕 保存任务关联的单元/课程信息，用于按进度过滤
+              unit: record.content?.unit || '',
+              lesson: record.content?.lesson || ''
+            });
+          }
+        });
+        const tasks = Array.from(taskMap.values());
 
         return {
           ...student,
@@ -699,12 +741,23 @@ const QCView: React.FC = () => {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
 
   // 🆕 监听selectedStudentId变化，自动加载该学生的进度（解决年级进度重置问题）
+  // 🔧 关键修复：移除 qcStudents 依赖，避免保存后触发重新加载导致覆盖用户选择
   useEffect(() => {
     if (selectedStudentId) {
       console.log(`[QCView] selectedStudentId 变化，加载学生进度: ${selectedStudentId}`);
+      // 🔧 先从已加载的学生列表中读取年级信息，立即更新UI
+      const student = qcStudents.find(s => s.id === selectedStudentId);
+      if (student) {
+        setCourseInfo(prev => ({
+          ...prev,
+          grade: student.grade || prev.grade,
+          semester: student.semester || prev.semester
+        }));
+      }
       fetchStudentProgress(selectedStudentId);
     }
-  }, [selectedStudentId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedStudentId]); // 🆕 只依赖 selectedStudentId，移除 qcStudents
   const [isQCDrawerOpen, setIsQCDrawerOpen] = useState(false);
   const [isCMSDrawerOpen, setIsCMSDrawerOpen] = useState(false);
 
@@ -844,15 +897,26 @@ const QCView: React.FC = () => {
     return total;
   };
 
-  // 🆕 计算当前选中学生的待结算经验
+  // 🆕 计算当前选中学生的待结算经验（只计算过关页任务，不含PK/挑战/勋章/习惯）
   const calculateSelectedStudentExp = () => {
     const student = getSelectedStudent();
-    if (!student) return 0;
+    if (!student) return { exp: 0, count: 0, items: [] };
     let total = 0;
+    let count = 0;
+    const items: string[] = [];
+    // 只计算过关页相关任务类型
+    const qcTaskTypes = ['QC', 'TASK', 'SPECIAL'];
     student.tasks.forEach(t => {
-      if (t.status === 'PASSED' || t.status === 'COMPLETED') total += t.exp;
+      // 🆕 只计算过关页任务（QC/TASK/SPECIAL），已完成且未结算
+      const isQcTask = qcTaskTypes.includes(t.type);
+      const isDone = t.status === 'PASSED' || t.status === 'COMPLETED';
+      if (isQcTask && isDone && !t.settledAt) {
+        total += t.exp;
+        count++;
+        items.push(`${t.name}(+${t.exp})`);
+      }
     });
-    return total;
+    return { exp: total, count, items };
   };
 
   // --- 交互逻辑 ---
@@ -867,16 +931,16 @@ const QCView: React.FC = () => {
     // 🚀 获取该学生的课程进度数据并预加载大纲
     if (student) {
       await fetchStudentProgress(student.id);
-
-      // 预加载当前年级/学期的三科大纲，提升下拉菜单响应速度
-      const g = getNormGrade(student.grade);
-      const s = getNormSemester(student.semester);
-      Promise.all([
-        fetchSyllabus('chinese', g, s),
-        fetchSyllabus('math', g, s),
-        fetchSyllabus('english', g, s)
-      ]);
     }
+
+    // 预加载当前年级/学期的三科大纲，提升下拉菜单响应速度
+    const g = getNormGrade(student.grade);
+    const s = getNormSemester(student.semester);
+    Promise.all([
+      fetchSyllabus('chinese', g, s),
+      fetchSyllabus('math', g, s),
+      fetchSyllabus('english', g, s)
+    ]);
   };
 
   const recordAttempt = async (e: React.MouseEvent, studentId: string, taskId: string) => {
@@ -904,8 +968,9 @@ const QCView: React.FC = () => {
           return {
             ...s,
             tasks: s.tasks.map(t => {
-              if (t.id !== taskId || t.status === 'PASSED') return t;
-              return { ...t, attempts: t.attempts + 1 };
+              if (t.id !== taskId) return t;
+              // 🆕 允许所有状态的任务增加尝试次数（包括 PENDING）
+              return { ...t, attempts: (t.attempts || 0) + 1 };
             })
           };
         }));
@@ -991,30 +1056,44 @@ const QCView: React.FC = () => {
   };
 
   const toggleQCPass = async (studentId: string, taskId: string) => {
-    console.log(`🔵 [TOGGLE_QC] 函数被调用: studentId=${studentId}, taskId=${taskId}`);
     try {
       // 找到对应的学生和任务
       const student = qcStudents.find(s => s.id === studentId);
       const task = student?.tasks.find(t => t.id === taskId);
 
-      console.log(`🔵 [TOGGLE_QC] 查找结果: student=${student?.name}, task=${task?.name}, recordId=${task?.recordId}`);
-
       if (!student || !task || !task.recordId) {
-        const errorMsg = `[QC_ERROR] 数据缺失: Student=${!!student}, Task=${!!task}, RecordID=${task?.recordId}`;
-        console.error(errorMsg);
-        alert(errorMsg);
         return;
       }
 
-      const newStatus = task.status === 'PASSED' ? 'PENDING' : 'COMPLETED';
-      const targetUrl = `lms/records/${task.recordId}/status`;
+      const isAlreadyPassed = task.status === 'PASSED' || task.status === 'COMPLETED';
+      const newStatus = isAlreadyPassed ? task.status : 'COMPLETED';
 
-      // 🚀 记录变更 (如果是第一次勾选静态项，可能需要创建新记录)
-      // 在此重构逻辑中，我们假设后端已经支持通过 taskId 或类似方式原子化处理
-      // 这里简化为：调用 API 切换状态，如果是新任务需后端自动补全
+      // 🆕 基础过关项：已过关时点击可以取消勾选
+      if (isAlreadyPassed) {
+        // 将状态改回 PENDING
+        const rollbackRes = await apiService.patch(`lms/records/${task.recordId}/status`, {
+          status: 'PENDING'
+        });
+        if (rollbackRes.success) {
+          setQcStudents(prev => prev.map(s => {
+            if (s.id !== studentId) return s;
+            return {
+              ...s,
+              tasks: s.tasks.map(t => {
+                if (t.id !== taskId) return t;
+                return { ...t, status: 'PENDING' };
+              })
+            };
+          }));
+          if (navigator.vibrate) navigator.vibrate(50);
+          return;
+        }
+      }
+
+      const targetUrl = `lms/records/${task.recordId}/status`;
       const response = await apiService.patch(targetUrl, {
         status: newStatus,
-        courseInfo: courseInfo // 🚀 关键修复：同步当前的课程进度快照
+        courseInfo: courseInfo
       });
 
       if (response.success) {
@@ -1053,58 +1132,9 @@ const QCView: React.FC = () => {
     }
   };
 
-  const passAllQC = async () => {
-    if (!selectedStudentId) return;
-
-    try {
-      // 获取当前学生的QC任务记录ID
-      const selectedStudent = qcStudents.find(s => s.id === selectedStudentId);
-      if (!selectedStudent) {
-        console.error('[QCView] 未找到选中的学生');
-        return;
-      }
-
-      const qcTaskIds = selectedStudent.tasks
-        .filter(t => t.type === 'QC' && t.status !== 'PASSED')
-        .map(t => t.recordId)
-        .filter(id => id); // 过滤掉空值
-
-      if (qcTaskIds.length === 0) {
-        alert('所有QC任务都已过关！');
-        return;
-      }
-
-      // 调用 API 进行正式一键结算 (Pass All)
-      const response = await apiService.records.passAll(selectedStudentId, 0, courseInfo);
-
-      if (response.success) {
-        // 更新本地状态：标记所有 QC 和 TASK 为已过关
-        setQcStudents(prev => prev.map(s => {
-          if (s.id !== selectedStudentId) return s;
-          return {
-            ...s,
-            tasks: s.tasks.map(t =>
-              (t.type === 'QC' || t.type === 'TASK') ? { ...t, status: 'PASSED' } : t
-            )
-          };
-        }));
-
-        // 震动反馈
-        if (navigator.vibrate) navigator.vibrate(100);
-
-        alert(`一键结算成功！学生获得奖励值。`);
-      } else {
-        console.error('[QCView] API一键结算失败:', response.message);
-        alert('结算失败: ' + (response.message || '未知错误'));
-      }
-    } catch (error) {
-      console.error('[QCView] 一键过关操作失败:', error);
-      alert('一键过关失败，请重试');
-    }
-  };
 
   const deleteTask = (studentId: string, taskId: string) => {
-    if (!window.confirm("确认删除此任务？")) return;
+    // 🆕 直接退回抽屉，无需确认弹窗
     setQcStudents(prev => prev.map(s => {
       if (s.id !== studentId) return s;
       return { ...s, tasks: s.tasks.filter(t => t.id !== taskId) };
@@ -1123,7 +1153,45 @@ const QCView: React.FC = () => {
         return;
       }
 
-      const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED';
+      const isAlreadyDone = task.status === 'COMPLETED' || task.status === 'PASSED';
+
+      // 🆕 核心调整：根据用户要求，非基础过关项处理逻辑如下：
+      // 1. 核心教学法 (Methodology) 和 综合成长 (Growth) 再次点击时，退回抽屉 (状态改为 PENDING)
+      // 2. 基础过关项 (QC) 保留原有点击增加尝试次数的逻辑 (由 toggleQCPass/toggleQCPassByManual 处理)
+      if (isAlreadyDone) {
+        const isMethodologyOrGrowth =
+          task.category === '核心教学法' ||
+          task.educationalDomain === '核心教学法' ||
+          task.category === '综合成长' ||
+          task.educationalDomain === '综合成长';
+
+        if (isMethodologyOrGrowth) {
+          // 退回抽屉逻辑
+          const rollbackRes = await apiService.patch(`/lms/records/${task.recordId}/status`, {
+            status: 'PENDING'
+          });
+          if (rollbackRes.success) {
+            setQcStudents(prev => prev.map(s => {
+              if (s.id !== studentId) return s;
+              return {
+                ...s,
+                tasks: s.tasks.map(t => {
+                  if (t.id !== taskId) return t;
+                  return { ...t, status: 'PENDING' };
+                })
+              };
+            }));
+            if (navigator.vibrate) navigator.vibrate(50);
+            return;
+          }
+        } else {
+          // 其他非基础过关项 (如定制加餐) 暂时不做二次点击处理
+          console.log('[QCView] 该项目已过关，无需进一步操作');
+          return;
+        }
+      }
+
+      const newStatus = 'COMPLETED';
 
       // 调用API更新任务状态
       const response = await apiService.patch(`/lms/records/${task.recordId}/status`, {
@@ -1210,13 +1278,13 @@ const QCView: React.FC = () => {
         return;
       }
 
-      // 检查当前学生是否有已完成的任务
-      const hasCompletedTasks = selectedStudent.tasks.some(t =>
-        t.status === 'COMPLETED' || t.status === 'PASSED'
+      // 🆕 检查当前学生是否有已完成且未结算的任务
+      const hasUnsettledTasks = selectedStudent.tasks.some(t =>
+        (t.status === 'COMPLETED' || t.status === 'PASSED') && !t.settledAt
       );
 
-      if (!hasCompletedTasks) {
-        setToastMsg('该学生暂无需要结算的任务');
+      if (!hasUnsettledTasks) {
+        setToastMsg('该学生暂无需要结算的任务（可能已结算过）');
         setTimeout(() => setToastMsg(null), 2000);
         return;
       }
@@ -1442,14 +1510,8 @@ const QCView: React.FC = () => {
 
                 {/* 1. Header (玻璃拟态) */}
                 <header className="px-5 py-4 bg-white/85 backdrop-blur-xl border-b border-slate-100 flex justify-between items-center sticky top-0 z-50">
-                  <div>
-                    <h1 className="text-xl font-bold text-slate-900 tracking-tight">{getSelectedStudent()?.name}</h1>
-                    <span className="text-xs text-slate-500 font-medium">{new Date().toLocaleDateString('zh-CN', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
-                  </div>
                   <div className="flex items-center gap-3">
-                    <button onClick={passAllQC} className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full hover:bg-emerald-100 active:scale-95 transition-all">
-                      一键过关
-                    </button>
+                    <span className="text-xl font-bold text-slate-900">{getSelectedStudent()?.name}</span>
                     <button onClick={() => setIsQCDrawerOpen(false)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
                       <X size={18} />
                     </button>
@@ -1500,13 +1562,20 @@ const QCView: React.FC = () => {
                             value={`${courseInfo.chinese.unit}-${courseInfo.chinese.lesson || '1'}`}
                             onChange={async (e) => {
                               const [unit, lesson] = e.target.value.split('-');
-                              const syllabus = syllabuses[`chinese_${getNormGrade(courseInfo.grade)}_${getNormSemester(courseInfo.semester)}_人教版`] || [];
-                              const match = syllabus.find((item: any) => item.unit === unit && (item.lesson === lesson || !item.lesson));
-                              if (match) {
-                                const newInfo = { ...courseInfo, chinese: { unit, lesson, title: match.title } };
-                                setCourseInfo(newInfo);
-                                await saveStudentProgress(newInfo);
-                              }
+                              if (!unit) return; // 防止空值
+
+                              const syllabusKey = `chinese_${getNormGrade(courseInfo.grade)}_${getNormSemester(courseInfo.semester)}_人教版`;
+                              const syllabus = syllabuses[syllabusKey] || [];
+
+                              // 🆕 改进匹配逻辑：优先精确匹配，否则用第一个单元项
+                              const match = syllabus.find((item: any) =>
+                                item.unit === unit && (item.lesson === lesson || (!item.lesson && !lesson))
+                              ) || syllabus.find((item: any) => item.unit === unit);
+
+                              const newTitle = match?.title || `第${unit}单元${lesson ? ` 第${lesson}课` : ''}`;
+                              const newInfo = { ...courseInfo, chinese: { unit, lesson: lesson || '1', title: newTitle } };
+                              setCourseInfo(newInfo);
+                              await saveStudentProgress(newInfo);
                             }}
                           >
                             <option value="">选择语文进度...</option>
@@ -1618,24 +1687,126 @@ const QCView: React.FC = () => {
                       </button>
                     </div>
                     <div className="space-y-0.5">
-                      {SUBJECT_DEFAULT_QC[qcTabSubject].map(itemName => {
+                      {(() => {
                         const student = getSelectedStudent();
-                        const existingTask = student?.tasks.find(t => t.name === itemName && t.type === 'QC');
-                        const isDone = existingTask?.status === 'PASSED' || existingTask?.status === 'COMPLETED';
-                        return (
-                          <div
-                            key={itemName}
-                            onClick={() => toggleQCPassByManual(selectedStudentId, itemName, qcTabSubject)}
-                            className="flex items-center px-3 py-3 rounded-xl cursor-pointer active:bg-slate-50 transition-colors"
-                          >
-                            <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all ${isDone ? 'bg-emerald-500 border-emerald-500' : 'border-slate-200'}`}>
-                              {isDone && <Check size={12} className="text-white" strokeWidth={3} />}
+                        // 🆕 获取当前科目的进度
+                        const currentProgress = courseInfo[qcTabSubject as keyof typeof courseInfo] as { unit: string; lesson?: string } | undefined;
+                        const currentUnit = currentProgress?.unit || '1';
+                        const currentLesson = currentProgress?.lesson || '1';
+
+                        // 🆕 动态合并：默认项 + 学生任务记录中该科目的自定义 QC 项
+                        const categoryMap: Record<string, string> = {
+                          chinese: '语文基础过关',
+                          math: '数学基础过关',
+                          english: '英语基础过关'
+                        };
+                        const currentCategory = categoryMap[qcTabSubject];
+
+                        // 从学生任务中提取该科目的所有 QC 项名称（去重）
+                        const dynamicItems = (student?.tasks || [])
+                          .filter(t => t.type === 'QC' && (t.category === currentCategory || t.category?.includes(qcTabSubject === 'chinese' ? '语文' : qcTabSubject === 'math' ? '数学' : '英语')))
+                          .map(t => t.name);
+
+                        // 合并默认项和动态项（去重，保持顺序：默认项在前）
+                        const defaultItems = SUBJECT_DEFAULT_QC[qcTabSubject];
+                        const allItems = [...defaultItems, ...dynamicItems.filter(item => !defaultItems.includes(item))];
+
+                        return allItems.map(itemName => {
+                          // 🆕 只匹配当前进度的任务（unit/lesson 匹配）
+                          const existingTask = student?.tasks.find(t =>
+                            t.name === itemName &&
+                            t.type === 'QC' &&
+                            (t.unit === currentUnit || !t.unit) &&
+                            (t.lesson === currentLesson || !t.lesson || !currentLesson)
+                          );
+                          const isDone = existingTask?.status === 'PASSED' || existingTask?.status === 'COMPLETED';
+                          const isCustomItem = !defaultItems.includes(itemName);
+
+                          return (
+                            <div
+                              key={itemName}
+                              className="flex items-center px-3 py-3 rounded-xl transition-colors"
+                            >
+                              {/* 勾选区：只负责勾选/取消勾选 */}
+                              <div
+                                onClick={() => existingTask && toggleQCPass(selectedStudentId, existingTask.id)}
+                                className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all cursor-pointer ${isDone ? 'bg-emerald-500 border-emerald-500' : 'border-slate-200 hover:border-slate-300'}`}
+                              >
+                                {isDone && <Check size={12} className="text-white" strokeWidth={3} />}
+                              </div>
+                              {/* 文字区：仅显示名称 */}
+                              <div className="flex-1">
+                                <span className={`text-sm font-medium transition-colors ${isDone ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
+                                  {itemName}
+                                  {isCustomItem && <span className="ml-1 text-[10px] text-purple-500 bg-purple-50 px-1 rounded">自定义</span>}
+                                </span>
+                              </div>
+                              {/* 🆕 "补"按钮常显：只记录辅导次数，不触发过关 */}
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  // 如果没有记录，先创建一个 PENDING 状态的记录
+                                  if (!existingTask) {
+                                    // 🆕 获取当前科目进度
+                                    const currentSubjectProgress = courseInfo[qcTabSubject as keyof typeof courseInfo] as { unit: string; lesson?: string } | undefined;
+                                    const response = await apiService.post('/lms/records', {
+                                      studentId: selectedStudentId,
+                                      type: 'QC',
+                                      title: itemName,
+                                      status: 'PENDING', // 注意：这里是 PENDING，不是 COMPLETED
+                                      category: categoryMap[qcTabSubject],
+                                      date: new Date().toISOString().split('T')[0],
+                                      courseInfo: courseInfo,
+                                      // 🆕 显式传递 unit/lesson 确保后端正确存储
+                                      unit: currentSubjectProgress?.unit || '1',
+                                      lesson: currentSubjectProgress?.lesson || '1'
+                                    });
+                                    if (response.success) {
+                                      const newRecord = response.data as any;
+                                      // 创建后立即增加 attempts
+                                      await apiService.patch(`lms/records/${newRecord.id}/attempt`, {});
+                                      // 更新本地状态
+                                      // 🆕 获取当前进度用于新任务
+                                      const cp = courseInfo[qcTabSubject as keyof typeof courseInfo] as { unit: string; lesson?: string } | undefined;
+                                      setQcStudents(prev => prev.map(s => {
+                                        if (s.id !== selectedStudentId) return s;
+                                        return {
+                                          ...s,
+                                          tasks: [...s.tasks, {
+                                            id: newRecord.id,
+                                            recordId: newRecord.id,
+                                            name: itemName,
+                                            type: 'QC',
+                                            category: categoryMap[qcTabSubject],
+                                            status: 'PENDING',
+                                            exp: 5,
+                                            attempts: 1,
+                                            isAuto: false,
+                                            // 🆕 保存当前进度的 unit/lesson，确保过滤能匹配
+                                            unit: cp?.unit || '1',
+                                            lesson: cp?.lesson || '1'
+                                          }]
+                                        };
+                                      }));
+                                    }
+                                  } else {
+                                    // 已有记录，直接增加 attempts
+                                    recordAttempt(e, selectedStudentId, existingTask.id);
+                                  }
+                                }}
+                                className="text-[10px] text-orange-600 font-bold bg-orange-50 px-2 py-1 rounded border border-orange-200 hover:bg-orange-100 active:scale-95 transition-all"
+                              >
+                                补
+                              </button>
+                              {/* Xn 显示在补按钮右边 */}
+                              {existingTask && existingTask.attempts > 0 && (
+                                <span className="text-[10px] text-orange-600 font-black bg-orange-50 px-1.5 py-0.5 rounded-md border border-orange-100 italic ml-1">X{existingTask.attempts}</span>
+                              )}
+                              <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ml-2 ${isDone ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>+5</span>
                             </div>
-                            <span className={`flex-1 text-sm font-medium transition-colors ${isDone ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{itemName}</span>
-                            <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${isDone ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>+5</span>
-                          </div>
-                        );
-                      })}
+                          );
+                        });
+                      })()}
                     </div>
                   </section>
 
@@ -1653,23 +1824,37 @@ const QCView: React.FC = () => {
                     <div className="space-y-0.5">
                       {(() => {
                         const student = getSelectedStudent();
-                        // 🔧 修复：只显示待处理的任务（PENDING），已完成的任务不应该显示在面板中
+                        // 🆕 核心教学法按日期更新（每天自动清理），不需要按课程进度过滤
                         const tasks = (student?.tasks || []).filter(t =>
-                          t.status === 'PENDING' && (
-                            (t.type === 'TASK' && t.id.startsWith('temp-methodology-')) ||
-                            t.category === '核心教学法' ||
-                            t.educationalDomain === '核心教学法'
-                          )
+                        (
+                          (t.type === 'TASK' && t.id.startsWith('temp-methodology-')) ||
+                          t.category === '核心教学法' ||
+                          t.educationalDomain === '核心教学法'
+                        )
                         );
                         if (tasks.length === 0) return <div className="py-6 text-center text-slate-300 text-xs">暂无发布任务</div>;
-                        return tasks.map(task => (
-                          <div key={task.id} onClick={() => toggleTaskComplete(selectedStudentId, task.id)} className="flex items-center px-3 py-3 rounded-xl cursor-pointer active:bg-slate-50 transition-colors">
-                            <div className="w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all border-slate-200">
+                        return tasks.map(task => {
+                          const isDone = task.status === 'COMPLETED' || task.status === 'PASSED';
+                          return (
+                            <div key={task.id} className="flex items-center px-3 py-3 rounded-xl transition-colors">
+                              {/* 勾选区：点击切换完成/未完成 */}
+                              <div
+                                onClick={() => toggleTaskComplete(selectedStudentId, task.id)}
+                                className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all cursor-pointer ${isDone ? 'bg-emerald-500 border-emerald-500' : 'border-slate-200 hover:border-slate-300'}`}
+                              >
+                                {isDone && <Check size={12} className="text-white" strokeWidth={3} />}
+                              </div>
+                              {/* 文字区：未勾选时点击退回抽屉 */}
+                              <div
+                                onClick={() => { if (!isDone) deleteTask(selectedStudentId, task.id); }}
+                                className={`flex-1 ${!isDone ? 'cursor-pointer hover:text-red-400' : ''}`}
+                              >
+                                <span className={`text-sm font-medium transition-colors ${isDone ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{task.name}</span>
+                              </div>
+                              <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${isDone ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>+{task.exp}</span>
                             </div>
-                            <span className="flex-1 text-sm font-medium text-slate-800">{task.name}</span>
-                            <span className="text-xs font-bold bg-slate-100 text-slate-400 px-2 py-0.5 rounded-lg">+{task.exp}</span>
-                          </div>
-                        ));
+                          );
+                        });
                       })()}
                     </div>
                   </section>
@@ -1688,23 +1873,37 @@ const QCView: React.FC = () => {
                     <div className="space-y-0.5">
                       {(() => {
                         const student = getSelectedStudent();
-                        // 🔧 修复：只显示待处理的任务（PENDING），已完成的任务不应该显示在面板中
+                        // 🔧 修复：显示所有相关任务，包括已完成的（用于支持多次辅导记录）
                         const tasks = (student?.tasks || []).filter(t =>
-                          t.status === 'PENDING' && (
-                            (t.type === 'TASK' && t.id.startsWith('temp-growth-')) ||
-                            t.category === '综合成长' ||
-                            t.educationalDomain === '综合成长'
-                          )
+                        (
+                          (t.type === 'TASK' && t.id.startsWith('temp-growth-')) ||
+                          t.category === '综合成长' ||
+                          t.educationalDomain === '综合成长'
+                        )
                         );
                         if (tasks.length === 0) return <div className="py-6 text-center text-slate-300 text-xs">暂无成长任务</div>;
-                        return tasks.map(task => (
-                          <div key={task.id} onClick={() => toggleTaskComplete(selectedStudentId, task.id)} className="flex items-center px-3 py-3 rounded-xl cursor-pointer active:bg-slate-50 transition-colors">
-                            <div className="w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all border-slate-200">
+                        return tasks.map(task => {
+                          const isDone = task.status === 'COMPLETED' || task.status === 'PASSED';
+                          return (
+                            <div key={task.id} className="flex items-center px-3 py-3 rounded-xl transition-colors">
+                              {/* 勾选区：点击切换完成/未完成 */}
+                              <div
+                                onClick={() => toggleTaskComplete(selectedStudentId, task.id)}
+                                className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all cursor-pointer ${isDone ? 'bg-emerald-500 border-emerald-500' : 'border-slate-200 hover:border-slate-300'}`}
+                              >
+                                {isDone && <Check size={12} className="text-white" strokeWidth={3} />}
+                              </div>
+                              {/* 文字区：未勾选时点击退回抽屉 */}
+                              <div
+                                onClick={() => { if (!isDone) deleteTask(selectedStudentId, task.id); }}
+                                className={`flex-1 ${!isDone ? 'cursor-pointer hover:text-red-400' : ''}`}
+                              >
+                                <span className={`text-sm font-medium transition-colors ${isDone ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{task.name}</span>
+                              </div>
+                              <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${isDone ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>+{task.exp}</span>
                             </div>
-                            <span className="flex-1 text-sm font-medium text-slate-800">{task.name}</span>
-                            <span className="text-xs font-bold bg-slate-100 text-slate-400 px-2 py-0.5 rounded-lg">+{task.exp}</span>
-                          </div>
-                        ));
+                          );
+                        });
                       })()}
                     </div>
                   </section>
@@ -1721,14 +1920,16 @@ const QCView: React.FC = () => {
                         if (tasks.length === 0) return <div className="py-6 text-center text-amber-400 text-xs">暂无个性化任务</div>;
                         return tasks.map(task => (
                           <div key={task.id} onClick={() => toggleTaskComplete(selectedStudentId, task.id)} className="flex items-center px-3 py-3 rounded-xl cursor-pointer active:bg-amber-100/50 transition-colors bg-white/50">
-                            <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all ${task.status === 'PASSED' || task.status === 'COMPLETED' ? 'bg-amber-500 border-amber-500' : 'border-amber-300'}`}>
+                            <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all ${task.status === 'PASSED' || task.status === 'COMPLETED' ? 'bg-amber-500 border-emerald-500' : 'border-amber-300'}`}>
                               {(task.status === 'PASSED' || task.status === 'COMPLETED') && <Check size={12} className="text-white" strokeWidth={3} />}
                             </div>
                             <div className="flex-1">
-                              <span className={`text-sm font-medium ${task.status === 'PASSED' || task.status === 'COMPLETED' ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{task.name}</span>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-sm font-medium ${task.status === 'PASSED' || task.status === 'COMPLETED' ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{task.name}</span>
+                              </div>
                               <span className="block text-[10px] text-amber-600 mt-0.5">指定: {getSelectedStudent()?.name}</span>
                             </div>
-                            <span className="text-xs font-bold bg-white/50 text-amber-600 px-2 py-0.5 rounded-lg">Pending</span>
+                            <span className="text-xs font-bold bg-white/50 text-amber-600 px-2 py-0.5 rounded-lg">+{task.exp}</span>
                           </div>
                         ));
                       })()}
@@ -1739,9 +1940,12 @@ const QCView: React.FC = () => {
 
                 {/* 3. 底部结算栏 - 调整位置避免被导航栏遮挡 */}
                 <footer className="absolute bottom-16 left-0 right-0 px-5 pt-2 pb-2 bg-white border-t border-slate-100 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] flex justify-between items-center z-50">
-                  <div className="flex items-baseline gap-2">
-                    <div className="text-2xl font-extrabold text-slate-900 tabular-nums">{calculateSelectedStudentExp()}</div>
-                    <span className="text-sm font-semibold text-slate-400">经验</span>
+                  <div className="flex flex-col">
+                    <div className="flex items-baseline gap-2">
+                      <div className="text-2xl font-extrabold text-slate-900 tabular-nums">{calculateSelectedStudentExp().exp}</div>
+                      <span className="text-sm font-semibold text-slate-400">经验</span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-medium">共 {calculateSelectedStudentExp().count} 项任务已完成 (含语/数/外/加餐)</div>
                   </div>
                   <button
                     onClick={settleToday}

@@ -157,6 +157,7 @@ interface StudentProfile {
       title: string;
       status: string;
       exp: number;
+      attempts: number;
     }>;
   }>;
   summary: {
@@ -193,6 +194,9 @@ const StudentDetail: React.FC = () => {
   // 习惯统计分页状态
   const [habitPage, setHabitPage] = useState(0);
 
+  // 🆕 任务达人分页状态 (每页10条)
+  const [taskPage, setTaskPage] = useState(0);
+
   // --- 2. 数据状态 ---
   const [isLoading, setIsLoading] = useState(!initialStudentData); // 如果没有预加载数据，则显示初始 Loading
   const [error, setError] = useState<string | null>(null);
@@ -222,26 +226,14 @@ const StudentDetail: React.FC = () => {
   // 邀请卡弹窗状态
   const [showInviteModal, setShowInviteModal] = useState(false);
 
-  // 勋章授予相关状态
-  const [showAwardModal, setShowAwardModal] = useState(false);
-  const [availableBadges, setAvailableBadges] = useState<any[]>([]);
-  const [awardForm, setAwardForm] = useState({
-    badgeId: '',
-    reason: ''
-  });
-  const [awardLoading, setAwardLoading] = useState(false);
+  // 🆕 错题本状态
+  const [mistakes, setMistakes] = useState<any[]>([]);
+  const [mistakeSubject, setMistakeSubject] = useState<'chinese' | 'math' | 'english'>('math');
+  const [showAddMistakeModal, setShowAddMistakeModal] = useState(false);
+  const [newMistake, setNewMistake] = useState({ page: '', question: '', errorCause: '', unit: '1', lesson: '1', workbookType: '53天天练' });
 
   // 🆕 本月签到天数
   const [monthlyCheckinCount, setMonthlyCheckinCount] = useState<number>(0);
-
-  // 🆕 进度修改相关状态
-  const [showProgressModal, setShowProgressModal] = useState(false);
-  const [progressForm, setProgressForm] = useState({
-    chinese: { unit: '1', lesson: '1', title: '' },
-    math: { unit: '1', lesson: '1', title: '' },
-    english: { unit: '1', title: '' }
-  });
-  const [isUpdatingProgress, setIsUpdatingProgress] = useState(false);
 
   // --- 3. 派生状态 (SSOT) ---
   const student = studentProfile?.student;
@@ -315,25 +307,6 @@ const StudentDetail: React.FC = () => {
       if (response.success) {
         const profile = response.data as StudentProfile;
         setStudentProfile(profile);
-        // 🆕 初始化进度修改表单数据
-        if (profile.student.progress) {
-          setProgressForm({
-            chinese: {
-              unit: profile.student.progress.chinese?.unit || '1',
-              lesson: profile.student.progress.chinese?.lesson || '1',
-              title: profile.student.progress.chinese?.title || ''
-            },
-            math: {
-              unit: profile.student.progress.math?.unit || '1',
-              lesson: profile.student.progress.math?.lesson || '1',
-              title: profile.student.progress.math?.title || ''
-            },
-            english: {
-              unit: profile.student.progress.english?.unit || '1',
-              title: profile.student.progress.english?.title || ''
-            }
-          });
-        }
       } else {
         // 使用 functional update 或判断初始数据来决定是否静默失败
         if (!initialStudentData) {
@@ -375,66 +348,10 @@ const StudentDetail: React.FC = () => {
     }
   }, [studentId, initialStudentData]); // 关键修复：移除 studentProfile 依赖，加入 initialStudentData
 
-  // 🆕 获取所有可用勋章（用于授予操作）
-  const fetchAvailableBadges = React.useCallback(async () => {
-    if (!user?.schoolId) return;
-    try {
-      const res = await apiService.get(`/badges?schoolId=${user.schoolId}`);
-      if (res.success) {
-        const badgeList = Array.isArray(res.data)
-          ? res.data
-          : (res.data as any)?.badges || res.data || [];
-        setAvailableBadges(badgeList);
-      }
-    } catch (error) {
-      console.error('[STUDENT DETAIL] Fetch badges failed:', error);
-    }
-  }, [user?.schoolId]);
-
-  // 🆕 授予勋章处理函数
-  const handleAwardBadge = async () => {
-    if (!studentId || !awardForm.badgeId) {
-      toast.error('请选择一个勋章');
-      return;
-    }
-
-    setAwardLoading(true);
-    try {
-      // 🚀 直接复用批量接口（单人模式）
-      const res = await apiService.post('/badges/award/batch', {
-        badgeId: awardForm.badgeId,
-        studentIds: [studentId],
-        schoolId: user?.schoolId,
-        reason: awardForm.reason,
-        awardedBy: user?.userId
-      });
-
-      if (res.success) {
-        toast.success('勋章授予成功！');
-        setShowAwardModal(false);
-        setAwardForm({ badgeId: '', reason: '' });
-        fetchStudentProfile(); // 刷新档案中的勋章列表
-      } else {
-        toast.error(res.message || '授予失败');
-      }
-    } catch (error) {
-      console.error('[STUDENT DETAIL] Award failed:', error);
-      toast.error('授予失败，请检查网络');
-    } finally {
-      setAwardLoading(false);
-    }
-  };
-
   // --- 5. 初始加载 ---
   useEffect(() => {
     fetchStudentProfile();
   }, [fetchStudentProfile]);
-
-  useEffect(() => {
-    if (showAwardModal) {
-      fetchAvailableBadges();
-    }
-  }, [showAwardModal, fetchAvailableBadges]);
 
   // 🆕 获取本月签到天数
   useEffect(() => {
@@ -460,36 +377,25 @@ const StudentDetail: React.FC = () => {
   // 🚀 实时任务状态更新
   const handlePassTask = async (lessonId: number, taskRecordId: string) => {
     try {
-      // 找到对应的任务记录
-      const taskRecord = taskRecords.find(record => record.id === taskRecordId);
-      if (!taskRecord) {
-        console.error('[StudentDetail] 未找到任务记录:', taskRecordId);
-        return;
-      }
+      // 1. 🆕 优先记录尝试/辅导次数 (X1, X2...)
+      await apiService.patch(`/lms/records/${taskRecordId}/attempt`, {});
 
-      // 调用API更新任务状态
+      // 2. 调用API更新任务状态为已过关
       const response = await apiService.patch(`/lms/records/${taskRecordId}/status`, {
         status: 'COMPLETED',
         courseInfo: studentProfile?.student.progress
       });
 
       if (response.success) {
-        // SSOT: 重新拉取数据以同步全局状态
+        // SSOT: 刷新数据
         await fetchStudentProfile();
-
-        // UI反馈动画 (可选，fetchProfile 会导致重新渲染)
-        const btn = document.getElementById(`btn-pass-${taskRecordId}`);
-        if (btn) {
-          btn.innerHTML = '<span class="text-green-600 font-bold text-xs">已过</span>';
-        }
-
         if (navigator.vibrate) navigator.vibrate(50);
       } else {
         alert(`更新失败: ${response.message}`);
       }
     } catch (error) {
       console.error('[StudentDetail] 更新任务状态异常:', error);
-      alert('更新任务状态失败，请重试');
+      alert('操作失败，请重试');
     }
   };
 
@@ -625,6 +531,72 @@ const StudentDetail: React.FC = () => {
     }
   };
 
+  // 🆕 错题本处理函数
+  const fetchMistakes = async () => {
+    if (!studentProfile?.student?.id) return;
+    try {
+      const res = await apiService.get(`/mistakes/${studentProfile.student.id}`);
+      if (res.success) setMistakes((res.data as any[]) || []);
+    } catch (e) {
+      console.error('获取错题列表失败:', e);
+    }
+  };
+
+  const handleAddMistake = async () => {
+    if (!studentProfile?.student?.id || !newMistake.page || !newMistake.question) return;
+    try {
+      const progress = (studentProfile.student as any).progress?.[mistakeSubject] || {};
+      const res = await apiService.post('/mistakes', {
+        studentId: studentProfile.student.id,
+        schoolId: (studentProfile.student as any).schoolId,
+        subject: mistakeSubject,
+        unit: newMistake.unit,
+        lesson: newMistake.lesson,
+        workbookPage: newMistake.page,
+        questionNo: newMistake.question,
+        errorCause: newMistake.errorCause,
+        workbookType: newMistake.workbookType
+      });
+      if (res.success) {
+        setMistakes(prev => [res.data, ...prev]);
+        setNewMistake({ page: '', question: '', errorCause: '', unit: '1', lesson: '1', workbookType: '53天天练' });
+        setShowAddMistakeModal(false);
+      }
+    } catch (e) {
+      console.error('添加错题失败:', e);
+    }
+  };
+
+  const handleRetryMistake = async (id: string) => {
+    try {
+      const res = await apiService.patch(`/mistakes/${id}/retry`, {});
+      if (res.success) {
+        setMistakes(prev => prev.map(m => m.id === id ? { ...m, retryCount: (m.retryCount || 0) + 1 } : m));
+      }
+    } catch (e) {
+      console.error('记录重做失败:', e);
+    }
+  };
+
+  const handleMasterMistake = async (id: string) => {
+    try {
+      const res = await apiService.patch(`/mistakes/${id}/master`, {});
+      if (res.success) {
+        setMistakes(prev => prev.map(m => m.id === id ? { ...m, status: 'RESOLVED' } : m));
+      }
+    } catch (e) {
+      console.error('标记掌握失败:', e);
+    }
+  };
+
+  // 加载错题列表
+  useEffect(() => {
+    if (activeTab === 'mistakes' && studentProfile?.student?.id) {
+      fetchMistakes();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, studentProfile?.student?.id]);
+
   const handleHistoryPrompt = async (weekNumber: number, startDate: string, endDate: string) => {
     console.log('[FIX] handleHistoryPrompt called', { weekNumber, startDate, endDate });
 
@@ -674,38 +646,6 @@ const StudentDetail: React.FC = () => {
     }
   };
 
-  // 处理进度修改提交
-  const handleUpdateProgress = async () => {
-    if (!studentId || !user?.schoolId || !user?.userId) {
-      toast.error('权限不足或学生信息缺失');
-      return;
-    }
-
-    setIsUpdatingProgress(true);
-    try {
-      const res = await apiService.records.updateProgress({
-        studentId,
-        schoolId: user.schoolId,
-        teacherId: user.userId,
-        courseInfo: progressForm
-      });
-
-      if (res.success) {
-        toast.success('进度已修正并记录为最高优先级');
-        setShowProgressModal(false);
-        // 刷新数据
-        fetchStudentProfile();
-      } else {
-        toast.error(res.message || '进度更新失败');
-      }
-    } catch (err: any) {
-      console.error('进度修改失败:', err);
-      toast.error(err.message || '进度修改失败');
-    } finally {
-      setIsUpdatingProgress(false);
-    }
-  };
-
   const loadAvailableWeeks = async () => {
     try {
       console.log('[FIX] Loading available weeks');
@@ -749,13 +689,22 @@ const StudentDetail: React.FC = () => {
   // 🚀 动态数据 - 使用实时任务记录数据
   const academicData = {
     aiComment: `通过对${studentName}的学情分析，该生整体学习态度端正，知识点掌握较为扎实。建议继续保持良好的学习习惯，同时在薄弱环节加强练习。`,
-    pendingTasks: taskRecords
-      .filter(record => record.type.toUpperCase() === 'QC' && record.status === 'COMPLETED')
-      .map(record => ({
-        id: record.id, // 🚀 关键修复：移除 parseInt，直接使用 UUID 字符串
+    // 🆕 按标题去重，避免重复显示（如两个"口算计时"）
+    pendingTasks: (() => {
+      const filtered = taskRecords.filter(record => record.type.toUpperCase() === 'QC' && record.status === 'COMPLETED');
+      const latestByTitle = new Map<string, typeof filtered[0]>();
+      filtered.forEach(record => {
+        const existing = latestByTitle.get(record.title);
+        if (!existing || new Date(record.createdAt) > new Date(existing.createdAt)) {
+          latestByTitle.set(record.title, record);
+        }
+      });
+      return Array.from(latestByTitle.values()).map(record => ({
+        id: record.id,
         title: record.title,
         attempts: record.content?.attempts || 0
-      })),
+      }));
+    })(),
     // 🚀 基于学生课程进度生成动态学期地图
     // 数据源：课程标题来自 student.progress，过关项目来自 QC 任务记录
     // 🚀 基于学生课程进度生成动态学习地图 (分科目数据推导 - 2025新版)
@@ -770,28 +719,38 @@ const StudentDetail: React.FC = () => {
       if (timelineSubject === 'chinese') gridCount = 40;
       else if (timelineSubject === 'english') gridCount = 35;
 
-      // 3. 过滤当前科目的记录
+      // 3. 🆕 过滤当前科目的记录（优先使用 category，兼容关键词匹配）
       const relevantRecords = allTaskRecords.filter(record => {
         const type = record.type.toUpperCase();
         const status = record.status.toUpperCase();
         if (status !== 'COMPLETED') return false;
-        if (!['QC', 'METHODOLOGY', 'SPECIAL'].includes(type)) return false;
+        if (!['QC', 'TASK', 'METHODOLOGY', 'SPECIAL'].includes(type)) return false;
 
         const content = (record.content || {}) as any;
         const category = content.category || '';
         const title = record.title || '';
 
-        if (timelineSubject === 'chinese') return category.includes('语文') || title.includes('生字') || title.includes('课文');
-        if (timelineSubject === 'math') return category.includes('数学') || title.includes('口算') || title.includes('计算');
-        if (timelineSubject === 'english') return category.includes('英语') || title.includes('单词') || title.includes('Unit');
+        // 🆕 优先使用 category 字段匹配科目
+        if (timelineSubject === 'chinese') {
+          return category.includes('语文') || category.includes('Chinese') ||
+            title.includes('生字') || title.includes('课文') || title.includes('听写');
+        }
+        if (timelineSubject === 'math') {
+          return category.includes('数学') || category.includes('Math') ||
+            title.includes('口算') || title.includes('计算') || title.includes('分步');
+        }
+        if (timelineSubject === 'english') {
+          return category.includes('英语') || category.includes('English') ||
+            title.includes('单词') || title.includes('Unit') || title.includes('背诵');
+        }
         return false;
       });
 
-      // 4. 重构网格生成与染色
       const grid = Array.from({ length: gridCount }, (_, i) => ({
         id: i,
         status: 'pending' as 'pending' | 'done',
         type: 'NONE' as 'NONE' | 'QC' | 'METHODOLOGY' | 'SPECIAL',
+        isRepassed: false,
         achievements: [] as { name: string; date: string; type: string }[]
       }));
 
@@ -820,6 +779,12 @@ const StudentDetail: React.FC = () => {
             const cell = grid[gridIdx];
             cell.status = 'done';
 
+            // 🆕 补过逻辑：如果这是该任务的补充记录，或者辅导次数 > 0，则标记为补过
+            const attempts = (content.attempts || 0) as number;
+            if (attempts > 0) {
+              cell.isRepassed = true;
+            }
+
             const typePriority = { 'QC': 3, 'METHODOLOGY': 2, 'SPECIAL': 1, 'NONE': 0 };
             if (typePriority[taskType] > typePriority[cell.type]) {
               cell.type = taskType;
@@ -838,6 +803,7 @@ const StudentDetail: React.FC = () => {
     })(),
 
     // 🚀 旧版时间轴逻辑 (保留以驱动下方列表展示)
+    // 🆕 修复：只显示当前课程进度相关的过关项，切换下一课时显示下一课流水
     timeline: (() => {
       const timeline = {
         chinese: [] as TimelineLesson[],
@@ -848,15 +814,47 @@ const StudentDetail: React.FC = () => {
       const progress = studentProfile?.student?.progress;
       const qcRecords = allTaskRecords.filter(r => r.type.toUpperCase() === 'QC' && r.status === 'COMPLETED');
 
-      const filterBySubject = (subjectKey: string) => {
+      // 🆕 新增：根据科目和当前进度过滤任务
+      const filterBySubjectAndProgress = (subjectKey: string) => {
+        const subjectProgress = progress?.[subjectKey as keyof typeof progress] as any;
+        if (!subjectProgress) return [];
+
+        const currentUnit = subjectProgress.unit || '1';
+        const currentLesson = subjectProgress.lesson || '1';
+        const currentTitle = subjectProgress.title || '';
+
         const filtered = qcRecords.filter(record => {
           const content = (record.content || {}) as any;
           const category = content.category || '';
-          if (subjectKey === 'chinese') return category.includes('语文') || record.title.includes('生字') || record.title.includes('听写');
-          if (subjectKey === 'math') return category.includes('数学') || record.title.includes('口算') || record.title.includes('计算');
-          if (subjectKey === 'english') return category.includes('英语') || record.title.includes('单词') || record.title.includes('Unit');
-          return false;
+          const recordUnit = content.unit || '';
+          const recordLesson = content.lesson || '';
+          const recordTitle = record.title || '';
+
+          // 1. 首先按科目过滤
+          let isSubjectMatch = false;
+          if (subjectKey === 'chinese') isSubjectMatch = category.includes('语文') || recordTitle.includes('生字') || recordTitle.includes('听写') || recordTitle.includes('课文');
+          if (subjectKey === 'math') isSubjectMatch = category.includes('数学') || recordTitle.includes('口算') || recordTitle.includes('计算') || recordTitle.includes('分步');
+          if (subjectKey === 'english') isSubjectMatch = category.includes('英语') || recordTitle.includes('单词') || recordTitle.includes('Unit');
+          if (!isSubjectMatch) return false;
+
+          // 2. 🆕 按当前进度过滤（只显示当前课程的过关项）
+          // 如果记录有单元/课程信息，则匹配当前进度
+          if (recordUnit && recordUnit !== currentUnit) return false;
+          if (recordLesson && recordLesson !== currentLesson) return false;
+
+          // 3. 如果记录没有单元/课程信息，则检查 taskDate 是否在最近 7 天内
+          const taskDate = content.taskDate;
+          if (!recordUnit && !recordLesson && taskDate) {
+            const recordDate = new Date(taskDate);
+            const now = new Date();
+            const diffDays = (now.getTime() - recordDate.getTime()) / (1000 * 60 * 60 * 24);
+            if (diffDays > 7) return false;
+          }
+
+          return true;
         });
+
+        // 按标题去重，保留最新的
         const latestByTitle = new Map<string, typeof filtered[0]>();
         filtered.forEach(record => {
           const existing = latestByTitle.get(record.title);
@@ -866,16 +864,16 @@ const StudentDetail: React.FC = () => {
       };
 
       if (progress?.chinese) {
-        const records = filterBySubject('chinese');
-        timeline.chinese.push({ id: 1, unit: parseInt(progress.chinese.unit) || 1, lesson: parseInt(progress.chinese.lesson || '1') || 1, title: progress.chinese.title || '未命名课程', status: records.length > 0 ? 'done' : 'pending', tasks: records.map(r => ({ id: r.id, name: r.title, status: 'passed' as const, attempts: (r.content as any)?.attempts || 0, date: new Date(r.createdAt).toLocaleDateString() })) });
+        const records = filterBySubjectAndProgress('chinese');
+        timeline.chinese.push({ id: 1, unit: parseInt((progress.chinese as any).unit) || 1, lesson: parseInt((progress.chinese as any).lesson || '1') || 1, title: (progress.chinese as any).title || '未命名课程', status: records.length > 0 ? 'done' : 'pending', tasks: records.map(r => ({ id: r.id, name: r.title, status: 'passed' as const, attempts: (r.content as any)?.attempts || 0, date: new Date(r.createdAt).toLocaleDateString() })) });
       }
       if (progress?.math) {
-        const records = filterBySubject('math');
-        timeline.math.push({ id: 2, unit: parseInt(progress.math.unit) || 1, lesson: parseInt(progress.math.lesson || '1') || 1, title: progress.math.title || '未命名课程', status: records.length > 0 ? 'done' : 'pending', tasks: records.map(r => ({ id: r.id, name: r.title, status: 'passed' as const, attempts: (r.content as any)?.attempts || 0, date: new Date(r.createdAt).toLocaleDateString() })) });
+        const records = filterBySubjectAndProgress('math');
+        timeline.math.push({ id: 2, unit: parseInt((progress.math as any).unit) || 1, lesson: parseInt((progress.math as any).lesson || '1') || 1, title: (progress.math as any).title || '未命名课程', status: records.length > 0 ? 'done' : 'pending', tasks: records.map(r => ({ id: r.id, name: r.title, status: 'passed' as const, attempts: (r.content as any)?.attempts || 0, date: new Date(r.createdAt).toLocaleDateString() })) });
       }
       if (progress?.english) {
-        const records = filterBySubject('english');
-        timeline.english.push({ id: 3, unit: parseInt(progress.english.unit) || 1, lesson: 1, title: progress.english.title || '未命名课程', status: records.length > 0 ? 'done' : 'pending', tasks: records.map(r => ({ id: r.id, name: r.title, status: 'passed' as const, attempts: (r.content as any)?.attempts || 0, date: new Date(r.createdAt).toLocaleDateString() })) });
+        const records = filterBySubjectAndProgress('english');
+        timeline.english.push({ id: 3, unit: parseInt((progress.english as any).unit) || 1, lesson: 1, title: (progress.english as any).title || '未命名课程', status: records.length > 0 ? 'done' : 'pending', tasks: records.map(r => ({ id: r.id, name: r.title, status: 'passed' as const, attempts: (r.content as any)?.attempts || 0, date: new Date(r.createdAt).toLocaleDateString() })) });
       }
 
       return timeline;
@@ -936,79 +934,6 @@ const StudentDetail: React.FC = () => {
       <div className="absolute inset-0 rounded-full border border-dashed border-gray-300 opacity-50"></div>
       <div className="absolute inset-4 rounded-full border border-dashed border-gray-300 opacity-50"></div>
       <div className="w-[60px] h-[60px] bg-purple-500/20 border-2 border-purple-500 transform rotate-45 skew-x-12 rounded-lg"></div>
-      {/* 勋章授予弹窗 */}
-      {showAwardModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
-                <Award className="text-amber-500" /> 授予荣誉勋章
-              </h3>
-              <button
-                onClick={() => setShowAwardModal(false)}
-                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-              >
-                <X className="w-5 h-5 text-slate-400" />
-              </button>
-            </div>
-
-            <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">选择勋章类型</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {availableBadges.map(badge => (
-                    <button
-                      key={badge.id}
-                      onClick={() => setAwardForm({ ...awardForm, badgeId: badge.id })}
-                      className={`p-3 rounded-2xl border-2 text-left transition-all flex items-center gap-2 ${awardForm.badgeId === badge.id
-                        ? 'border-amber-500 bg-amber-50'
-                        : 'border-slate-50 bg-slate-50 hover:border-slate-200'
-                        }`}
-                    >
-                      <span className="text-xl">{badge.icon}</span>
-                      <span className={`text-xs font-bold ${awardForm.badgeId === badge.id ? 'text-amber-700' : 'text-slate-600'}`}>
-                        {badge.name}
-                      </span>
-                    </button>
-                  ))}
-                  {availableBadges.length === 0 && (
-                    <p className="col-span-2 text-center text-xs text-slate-400 py-4 font-bold">
-                      暂无可用勋章，请先在勋章管理页创建
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">授予寄语 (可选)</label>
-                <textarea
-                  placeholder="写下对孩子的鼓励吧..."
-                  value={awardForm.reason}
-                  onChange={(e) => setAwardForm({ ...awardForm, reason: e.target.value })}
-                  rows={3}
-                  className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-amber-500 resize-none placeholder:text-slate-300"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-8">
-              <button
-                onClick={() => setShowAwardModal(false)}
-                className="flex-1 py-4 bg-slate-100 text-slate-500 font-bold rounded-2xl active:scale-95 transition-all"
-              >
-                返回
-              </button>
-              <button
-                onClick={handleAwardBadge}
-                disabled={awardLoading || !awardForm.badgeId}
-                className="flex-1 py-4 bg-amber-500 text-white font-bold rounded-2xl shadow-lg shadow-amber-200 active:scale-95 transition-all disabled:opacity-50 disabled:shadow-none"
-              >
-                {awardLoading ? '正在授予...' : '确认授予'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 
@@ -1189,17 +1114,9 @@ const StudentDetail: React.FC = () => {
                   <h3 className="font-bold text-slate-800 flex items-center gap-2">
                     <Medal className="w-4 h-4 text-amber-500" /> 成就勋章
                   </h3>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setShowAwardModal(true)}
-                      className="text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full font-black flex items-center gap-0.5 active:scale-95 transition-transform"
-                    >
-                      <Plus className="w-2.5 h-2.5" /> 授予
-                    </button>
-                    <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 font-black">
-                      {studentProfile?.badges?.length || 0} 枚
-                    </span>
-                  </div>
+                  <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 font-black">
+                    {studentProfile?.badges?.length || 0} 枚
+                  </span>
                 </div>
                 <div className="grid grid-cols-4 gap-3">
                   {(studentProfile?.badges || []).length > 0 ? (
@@ -1305,54 +1222,56 @@ const StudentDetail: React.FC = () => {
                 </h3>
                 <div className="space-y-2">
                   {thisWeekProcessTasks.length > 0 ? (
-                    thisWeekProcessTasks.map(task => {
-                      // 根据任务类型定义配色方案
-                      let bgColor = 'bg-blue-50';
-                      let tagColor = 'bg-blue-100 text-blue-600';
-                      let iconColor = 'bg-blue-200 text-blue-700';
+                    thisWeekProcessTasks
+                      .slice(taskPage * 10, (taskPage + 1) * 10)
+                      .map(task => {
+                        // 根据任务类型定义配色方案
+                        let bgColor = 'bg-blue-50';
+                        let tagColor = 'bg-blue-100 text-blue-600';
+                        let iconColor = 'bg-blue-200 text-blue-700';
 
-                      if (task.rawType === 'SPECIAL') {
-                        bgColor = 'bg-amber-50';
-                        tagColor = 'bg-amber-100 text-amber-600';
-                        iconColor = 'bg-amber-200 text-amber-700';
-                      } else if (task.rawType === 'DAILY') {
-                        bgColor = 'bg-green-50';
-                        tagColor = 'bg-green-100 text-green-600';
-                        iconColor = 'bg-green-200 text-green-700';
-                      } else if (task.name.includes('挑战') || task.name.includes('PK')) {
-                        bgColor = 'bg-purple-50';
-                        tagColor = 'bg-purple-100 text-purple-600';
-                        iconColor = 'bg-purple-200 text-purple-700';
-                      }
+                        if (task.rawType === 'SPECIAL') {
+                          bgColor = 'bg-amber-50';
+                          tagColor = 'bg-amber-100 text-amber-600';
+                          iconColor = 'bg-amber-200 text-amber-700';
+                        } else if (task.rawType === 'DAILY') {
+                          bgColor = 'bg-green-50';
+                          tagColor = 'bg-green-100 text-green-600';
+                          iconColor = 'bg-green-200 text-green-700';
+                        } else if (task.name.includes('挑战') || task.name.includes('PK')) {
+                          bgColor = 'bg-purple-50';
+                          tagColor = 'bg-purple-100 text-purple-600';
+                          iconColor = 'bg-purple-200 text-purple-700';
+                        }
 
-                      return (
-                        <div key={task.id} className={`flex items-center gap-3 p-3 ${bgColor} rounded-xl transition-all hover:scale-[1.02]`}>
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${task.status === 'completed' ? (task.rawType === 'SPECIAL' ? 'bg-amber-400 text-white' : 'bg-green-400 text-white') : iconColor
-                            }`}>
-                            {task.status === 'completed' ? (task.rawType === 'SPECIAL' ? '⭐' : '✓') :
-                              task.status === 'in_progress' ? '...' : '○'}
-                          </div>
-                          <div className="flex-1">
-                            <div className="text-sm font-bold text-slate-800">{task.name}</div>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className={`px-1.5 py-0.5 ${tagColor} rounded-full text-[10px] font-black leading-none uppercase tracking-tighter`}>
-                                {task.category}
-                              </span>
-                              {task.teacherNote && (
-                                <span className="text-[10px] text-slate-400 font-bold truncate max-w-[120px]">
-                                  💬 {task.teacherNote}
+                        return (
+                          <div key={task.id} className={`flex items-center gap-3 p-3 ${bgColor} rounded-xl transition-all hover:scale-[1.02]`}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${task.status === 'completed' ? (task.rawType === 'SPECIAL' ? 'bg-amber-400 text-white' : 'bg-green-400 text-white') : iconColor
+                              }`}>
+                              {task.status === 'completed' ? (task.rawType === 'SPECIAL' ? '⭐' : '✓') :
+                                task.status === 'in_progress' ? '...' : '○'}
+                            </div>
+                            <div className="flex-1">
+                              <div className="text-sm font-bold text-slate-800">{task.name}</div>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className={`px-1.5 py-0.5 ${tagColor} rounded-full text-[10px] font-black leading-none uppercase tracking-tighter`}>
+                                  {task.category}
                                 </span>
-                              )}
+                                {task.teacherNote && (
+                                  <span className="text-[10px] text-slate-400 font-bold truncate max-w-[120px]">
+                                    💬 {task.teacherNote}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className={`text-[10px] font-black ${task.status === 'completed' ? 'text-green-600' : 'text-slate-400'}`}>
+                                {task.status === 'completed' ? '已达成' : '进行中'}
+                              </div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div className={`text-[10px] font-black ${task.status === 'completed' ? 'text-green-600' : 'text-slate-400'}`}>
-                              {task.status === 'completed' ? '已达成' : '进行中'}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })
+                        );
+                      })
                   ) : (
                     <div className="text-center py-4 text-slate-400 text-xs">
                       暂无任务记录
@@ -1367,6 +1286,24 @@ const StudentDetail: React.FC = () => {
                     {thisWeekProcessTasks.filter(t => t.status === 'completed').length}/{thisWeekProcessTasks.length} 已完成
                   </span>
                 </div>
+                {/* 🆕 任务达人分页导航 */}
+                {thisWeekProcessTasks.length > 10 && (
+                  <div className="flex justify-center items-center gap-3 mt-3">
+                    <button
+                      onClick={() => setTaskPage(Math.max(0, taskPage - 1))}
+                      disabled={taskPage === 0}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${taskPage === 0 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-blue-100 text-blue-600 hover:bg-blue-200 active:scale-95'}`}
+                    >←</button>
+                    <span className="text-xs text-gray-500 font-medium">
+                      第 {taskPage + 1} / {Math.ceil(thisWeekProcessTasks.length / 10)} 页
+                    </span>
+                    <button
+                      onClick={() => setTaskPage(taskPage + 1)}
+                      disabled={(taskPage + 1) * 10 >= thisWeekProcessTasks.length}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${(taskPage + 1) * 10 >= thisWeekProcessTasks.length ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-blue-100 text-blue-600 hover:bg-blue-200 active:scale-95'}`}
+                    >→</button>
+                  </div>
+                )}
               </div>
 
               {/* PK对决记录 - V1原版样式 */}
@@ -1488,103 +1425,23 @@ const StudentDetail: React.FC = () => {
                 </div>
               </div>
 
-              {/* B. 今日过关 (Quick Check) - V1原版样式 */}
-              <div className="bg-white rounded-[28px] p-5 shadow-sm border border-slate-100 relative overflow-hidden">
-                {isDataFetching && (
-                  <div className="absolute top-3 right-5 flex items-center gap-1 opacity-60">
-                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-                    <span className="text-[8px] text-blue-400 font-bold uppercase tracking-widest">同步中</span>
-                  </div>
-                )}
-                <h3 className="font-bold text-gray-700 mb-2 flex justify-between items-center px-1">
-                  今日过关
-                  <span className="text-xs font-normal text-gray-400">
-                    已完成 {academicData.pendingTasks.length}
-                  </span>
-                </h3>
-                <div className="space-y-2">
-                  {academicData.pendingTasks.length > 0 ? academicData.pendingTasks.map(task => (
-                    <div key={task.id} className="bg-gray-50/50 p-3 rounded-xl border-l-4 border-orange-400 flex justify-between items-center transition-all hover:bg-gray-50 active:scale-[0.98]">
-                      <div>
-                        <div className="text-sm font-bold text-gray-800">{task.title}</div>
-                        {(task.attempts as number) > 0 && <div className="text-[10px] text-orange-500 font-bold mt-1 text-xs">🔥 辅导: {task.attempts as number} 次</div>}
-                      </div>
-                      <div className="flex gap-2">
-                        <button className="w-8 h-8 rounded-full bg-white text-orange-600 flex items-center justify-center active:bg-orange-100 shadow-sm transition-colors border border-orange-100"><Plus size={16} /></button>
-                        <button id={`btn-pass-${task.id}`} onClick={() => handlePassTask(0, task.id.toString())} className="w-8 h-8 rounded-full bg-white text-green-600 flex items-center justify-center active:bg-green-100 shadow-sm transition-colors border border-green-100"><Check size={16} /></button>
-                      </div>
-                    </div>
-                  )) : (
-                    <div className="text-center py-6 text-slate-400 text-xs bg-slate-50/50 rounded-2xl border border-dashed border-slate-100">
-                      今日暂无待过关任务
-                    </div>
-                  )}
-                </div>
-              </div>
 
-              {/* C. 个性化加餐 - V1原版样式 */}
-              <div className="relative rounded-[28px] p-6 overflow-hidden text-slate-800 shadow-sm border border-slate-100 bg-white">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
-                <div className="relative z-10">
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center">
-                        <Sparkles size={14} fill="currentColor" />
-                      </div>
-                      <span className="font-bold text-slate-800 text-sm">个性化加餐</span>
-                    </div>
-                    <span className="text-[10px] text-orange-700 bg-orange-50 px-2 py-1 rounded-md font-bold">
-                      {studentPersonalizedTasks.length} 项
-                    </span>
-                  </div>
-
-                  <div className="space-y-2">
-                    {studentPersonalizedTasks.length > 0 ? studentPersonalizedTasks.map(item => (
-                      <div key={item.id} className="bg-white/60 backdrop-blur border border-white/50 p-3 rounded-2xl shadow-sm">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="text-xs font-bold text-slate-800 mb-1">
-                              {item.students.join(', ')}
-                            </div>
-                            <div className="text-xs text-orange-600 font-bold flex items-center gap-1">
-                              <Plus size={10} /> {item.tasks.join(' + ')}
-                            </div>
-                            <div className="text-[9px] text-slate-500 mt-1">{item.date}</div>
-                          </div>
-                        </div>
-                      </div>
-                    )) : (
-                      <div className="text-center py-6 text-slate-400 text-xs bg-slate-50/50 rounded-2xl border border-dashed border-slate-100">
-                        暂无个性化加餐任务
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              {/* 🆕 已删除：今日教学计划面板（放在个人详情页不合适） */}
 
               {/* E. 全学期过关地图 (Timeline) - V1原版样式 */}
               <div className="pt-2">
                 <div className="flex justify-between items-center mb-3 px-1">
                   <h3 className="font-bold text-gray-700">全学期过关地图</h3>
-                  <div className="flex items-center gap-2">
-                    {/* 🆕 调整进度按钮 */}
-                    <button
-                      onClick={() => setShowProgressModal(true)}
-                      className="px-2 py-1 bg-white border border-slate-200 text-slate-500 text-[10px] font-black rounded-lg hover:bg-slate-50 active:scale-95 transition-all shadow-sm flex items-center gap-1"
-                    >
-                      <Settings2 size={10} /> 修改进度
-                    </button>
-                    <div className="flex bg-white p-0.5 rounded-lg border border-gray-200 shadow-sm">
-                      {(['chinese', 'math', 'english'] as const).map(sub => (
-                        <button
-                          key={sub}
-                          onClick={() => setTimelineSubject(sub)}
-                          className={`px-3 py-1 text-[10px] rounded-md font-black transition-all ${timelineSubject === sub ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                        >
-                          {sub === 'chinese' ? '语文' : sub === 'math' ? '数学' : '英语'}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="flex bg-white p-0.5 rounded-lg border border-gray-200 shadow-sm">
+                    {(['chinese', 'math', 'english'] as const).map(sub => (
+                      <button
+                        key={sub}
+                        onClick={() => setTimelineSubject(sub)}
+                        className={`px-3 py-1 text-[10px] rounded-md font-black transition-all ${timelineSubject === sub ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                      >
+                        {sub === 'chinese' ? '语文' : sub === 'math' ? '数学' : '英语'}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -1593,36 +1450,41 @@ const StudentDetail: React.FC = () => {
                   <div className="grid grid-cols-7 gap-1.5">
                     {academicData.semesterMap.map((cell: any) => {
                       // 🚀 动态色系方案 (语/数/英 差异化)
+                      // 🆕 修复：一次过关=深色，补过=淡色
                       const colors: Record<string, any> = {
                         chinese: {
-                          done: 'bg-orange-500 border-orange-400 shadow-md shadow-orange-100 scale-105 z-10',
-                          method: 'bg-rose-400 border-rose-300 scale-105 z-10',
-                          special: 'bg-amber-400 border-amber-300 scale-105 z-10',
+                          done: 'bg-orange-500 border-orange-400 shadow-md shadow-orange-100 scale-105 z-10',       // 一次过关：深色
+                          repassed: 'bg-orange-200 border-orange-200 scale-100',                                     // 补过：淡色
                           pending: 'bg-orange-50/50 border-orange-100/30 text-orange-200'
                         },
                         math: {
                           done: 'bg-blue-500 border-blue-400 shadow-md shadow-blue-100 scale-105 z-10',
-                          method: 'bg-cyan-400 border-cyan-300 scale-105 z-10',
-                          special: 'bg-indigo-400 border-indigo-300 scale-105 z-10',
+                          repassed: 'bg-blue-200 border-blue-200 scale-100',
                           pending: 'bg-blue-50/50 border-blue-100/30 text-blue-200'
                         },
                         english: {
                           done: 'bg-green-500 border-green-400 shadow-md shadow-green-100 scale-105 z-10',
-                          method: 'bg-emerald-400 border-emerald-300 scale-105 z-10',
-                          special: 'bg-teal-400 border-teal-300 scale-105 z-10',
+                          repassed: 'bg-green-200 border-green-200 scale-100',
                           pending: 'bg-green-50/50 border-green-100/30 text-green-200'
                         }
                       };
 
                       const subjectColors = colors[timelineSubject] || colors.math;
-                      let cellClass = cell.status === 'done'
-                        ? (cell.type === 'METHODOLOGY' ? subjectColors.method : (cell.type === 'SPECIAL' ? subjectColors.special : subjectColors.done))
-                        : subjectColors.pending;
+
+                      // 🆕 核心逻辑：补过(isRepassed=true)用淡色，一次过关用深色
+                      let cellClass = '';
+                      if (cell.status === 'done') {
+                        cellClass = cell.isRepassed ? subjectColors.repassed : subjectColors.done;
+                      } else {
+                        cellClass = subjectColors.pending;
+                      }
+
+                      const borderStyle = 'border';
 
                       return (
                         <div
                           key={cell.id}
-                          className={`group relative aspect-square rounded-lg border flex items-center justify-center transition-all ${cellClass}`}
+                          className={`group relative aspect-square rounded-lg flex items-center justify-center transition-all ${cellClass} ${borderStyle}`}
                         >
                           {cell.status === 'done' ? (
                             <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse shadow-sm" />
@@ -1654,171 +1516,311 @@ const StudentDetail: React.FC = () => {
                       );
                     })}
                   </div>
-                  <div className="mt-4 grid grid-cols-2 gap-y-2 px-2">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-md bg-emerald-500"></div>
-                      <span className="text-[10px] text-slate-500 font-bold">已过关(QC)</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-md bg-indigo-500"></div>
-                      <span className="text-[10px] text-slate-500 font-bold">核心教法</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-md bg-purple-500"></div>
-                      <span className="text-[10px] text-slate-500 font-bold">个性加餐</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-md bg-slate-100 border border-slate-200"></div>
-                      <span className="text-[10px] text-slate-500 font-bold">待探索</span>
-                    </div>
-                  </div>
                 </div>
+              </div>
 
-                {/* Timeline List - V1原版样式 (改为辅助展示) */}
-                <div className="flex items-center gap-2 mb-4 px-1">
-                  <BookOpen size={14} className="text-slate-400" />
-                  <span className="text-xs font-black text-slate-500 uppercase tracking-wider">最近过关流水</span>
-                </div>
+              {/* Timeline List - V1原版样式 (改为辅助展示) */}
+              <div className="flex items-center gap-2 mb-4 px-1">
+                <BookOpen size={14} className="text-slate-400" />
+                <span className="text-xs font-black text-slate-500 uppercase tracking-wider">最近过关流水</span>
+              </div>
 
-                <div className="relative pl-6 space-y-6">
-                  <div className="absolute left-[11px] top-2 bottom-0 w-0.5 bg-slate-200/60 rounded-full"></div>
+              <div className="relative pl-6 space-y-6">
+                <div className="absolute left-[11px] top-2 bottom-0 w-0.5 bg-slate-200/60 rounded-full"></div>
 
-                  {academicData.timeline[timelineSubject as keyof typeof academicData.timeline]
-                    .filter((l: TimelineLesson) => !showPendingOnly || l.status === 'pending')
-                    .map((lesson: TimelineLesson) => {
-                      const isExpanded = expandedLessons[lesson.id] || (lesson.status === 'pending');
-                      const isDone = lesson.status === 'done';
+                {academicData.timeline[timelineSubject as keyof typeof academicData.timeline]
+                  .filter((l: TimelineLesson) => !showPendingOnly || l.status === 'pending')
+                  .map((lesson: TimelineLesson) => {
+                    const isExpanded = expandedLessons[lesson.id] || (lesson.status === 'pending');
+                    const isDone = lesson.status === 'done';
 
-                      return (
-                        <div key={lesson.id} className="relative z-10 scale-in-center">
-                          <div className={`absolute -left-[21px] top-4 w-4 h-4 rounded-full border-4 box-content shadow-sm transition-all duration-300 ${isDone ? 'bg-green-500 border-green-100' : 'bg-orange-500 border-orange-100 animate-pulse'}`}></div>
+                    return (
+                      <div key={lesson.id} className="relative z-10 scale-in-center">
+                        <div className={`absolute -left-[21px] top-4 w-4 h-4 rounded-full border-4 box-content shadow-sm transition-all duration-300 ${isDone ? 'bg-green-500 border-green-100' : 'bg-orange-500 border-orange-100 animate-pulse'}`}></div>
 
-                          <div className={`bg-white rounded-2xl shadow-sm overflow-hidden transition-all border border-slate-100 ${!isDone ? 'ring-1 ring-orange-100' : ''}`}>
-                            <div
-                              className={`p-3.5 flex justify-between items-center cursor-pointer active:bg-slate-50 transition-colors ${!isDone ? 'bg-orange-50/30' : ''}`}
-                              onClick={() => toggleLessonExpand(lesson.id)}
-                            >
-                              <div className="flex-1">
-                                <div className={`text-[10px] font-black mb-1 leading-none ${isDone ? 'text-slate-400' : 'text-orange-600 uppercase'}`}>
-                                  U{lesson.unit} L{lesson.lesson} {isDone ? '已过关' : '· 过关中'}
-                                </div>
-                                <div className={`font-black text-sm ${isDone ? 'text-slate-600' : 'text-slate-800'}`}>{lesson.title}</div>
+                        <div className={`bg-white rounded-2xl shadow-sm overflow-hidden transition-all border border-slate-100 ${!isDone ? 'ring-1 ring-orange-100' : ''}`}>
+                          <div
+                            className={`p-3.5 flex justify-between items-center cursor-pointer active:bg-slate-50 transition-colors ${!isDone ? 'bg-orange-50/30' : ''}`}
+                            onClick={() => toggleLessonExpand(lesson.id)}
+                          >
+                            <div className="flex-1">
+                              <div className={`text-[10px] font-black mb-1 leading-none ${isDone ? 'text-slate-400' : 'text-orange-600 uppercase'}`}>
+                                U{lesson.unit} L{lesson.lesson} {isDone ? '已过关' : '· 过关中'}
                               </div>
-                              <div className="flex items-center gap-2">
-                                {!isDone && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handlePassLesson(lesson.id, lesson);
-                                    }}
-                                    className="px-2.5 py-1.5 bg-green-500 text-white text-[10px] font-black rounded-xl hover:bg-green-600 active:scale-95 transition-all shadow-sm"
-                                  >
-                                    补过
-                                  </button>
-                                )}
-                                <ChevronDown className={`w-4 h-4 text-slate-300 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                              <div className={`font-black text-sm ${isDone ? 'text-slate-600' : 'text-slate-800'}`}>{lesson.title}</div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {!isDone && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePassLesson(lesson.id, lesson);
+                                  }}
+                                  className="px-2.5 py-1.5 bg-green-500 text-white text-[10px] font-black rounded-xl hover:bg-green-600 active:scale-95 transition-all shadow-sm"
+                                >
+                                  补过
+                                </button>
+                              )}
+                              <ChevronDown className={`w-4 h-4 text-slate-300 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                            </div>
+                          </div>
+
+                          {isExpanded && (
+                            <div className="px-3 pb-3 border-t border-slate-50 animate-in fade-in slide-in-from-top-2 duration-300">
+                              <div className="pt-3 space-y-2">
+                                {lesson.tasks.map((task: TimelineTask) => {
+                                  const isTaskDone = task.status === 'passed';
+                                  return (
+                                    <div key={task.id} className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${isTaskDone ? 'bg-green-50/50 border-green-100' : 'bg-slate-50/50 border-slate-100'}`}>
+                                      <div className="flex items-center gap-2.5">
+                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shadow-sm ${isTaskDone ? 'bg-green-500 text-white' : 'bg-white text-slate-300 border border-slate-200'}`}>
+                                          {isTaskDone ? '✓' : '○'}
+                                        </div>
+                                        <span className={`text-xs font-bold ${isTaskDone ? 'text-green-700' : 'text-slate-600'}`}>{task.name}</span>
+                                      </div>
+                                      {/* 🆕 只展示状态，不需要点击功能 */}
+                                      {task.attempts > 0 && (
+                                        <span className="text-[10px] text-orange-600 font-black bg-orange-50 px-1.5 py-0.5 rounded-md border border-orange-100">
+                                          X{task.attempts}
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </div>
-
-                            {isExpanded && (
-                              <div className="px-3 pb-3 border-t border-slate-50 animate-in fade-in slide-in-from-top-2 duration-300">
-                                <div className="pt-3 space-y-2">
-                                  {lesson.tasks.map((task: TimelineTask) => {
-                                    const isTaskDone = task.status === 'passed';
-                                    return (
-                                      <div key={task.id} className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${isTaskDone ? 'bg-green-50/50 border-green-100' : 'bg-slate-50/50 border-slate-100'}`}>
-                                        <div className="flex items-center gap-2.5">
-                                          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shadow-sm ${isTaskDone ? 'bg-green-500 text-white' : 'bg-white text-slate-300 border border-slate-200'}`}>
-                                            {isTaskDone ? '✓' : '○'}
-                                          </div>
-                                          <span className={`text-xs font-bold ${isTaskDone ? 'text-green-700' : 'text-slate-600'}`}>{task.name}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          {task.attempts > 0 && <span className="text-[10px] text-orange-600 font-black tracking-tighter bg-orange-50 px-1.5 py-0.5 rounded-md border border-orange-100">🔥 {task.attempts}次辅导</span>}
-                                          {!isTaskDone && (
-                                            <button
-                                              id={`btn-pass-${task.id}`}
-                                              onClick={() => handlePassTask(lesson.id, task.id.toString())}
-                                              className="w-7 h-7 rounded-full bg-white text-green-600 flex items-center justify-center text-xs shadow-sm border border-green-100 active:scale-90 transition-all hover:bg-green-50"
-                                            >
-                                              ✓
-                                            </button>
-                                          )}
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            )}
-                          </div>
+                          )}
                         </div>
-                      );
-                    })}
-                </div>
+                      </div>
+                    );
+                  })}
               </div>
-
-              {/* F. 历史报告入口 - V1原版样式 */}
-              <div className="bg-white rounded-2xl border border-slate-100 p-4 flex justify-between items-center shadow-sm cursor-pointer hover:bg-slate-50 active:scale-[0.98] transition-all">
-                <span className="text-sm font-black text-slate-700 flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center">
-                    <Calendar size={16} />
-                  </div>
-                  历史学情报告
-                </span>
-                <ChevronRight size={16} className="text-slate-300" />
-              </div>
-
             </div>
           )}
 
-          {/* --- TAB 3: 错题管理 (Mistakes) - V1原版样式 --- */}
+          {/* --- TAB 3: 错题本 (Mistakes) - 轻量级设计 --- */}
           {activeTab === 'mistakes' && (
             <div className="space-y-4 animate-in slide-in-from-right-4 fade-in duration-300">
-              <div className="bg-red-50 p-4 rounded-xl border border-red-100 flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-bold text-red-700 text-sm">错题攻克中心</div>
-                  <div className="text-xs text-red-500 mt-1">本周共录入 {mistakeData.recent.length} 道错题，建议优先处理数学应用题。</div>
-                </div>
+              {/* 科目切换 Tab */}
+              <div className="flex gap-2 bg-white p-1.5 rounded-xl border border-gray-100 shadow-sm">
+                {[
+                  { key: 'chinese', label: '语文', color: 'orange' },
+                  { key: 'math', label: '数学', color: 'blue' },
+                  { key: 'english', label: '英语', color: 'purple' }
+                ].map(sub => (
+                  <button
+                    key={sub.key}
+                    onClick={() => setMistakeSubject(sub.key as 'chinese' | 'math' | 'english')}
+                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${mistakeSubject === sub.key
+                      ? `bg-${sub.color}-500 text-white shadow-md`
+                      : 'text-slate-500 hover:bg-slate-50'
+                      }`}
+                  >
+                    {sub.label}
+                  </button>
+                ))}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <button className="bg-gradient-to-br from-red-500 to-rose-600 text-white p-4 rounded-2xl shadow-lg shadow-red-100 flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform">
-                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                    <Camera size={20} />
+              {/* 添加错题按钮 */}
+              <button
+                onClick={() => setShowAddMistakeModal(true)}
+                className="w-full bg-gradient-to-r from-red-500 to-rose-600 text-white p-4 rounded-2xl shadow-lg shadow-red-100 flex items-center justify-center gap-3 active:scale-95 transition-transform"
+              >
+                <Plus size={20} />
+                <span className="font-bold">添加错题</span>
+              </button>
+
+              {/* 错题列表（按课程节点分组） */}
+              <div className="space-y-3">
+                {mistakes.filter(m => m.subject === mistakeSubject).length === 0 ? (
+                  <div className="bg-white p-8 rounded-xl border border-gray-100 text-center">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <AlertCircle className="text-gray-300" size={28} />
+                    </div>
+                    <div className="text-gray-400 text-sm">暂无错题记录</div>
                   </div>
-                  <span className="font-bold text-sm">录入错题</span>
-                </button>
-                <button className="bg-white border border-red-100 text-red-600 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform">
-                  <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center">
-                    <Printer size={20} />
-                  </div>
-                  <span className="font-bold text-sm">生成攻克单</span>
-                </button>
+                ) : (
+                  // 按课程节点分组
+                  Object.entries(
+                    mistakes
+                      .filter(m => m.subject === mistakeSubject)
+                      .reduce((acc, m) => {
+                        const key = `第${m.unit || '?'}单元 第${m.lesson || '?'}课`;
+                        if (!acc[key]) acc[key] = [];
+                        acc[key].push(m);
+                        return acc;
+                      }, {} as Record<string, any[]>)
+                  ).map(([lessonKey, lessonMistakes]: [string, any[]]) => (
+                    <div key={lessonKey} className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+                      <div className="bg-gray-50 px-4 py-2.5 border-b border-gray-100">
+                        <span className="text-xs font-bold text-gray-600">{lessonKey}</span>
+                        <span className="ml-2 text-xs text-gray-400">({lessonMistakes.length}道)</span>
+                      </div>
+                      <div className="divide-y divide-gray-50">
+                        {lessonMistakes.map(m => (
+                          <div key={m.id} className="px-4 py-3 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
+                                <span className="text-red-500 font-bold text-sm">P{m.workbookPage}</span>
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium text-gray-800">第{m.questionNo}题</span>
+                                  {m.errorCause && (
+                                    <span className="text-[10px] px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-100">
+                                      {m.errorCause}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-xs text-gray-400 mt-0.5">
+                                  错{m.wrongCount}次 · 重做{m.retryCount}次
+                                  {m.status === 'RESOLVED' && <span className="text-green-500 ml-1">✓ 已掌握</span>}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleRetryMistake(m.id)}
+                                className="text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 hover:bg-blue-100 active:scale-95 transition-all"
+                              >
+                                +重做
+                              </button>
+                              <button
+                                onClick={() => handleMasterMistake(m.id)}
+                                className="text-xs text-green-600 bg-green-50 px-3 py-1.5 rounded-lg border border-green-100 hover:bg-green-100 active:scale-95 transition-all"
+                              >
+                                ✓掌握
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
-
-              <div className="bg-white p-3 rounded-xl border border-gray-100">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-xs text-gray-400 font-bold">最近错题池</span>
-                  <span className="text-xs text-blue-500 flex items-center cursor-pointer">全部 <ChevronRight size={10} /></span>
-                </div>
-                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-                  <div className="w-20 h-20 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-300 border border-gray-200"><AlertCircle /></div>
-                  <div className="w-20 h-20 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-300 border border-gray-200"><AlertCircle /></div>
-                  <div className="w-20 h-20 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-300 border border-gray-200"><AlertCircle /></div>
-                </div>
-              </div>
-
             </div>
           )}
 
-        </div >
-      </div >
+          {/* 添加错题弹窗 */}
+          {showAddMistakeModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 animate-in fade-in duration-200">
+              <div className="bg-white rounded-t-3xl w-full max-w-lg p-6 pb-24 animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold text-gray-800">添加错题</h3>
+                  <button onClick={() => setShowAddMistakeModal(false)} className="text-gray-400 hover:text-gray-600">
+                    <X size={20} />
+                  </button>
+                </div>
+                {/* 🆕 进度选择器 */}
+                <div className="mb-4">
+                  <label className="block text-xs text-gray-500 mb-2">课程节点</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <select
+                        value={newMistake.unit}
+                        onChange={e => setNewMistake({ ...newMistake, unit: e.target.value })}
+                        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:border-amber-300 focus:ring-2 focus:ring-amber-100 outline-none"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map(u => (
+                          <option key={u} value={String(u)}>第{u}单元</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <select
+                        value={newMistake.lesson}
+                        onChange={e => setNewMistake({ ...newMistake, lesson: e.target.value })}
+                        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:border-amber-300 focus:ring-2 focus:ring-amber-100 outline-none"
+                      >
+                        {Array.from({ length: 30 }, (_, i) => i + 1).map(l => (
+                          <option key={l} value={String(l)}>第{l}课</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
 
-      {/* 历史记录模态框 */}
-      {
-        showHistoryModal && (
+                {/* 🆕 作业类别选择器 */}
+                <div className="mb-4">
+                  <label className="block text-xs text-gray-500 mb-2">作业类别</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {['能陪', '53天天练', '试卷', '练习单'].map(type => (
+                      <button
+                        key={type}
+                        onClick={() => setNewMistake({ ...newMistake, workbookType: type })}
+                        className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${newMistake.workbookType === type
+                          ? 'bg-amber-500 text-white border-amber-500'
+                          : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-amber-200'
+                          }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1.5">页码</label>
+                      <input
+                        type="number"
+                        value={newMistake.page}
+                        onChange={e => setNewMistake({ ...newMistake, page: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-red-300 focus:ring-2 focus:ring-red-100 outline-none transition-all"
+                        placeholder="48"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1.5">题号</label>
+                      <input
+                        type="number"
+                        value={newMistake.question}
+                        onChange={e => setNewMistake({ ...newMistake, question: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-red-300 focus:ring-2 focus:ring-red-100 outline-none transition-all"
+                        placeholder="3"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1.5">错因标签</label>
+                    <div className="flex flex-wrap gap-2">
+                      {(mistakeSubject === 'chinese'
+                        ? ['字词混淆', '拼音错误', '笔画错误', '阅读理解', '审题不清', '粗心大意']
+                        : mistakeSubject === 'english'
+                          ? ['拼写错误', '语法错误', '时态混淆', '单词遗忘', '审题不清', '粗心大意']
+                          : ['审题不清', '计算失误', '概念混淆', '粗心大意', '知识盲区']
+                      ).map(cause => (
+                        <button
+                          key={cause}
+                          onClick={() => setNewMistake({ ...newMistake, errorCause: cause })}
+                          className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${newMistake.errorCause === cause
+                            ? 'bg-red-500 text-white border-red-500'
+                            : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-red-200'
+                            }`}
+                        >
+                          {cause}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleAddMistake}
+                    className="w-full bg-gradient-to-r from-red-500 to-rose-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-red-100 active:scale-95 transition-transform"
+                  >
+                    确认添加
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+
+        </div>
+
+        {/* 历史记录模态框 */}
+        {showHistoryModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-in fade-in duration-300">
             <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 animate-in zoom-in-95 duration-300">
               <div className="flex items-center justify-between mb-4">
@@ -1883,145 +1885,10 @@ const StudentDetail: React.FC = () => {
               </div>
             </div>
           </div>
-        )
-      }
+        )}
 
-      {/* 进度修改模态框 */}
-      {showProgressModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] animate-in fade-in duration-300 p-4">
-          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
-            <div className="bg-gradient-to-r from-indigo-600 to-blue-600 p-5 text-white">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-black flex items-center gap-2">
-                  <Settings2 size={20} /> 修正教学进度
-                </h3>
-                <button onClick={() => setShowProgressModal(false)} className="opacity-70 hover:opacity-100 transition-opacity">
-                  <X size={20} />
-                </button>
-              </div>
-              <p className="text-[10px] opacity-80 mt-1 font-bold uppercase tracking-widest">最高权限覆盖 · 立即对该生生效</p>
-            </div>
-
-            <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
-              {/* 语文 */}
-              <div className="space-y-2">
-                <label className="text-xs font-black text-slate-500 flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> 语文进度
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">UNIT</span>
-                    <input
-                      type="number"
-                      value={progressForm.chinese.unit}
-                      onChange={(e) => setProgressForm({ ...progressForm, chinese: { ...progressForm.chinese, unit: e.target.value } })}
-                      className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-10 pr-3 py-2.5 text-sm font-black focus:ring-2 ring-indigo-500/20 outline-none"
-                    />
-                  </div>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">LESSON</span>
-                    <input
-                      type="number"
-                      value={progressForm.chinese.lesson}
-                      onChange={(e) => setProgressForm({ ...progressForm, chinese: { ...progressForm.chinese, lesson: e.target.value } })}
-                      className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-12 pr-3 py-2.5 text-sm font-black focus:ring-2 ring-indigo-500/20 outline-none"
-                    />
-                  </div>
-                </div>
-                <input
-                  type="text"
-                  placeholder="课文标题（可选）"
-                  value={progressForm.chinese.title}
-                  onChange={(e) => setProgressForm({ ...progressForm, chinese: { ...progressForm.chinese, title: e.target.value } })}
-                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 ring-indigo-500/20 outline-none"
-                />
-              </div>
-
-              {/* 数学 */}
-              <div className="space-y-2">
-                <label className="text-xs font-black text-slate-500 flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div> 数学进度
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">UNIT</span>
-                    <input
-                      type="number"
-                      value={progressForm.math.unit}
-                      onChange={(e) => setProgressForm({ ...progressForm, math: { ...progressForm.math, unit: e.target.value } })}
-                      className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-10 pr-3 py-2.5 text-sm font-black focus:ring-2 ring-indigo-500/20 outline-none"
-                    />
-                  </div>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">LESSON</span>
-                    <input
-                      type="number"
-                      value={progressForm.math.lesson}
-                      onChange={(e) => setProgressForm({ ...progressForm, math: { ...progressForm.math, lesson: e.target.value } })}
-                      className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-12 pr-3 py-2.5 text-sm font-black focus:ring-2 ring-indigo-500/20 outline-none"
-                    />
-                  </div>
-                </div>
-                <input
-                  type="text"
-                  placeholder="知识点描述（可选）"
-                  value={progressForm.math.title}
-                  onChange={(e) => setProgressForm({ ...progressForm, math: { ...progressForm.math, title: e.target.value } })}
-                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 ring-indigo-500/20 outline-none"
-                />
-              </div>
-
-              {/* 英语 */}
-              <div className="space-y-2">
-                <label className="text-xs font-black text-slate-500 flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div> 英语进度
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">UNIT</span>
-                  <input
-                    type="number"
-                    value={progressForm.english.unit}
-                    onChange={(e) => setProgressForm({ ...progressForm, english: { ...progressForm.english, unit: e.target.value } })}
-                    className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-10 pr-3 py-2.5 text-sm font-black focus:ring-2 ring-indigo-500/20 outline-none"
-                  />
-                </div>
-                <input
-                  type="text"
-                  placeholder="单元主题（可选）"
-                  value={progressForm.english.title}
-                  onChange={(e) => setProgressForm({ ...progressForm, english: { ...progressForm.english, title: e.target.value } })}
-                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 ring-indigo-500/20 outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="p-5 bg-slate-50 flex gap-3">
-              <button
-                onClick={() => setShowProgressModal(false)}
-                className="flex-1 py-3 text-sm font-black text-slate-500 hover:text-slate-700 transition-colors"
-                disabled={isUpdatingProgress}
-              >
-                取消
-              </button>
-              <button
-                onClick={handleUpdateProgress}
-                disabled={isUpdatingProgress}
-                className="flex-[2] bg-indigo-600 text-white py-3 rounded-2xl text-sm font-black shadow-lg shadow-indigo-200 active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                {isUpdatingProgress ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
-                ) : (
-                  <>确认修正</>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 邀请卡弹窗 */}
-      {
-        student && (
+        {/* 邀请卡弹窗 */}
+        {student && (
           <InviteCardModal
             isOpen={showInviteModal}
             onClose={() => setShowInviteModal(false)}
@@ -2032,9 +1899,9 @@ const StudentDetail: React.FC = () => {
               avatarUrl: undefined
             }}
           />
-        )
-      }
-    </ProtectedRoute >
+        )}
+      </div>
+    </ProtectedRoute>
   );
 };
 

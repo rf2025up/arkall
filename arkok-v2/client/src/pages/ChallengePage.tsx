@@ -344,7 +344,7 @@ const ChallengePage: React.FC = () => {
         <section className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-50">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-purple-500 rounded-full" />
+              <div className="w-1.5 h-4 bg-orange-500 rounded-full" />
               <h2 className="text-sm font-bold text-slate-800">发布新挑战</h2>
             </div>
             <X
@@ -360,21 +360,21 @@ const ChallengePage: React.FC = () => {
               placeholder="挑战名称 (例如：每日朗读打卡)"
               value={newChallenge.title}
               onChange={e => setNewChallenge({ ...newChallenge, title: e.target.value })}
-              className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-bold text-slate-700 placeholder:text-slate-300 focus:ring-1 focus:ring-purple-200"
+              className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-bold text-slate-700 placeholder:text-slate-300 focus:ring-1 focus:ring-orange-200"
             />
             <textarea
               placeholder="具体要求..."
               value={newChallenge.description}
               onChange={(e) => setNewChallenge({ ...newChallenge, description: e.target.value })}
               rows={2}
-              className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-bold text-slate-700 placeholder:text-slate-300 focus:ring-1 focus:ring-purple-200 resize-none"
+              className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-bold text-slate-700 placeholder:text-slate-300 focus:ring-1 focus:ring-orange-200 resize-none"
             />
 
             {/* 学生选择 - 习惯页风格展开列表 */}
             <div className="relative" ref={studentDropdownRef}>
               <div
                 onClick={() => setShowCreateModal(!showCreateModal)}
-                className="w-full bg-purple-50 text-purple-600 rounded-xl p-3 flex items-center justify-between border border-purple-100 cursor-pointer active:scale-[0.99] transition-all"
+                className="w-full bg-orange-50 text-orange-600 rounded-xl p-3 flex items-center justify-between border border-orange-100 cursor-pointer active:scale-[0.99] transition-all"
               >
                 <span className="font-bold text-sm">
                   {newChallenge.studentIds.length > 0 ? `已选 ${newChallenge.studentIds.length} 位学生` : '选择参与学生'}
@@ -386,7 +386,7 @@ const ChallengePage: React.FC = () => {
                 <div className="mt-2 bg-white rounded-2xl border border-slate-100 shadow-lg overflow-hidden animate-in slide-in-from-top-2">
                   <div className="flex items-center justify-between p-3 border-b border-slate-50">
                     <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-4 bg-purple-500 rounded-full" />
+                      <div className="w-1.5 h-4 bg-orange-500 rounded-full" />
                       <span className="text-sm font-bold text-slate-800">学生列表</span>
                     </div>
                     <button
@@ -397,7 +397,7 @@ const ChallengePage: React.FC = () => {
                           setNewChallenge({ ...newChallenge, studentIds: students.map(s => s.id) });
                         }
                       }}
-                      className="text-[10px] font-bold text-purple-500"
+                      className="text-[10px] font-bold text-orange-500"
                     >
                       {newChallenge.studentIds.length === students.length ? '取消全选' : '一键全选'}
                     </button>
@@ -417,7 +417,7 @@ const ChallengePage: React.FC = () => {
                           className="flex items-center justify-between p-3 border-b border-slate-50 last:border-b-0 cursor-pointer hover:bg-slate-50 transition-colors"
                         >
                           <span className="text-sm font-bold text-slate-700">{s.name}</span>
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'border-purple-500 bg-purple-500' : 'border-slate-200'}`}>
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'border-orange-500 bg-orange-500' : 'border-slate-200'}`}>
                             {isSelected && <CheckCircle2 size={12} className="text-white" strokeWidth={3} />}
                           </div>
                         </div>
@@ -441,7 +441,7 @@ const ChallengePage: React.FC = () => {
                 />
               </div>
               <div className="flex-1 bg-slate-50 rounded-lg flex items-center px-3 py-2 gap-1">
-                <Trophy size={12} className="text-purple-500" />
+                <Trophy size={12} className="text-orange-500" />
                 <span className="text-[10px] text-slate-400 font-bold">积分</span>
                 <input
                   type="number"
@@ -455,7 +455,7 @@ const ChallengePage: React.FC = () => {
             <button
               onClick={handleCreateChallenge}
               disabled={createLoading || !newChallenge.title.trim() || newChallenge.studentIds.length === 0}
-              className="w-full h-11 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-[44px] text-sm font-bold shadow-lg shadow-purple-200 active:scale-[0.98] transition-all disabled:opacity-50"
+              className="w-full h-11 bg-gradient-to-r from-[#FF9A5E] to-[#FF502E] text-white rounded-[44px] text-sm font-bold shadow-lg shadow-orange-200 active:scale-[0.98] transition-all disabled:opacity-50"
             >
               {createLoading ? '发布中...' : '发布挑战'}
             </button>
@@ -472,7 +472,6 @@ const ChallengePage: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="text-[11px] font-bold text-slate-800">{c.title}</h3>
-                    <span className="text-[8px] font-bold text-slate-300">{c.participantCount}位选手</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5">

@@ -92,14 +92,15 @@ export class LMSRoutes {
       }
     });
 
-    // 处理记录尝试
+    // 🆕 记录尝试次数递增
     this.router.patch('/records/:id/attempt', async (req, res) => {
       try {
         const { id } = req.params;
-        res.json({ success: true, message: `记录 ${id} 尝试更新成功` });
+        const result = await this.lmsService.incrementTaskAttempts(id);
+        res.json({ success: true, data: result, message: '尝试次数已更新' });
       } catch (error) {
-        console.error('更新记录尝试失败:', error);
-        res.status(500).json({ success: false, message: '更新记录尝试失败' });
+        console.error('❌ 更新记录尝试失败:', error);
+        res.status(500).json({ success: false, message: '更新记录尝试次数失败' });
       }
     });
 

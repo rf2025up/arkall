@@ -555,21 +555,20 @@ const BadgePage: React.FC = () => {
 
           <div className="space-y-2">
             {studentBadges.length > 0 ? studentBadges.map((sb) => (
-              <div key={sb.id} className="bg-white rounded-xl p-3 shadow-sm border border-slate-50 flex items-center justify-between gap-4">
-                <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center shrink-0">
-                  <span className="text-lg">{sb.badge.icon}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-[11px] font-bold text-slate-800">{sb.student.name}</span>
-                    <span className="text-[9px] font-bold text-slate-300 italic">获得</span>
-                    <span className="text-[11px] font-bold text-orange-600">{sb.badge.name}</span>
+              <div key={sb.id} className="bg-white rounded-xl p-3 shadow-sm border border-slate-50 flex items-center justify-between">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
+                    <span className="text-base">{sb.badge.icon}</span>
                   </div>
-                  <div className="text-[10px] font-bold text-slate-300 truncate tracking-wide">
-                    {formatDate(sb.awardedAt)} · {sb.reason || '为进步喝彩'}
+                  <div className="flex items-center gap-2 truncate">
+                    <span className="text-[12px] font-bold text-slate-800">{sb.student.name}</span>
+                    <span className="text-[10px] font-bold text-slate-300 italic">获得</span>
+                    <span className="text-[12px] font-bold text-orange-600 truncate">{sb.badge.name}</span>
                   </div>
                 </div>
-                <Sparkles size={14} className="text-amber-400 opacity-30" />
+                <div className="text-[10px] text-slate-300 font-bold ml-4">
+                  {formatDate(sb.awardedAt)}
+                </div>
               </div>
             )) : (
               <div className="py-8 text-center bg-white rounded-xl border border-slate-50 shadow-sm">

@@ -109,20 +109,35 @@ model lesson_plans {
 }
 
 model mistakes {
-  id         String        @id @default(uuid())
-  schoolId   String
-  studentId  String
-  imageUrl   String?
-  ocrText    String?
-  status     MistakeStatus @default(PENDING)
-  category   String?
-  notes      String?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  aiAnalysis Json?
-  schools    schools       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  students   students      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id            String        @id @default(uuid())
+  schoolId      String
+  studentId     String
+  // 🆕 科目和课程节点锚点
+  subject       String?       // 'chinese' | 'math' | 'english'
+  unit          String?       // 课程节点锚点
+  lesson        String?       // 课程节点锚点
+  // 🆕 轻量级定位信息
+  workbookPage  Int?          // 作业册页数
+  questionNo    Int?          // 第几题
+  // 🆕 错因分析标签
+  errorCause    String?       // 审题不清/计算失误/概念混淆/粗心大意/知识盲区
+  // 🆕 统计信息
+  wrongCount    Int           @default(1)  // 这道题错了几次
+  retryCount    Int           @default(0)  // 重做了几次
+  lastRetryAt   DateTime?     // 最近重做时间
+  // 原有字段（保留兼容）
+  imageUrl      String?
+  ocrText       String?
+  status        MistakeStatus @default(PENDING)
+  category      String?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  aiAnalysis    Json?
+  schools       schools       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  students      students      @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
+
 
 model pk_matches {
   id        String    @id @default(uuid())
@@ -204,6 +219,9 @@ model students {
   currentUnit                 String?
   currentInviteCode           String?
   inviteCodeExpiresAt         DateTime?
+  grade                       String?
+  semester                    String?
+  currentProgress             Json?     // 🆕 多科目进度 { chinese: {unit, lesson, title}, math: {...}, english: {...} }
   campaigns                   campaigns[]
   challenge_participants      challenge_participants[]
   daily_summaries             daily_summaries[]
@@ -265,6 +283,7 @@ model task_records {
   status        TaskStatus    @default(PENDING)
   expAwarded    Int           @default(0)
   submittedAt   DateTime?
+  settledAt     DateTime?     // 🆕 结算时间戳，用于防止重复结算
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   lessonPlanId  String?

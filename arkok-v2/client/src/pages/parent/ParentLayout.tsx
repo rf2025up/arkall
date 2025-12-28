@@ -113,7 +113,7 @@ const ParentLayout: React.FC = () => {
                     className={`flex flex-col items-center justify-center p-1 transition-colors flex-1 ${activeTab === 'today' ? 'text-orange-500' : 'text-gray-400 hover:text-gray-600'
                         }`}
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === 'today' ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === 'today' ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round">
                         <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
                         <line x1="16" x2="16" y1="2" y2="6" />
                         <line x1="8" x2="8" y1="2" y2="6" />
@@ -128,7 +128,7 @@ const ParentLayout: React.FC = () => {
                     className={`flex flex-col items-center justify-center p-1 transition-colors flex-1 ${activeTab === 'growth' ? 'text-orange-500' : 'text-gray-400 hover:text-gray-600'
                         }`}
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === 'growth' ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === 'growth' ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                     </svg>
                     <span className="text-[9px] mt-0.5 font-medium">成长档案</span>
@@ -140,12 +140,13 @@ const ParentLayout: React.FC = () => {
                     className={`flex flex-col items-center justify-center p-1 transition-colors flex-1 ${activeTab === 'connect' ? 'text-orange-500' : 'text-gray-400 hover:text-gray-600'
                         }`}
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === 'connect' ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === 'connect' ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round">
                         <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                         <polyline points="9 22 9 12 15 12 15 22" />
                     </svg>
                     <span className="text-[9px] mt-0.5 font-medium">家校互联</span>
                 </button>
+
             </div>
         </div>
     );

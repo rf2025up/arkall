@@ -233,7 +233,8 @@ export class ParentService {
                 status: true,
                 expAwarded: true,
                 createdAt: true,
-                subject: true
+                subject: true,
+                attempts: true  // 🆕 补过次数
             }
         });
 
@@ -601,6 +602,7 @@ export class ParentService {
                 name: r.title,
                 status: r.status,
                 exp: r.expAwarded || 0,
+                attempts: r.attempts || 0, // 🆕 返回尝试次数
                 time: r.createdAt
             }));
 

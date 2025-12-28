@@ -368,8 +368,7 @@ const HabitPage: React.FC = () => {
                 onClick={() => setIsManageOpen(!isManageOpen)}
                 className="w-full bg-[#FFF9E0] text-[#FFAA00] rounded-xl p-3.5 flex items-center justify-between border border-[#FFF0E0] cursor-pointer active:scale-[0.99] transition-all"
               >
-                <span className="font-bold text-sm flex items-center gap-2">
-                  {habits.find(h => h.id === selectedHabitId)?.icon || '📋'}
+                <span className="font-bold text-sm">
                   {filterEmoji(habits.find(h => h.id === selectedHabitId)?.name || '选择习惯')}
                 </span>
                 <Plus size={20} strokeWidth={2.5} className={`opacity-60 transition-transform ${isManageOpen ? 'rotate-45' : ''}`} />
@@ -390,14 +389,13 @@ const HabitPage: React.FC = () => {
                         className="flex items-center justify-between p-4 border-b border-slate-50 last:border-b-0 hover:bg-slate-50 transition-colors"
                       >
                         <div
-                          className="flex-1 flex items-center gap-3 cursor-pointer"
+                          className="flex-1 cursor-pointer"
                           onClick={() => {
                             setSelectedHabitId(habit.id);
                             setIsManageOpen(false);
                             setIsAddMode(false);
                           }}
                         >
-                          <span className="text-xl">{habit.icon}</span>
                           <span className="text-sm font-bold text-slate-700">{filterEmoji(habit.name)}</span>
                         </div>
                         <div className="flex items-center gap-2">

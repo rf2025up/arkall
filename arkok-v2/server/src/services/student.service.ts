@@ -38,6 +38,8 @@ export interface UpdateStudentRequest {
   avatar?: string;
   score?: number;
   exp?: number;
+  grade?: string;
+  semester?: string;
 }
 
 export interface StudentListResponse {
@@ -153,6 +155,8 @@ export class StudentService {
           level: true,
           teacherId: true,
           isActive: true,
+          grade: true,
+          semester: true,
         },
         orderBy: [
           { exp: 'desc' },
@@ -379,7 +383,8 @@ export class StudentService {
             id: task.id,
             title: task.title,
             status: task.status,
-            exp: task.expAwarded
+            exp: task.expAwarded,
+            attempts: task.attempts || 0 // 🆕 注入辅导/补过次数
           });
           return acc;
         }, {});
@@ -453,8 +458,8 @@ export class StudentService {
         chinese: { unit: '1', lesson: '1', title: '默认课程' },
         math: { unit: '1', lesson: '1', title: '默认课程' },
         english: { unit: '1', title: 'Default' },
-        grade: getGradeFromClass(student?.className || null),
-        semester: '上册'
+        grade: student?.grade || getGradeFromClass(student?.className || null),
+        semester: student?.semester || '上册'
       };
 
       const planInfo = (latestLessonPlan?.content as any)?.courseInfo || defaultProgress;
@@ -695,6 +700,8 @@ export class StudentService {
         ...(score !== undefined && { score }),
         ...(exp !== undefined && { exp }),
         ...(level !== undefined && { level }),
+        ...(data.grade !== undefined && { grade: data.grade }),
+        ...(data.semester !== undefined && { semester: data.semester }),
         updatedAt: new Date()
       }
     });

@@ -328,12 +328,12 @@ const PKPage: React.FC = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <span className={`text-[11px] font-bold truncate ${pk.winnerId === pk.studentA.id ? 'text-slate-800' : 'text-slate-400'}`}>{pk.studentA.name}</span>
+                    <span className={`text-[11px] font-bold truncate ${pk.winnerId === pk.studentA.id ? 'text-orange-600' : 'text-slate-400'}`}>{pk.studentA.name}</span>
                     <span className="text-[9px] font-bold text-slate-300 italic">VS</span>
-                    <span className={`text-[11px] font-bold truncate ${pk.winnerId === pk.studentB.id ? 'text-slate-800' : 'text-slate-400'}`}>{pk.studentB.name}</span>
+                    <span className={`text-[11px] font-bold truncate ${pk.winnerId === pk.studentB.id ? 'text-orange-600' : 'text-slate-400'}`}>{pk.studentB.name}</span>
                   </div>
                   <div className="text-[10px] font-bold text-slate-300 truncate tracking-wide">
-                    {pk.topic} · {pk.winnerId ? `${students.find(s => s.id === pk.winnerId)?.name || '优胜者'} 获胜` : '握手言和'}
+                    {pk.topic}
                   </div>
                 </div>
                 <div className="text-[10px] text-slate-300 font-bold">

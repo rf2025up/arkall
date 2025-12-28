@@ -140,7 +140,7 @@ export class App {
     this.app.use('/api/users', new UserRoutes(this.authService, this.prisma).getRoutes());
     this.app.use('/api/reports', new ReportRoutes(this.reportService, this.authService, this.prisma).getRoutes());
     this.app.use('/api/lms', new LMSRoutes(this.lmsService, this.authService, this.prisma).getRoutes());
-    this.app.use('/api/mistakes', new MistakesRoutes(this.authService).getRoutes());
+    this.app.use('/api/mistakes', new MistakesRoutes(this.authService, this.prisma).getRoutes());
     this.app.use('/api/records', new RecordsRoutes(this.lmsService, this.authService).getRoutes());
 
     // 边缘路由类化挂载
