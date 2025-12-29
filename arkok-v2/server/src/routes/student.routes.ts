@@ -187,6 +187,9 @@ export class StudentRoutes {
      */
     this.router.get('/:id/profile', this.getStudentProfile.bind(this));
 
+    // 🆕 获取学生最近一次积分操作记录
+    this.router.get('/:id/last-score', this.getLastScoreRecord.bind(this));
+
     /**
      * @swagger
      * /api/students/classes:
@@ -893,6 +896,61 @@ export class StudentRoutes {
           message: '添加积分过程中发生错误'
         });
       }
+    }
+  }
+
+  /**
+   * 🆕 获取学生最近一次积分操作记录
+   */
+  private async getLastScoreRecord(req: Request, res: Response): Promise<void> {
+    try {
+      const { id: studentId } = req.params;
+      const schoolId = req.schoolId!;
+
+      // 从 task_records 中查询最近一条手动加分记录
+      const prisma = require('../utils/prisma').default;
+      const lastRecord = await prisma.task_records.findFirst({
+        where: {
+          studentId,
+          schoolId,
+          OR: [
+            { title: { contains: '手动' } },
+            { title: { contains: '加分' } },
+            { title: { contains: '扣分' } },
+            { title: { contains: '经验调整' } }
+          ]
+        },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          expAwarded: true,
+          createdAt: true
+        }
+      });
+
+      if (!lastRecord) {
+        res.status(200).json({ success: true, data: null });
+        return;
+      }
+
+      const content = (lastRecord.content || {}) as any;
+      const result = {
+        points: content.score || 0,
+        exp: lastRecord.expAwarded || content.exp || 0,
+        reason: lastRecord.title,
+        operatorName: content.metadata?.updatedBy || '老师',
+        operatedAt: lastRecord.createdAt.toISOString()
+      };
+
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      console.error('Get last score record error:', error);
+      res.status(500).json({
+        success: false,
+        message: '获取积分记录失败'
+      });
     }
   }
 

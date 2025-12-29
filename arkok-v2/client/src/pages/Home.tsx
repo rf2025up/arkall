@@ -21,6 +21,13 @@ const Home = () => {
   const [scoringStudent, setScoringStudent] = useState<Student | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [lastScoreRecord, setLastScoreRecord] = useState<{
+    points: number;
+    exp: number;
+    reason?: string;
+    operatorName?: string;
+    operatedAt: string;
+  } | null>(null);
 
   // --- 加载和错误状态 ---
   const [isLoading, setIsLoading] = useState(true);
@@ -176,12 +183,25 @@ const Home = () => {
     touchStartPos.current = { x: touch.clientX, y: touch.clientY };
     isLongPressTriggered.current = false;
 
-    longPressTimer.current = setTimeout(() => {
+    longPressTimer.current = setTimeout(async () => {
       if (!isMultiSelectMode) {
         isLongPressTriggered.current = true;
         setScoringStudent(student);
         setIsSheetOpen(true);
         if (navigator.vibrate) navigator.vibrate(50);
+
+        // 🆕 获取该学生最近一次积分操作记录
+        try {
+          const res = await apiService.get(`/students/${student.id}/last-score`);
+          if (res.success && res.data) {
+            setLastScoreRecord(res.data as any);
+          } else {
+            setLastScoreRecord(null);
+          }
+        } catch (err) {
+          console.error('[Home] 获取积分记录失败:', err);
+          setLastScoreRecord(null);
+        }
       }
     }, 600);
   };
@@ -453,11 +473,12 @@ const Home = () => {
 
       <ActionSheet
         isOpen={isSheetOpen}
-        onClose={() => { setIsSheetOpen(false); setScoringStudent(null); }}
+        onClose={() => { setIsSheetOpen(false); setScoringStudent(null); setLastScoreRecord(null); }}
         selectedStudents={scoringStudent ? [scoringStudent] : visibleStudents.filter(s => selectedIds.has(s.id))}
         onConfirm={handleConfirmScore}
         onTransfer={user?.role === 'TEACHER' ? handleTransferStudents : undefined}
         onCheckin={user?.role === 'TEACHER' ? handleBatchCheckin : undefined}
+        lastScoreRecord={lastScoreRecord || undefined}
       />
 
       {toastMsg && (

@@ -180,6 +180,8 @@ model schools {
   task_library                task_library[]
   task_records                task_records[]
   teachers                    teachers[]
+  reading_books               reading_books[]               // 🆕 阅读书籍
+  reading_logs                reading_logs[]                // 🆕 阅读记录
 }
 
 model student_badges {
@@ -231,6 +233,8 @@ model students {
   schools                     schools                       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   teachers                    teachers?                     @relation(fields: [teacherId], references: [id])
   task_records                task_records[]
+  reading_books               reading_books[]               // 🆕 阅读书籍
+  reading_logs                reading_logs[]                // 🆕 阅读记录
 
   @@unique([schoolId, name])
 }
@@ -522,3 +526,42 @@ enum TaskType {
   PK_RESULT
   HABIT
 }
+
+// 🆕 阅读书籍表（按学生管理）
+model reading_books {
+  id          String         @id @default(uuid())
+  schoolId    String
+  studentId   String
+  bookName    String
+  totalPages  Int?
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  
+  schools     schools        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  students    students       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  logs        reading_logs[]
+  
+  @@index([studentId])
+  @@index([schoolId, studentId])
+}
+
+// 🆕 阅读记录表
+model reading_logs {
+  id          String        @id @default(uuid())
+  bookId      String
+  studentId   String
+  schoolId    String
+  currentPage Int           // 当前读到第几页（进度）
+  duration    Int           // 本次阅读时长（分钟）
+  recordedAt  DateTime      @default(now())
+  recordedBy  String?       // 记录老师ID
+  
+  books       reading_books @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  students    students      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  schools     schools       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  
+  @@index([studentId])
+  @@index([bookId])
+  @@index([schoolId, studentId])
+}
+

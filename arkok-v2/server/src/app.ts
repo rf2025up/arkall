@@ -43,6 +43,7 @@ import ParentRoutes from './routes/parent.routes';
 import CheckinRoutes from './routes/checkin.routes';
 import PlatformRoutes from './routes/platform.routes';
 import rewardRoutes from './routes/reward.routes';
+import ReadingRoutes from './routes/reading.routes';  // 🆕 阅读计划路由
 
 // Middleware & Utils
 import { errorHandler } from './middleware/errorHandler';
@@ -157,6 +158,9 @@ export class App {
 
     // 签到路由
     this.app.use('/api/checkins', new CheckinRoutes(this.authService).getRoutes());
+
+    // 🆕 阅读计划路由
+    this.app.use('/api/reading', new ReadingRoutes(this.authService).getRoutes());
 
     // 静态文件与前端路由
     const clientPath = path.resolve(__dirname, '../../client/dist');

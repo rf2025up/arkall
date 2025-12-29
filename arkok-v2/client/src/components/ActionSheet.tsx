@@ -1,7 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { X, UserPlus, CalendarCheck } from 'lucide-react';
+import { X, UserPlus, CalendarCheck, History } from 'lucide-react';
 import { Student } from '../types/student';
 import { useClass } from '../context/ClassContext';
+
+// 🆕 上次积分操作记录类型
+interface LastScoreRecord {
+  points: number;
+  exp: number;
+  reason?: string;
+  operatorName?: string;
+  operatedAt: string;
+}
 
 interface ActionSheetProps {
   isOpen: boolean;
@@ -9,7 +18,8 @@ interface ActionSheetProps {
   selectedStudents: Student[];
   onConfirm: (points: number, reason: string, exp?: number) => void;
   onTransfer?: (studentIds: string[], targetTeacherId?: string) => void;
-  onCheckin?: (studentIds: string[]) => void;  // 🆕 签到回调
+  onCheckin?: (studentIds: string[]) => void;
+  lastScoreRecord?: LastScoreRecord;  // 🆕 上次积分操作记录
 }
 
 const ActionSheet: React.FC<ActionSheetProps> = ({
@@ -18,16 +28,19 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
   selectedStudents,
   onConfirm,
   onTransfer,
-  onCheckin  // 🆕 签到回调
+  onCheckin,
+  lastScoreRecord  // 🆕
 }) => {
   const { viewMode, isProxyMode } = useClass();
   const [customPoints, setCustomPoints] = useState<string>('');
   const [customExp, setCustomExp] = useState<string>('');
+  const [customReason, setCustomReason] = useState<string>('');  // 🆕 原因字段
 
   useEffect(() => {
     if (isOpen) {
       setCustomPoints('');
       setCustomExp('');
+      setCustomReason('');
     }
   }, [isOpen]);
 
@@ -40,7 +53,7 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
     if (!isNaN(pts) || !isNaN(exp)) {
       const finalPts = isNaN(pts) ? 0 : pts;
       const finalExp = isNaN(exp) ? 0 : exp;
-      const reason = finalPts > 0 ? '手动加分' : (finalPts < 0 ? '手动扣分' : '经验调整');
+      const reason = customReason.trim() || (finalPts > 0 ? '手动加分' : (finalPts < 0 ? '手动扣分' : '经验调整'));
 
       onConfirm(finalPts, reason, finalExp);
     }
@@ -58,8 +71,7 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
     if (onTransfer && selectedStudents.length > 0) {
       const studentIds = selectedStudents.map(s => s.id);
       console.log('[DEBUG] Calling onTransfer with studentIds:', studentIds);
-      // 传递当前用户ID作为目标教师ID
-      onTransfer(studentIds, 'current'); // 使用'current'标识当前老师
+      onTransfer(studentIds, 'current');
       onClose();
     } else {
       console.log('[DEBUG] Transfer not executed:', {
@@ -69,18 +81,17 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
     }
   };
 
-  return (
-    // 1. Z-Index 60 确保盖住 BottomNav (Z-50)
-    // 2. items-end 确保靠底
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 backdrop-blur-[2px] transition-opacity animate-in fade-in">
+  // 🆕 格式化日期
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return `${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+  };
 
-      {/* 点击背景关闭 */}
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 backdrop-blur-[2px] transition-opacity animate-in fade-in">
       <div className="absolute inset-0" onClick={onClose}></div>
 
-      {/* 内容区域：贴底抽屉 */}
       <div className="relative bg-white w-full max-w-none rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300 overflow-hidden">
-
-        {/* 顶部把手 */}
         <div className="w-full flex justify-center pt-3 pb-1" onClick={onClose}>
           <div className="w-12 h-1.5 bg-gray-200 rounded-full"></div>
         </div>
@@ -110,15 +121,9 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
           </button>
         </div>
 
-        {/* 🆕 抢人功能 - 在全校视图和特定班级视图时显示 */}
+        {/* 🆕 抢人功能 */}
         {(() => {
           const shouldShow = !!(onTransfer && (viewMode === 'ALL_SCHOOL' || viewMode === 'SPECIFIC_CLASS'));
-          console.log('[DEBUG] ActionSheet transfer button render check:', {
-            hasOnTransfer: !!onTransfer,
-            viewMode: viewMode,
-            shouldShow,
-            selectedStudentsCount: selectedStudents.length
-          });
           return shouldShow;
         })() && (
             <div className="px-4 pb-2">
@@ -135,10 +140,39 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
             </div>
           )}
 
-        {/* 🆕 积分调整功能 - 在"我的学生"视图或"全权代理模式"下显示 */}
+        {/* 🆕 积分调整功能 */}
         {(viewMode === 'MY_STUDENTS' || isProxyMode) && (
           <div className="p-5 border-t border-gray-100 bg-white pb-14 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]">
-            {/* 积分调整 */}
+
+            {/* 🆕 上次操作记录 */}
+            {lastScoreRecord && (
+              <div className="mb-4 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <History size={14} className="text-gray-400" />
+                  <span className="text-xs font-medium text-gray-500">上次操作</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {lastScoreRecord.points !== 0 && (
+                      <span className={`text-sm font-bold ${lastScoreRecord.points > 0 ? 'text-orange-600' : 'text-red-500'}`}>
+                        {lastScoreRecord.points > 0 ? '+' : ''}{lastScoreRecord.points} 积分
+                      </span>
+                    )}
+                    {lastScoreRecord.exp !== 0 && (
+                      <span className="text-sm font-bold text-blue-600">
+                        {lastScoreRecord.exp > 0 ? '+' : ''}{lastScoreRecord.exp} 经验
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-gray-400">
+                    {lastScoreRecord.operatorName && `${lastScoreRecord.operatorName} · `}
+                    {formatDate(lastScoreRecord.operatedAt)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* 积分/经验输入 */}
             <div className="flex gap-3 items-center mb-3">
               <div className="flex-1 relative">
                 <label className="absolute -top-2 left-2 bg-white px-1 text-[10px] font-bold text-gray-400">积分</label>
@@ -161,6 +195,19 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
                 />
               </div>
             </div>
+
+            {/* 🆕 原因输入（可选） */}
+            <div className="mb-3 relative">
+              <label className="absolute -top-2 left-2 bg-white px-1 text-[10px] font-bold text-gray-400 z-10">原因（可选）</label>
+              <input
+                type="text"
+                placeholder="课堂表现优秀..."
+                value={customReason}
+                onChange={(e) => setCustomReason(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:ring-2 focus:ring-gray-300 focus:border-transparent outline-none bg-gray-50"
+              />
+            </div>
+
             <button
               onClick={handleCustomConfirm}
               className="w-full bg-gray-900 text-white font-bold rounded-xl py-3.5 hover:bg-gray-800 active:scale-[0.98] transition-all shadow-lg"
@@ -187,3 +234,4 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
 };
 
 export default ActionSheet;
+
