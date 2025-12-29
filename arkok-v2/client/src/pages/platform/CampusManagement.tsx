@@ -111,6 +111,41 @@ export function CampusManagement() {
         expiredAt: ''
     });
 
+    // 🆕 删除校区弹窗状态
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deletingCampus, setDeletingCampus] = useState<Campus | null>(null);
+    const [deleteConfirmName, setDeleteConfirmName] = useState('');
+
+    const openDeleteModal = (campus: Campus) => {
+        setDeletingCampus(campus);
+        setDeleteConfirmName('');
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleDeleteCampus = async () => {
+        if (!deletingCampus || deleteConfirmName !== deletingCampus.name) {
+            toast.error('请输入正确的校区名称');
+            return;
+        }
+
+        setIsDeleting(true);
+        try {
+            const response = await apiService.delete(`/platform/campuses/${deletingCampus.id}`);
+            if (response.success) {
+                toast.success(`校区「${deletingCampus.name}」已删除`);
+                setIsDeleteModalOpen(false);
+                setCampuses(prev => prev.filter(c => c.id !== deletingCampus.id));
+            } else {
+                toast.error(response.message || '删除失败');
+            }
+        } catch (err: any) {
+            toast.error('删除失败: ' + err.message);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     const openEditModal = (campus: Campus) => {
         setEditingCampus(campus);
         setEditForm({
@@ -238,6 +273,13 @@ export function CampusManagement() {
                                         className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-colors"
                                     >
                                         <Edit2 size={18} />
+                                    </button>
+                                    <button
+                                        onClick={() => openDeleteModal(campus)}
+                                        className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                                        title="删除校区"
+                                    >
+                                        <AlertTriangle size={18} />
                                     </button>
                                 </div>
                             </div>
@@ -427,6 +469,73 @@ export function CampusManagement() {
                                     <>
                                         <Check size={18} />
                                         保存更改
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+
+            {/* 🆕 删除校区确认弹窗 */}
+            {isDeleteModalOpen && deletingCampus && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="bg-white rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden"
+                    >
+                        <div className="px-8 py-6">
+                            <div className="flex items-center mb-4">
+                                <div className="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center mr-4">
+                                    <AlertTriangle size={24} className="text-red-600" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-gray-900 text-xl">删除校区</h3>
+                                    <p className="text-xs text-gray-500">此操作不可撤销，请谨慎操作</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-red-50 border border-red-100 rounded-2xl p-4 mb-6">
+                                <p className="text-sm text-red-700">
+                                    <strong>⚠️ 警告：</strong>删除校区将标记为删除状态，30 天内可联系管理员恢复。30 天后数据将被永久清除。
+                                </p>
+                            </div>
+
+                            <p className="text-sm text-gray-600 mb-2">
+                                请输入校区名称 <strong className="text-red-600">{deletingCampus.name}</strong> 以确认删除：
+                            </p>
+                            <input
+                                type="text"
+                                value={deleteConfirmName}
+                                onChange={(e) => setDeleteConfirmName(e.target.value)}
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all text-gray-900"
+                                placeholder="输入校区名称..."
+                            />
+                        </div>
+
+                        <div className="flex border-t border-gray-100">
+                            <button
+                                onClick={() => setIsDeleteModalOpen(false)}
+                                className="flex-1 py-4 text-center font-bold text-gray-500 hover:bg-gray-50 transition-colors"
+                            >
+                                取消
+                            </button>
+                            <button
+                                onClick={handleDeleteCampus}
+                                disabled={isDeleting || deleteConfirmName !== deletingCampus.name}
+                                className={`flex-1 py-4 text-center font-bold transition-all flex items-center justify-center gap-2 ${deleteConfirmName === deletingCampus.name
+                                    ? 'text-white bg-red-600 hover:bg-red-700'
+                                    : 'text-gray-300 bg-gray-100 cursor-not-allowed'
+                                    }`}
+                            >
+                                {isDeleting ? (
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                ) : (
+                                    <>
+                                        <AlertTriangle size={18} />
+                                        确认删除
                                     </>
                                 )}
                             </button>

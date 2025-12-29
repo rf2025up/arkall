@@ -47,6 +47,7 @@ export class PlatformService {
      */
     async listAllCampuses() {
         const schools = await this.prisma.schools.findMany({
+            where: { deletedAt: null }, // 排除已删除的校区
             orderBy: { createdAt: 'desc' },
             include: {
                 _count: {
@@ -185,6 +186,19 @@ export class PlatformService {
                 schools: { select: { name: true } }
             },
             take: limit
+        });
+    }
+
+    /**
+     * 软删除校区（标记 deletedAt，30 天后可清理）
+     */
+    async softDeleteCampus(schoolId: string) {
+        return this.prisma.schools.update({
+            where: { id: schoolId },
+            data: {
+                deletedAt: new Date(),
+                isActive: false
+            }
         });
     }
 }

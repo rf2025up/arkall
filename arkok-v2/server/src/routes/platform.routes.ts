@@ -195,6 +195,30 @@ export class PlatformRoutes {
         });
 
         /**
+         * DELETE /api/platform/campuses/:schoolId
+         * 软删除校区（标记 deletedAt，30 天后可清理）
+         */
+        router.delete('/campuses/:schoolId', async (req, res) => {
+            try {
+                const { schoolId } = req.params;
+
+                await this.platformService.softDeleteCampus(schoolId);
+
+                res.json({
+                    success: true,
+                    message: '校区已标记为删除，30 天内可联系管理员恢复'
+                });
+            } catch (error) {
+                console.error('❌ Error in DELETE /api/platform/campuses:', error);
+                res.status(500).json({
+                    success: false,
+                    message: '删除校区失败',
+                    error: (error as Error).message
+                });
+            }
+        });
+
+        /**
          * GET /api/platform/search
          * 全局搜索学生或教师
          */
