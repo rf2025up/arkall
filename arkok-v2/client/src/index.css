@@ -65,6 +65,44 @@
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
   }
+
+  /* ============================================
+     🍎 iOS Safari 触摸优化 - 修复点击不精确问题
+     ============================================ */
+
+  /* 消除 300ms 点击延迟 - 对所有可点击元素 */
+  button,
+  a,
+  [role="button"],
+  [onclick],
+  .cursor-pointer,
+  input[type="submit"],
+  input[type="button"],
+  input[type="checkbox"],
+  input[type="radio"],
+  select {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 移除 iOS 默认的点击高亮效果 */
+  * {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  }
+
+  /* 防止文本选择干扰触摸交互 */
+  button,
+  [role="button"],
+  .cursor-pointer {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Hover 状态隔离 - 只在真正支持 hover 的设备上应用 */
+  /* 注意：不添加空规则，避免破坏原有样式 */
+
+  /* 注意：移除了 min-height/min-width 规则，因为它会破坏紧凑的内联按钮布局 */
+  /* 如需更大的触摸区域，请在特定组件上手动添加 */
 }
 
 /* Custom component styles */

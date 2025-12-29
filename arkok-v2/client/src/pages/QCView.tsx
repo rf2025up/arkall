@@ -182,7 +182,10 @@ const QCView: React.FC = () => {
         const methodGroups: Record<string, string[]> = {};
         methodologyTasks.forEach(t => {
           if (!methodGroups[t.educationalSubcategory]) methodGroups[t.educationalSubcategory] = [];
-          methodGroups[t.educationalSubcategory].push(t.name);
+          // 🔧 修复：防止重复数据
+          if (!methodGroups[t.educationalSubcategory].includes(t.name)) {
+            methodGroups[t.educationalSubcategory].push(t.name);
+          }
         });
         setMethodologyCategories(Object.entries(methodGroups).map(([name, items]) => ({ name, items })));
 
@@ -191,7 +194,10 @@ const QCView: React.FC = () => {
         const growthGroups: Record<string, string[]> = {};
         growthHabitTasks.forEach(t => {
           if (!growthGroups[t.educationalSubcategory]) growthGroups[t.educationalSubcategory] = [];
-          growthGroups[t.educationalSubcategory].push(t.name);
+          // 🔧 修复：防止重复数据
+          if (!growthGroups[t.educationalSubcategory].includes(t.name)) {
+            growthGroups[t.educationalSubcategory].push(t.name);
+          }
         });
         setGrowthCategories(Object.entries(growthGroups).map(([name, items]) => ({ name, items })));
       }
@@ -1208,6 +1214,79 @@ const QCView: React.FC = () => {
   };
 
 
+  // 🆕 处理基础过关项的点击 (支持空状态点击：若无任务则自动创建并完成)
+  const handleBasicQCClick = async (e: React.MouseEvent, studentId: string, itemName: string) => {
+    e.stopPropagation();
+    const student = qcStudents.find(s => s.id === studentId);
+    if (!student) return;
+
+    // 查找该项对应的现有任务 (匹配 name 和 category)
+    const categoryMap: Record<string, string> = {
+      chinese: '语文基础过关',
+      math: '数学基础过关',
+      english: '英语基础过关'
+    };
+    const targetCategory = categoryMap[qcTabSubject];
+    const existingTask = student.tasks.find(t => t.name === itemName && (!t.category || t.category === targetCategory));
+
+    if (existingTask) {
+      // 已存在任务，执行原有的切换逻辑
+      toggleQCPass(studentId, existingTask.id);
+    } else {
+      // 不存在任务，创建并直接标记为已完成
+      const currentSubjectProgress = courseInfo[qcTabSubject as keyof typeof courseInfo] as { unit: string; lesson?: string } | undefined;
+
+      try {
+        const response = await apiService.post('/lms/records', {
+          studentId: studentId,
+          type: 'QC',
+          title: itemName,
+          status: 'COMPLETED', // 直接完成 (绿勾)
+          category: targetCategory,
+          date: new Date().toISOString().split('T')[0],
+          courseInfo: courseInfo,
+          unit: currentSubjectProgress?.unit || '1',
+          lesson: currentSubjectProgress?.lesson || '1',
+          expAwarded: 5 // 默认分值
+        });
+
+        if (response.success) {
+          const newRecord = response.data as any;
+          // 🔧 修复：直接过关不增加尝试次数 (attempts 保持为 0，UI不显示 xN)
+          // await apiService.patch(`lms/records/${newRecord.id}/attempt`, {});
+
+          toast.success('已过关');
+
+          // 更新本地状态
+          const cp = courseInfo[qcTabSubject as keyof typeof courseInfo] as { unit: string; lesson?: string } | undefined;
+          setQcStudents(prev => prev.map(s => {
+            if (s.id !== studentId) return s;
+            return {
+              ...s,
+              tasks: [...s.tasks, {
+                id: newRecord.id, // 使用 recordId
+                recordId: newRecord.id,
+                name: itemName,
+                type: 'QC',
+                category: targetCategory,
+                status: 'COMPLETED', // 状态改为 COMPLETED
+                exp: 5,
+                attempts: 0, // 初始尝试次数为 0
+                isAuto: false,
+                unit: cp?.unit || '1',
+                lesson: cp?.lesson || '1'
+              }]
+            };
+          }));
+        }
+      } catch (err) {
+        console.error('Failed to create QC task:', err);
+        toast.error('操作失败');
+      }
+    }
+  };
+
+
   const deleteTask = (studentId: string, taskId: string) => {
     // 🆕 直接退回抽屉，无需确认弹窗
     setQcStudents(prev => prev.map(s => {
@@ -1803,7 +1882,7 @@ const QCView: React.FC = () => {
                             >
                               {/* 勾选区：只负责勾选/取消勾选 */}
                               <div
-                                onClick={() => existingTask && toggleQCPass(selectedStudentId, existingTask.id)}
+                                onClick={(e) => handleBasicQCClick(e, selectedStudentId, itemName)}
                                 className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all cursor-pointer ${isDone ? 'bg-emerald-500 border-emerald-500' : 'border-slate-200 hover:border-slate-300'}`}
                               >
                                 {isDone && <Check size={12} className="text-white" strokeWidth={3} />}
