@@ -249,10 +249,24 @@ export class ParentService {
                 checkedAt: { gte: today, lt: tomorrow }
             },
             include: {
-                habits: { select: { name: true, icon: true } }
+                habits: { select: { id: true, name: true, icon: true } }
             },
             orderBy: { checkedAt: 'asc' }
         });
+
+        // 🆕 获取每个习惯的累计打卡次数（与教师端保持一致）
+        const habitTotalCounts = await prisma.habit_logs.groupBy({
+            by: ['habitId'],
+            where: { studentId },
+            _count: { id: true }
+        });
+        const habitCountMap = new Map(habitTotalCounts.map(h => [h.habitId, h._count.id]));
+
+        // 🆕 为每条习惯打卡记录注入累计次数
+        const habitLogsWithTotal = habitLogs.map(log => ({
+            ...log,
+            totalCheckIns: habitCountMap.get(log.habitId) || 1
+        }));
 
         // 获取今日PK记录
         const pkMatches = await prisma.pk_matches.findMany({
@@ -286,7 +300,7 @@ export class ParentService {
         });
 
         // 🆕 移除跨天累计逻辑：只显示当天的记录，确保每次发布后数据干净
-        const timeline = this.buildTimeline(filteredCompleted, habitLogs, pkMatches, badges, studentId);
+        const timeline = this.buildTimeline(filteredCompleted, habitLogsWithTotal, pkMatches, badges, studentId);
 
         // 🆕 注入“今日教学计划”置顶公告 (展示全天计划，包含已过关和待练习)
         // 🔧 过滤逻辑：只包含从备课页发布的任务，排除 PK/挑战赛等系统自动生成的记录
@@ -770,7 +784,11 @@ export class ParentService {
                 category: '习惯打卡',
                 title: h.habits.name,
                 icon: h.habits.icon || '🎯',
-                content: { streakDays: h.streakDays, notes: h.notes },
+                content: {
+                    totalCheckIns: (h as any).totalCheckIns || 1,  // 🆕 改为累计打卡次数
+                    habitName: h.habits.name,
+                    notes: h.notes
+                },
                 time: h.checkedAt,
                 cardStyle: 'habit'
             });
