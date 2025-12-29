@@ -13,6 +13,7 @@ import apiService from '../services/api.service';
 import { toast } from 'sonner';
 import InviteCardModal from '../components/InviteCardModal';
 import ParentBindingList from '../components/ParentBindingList';
+import ReadingStatsCard from '../components/ReadingStatsCard';  // 🆕 阅读统计组件
 
 // 本周数据过滤工具函数（周一到周日）
 const filterThisWeek = <T extends { created_at?: string; date?: string; createdAt?: string; awardedAt?: string }>(items: T[]): T[] => {
@@ -1214,6 +1215,9 @@ const StudentDetail: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {/* 🆕 阅读成长统计 */}
+              {studentId && <ReadingStatsCard studentId={studentId} />}
 
               {/* 任务达人面板 - V1原版样式 */}
               <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">

@@ -8,6 +8,7 @@ import ProtectedRoute from '../components/ProtectedRoute';
 import apiService from '../services/api.service';
 import MessageCenter from '../components/MessageCenter';
 import { FIXED_QC_ITEMS } from '../config/taskCategories';
+import ReadingSection from '../components/ReadingSection';  // 🆕 阅读记录组件
 
 // --- 类型定义 ---
 
@@ -2013,6 +2014,14 @@ const QCView: React.FC = () => {
                       })()}
                     </div>
                   </section>
+
+                  {/* 🆕 阅读培养区 - 在定制加餐之后 */}
+                  {selectedStudentId && (
+                    <ReadingSection
+                      studentId={selectedStudentId}
+                      studentName={getSelectedStudent()?.name || ''}
+                    />
+                  )}
 
                 </main>
 

@@ -268,6 +268,18 @@ export class ParentService {
             totalCheckIns: habitCountMap.get(log.habitId) || 1
         }));
 
+        // 🆕 获取今日阅读记录
+        const readingLogs = await prisma.reading_logs.findMany({
+            where: {
+                studentId,
+                recordedAt: { gte: today, lt: tomorrow }
+            },
+            include: {
+                books: { select: { bookName: true, totalPages: true } }
+            },
+            orderBy: { recordedAt: 'asc' }
+        });
+
         // 获取今日PK记录
         const pkMatches = await prisma.pk_matches.findMany({
             where: {
@@ -300,7 +312,7 @@ export class ParentService {
         });
 
         // 🆕 移除跨天累计逻辑：只显示当天的记录，确保每次发布后数据干净
-        const timeline = this.buildTimeline(filteredCompleted, habitLogsWithTotal, pkMatches, badges, studentId);
+        const timeline = this.buildTimeline(filteredCompleted, habitLogsWithTotal, pkMatches, badges, studentId, readingLogs);
 
         // 🆕 注入“今日教学计划”置顶公告 (展示全天计划，包含已过关和待练习)
         // 🔧 过滤逻辑：只包含从备课页发布的任务，排除 PK/挑战赛等系统自动生成的记录
@@ -532,7 +544,8 @@ export class ParentService {
         habitLogs: any[],
         pkMatches: any[],
         badges: any[],
-        studentId: string
+        studentId: string,
+        readingLogs: any[] = []  // 🆕 阅读记录参数
     ) {
         const timeline: any[] = [];
 
@@ -791,6 +804,28 @@ export class ParentService {
                 },
                 time: h.checkedAt,
                 cardStyle: 'habit'
+            });
+        });
+
+        // 🆕 添加阅读记录
+        readingLogs.forEach(log => {
+            timeline.push({
+                id: log.id,
+                type: 'READING',
+                category: '阅读培养',
+                title: log.books.bookName,
+                icon: '📚',
+                content: {
+                    bookName: log.books.bookName,
+                    currentPage: log.currentPage,
+                    totalPages: log.books.totalPages,
+                    duration: log.duration,
+                    progress: log.books.totalPages
+                        ? Math.round((log.currentPage / log.books.totalPages) * 100)
+                        : null
+                },
+                time: log.recordedAt,
+                cardStyle: 'reading'
             });
         });
 

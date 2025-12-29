@@ -291,6 +291,17 @@ const TodayTimeline: React.FC = () => {
                         decorIcon: '⭐',
                         decorColor: 'text-purple-500/5'
                     };
+                // 🆕 阅读培养卡片
+                case 'READING':
+                    return {
+                        nodeColor: 'border-emerald-500 bg-emerald-50',
+                        nodeShadow: 'rgba(16,185,129,0.15)',
+                        titleColor: 'text-emerald-700',
+                        timeColor: 'text-emerald-600 bg-emerald-100',
+                        cardBg: 'bg-gradient-to-br from-white to-emerald-50 border-emerald-200',
+                        decorIcon: '📚',
+                        decorColor: 'text-emerald-500/5'
+                    };
                 default:
                     return {
                         nodeColor: 'border-gray-500 bg-gray-50',
@@ -627,8 +638,38 @@ const TodayTimeline: React.FC = () => {
                         </div>
                     )}
 
+                    {/* 🆕 阅读培养卡片内容 */}
+                    {item.type === 'READING' && (
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-emerald-700">
+                                    {item.content?.bookName}
+                                </span>
+                                {item.content?.totalPages && (
+                                    <span className="text-xs text-emerald-500">
+                                        第{item.content.currentPage}页/{item.content.totalPages}页
+                                    </span>
+                                )}
+                            </div>
+                            {item.content?.totalPages && item.content?.progress !== null && (
+                                <div className="relative h-2 bg-emerald-100 rounded-full overflow-hidden">
+                                    <div
+                                        className="absolute left-0 top-0 h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full transition-all"
+                                        style={{ width: `${Math.min(item.content.progress, 100)}%` }}
+                                    />
+                                </div>
+                            )}
+                            {!item.content?.totalPages && (
+                                <div className="text-xs text-emerald-400">已读到第 {item.content?.currentPage} 页</div>
+                            )}
+                            <div className="flex items-center gap-2 text-xs text-emerald-500">
+                                <span>⏱️ 阅读 {item.content?.duration} 分钟</span>
+                            </div>
+                        </div>
+                    )}
+
                     {/* 任务描述 + 完成状态（同行） - 只在有独立描述时显示 */}
-                    {item.type !== 'BADGE' && item.type !== 'QC' && item.type !== 'QC_GROUP' && item.type !== 'HABIT' && item.type !== 'PK' && item.type !== 'PLAN_ANNOUNCEMENT' && (
+                    {item.type !== 'BADGE' && item.type !== 'QC' && item.type !== 'QC_GROUP' && item.type !== 'HABIT' && item.type !== 'PK' && item.type !== 'PLAN_ANNOUNCEMENT' && item.type !== 'READING' && (
                         <div className="flex items-center justify-between gap-2 text-sm">
                             {/* 🆕 修复：只有当 description 存在且与 title 不同时才显示 */}
                             {item.content?.description && item.content.description !== item.title && (
