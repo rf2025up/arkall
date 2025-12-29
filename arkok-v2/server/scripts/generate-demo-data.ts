@@ -91,45 +91,45 @@ async function main() {
 
     // 管理员
     const admin = await prisma.teachers.upsert({
-        where: { username: 'demo_admin' },
+        where: { username: 'demo1' },
         update: { name: '演示校长', schoolId },
         create: {
-            username: 'demo_admin',
+            username: 'demo1',
             password: hashedPassword,
             name: '演示校长',
             role: 'ADMIN',
             schoolId
         }
     });
-    console.log(`   ✅ 管理员: ${admin.name} (用户名: demo_admin, 密码: 123456)`);
+    console.log(`   ✅ 管理员: ${admin.name} (用户名: demo1, 密码: 123456)`);
 
     // 教师1
     const teacher1 = await prisma.teachers.upsert({
-        where: { username: 'demo_teacher1' },
+        where: { username: 'demo2' },
         update: { name: '张老师', schoolId },
         create: {
-            username: 'demo_teacher1',
+            username: 'demo2',
             password: hashedPassword,
             name: '张老师',
             role: 'TEACHER',
             schoolId
         }
     });
-    console.log(`   ✅ 教师1: ${teacher1.name} (用户名: demo_teacher1, 密码: 123456)`);
+    console.log(`   ✅ 教师1: ${teacher1.name} (用户名: demo2, 密码: 123456)`);
 
     // 教师2
     const teacher2 = await prisma.teachers.upsert({
-        where: { username: 'demo_teacher2' },
+        where: { username: 'demo3' },
         update: { name: '李老师', schoolId },
         create: {
-            username: 'demo_teacher2',
+            username: 'demo3',
             password: hashedPassword,
             name: '李老师',
             role: 'TEACHER',
             schoolId
         }
     });
-    console.log(`   ✅ 教师2: ${teacher2.name} (用户名: demo_teacher2, 密码: 123456)`);
+    console.log(`   ✅ 教师2: ${teacher2.name} (用户名: demo3, 密码: 123456)`);
 
     // 3. 创建习惯
     console.log('\n📌 Step 3: 创建习惯项...');
@@ -381,13 +381,13 @@ async function main() {
 
     // 先检查家长是否存在
     let parent = await prisma.parents.findFirst({
-        where: { schoolId, phone: '13800138000' }
+        where: { schoolId, phone: '13800000000' }
     });
 
     if (!parent) {
         parent = await prisma.parents.create({
             data: {
-                phone: '13800138000',
+                phone: '13800000000',
                 password: hashedPassword,
                 name: `${firstStudent.name}家长`,
                 schoolId,
@@ -411,7 +411,7 @@ async function main() {
             }
         });
     }
-    console.log(`   ✅ 创建家长: ${parent.name} (手机: 13800138000, 密码: 123456)`);
+    console.log(`   ✅ 创建家长: ${parent.name} (手机: 13800000000, 密码: 123456)`);
     console.log(`   ✅ 已绑定学生: ${firstStudent.name}`);
 
     // 汇总
@@ -419,10 +419,10 @@ async function main() {
     console.log('✅ 演示数据生成完成！');
     console.log('='.repeat(60));
     console.log('\n📋 账号信息:');
-    console.log('   - 管理员: demo_admin / 123456');
-    console.log('   - 教师1: demo_teacher1 / 123456');
-    console.log('   - 教师2: demo_teacher2 / 123456');
-    console.log('   - 家长: 13800138000 / 123456');
+    console.log('   - 管理员: demo1 / 123456');
+    console.log('   - 教师1: demo2 / 123456');
+    console.log('   - 教师2: demo3 / 123456');
+    console.log('   - 家长: 13800000000 / 123456');
     console.log(`\n📊 数据统计:`);
     console.log(`   - 学校: ${school.name}`);
     console.log(`   - 学生: ${students.length} 人`);
