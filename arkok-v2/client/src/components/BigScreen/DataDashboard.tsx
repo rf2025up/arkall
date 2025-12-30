@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Swords, Target, CheckCircle2, XCircle, Award, Rocket, Zap, TrendingUp, Star, Layout } from 'lucide-react';
 import { apiService } from '../../services/api.service';
+import { useSearchParams } from 'react-router-dom';
 
 // 类型定义
 interface Student {
@@ -98,16 +99,20 @@ const DataDashboard: React.FC = () => {
     const [scrollIndex, setScrollIndex] = useState(0);
     const [pkIndex, setPkIndex] = useState(0);
 
+    const [searchParams] = useSearchParams();
+    const schoolId = searchParams.get('schoolId');
+
     const fetchData = useCallback(async () => {
         try {
-            const response = await apiService.get<BigscreenData>('/dashboard/bigscreen');
+            const url = schoolId ? `/dashboard/bigscreen?schoolId=${schoolId}` : '/dashboard/bigscreen';
+            const response = await apiService.get<BigscreenData>(url);
             if (response.success && response.data) setData(response.data);
         } catch (err) {
             console.error('[DataDashboard] Error:', err);
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [schoolId]);
 
     useEffect(() => {
         fetchData();
