@@ -48,15 +48,28 @@ export class DashboardRoutes {
       }
     });
 
-    // 获取大屏专用数据
-    router.get('/bigscreen', authenticateToken(this.authService), validateUser, async (req, res) => {
+    // 获取大屏专用数据 (公开接口，无需认证)
+    router.get('/bigscreen', async (req, res) => {
       try {
-        const schoolId = (req as any).user?.schoolId || req.query.schoolId as string;
+        // 支持通过 URL 参数传递 schoolId，如果没有则自动查找第一个可用学校
+        let schoolId = req.query.schoolId as string;
+
+        if (!schoolId) {
+          // 如果没有提供 schoolId，查找第一个有学生的学校
+          const { PrismaClient } = require('@prisma/client');
+          const prisma = new PrismaClient();
+          const school = await prisma.schools.findFirst({
+            where: { isActive: true, students: { some: { isActive: true } } },
+            select: { id: true }
+          });
+          await prisma.$disconnect();
+          schoolId = school?.id;
+        }
 
         if (!schoolId) {
           return res.status(400).json({
             success: false,
-            message: 'schoolId is required'
+            message: 'No active school found'
           });
         }
 

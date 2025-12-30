@@ -125,6 +125,7 @@ export interface BadgeItem {
 }
 
 export interface BigscreenData {
+  schoolName?: string;
   taskCompletionRate: number;
   students: BigscreenStudent[];
   pkResults: PKResult[];
@@ -327,6 +328,13 @@ export class DashboardService {
    */
   async getBigscreenData(schoolId: string): Promise<BigscreenData> {
     console.log('📺 [BIGSCREEN] Fetching data for school:', schoolId);
+
+    // 获取校区名称
+    const school = await this.prisma.schools.findUnique({
+      where: { id: schoolId },
+      select: { name: true }
+    });
+    const schoolName = school?.name || '未知校区';
 
     // 经验进度计算辅助函数
     const getExpRequiredForLevel = (level: number): number => {
@@ -605,6 +613,7 @@ export class DashboardService {
 
     // 组装最终结果
     const result: BigscreenData = {
+      schoolName,
       taskCompletionRate,
       students: students.slice(0, 50),
       pkResults,

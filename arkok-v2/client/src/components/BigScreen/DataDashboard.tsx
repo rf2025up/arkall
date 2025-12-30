@@ -54,6 +54,7 @@ interface BadgeItem {
 }
 
 interface BigscreenData {
+    schoolName?: string;
     taskCompletionRate: number;
     students: Student[];
     pkResults: PKResult[];
@@ -175,7 +176,7 @@ const DataDashboard: React.FC = () => {
                                 <Layout className="w-5 h-5 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-lg font-black bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">星途成长方舟</h1>
+                                <h1 className="text-lg font-black bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">星途成长方舟 · {data?.schoolName || '加载中'}</h1>
                                 <div className="flex items-center gap-1">
                                     <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                                     <span className="text-[9px] text-slate-400 uppercase tracking-widest font-bold">LIVE CONNECTED</span>
