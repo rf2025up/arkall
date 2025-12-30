@@ -22,6 +22,7 @@ export interface CreateChallengeRequest {
   rewardPoints?: number;
   rewardExp?: number;
   maxParticipants?: number;
+  status?: string;
   metadata?: Record<string, any>;
 }
 
@@ -234,9 +235,9 @@ export class ChallengeService {
         endDate,
         rewardPoints: rewardPoints || 0,
         rewardExp: rewardExp || 0,
-        maxParticipants: maxParticipants || 2,
+        maxParticipants: maxParticipants || (type === 'CLASS' ? 999 : 2),
         metadata,
-        status: 'DRAFT' as any,
+        status: (data as any).status || 'DRAFT',
         updatedAt: new Date()
       },
       include: {
