@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import LegacyMonitorView from './LegacyMonitorView'
+import DataDashboard from './DataDashboard'
 import StarshipBattleView, { type BattleData } from './StarshipBattleView'
 
 // 模拟API响应类型
@@ -51,6 +51,7 @@ const BigScreen: React.FC = () => {
 
             if (studentA && studentB) {
               setBattleData({
+                id: String(pk.id || `pk_${Date.now()}`),
                 type: 'pk',
                 studentA: {
                   id: String(studentA.id),
@@ -80,6 +81,7 @@ const BigScreen: React.FC = () => {
           else if (recentChallenges && recentChallenges.length > 0) {
             const challenge = recentChallenges[0]
             setBattleData({
+              id: String(challenge.id || `challenge_${Date.now()}`),
               type: challenge.result === 'success' ? 'victory' : 'challenge',
               topic: challenge.title,
               status: 'ended'
@@ -117,6 +119,7 @@ const BigScreen: React.FC = () => {
   // 手动切换战斗模式的调试函数
   const triggerTestBattle = () => {
     setBattleData({
+      id: `test_battle_${Date.now()}`,
       type: 'pk',
       studentA: {
         id: '1',
@@ -144,6 +147,7 @@ const BigScreen: React.FC = () => {
 
   const triggerTestVictory = () => {
     setBattleData({
+      id: `test_victory_${Date.now()}`,
       type: 'victory',
       topic: '星际探索挑战',
       status: 'ended'
@@ -172,21 +176,19 @@ const BigScreen: React.FC = () => {
           <div className="flex gap-2 mb-2">
             <button
               onClick={() => setScreenMode('legacy')}
-              className={`px-3 py-1 rounded text-sm ${
-                screenMode === 'legacy'
-                  ? 'bg-cyan-500 text-white'
-                  : 'bg-slate-700 text-slate-300'
-              }`}
+              className={`px-3 py-1 rounded text-sm ${screenMode === 'legacy'
+                ? 'bg-cyan-500 text-white'
+                : 'bg-slate-700 text-slate-300'
+                }`}
             >
               日常模式
             </button>
             <button
               onClick={triggerTestBattle}
-              className={`px-3 py-1 rounded text-sm ${
-                screenMode === 'battle'
-                  ? 'bg-cyan-500 text-white'
-                  : 'bg-slate-700 text-slate-300'
-              }`}
+              className={`px-3 py-1 rounded text-sm ${screenMode === 'battle'
+                ? 'bg-cyan-500 text-white'
+                : 'bg-slate-700 text-slate-300'
+                }`}
             >
               测试战斗
             </button>
@@ -214,7 +216,7 @@ const BigScreen: React.FC = () => {
             transition={{ duration: 0.5 }}
             className="w-full h-full"
           >
-            <LegacyMonitorView schoolId="demo" />
+            <DataDashboard />
           </motion.div>
         ) : (
           <motion.div
@@ -236,11 +238,10 @@ const BigScreen: React.FC = () => {
       {/* 模式切换指示器 */}
       <div className="absolute bottom-4 right-4 z-40">
         <motion.div
-          className={`px-4 py-2 rounded-full text-sm font-medium backdrop-blur-lg ${
-            screenMode === 'legacy'
-              ? 'bg-slate-800/80 text-cyan-400 border border-cyan-400/30'
-              : 'bg-slate-800/80 text-magenta-400 border border-magenta-400/30'
-          }`}
+          className={`px-4 py-2 rounded-full text-sm font-medium backdrop-blur-lg ${screenMode === 'legacy'
+            ? 'bg-slate-800/80 text-cyan-400 border border-cyan-400/30'
+            : 'bg-slate-800/80 text-magenta-400 border border-magenta-400/30'
+            }`}
           whileHover={{ scale: 1.05 }}
         >
           {screenMode === 'legacy' ? '📊 日常监控模式' : '⚔️ 战斗模式'}
