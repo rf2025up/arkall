@@ -185,7 +185,7 @@ const ChallengePage: React.FC = () => {
         const challengeId = (res.data as any).id;
         console.log('[DEBUG CHALLENGE] Challenge created successfully, ID:', challengeId);
 
-        // 2. 如果是个人挑战或指定了学生，批量添加参与者
+        // 2. 如果是个人挑战且指定了学生，批量添加参与者
         if (publishMode === 'PERSONAL' && newChallenge.studentIds.length > 0) {
           await Promise.all(
             newChallenge.studentIds.map(studentId =>
@@ -196,18 +196,8 @@ const ChallengePage: React.FC = () => {
               })
             )
           );
-        } else if (publishMode === 'PUBLIC') {
-          // 公开悬赏（全班）：遍历所有学生加入
-          await Promise.all(
-            students.map(s =>
-              apiService.post('/challenges/join', {
-                challengeId,
-                studentId: s.id,
-                schoolId: userInfo?.schoolId
-              })
-            )
-          );
         }
+        // 公开悬赏模式下不添加任何学生参与者，仅作为公示作用
 
         toast.success('挑战发布成功！');
         apiService.invalidateCache('/challenges');

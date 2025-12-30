@@ -333,37 +333,37 @@ const DataDashboard: React.FC = () => {
                                                     initial={{ opacity: 0, scale: 0.9 }}
                                                     animate={{ opacity: 1, scale: 1 }}
                                                     exit={{ opacity: 0, scale: 0.9 }}
-                                                    className="flex items-center gap-10"
+                                                    className="flex items-center justify-between w-full px-8"
                                                 >
-                                                    <div className="flex flex-col items-center min-w-[120px]">
-                                                        <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-slate-700/50 shadow-[0_0_20px_rgba(34,197,94,0.3)] mt-1">
+                                                    <div className="flex flex-col items-center flex-1">
+                                                        <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-slate-700/50 shadow-[0_0_20px_rgba(34,197,94,0.3)]">
                                                             <img src={currentPK.winner.avatarUrl || '/avatar.jpg'} className="w-full h-full object-cover" />
                                                         </div>
-                                                        <div className="mt-3 font-bold text-lg text-slate-100 whitespace-nowrap text-center">{currentPK.winner.name}</div>
+                                                        <div className="mt-2 font-bold text-base text-slate-100 text-center">{currentPK.winner.name}</div>
                                                     </div>
 
                                                     {/* VS */}
-                                                    <div className="flex flex-col items-center">
-                                                        <div className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-500 italic">VS</div>
-                                                        <div className="text-sm font-bold text-slate-300 mt-2 whitespace-nowrap">{currentPK.topic}</div>
+                                                    <div className="flex flex-col items-center px-4">
+                                                        <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-500 italic">VS</div>
+                                                        <div className="text-xs font-bold text-slate-300 mt-1">{currentPK.topic}</div>
 
                                                         {/* PK 奖励 - 横向呈现 */}
-                                                        <div className="mt-4 flex items-center gap-3 bg-white/5 px-4 py-2 rounded-xl border border-white/10">
-                                                            <div className="flex items-center gap-1 text-[11px] font-black text-yellow-500 whitespace-nowrap">
+                                                        <div className="mt-3 flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
+                                                            <div className="flex items-center gap-1 text-[10px] font-black text-yellow-500">
                                                                 <span>⭐</span> 积分 {currentPK.rewardPoints || 100}
                                                             </div>
                                                             <div className="w-px h-3 bg-white/10" />
-                                                            <div className="flex items-center gap-1 text-[11px] font-black text-blue-400 whitespace-nowrap">
+                                                            <div className="flex items-center gap-1 text-[10px] font-black text-blue-400">
                                                                 <span>⚡</span> 经验 {currentPK.rewardExp || 50}
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex flex-col items-center min-w-[120px]">
-                                                        <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-slate-700/50 shadow-lg opacity-60 mt-1 grayscale-[0.5]">
+                                                    <div className="flex flex-col items-center flex-1">
+                                                        <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-slate-700/50 shadow-lg opacity-60 grayscale-[0.5]">
                                                             <img src={currentPK.loser.avatarUrl || '/avatar.jpg'} className="w-full h-full object-cover" />
                                                         </div>
-                                                        <div className="mt-3 font-bold text-lg text-slate-400 opacity-70 whitespace-nowrap text-center">{currentPK.loser.name}</div>
+                                                        <div className="mt-2 font-bold text-base text-slate-400 opacity-70 text-center">{currentPK.loser.name}</div>
                                                     </div>
                                                 </motion.div>
                                             </AnimatePresence>
