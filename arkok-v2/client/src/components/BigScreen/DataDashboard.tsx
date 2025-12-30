@@ -324,7 +324,23 @@ const DataDashboard: React.FC = () => {
 
                         {/* 中间区域 */}
                         <div className="col-span-6 flex flex-col gap-4">
-
+                            {/*
+                            - [x] 优化大屏端挑战悬赏榜布局 (压缩占比、微调字号)
+                            - [x] 教师端 APP：挑战页增加公开悬赏发布区 (输入框 + 经验 + 积分)
+                            - [x] 大屏端：对接个人挑战区的真实结果 API (绑定判定动态)
+                            - [x] 重塑 PK 竞技场视觉 (头像放大、分居两侧、展示奖励)
+                            - [x] 修复后台等级排序与数据查询不一致问题
+                            - [x] 优化积分榜滚动：改为整页翻页 (5人/页)
+                            - [x] 实时动态增强：
+                                - [x] 接入习惯打卡（显示具体习惯与连续天数）
+                                - [x] 接入阅读记录（显示书名与时长）
+                                - [x] 接入核心教学法与综合成长
+                            - [x] 视觉颜色分类：阅读(绿)、教学法(红)、成长(蓝)、习惯(金)
+                            - [x] 生产环境适配：大屏接口改为公开访问模式
+                            - [x] 多学校支持：支持通过 URL 参数 `?schoolId` 区分校区
+                            - [x] 标题增强：动态显示所属校区名称
+                            - [x] 数据清理：软删除特定学生数据 ("小龙")
+                            */}
                             {/* PK 竞技场 - 大头像循环展示 */}
                             <div className="flex-[2] glass-card rounded-2xl relative overflow-hidden">
                                 <div className="absolute inset-0 bg-gradient-to-r from-red-600/30 to-blue-600/30 z-0" />
