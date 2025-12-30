@@ -9,6 +9,7 @@ import StudentGrid from '../pages/StudentGrid';
 import StudentDetail from '../pages/StudentDetail';
 import Dashboard from '../pages/Dashboard';
 import BigScreen from '../pages/BigScreen';
+import DataDashboard from '../components/BigScreen/DataDashboard';
 import HabitPage from '../pages/HabitPage';
 import ChallengePage from '../pages/ChallengePage';
 import PKPage from '../pages/PKPage';
@@ -163,6 +164,15 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     errorElement: <div className="flex items-center justify-center min-h-screen bg-black text-white">大屏加载错误</div>,
+  },
+  {
+    path: '/data-dashboard',
+    element: (
+      <ProtectedRoute>
+        <DataDashboard />
+      </ProtectedRoute>
+    ),
+    errorElement: <div className="flex items-center justify-center min-h-screen bg-black text-white">数据看板加载错误</div>,
   },
   // ==================== 平台超级管理路由 ====================
   {

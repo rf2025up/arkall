@@ -190,6 +190,9 @@ export class StudentRoutes {
     // 🆕 获取学生最近一次积分操作记录
     this.router.get('/:id/last-score', this.getLastScoreRecord.bind(this));
 
+    // 🆕 获取学生等级进度信息（用于展示进度条）
+    this.router.get('/:id/level-progress', this.getLevelProgress.bind(this));
+
     /**
      * @swagger
      * /api/students/classes:
@@ -950,6 +953,47 @@ export class StudentRoutes {
       res.status(500).json({
         success: false,
         message: '获取积分记录失败'
+      });
+    }
+  }
+
+  /**
+   * 🆕 获取学生等级进度信息（用于展示进度条）
+   */
+  private async getLevelProgress(req: Request, res: Response): Promise<void> {
+    try {
+      const { id: studentId } = req.params;
+      const schoolId = req.schoolId!;
+
+      // 获取学生当前经验值
+      const prisma = require('../utils/prisma').default;
+      const student = await prisma.students.findFirst({
+        where: { id: studentId, schoolId },
+        select: { id: true, name: true, exp: true, level: true }
+      });
+
+      if (!student) {
+        res.status(404).json({ success: false, message: '学生不存在' });
+        return;
+      }
+
+      // 使用 StudentService 计算等级进度
+      const levelProgress = this.studentService.getLevelProgress(student.exp);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          studentId: student.id,
+          studentName: student.name,
+          totalExp: student.exp,
+          ...levelProgress
+        }
+      });
+    } catch (error) {
+      console.error('Get level progress error:', error);
+      res.status(500).json({
+        success: false,
+        message: '获取等级进度失败'
       });
     }
   }

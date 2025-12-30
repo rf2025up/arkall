@@ -13,6 +13,7 @@ interface BattleStudent {
 }
 
 export interface BattleData {
+  id: string
   type: 'pk' | 'challenge' | 'victory'
   studentA?: BattleStudent
   studentB?: BattleStudent
@@ -20,11 +21,12 @@ export interface BattleData {
   winner_id?: string
   status?: 'starting' | 'active' | 'ended'
   startTime?: number
+  rewardPoints?: number
+  rewardExp?: number
 }
 
 interface StarshipBattleViewProps {
-  battleData?: BattleData
-  isActive?: boolean
+  activeBattles: BattleData[]
 }
 
 // 粒子背景组件
@@ -126,19 +128,20 @@ const BattleCard: React.FC<{
     <motion.div
       initial={{
         opacity: 0,
-        x: position === 'left' ? -200 : 200,
-        rotateZ: tiltAngle
+        x: position === 'left' ? -400 : 400,
+        rotateZ: tiltAngle,
+        scale: 0.8
       }}
       animate={{
         opacity: 1,
-        x: 0,
-        rotateZ: isActive ? [tiltAngle, tiltAngle - 2, tiltAngle] : tiltAngle,
-        scale: isWinner ? 1.1 : 1
+        x: position === 'left' ? -60 : 60,
+        rotateZ: isActive ? [tiltAngle, tiltAngle - 1, tiltAngle] : tiltAngle,
+        scale: isWinner ? 1.15 : 1
       }}
       transition={{
-        duration: 0.8,
-        delay: position === 'left' ? 0.2 : 0.4,
-        rotateZ: { repeat: Infinity, duration: 2, ease: "easeInOut" }
+        duration: 1,
+        delay: position === 'left' ? 0.4 : 0.6,
+        rotateZ: { repeat: Infinity, duration: 3, ease: "easeInOut" }
       }}
       className={`relative w-80 h-96 rounded-2xl overflow-hidden
         bg-gradient-to-br from-slate-900/90 to-slate-800/90
@@ -214,11 +217,7 @@ const BattleCard: React.FC<{
         <h2 className={`text-3xl font-bold mb-2 ${isWinner ? 'text-green-400' : 'text-cyan-400'}`}>
           {student.name}
         </h2>
-        {student.team_name && (
-          <p className="text-sm text-slate-300 mb-4">
-            {student.team_name}
-          </p>
-        )}
+
 
         {/* 能量条 */}
         <div className="relative h-6 bg-slate-700/50 rounded-full overflow-hidden border border-cyan-400/30">
@@ -301,40 +300,44 @@ const VSIndicator: React.FC<{ isAnimating?: boolean }> = ({ isAnimating }) => {
 }
 
 // 主题显示组件
-const BattleTopic: React.FC<{ topic?: string }> = ({ topic }) => {
+const BattleTopic: React.FC<{ topic?: string; rewardPoints?: number; rewardExp?: number }> = ({ topic, rewardPoints, rewardExp }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: -30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, delay: 0.8 }}
-      className="text-center mb-12"
+      className="text-center mb-8"
     >
-      <h2 className="text-4xl font-bold text-white mb-2">对战主题</h2>
+      <h2 className="text-5xl font-black text-white mb-6 tracking-tighter italic">
+        <span className="bg-gradient-to-b from-white to-slate-400 bg-clip-text text-transparent opacity-50 uppercase text-lg block mb-1">Battle Topic</span>
+        {topic || '未知挑战'}
+      </h2>
+
+      {/* PK 奖励展示区域 */}
       <motion.div
-        className="inline-block px-8 py-4 bg-slate-800/80 backdrop-blur-xl rounded-2xl border-2 border-cyan-400/50"
-        whileHover={{ scale: 1.05, borderColor: "rgba(6, 182, 212, 0.8)" }}
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 1.2, type: "spring" }}
+        className="inline-flex items-center gap-6 px-10 py-3 bg-blue-600/20 backdrop-blur-xl rounded-full border border-blue-500/40 shadow-[0_0_30px_rgba(59,130,246,0.3)]"
       >
-        <p className="text-2xl font-semibold text-cyan-300">{topic || '未知挑战'}</p>
+        <div className="flex items-center gap-2">
+          <span className="text-yellow-400 text-xl">⭐</span>
+          <span className="text-2xl font-black text-yellow-400 font-mono">{rewardPoints || 100} 积分</span>
+        </div>
+        <div className="w-px h-8 bg-white/10" />
+        <div className="flex items-center gap-2">
+          <span className="text-blue-400 text-xl">⚡</span>
+          <span className="text-2xl font-black text-blue-400 font-mono">+{rewardExp || 50} EXP</span>
+        </div>
       </motion.div>
     </motion.div>
   )
 }
 
 const StarshipBattleView: React.FC<StarshipBattleViewProps> = ({
-  battleData,
-  isActive = false
+  activeBattles
 }) => {
-  const [showBattle, setShowBattle] = useState(false)
-
-  useEffect(() => {
-    if (isActive && battleData) {
-      setShowBattle(true)
-    } else {
-      setShowBattle(false)
-    }
-  }, [isActive, battleData])
-
-  if (!showBattle || !battleData) {
+  if (!activeBattles || activeBattles.length === 0) {
     return (
       <div className="w-full h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800">
         <StarfieldBackground />
@@ -356,125 +359,117 @@ const StarshipBattleView: React.FC<StarshipBattleViewProps> = ({
     )
   }
 
-  const isPKMode = battleData.type === 'pk' && battleData.studentA && battleData.studentB
-  const isWinnerA = battleData.winner_id === battleData.studentA?.id
-  const isWinnerB = battleData.winner_id === battleData.studentB?.id
-
   return (
-    <div className="w-full h-screen relative overflow-hidden">
+    <div className="w-full h-screen relative overflow-hidden bg-slate-900">
       <StarfieldBackground />
 
-      <div className="relative z-10 h-full flex flex-col">
-        {/* 标题区域 */}
-        <motion.div
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
-          className="text-center py-8"
-        >
-          <h1 className="text-5xl font-bold text-white mb-2">
-            <span className="bg-gradient-to-r from-cyan-400 via-magenta-500 to-cyan-400 bg-clip-text text-transparent">
-              星际战斗模式
-            </span>
-          </h1>
-          <motion.div
-            className="w-64 h-1 bg-gradient-to-r from-cyan-400 to-magenta-500 mx-auto rounded-full"
-            animate={{ scaleX: [0.8, 1, 0.8] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
-        </motion.div>
-
-        {/* 对战主题 */}
-        {battleData.topic && <BattleTopic topic={battleData.topic} />}
-
-        {/* 主要战斗区域 */}
-        {isPKMode && (
-          <div className="flex-1 flex items-center justify-center px-8">
-            <div className="flex items-center justify-center gap-8 w-full max-w-7xl">
-              {/* 左侧选手 */}
-              <BattleCard
-                student={battleData.studentA!}
-                position="left"
-                isWinner={isWinnerA}
-                isActive={battleData.status === 'active'}
+      <div className="relative z-10 h-full flex flex-col p-8 overflow-y-auto">
+        {/* 单场 PK 特效模式 */}
+        {activeBattles.length === 1 && activeBattles[0].type === 'pk' ? (
+          <div className="h-full flex flex-col">
+            <motion.div
+              initial={{ opacity: 0, y: -50 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-4"
+            >
+              <h1 className="text-5xl font-bold text-white mb-2">
+                <span className="bg-gradient-to-r from-cyan-400 via-magenta-500 to-cyan-400 bg-clip-text text-transparent">
+                  星际战斗模式
+                </span>
+              </h1>
+              <motion.div
+                className="w-64 h-1 bg-gradient-to-r from-cyan-400 to-magenta-500 mx-auto rounded-full"
+                animate={{ scaleX: [0.8, 1, 0.8] }}
+                transition={{ duration: 2, repeat: Infinity }}
               />
+            </motion.div>
 
-              {/* VS 标志 */}
-              <VSIndicator isAnimating={battleData.status === 'active'} />
+            {activeBattles[0].topic && <BattleTopic
+              topic={activeBattles[0].topic}
+              rewardPoints={activeBattles[0].rewardPoints}
+              rewardExp={activeBattles[0].rewardExp}
+            />}
 
-              {/* 右侧选手 */}
-              <BattleCard
-                student={battleData.studentB!}
-                position="right"
-                isWinner={isWinnerB}
-                isActive={battleData.status === 'active'}
-              />
+            <div className="flex-1 flex items-center justify-center">
+              <div className="flex items-center justify-center gap-8 w-full max-w-7xl">
+                <BattleCard
+                  student={activeBattles[0].studentA!}
+                  position="left"
+                  isWinner={activeBattles[0].winner_id === activeBattles[0].studentA?.id}
+                  isActive={activeBattles[0].status === 'active'}
+                />
+                <VSIndicator isAnimating={activeBattles[0].status === 'active'} />
+                <BattleCard
+                  student={activeBattles[0].studentB!}
+                  position="right"
+                  isWinner={activeBattles[0].winner_id === activeBattles[0].studentB?.id}
+                  isActive={activeBattles[0].status === 'active'}
+                />
+              </div>
             </div>
           </div>
-        )}
+        ) : (
+          /* 多场 PK 平铺模式 */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {activeBattles.map(battle => (
+              <motion.div
+                key={battle.id}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="glass-card rounded-3xl p-6 border-2 border-cyan-400/30 flex flex-col gap-4 relative overflow-hidden"
+              >
+                <div className="text-center">
+                  <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-xs font-bold uppercase tracking-tighter">
+                    {battle.type === 'pk' ? 'PK 实时对战' : '挑战动态'}
+                  </span>
+                  <h3 className="text-lg font-bold text-white mt-2 truncate">{battle.topic}</h3>
+                </div>
 
-        {/* 挑战模式或胜利画面 */}
-        {!isPKMode && (
-          <div className="flex-1 flex items-center justify-center">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, type: "spring" }}
-              className="text-center"
-            >
-              {battleData.type === 'victory' ? (
-                <div>
-                  <motion.div
-                    className="text-8xl mb-8"
-                    animate={{ rotate: [0, 360] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                  >
-                    🏆
-                  </motion.div>
-                  <h2 className="text-6xl font-bold text-green-400 mb-4">VICTORY!</h2>
-                  <p className="text-2xl text-slate-300">挑战完成</p>
+                <div className="flex items-center justify-between gap-2">
+                  {/* A */}
+                  <div className="flex-1 flex flex-col items-center">
+                    <div className={`w-16 h-16 rounded-full border-2 p-1 ${battle.winner_id === battle.studentA?.id ? 'border-green-400 shadow-lg shadow-green-500/50' : 'border-slate-500'}`}>
+                      <img src={battle.studentA?.avatar_url || '/avatar.jpg'} className="w-full h-full rounded-full object-cover" />
+                    </div>
+                    <span className="text-sm font-bold mt-2 truncate max-w-full">{battle.studentA?.name}</span>
+                    <div className="text-xs text-yellow-400 font-mono mt-1">{battle.studentA?.score?.toLocaleString()}</div>
+                  </div>
+
+                  <div className="text-2xl font-black italic bg-gradient-to-r from-cyan-400 to-magenta-500 bg-clip-text text-transparent">VS</div>
+
+                  {/* B */}
+                  {battle.studentB ? (
+                    <div className="flex-1 flex flex-col items-center">
+                      <div className={`w-16 h-16 rounded-full border-2 p-1 ${battle.winner_id === battle.studentB?.id ? 'border-green-400 shadow-lg shadow-green-500/50' : 'border-slate-500'}`}>
+                        <img src={battle.studentB?.avatar_url || '/avatar.jpg'} className="w-full h-full rounded-full object-cover" />
+                      </div>
+                      <span className="text-sm font-bold mt-2 truncate max-w-full">{battle.studentB?.name}</span>
+                      <div className="text-xs text-yellow-400 font-mono mt-1">{battle.studentB?.score?.toLocaleString()}</div>
+                    </div>
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center">
+                      <div className="w-16 h-16 rounded-full bg-slate-800/50 flex items-center justify-center">
+                        <span className="text-2xl">⚡</span>
+                      </div>
+                      <span className="text-xs text-slate-500 mt-2">单人挑战</span>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div>
-                  <motion.div
-                    className="text-8xl mb-8"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                  >
-                    ⚡
-                  </motion.div>
-                  <h2 className="text-6xl font-bold text-cyan-400 mb-4">CHALLENGE</h2>
-                  <p className="text-2xl text-slate-300">挑战开始</p>
+
+                {/* 状态 */}
+                <div className="text-center mt-2">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full ${battle.status === 'active' ? 'bg-green-400 animate-pulse' : 'bg-slate-500'}`} />
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">
+                      {battle.status === 'active' ? '进行中' : battle.status === 'starting' ? '准备中' : '已结束'}
+                    </span>
+                  </div>
                 </div>
-              )}
-            </motion.div>
+              </motion.div>
+            ))}
           </div>
         )}
       </div>
-
-      {/* 战斗状态指示器 */}
-      {battleData.status && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="absolute top-8 right-8 px-6 py-3 bg-slate-800/80 backdrop-blur-xl rounded-full border-2 border-cyan-400"
-        >
-          <div className="flex items-center gap-3">
-            <motion.div
-              className="w-3 h-3 bg-green-400 rounded-full"
-              animate={{
-                scale: [1, 1.5, 1],
-                opacity: [0.8, 1, 0.8]
-              }}
-              transition={{ duration: 1, repeat: Infinity }}
-            />
-            <span className="text-white font-semibold">
-              {battleData.status === 'active' ? '战斗进行中' :
-                battleData.status === 'starting' ? '准备开始' : '战斗结束'}
-            </span>
-          </div>
-        </motion.div>
-      )}
     </div>
   )
 }

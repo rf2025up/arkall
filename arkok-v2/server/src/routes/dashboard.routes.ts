@@ -48,6 +48,35 @@ export class DashboardRoutes {
       }
     });
 
+    // 获取大屏专用数据
+    router.get('/bigscreen', authenticateToken(this.authService), validateUser, async (req, res) => {
+      try {
+        const schoolId = (req as any).user?.schoolId || req.query.schoolId as string;
+
+        if (!schoolId) {
+          return res.status(400).json({
+            success: false,
+            message: 'schoolId is required'
+          });
+        }
+
+        console.log(`📺 [BIGSCREEN] Loading data for school: ${schoolId}`);
+        const bigscreenData = await this.dashboardService.getBigscreenData(schoolId);
+
+        res.status(200).json({
+          success: true,
+          data: bigscreenData
+        });
+      } catch (error) {
+        console.error('❌ [BIGSCREEN] Error:', error);
+        res.status(500).json({
+          success: false,
+          message: 'Failed to load bigscreen data',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    });
+
     return router;
   }
 }

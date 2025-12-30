@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import LegacyMonitorView from '../components/BigScreen/LegacyMonitorView';
+import { Rocket, Trophy, Clock, Award, Layout, TrendingUp, Star } from 'lucide-react';
+import { io, Socket } from 'socket.io-client';
+import DataDashboard from '../components/BigScreen/DataDashboard';
 import StarshipBattleView, { BattleData } from '../components/BigScreen/StarshipBattleView';
 
 // 获取用户信息
@@ -19,10 +21,55 @@ const getUserInfo = () => {
 const userInfo = getUserInfo();
 
 const BigScreen: React.FC = () => {
-  const [mode, setMode] = useState<'MONITOR' | 'BATTLE'>('MONITOR');
-  const [battleData, setBattleData] = useState<BattleData | null>(null);
-  const [showDebugPanel, setShowDebugPanel] = useState(true);
-  const [socket, setSocket] = useState<any>(null);
+  const [activeBattles, setActiveBattles] = useState<BattleData[]>([]);
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+
+  // 🔌 初始化 Socket.IO 连接
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const schoolId = userInfo?.schoolId;
+
+    if (!schoolId) {
+      console.warn('[BigScreen] No schoolId found, running in demo mode');
+      return;
+    }
+
+    console.log('[BigScreen] Initializing Socket.IO connection...');
+
+    const newSocket = io(window.location.origin, {
+      auth: { token },
+      query: { schoolId },
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 10
+    });
+
+    newSocket.on('connect', () => {
+      console.log('[BigScreen] ✅ Socket connected:', newSocket.id);
+      setIsConnected(true);
+      // 加入学校房间
+      newSocket.emit('JOIN_SCHOOL_ROOM', { schoolId });
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('[BigScreen] ❌ Socket disconnected');
+      setIsConnected(false);
+    });
+
+    newSocket.on('connect_error', (err) => {
+      console.error('[BigScreen] Socket connection error:', err.message);
+      setIsConnected(false);
+    });
+
+    setSocket(newSocket);
+
+    return () => {
+      console.log('[BigScreen] Cleaning up socket connection');
+      newSocket.disconnect();
+    };
+  }, []);
 
   // WebSocket事件监听
   useEffect(() => {
@@ -31,7 +78,8 @@ const BigScreen: React.FC = () => {
     // 监听PK开始事件
     const handlePKStart = (data: any) => {
       console.log('🎮 PK Start Event:', data);
-      const newBattleData: BattleData = {
+      const newBattle: BattleData = {
+        id: data.matchId || `pk-${Date.now()}`,
         type: 'pk',
         studentA: data.playerA ? {
           id: data.playerA.id,
@@ -51,38 +99,43 @@ const BigScreen: React.FC = () => {
         } : undefined,
         topic: data.topic,
         status: 'starting',
-        startTime: Date.now()
+        startTime: Date.now(),
+        rewardPoints: data.rewardPoints || 100,
+        rewardExp: data.rewardExp || 50
       };
 
-      setBattleData(newBattleData);
-      setMode('BATTLE');
+      setActiveBattles(prev => {
+        const exists = prev.find(b => b.id === newBattle.id);
+        if (exists) return prev;
+        return [...prev, newBattle];
+      });
 
       // 3秒后激活战斗
       setTimeout(() => {
-        setBattleData(prev => prev ? { ...prev, status: 'active' } : null);
+        setActiveBattles(prev => prev.map(b => b.id === newBattle.id ? { ...b, status: 'active' } : b));
       }, 3000);
     };
 
     // 监听PK结束事件
     const handlePKEnd = (data: any) => {
       console.log('🏁 PK End Event:', data);
-      setBattleData(prev => prev ? {
-        ...prev,
-        status: 'ended',
-        winner_id: data.winnerId
-      } : null);
+      setActiveBattles(prev => prev.map(b =>
+        (b.id === data.matchId || (b.type === 'pk' && b.status !== 'ended'))
+          ? { ...b, status: 'ended', winner_id: data.winnerId }
+          : b
+      ));
 
-      // 5秒后返回监控模式
+      // 8秒后从列表中移除该场对战
       setTimeout(() => {
-        setMode('MONITOR');
-        setBattleData(null);
-      }, 5000);
+        setActiveBattles(prev => prev.filter(b => b.id !== data.matchId && b.status !== 'ended'));
+      }, 8000);
     };
 
     // 监听挑战事件
     const handleChallengeStart = (data: any) => {
       console.log('⚡ Challenge Start Event:', data);
-      const newBattleData: BattleData = {
+      const newBattle: BattleData = {
+        id: `challenge-${Date.now()}`,
         type: 'challenge',
         studentA: data.student ? {
           id: data.student.id,
@@ -97,69 +150,71 @@ const BigScreen: React.FC = () => {
         startTime: Date.now()
       };
 
-      setBattleData(newBattleData);
-      setMode('BATTLE');
+      setActiveBattles(prev => [...prev, newBattle]);
+
+      // 10秒后自动移除挑战（挑战通常是瞬时的展示）
+      setTimeout(() => {
+        setActiveBattles(prev => prev.filter(b => b.id !== newBattle.id));
+      }, 10000);
+    };
+
+    // 🔧 监听统一的 DATA_UPDATE 事件（后端使用此事件名）
+    const handleDataUpdate = (payload: any) => {
+      console.log('📡 DATA_UPDATE received:', payload.type, payload.data);
+
+      switch (payload.type) {
+        case 'PKMATCH_CREATED':
+          // PK 对战创建
+          const match = payload.data?.match;
+          if (match) {
+            handlePKStart({
+              matchId: match.id,
+              playerA: match.playerA,
+              playerB: match.playerB,
+              topic: match.topic
+            });
+          }
+          break;
+
+        case 'PKMATCH_COMPLETED':
+        case 'PKMATCH_UPDATED':
+          // PK 对战结束
+          const matchData = payload.data?.match;
+          if (matchData && matchData.status === 'COMPLETED') {
+            handlePKEnd({
+              matchId: matchData.id,
+              winnerId: matchData.winnerId
+            });
+          }
+          break;
+
+        case 'CHALLENGE_COMPLETED':
+          // 挑战完成
+          if (payload.data?.student) {
+            handleChallengeStart({
+              student: payload.data.student,
+              title: payload.data.title || '挑战任务'
+            });
+          }
+          break;
+      }
     };
 
     // 注册事件监听器
+    socket.on('DATA_UPDATE', handleDataUpdate);
+    // 保留直接事件监听（如果后端也发送这些事件）
     socket.on('PK_START', handlePKStart);
     socket.on('PK_END', handlePKEnd);
     socket.on('CHALLENGE_START', handleChallengeStart);
 
     // 清理事件监听器
     return () => {
+      socket.off('DATA_UPDATE', handleDataUpdate);
       socket.off('PK_START', handlePKStart);
       socket.off('PK_END', handlePKEnd);
       socket.off('CHALLENGE_START', handleChallengeStart);
     };
   }, [socket]);
-
-  // 模拟战斗数据（用于演示）
-  const simulateBattle = () => {
-    const mockBattleData: BattleData = {
-      type: 'pk',
-      studentA: {
-        id: '65697759-b4ba-49ae-9f18-101730f7bf47',
-        name: '刘梓萌',
-        avatar_url: '/avatar.jpg',
-        team_name: '龙老师班',
-        energy: 100,
-        score: 2500
-      },
-      studentB: {
-        id: '1896c410-1a91-4281-ac02-797756c638cc',
-        name: '宁可歆',
-        avatar_url: '/avatar.jpg',
-        team_name: '龙老师班',
-        energy: 100,
-        score: 2300
-      },
-      topic: '数学速算挑战',
-      status: 'starting',
-      startTime: Date.now()
-    };
-
-    setBattleData(mockBattleData);
-    setMode('BATTLE');
-
-    // 模拟战斗进程
-    setTimeout(() => {
-      setBattleData(prev => prev ? { ...prev, status: 'active' } : null);
-    }, 2000);
-
-    setTimeout(() => {
-      setBattleData(prev => prev ? {
-        ...prev,
-        status: 'ended',
-        winner_id: '1'
-      } : null);
-    }, 8000);
-
-    setTimeout(() => {
-      setMode('MONITOR');
-      setBattleData(null);
-    }, 13000);
-  };
 
   // 页面切换动画配置
   const pageVariants = {
@@ -177,80 +232,9 @@ const BigScreen: React.FC = () => {
   return (
     <div className="w-screen h-screen bg-black text-white overflow-hidden relative">
 
-      {/* 调试面板 */}
-      {showDebugPanel && (
-        <motion.div
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="absolute top-4 left-4 z-50 bg-slate-900/90 backdrop-blur-xl rounded-xl p-4 border border-cyan-400/30"
-        >
-          <div className="text-xs space-y-2">
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${mode === 'MONITOR' ? 'bg-blue-400' : 'bg-red-400'} animate-pulse`} />
-              <span className="font-bold text-cyan-300">当前模式: {mode === 'MONITOR' ? '监控模式' : '战斗模式'}</span>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => setMode('MONITOR')}
-                className={`px-3 py-1 rounded text-xs font-bold transition-colors ${
-                  mode === 'MONITOR'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                }`}
-              >
-                监控模式
-              </button>
-              <button
-                onClick={() => setMode('BATTLE')}
-                className={`px-3 py-1 rounded text-xs font-bold transition-colors ${
-                  mode === 'BATTLE'
-                    ? 'bg-red-600 text-white'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                }`}
-              >
-                战斗模式
-              </button>
-            </div>
-
-            <button
-              onClick={simulateBattle}
-              className="px-3 py-1 bg-gradient-to-r from-cyan-600 to-magenta-600 text-white rounded text-xs font-bold hover:from-cyan-500 hover:to-magenta-500 transition-colors"
-            >
-              🎮 模拟战斗
-            </button>
-
-            <button
-              onClick={() => setShowDebugPanel(false)}
-              className="px-3 py-1 bg-slate-700 text-slate-300 rounded text-xs font-bold hover:bg-slate-600 transition-colors"
-            >
-              隐藏面板
-            </button>
-          </div>
-        </motion.div>
-      )}
-
-      {/* 显示隐藏面板的按钮 */}
-      {!showDebugPanel && (
-        <button
-          onClick={() => setShowDebugPanel(true)}
-          className="absolute top-4 left-4 z-50 px-3 py-1 bg-slate-900/90 backdrop-blur-xl text-cyan-300 rounded text-xs font-bold border border-cyan-400/30 hover:bg-slate-800 transition-colors"
-        >
-          显示调试
-        </button>
-      )}
-
-      {/* 连接状态指示器 */}
-      <div className="absolute top-4 right-4 z-40 flex items-center gap-2 px-3 py-1 bg-slate-900/90 backdrop-blur-xl rounded-full border border-cyan-400/30">
-        <div className={`w-2 h-2 rounded-full ${socket ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`} />
-        <span className="text-xs text-slate-300">
-          {socket ? '实时连接' : '离线模式'}
-        </span>
-      </div>
-
       {/* 主要内容区域 */}
       <AnimatePresence mode="wait">
-        {mode === 'MONITOR' ? (
+        {activeBattles.length === 0 ? (
           <motion.div
             key="monitor"
             variants={pageVariants}
@@ -260,7 +244,7 @@ const BigScreen: React.FC = () => {
             transition={pageTransition}
             className="absolute inset-0"
           >
-            <LegacyMonitorView schoolId={userInfo?.schoolId || 'demo'} />
+            <DataDashboard />
           </motion.div>
         ) : (
           <motion.div
@@ -273,8 +257,7 @@ const BigScreen: React.FC = () => {
             className="absolute inset-0"
           >
             <StarshipBattleView
-              battleData={battleData || undefined}
-              isActive={mode === 'BATTLE'}
+              activeBattles={activeBattles}
             />
           </motion.div>
         )}

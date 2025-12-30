@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ChevronLeft, Plus, Trophy, Target, Users, Zap, Crown, Star, Sparkles, ArrowRight, X, Swords, CheckCircle2, UserCheck, Award, Loader2, Search, Calendar, MessageSquare, Clock, XCircle, ArrowLeft } from 'lucide-react'
@@ -67,6 +68,7 @@ const ChallengePage: React.FC = () => {
     rewardExp: 50,
     studentIds: [] as string[]
   })
+  const [publishMode, setPublishMode] = useState<'PERSONAL' | 'PUBLIC'>('PERSONAL')
 
   // 学生选择下拉框 ref (用于点击外部关闭)
   const studentDropdownRef = useRef<HTMLDivElement>(null);
@@ -154,7 +156,7 @@ const ChallengePage: React.FC = () => {
       return;
     }
 
-    if (newChallenge.type === 'PERSONAL' && newChallenge.studentIds.length === 0) {
+    if (publishMode === 'PERSONAL' && newChallenge.studentIds.length === 0) {
       console.warn('[DEBUG CHALLENGE] Validation failed: no students selected for personal challenge');
       toast.error('请选择参与挑战的学生');
       return;
@@ -171,6 +173,7 @@ const ChallengePage: React.FC = () => {
       // 1. 创建挑战本身
       const res = await apiService.post('/challenges', {
         ...newChallenge,
+        type: publishMode === 'PUBLIC' ? 'CLASS' : 'PERSONAL',
         schoolId: userInfo?.schoolId,
         creatorId: userInfo?.userId || userInfo?.id,
         status: 'ACTIVE' // 直接开启
@@ -183,7 +186,7 @@ const ChallengePage: React.FC = () => {
         console.log('[DEBUG CHALLENGE] Challenge created successfully, ID:', challengeId);
 
         // 2. 如果是个人挑战或指定了学生，批量添加参与者
-        if (newChallenge.type === 'PERSONAL' && newChallenge.studentIds.length > 0) {
+        if (publishMode === 'PERSONAL' && newChallenge.studentIds.length > 0) {
           await Promise.all(
             newChallenge.studentIds.map(studentId =>
               apiService.post('/challenges/join', {
@@ -193,8 +196,8 @@ const ChallengePage: React.FC = () => {
               })
             )
           );
-        } else if (newChallenge.type === 'CLASS') {
-          // 全班挑战：遍历所有学生加入
+        } else if (publishMode === 'PUBLIC') {
+          // 公开悬赏（全班）：遍历所有学生加入
           await Promise.all(
             students.map(s =>
               apiService.post('/challenges/join', {
@@ -343,15 +346,22 @@ const ChallengePage: React.FC = () => {
         {/* 发布挑战卡片 - 表单始终显示 */}
         <section className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-50">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-orange-500 rounded-full" />
-              <h2 className="text-sm font-bold text-slate-800">发布新挑战</h2>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setPublishMode('PERSONAL')}
+                className={`relative pb-1 text-sm font-bold transition-all ${publishMode === 'PERSONAL' ? 'text-slate-800' : 'text-slate-300'}`}
+              >
+                发布个人挑战
+                {publishMode === 'PERSONAL' && <motion.div layoutId="tab" className="absolute bottom-0 left-0 right-0 h-1 bg-orange-500 rounded-full" />}
+              </button>
+              <button
+                onClick={() => setPublishMode('PUBLIC')}
+                className={`relative pb-1 text-sm font-bold transition-all ${publishMode === 'PUBLIC' ? 'text-slate-800' : 'text-slate-300'}`}
+              >
+                公开悬赏区
+                {publishMode === 'PUBLIC' && <motion.div layoutId="tab" className="absolute bottom-0 left-0 right-0 h-1 bg-orange-500 rounded-full" />}
+              </button>
             </div>
-            <X
-              size={20}
-              className="text-slate-400 cursor-pointer hover:text-slate-600"
-              onClick={() => setNewChallenge({ ...newChallenge, title: '', description: '', studentIds: [] })}
-            />
           </div>
 
           <div className="space-y-4">
@@ -370,63 +380,65 @@ const ChallengePage: React.FC = () => {
               className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-bold text-slate-700 placeholder:text-slate-300 focus:ring-1 focus:ring-orange-200 resize-none"
             />
 
-            {/* 学生选择 - 习惯页风格展开列表 */}
-            <div className="relative" ref={studentDropdownRef}>
-              <div
-                onClick={() => setShowCreateModal(!showCreateModal)}
-                className="w-full bg-orange-50 text-orange-600 rounded-xl p-3 flex items-center justify-between border border-orange-100 cursor-pointer active:scale-[0.99] transition-all"
-              >
-                <span className="font-bold text-sm">
-                  {newChallenge.studentIds.length > 0 ? `已选 ${newChallenge.studentIds.length} 位学生` : '选择参与学生'}
-                </span>
-                <Plus size={18} strokeWidth={2.5} className={`opacity-60 transition-transform ${showCreateModal ? 'rotate-45' : ''}`} />
-              </div>
-
-              {showCreateModal && (
-                <div className="mt-2 bg-white rounded-2xl border border-slate-100 shadow-lg overflow-hidden animate-in slide-in-from-top-2">
-                  <div className="flex items-center justify-between p-3 border-b border-slate-50">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-4 bg-orange-500 rounded-full" />
-                      <span className="text-sm font-bold text-slate-800">学生列表</span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        if (newChallenge.studentIds.length === students.length) {
-                          setNewChallenge({ ...newChallenge, studentIds: [] });
-                        } else {
-                          setNewChallenge({ ...newChallenge, studentIds: students.map(s => s.id) });
-                        }
-                      }}
-                      className="text-[10px] font-bold text-orange-500"
-                    >
-                      {newChallenge.studentIds.length === students.length ? '取消全选' : '一键全选'}
-                    </button>
-                  </div>
-                  <div className="max-h-[180px] overflow-y-auto">
-                    {students.map(s => {
-                      const isSelected = newChallenge.studentIds.includes(s.id);
-                      return (
-                        <div
-                          key={s.id}
-                          onClick={() => {
-                            const ids = isSelected
-                              ? newChallenge.studentIds.filter(id => id !== s.id)
-                              : [...newChallenge.studentIds, s.id];
-                            setNewChallenge({ ...newChallenge, studentIds: ids });
-                          }}
-                          className="flex items-center justify-between p-3 border-b border-slate-50 last:border-b-0 cursor-pointer hover:bg-slate-50 transition-colors"
-                        >
-                          <span className="text-sm font-bold text-slate-700">{s.name}</span>
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'border-orange-500 bg-orange-500' : 'border-slate-200'}`}>
-                            {isSelected && <CheckCircle2 size={12} className="text-white" strokeWidth={3} />}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+            {/* 学生选择 - 仅在个人挑战下显示 */}
+            {publishMode === 'PERSONAL' && (
+              <div className="relative" ref={studentDropdownRef}>
+                <div
+                  onClick={() => setShowCreateModal(!showCreateModal)}
+                  className="w-full bg-orange-50 text-orange-600 rounded-xl p-3 flex items-center justify-between border border-orange-100 cursor-pointer active:scale-[0.99] transition-all"
+                >
+                  <span className="font-bold text-sm">
+                    {newChallenge.studentIds.length > 0 ? `已选 ${newChallenge.studentIds.length} 位学生` : '选择参与学生'}
+                  </span>
+                  <Plus size={18} strokeWidth={2.5} className={`opacity-60 transition-transform ${showCreateModal ? 'rotate-45' : ''}`} />
                 </div>
-              )}
-            </div>
+
+                {showCreateModal && (
+                  <div className="mt-2 bg-white rounded-2xl border border-slate-100 shadow-lg overflow-hidden animate-in slide-in-from-top-2">
+                    <div className="flex items-center justify-between p-3 border-b border-slate-50">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-4 bg-orange-500 rounded-full" />
+                        <span className="text-sm font-bold text-slate-800">学生列表</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (newChallenge.studentIds.length === students.length) {
+                            setNewChallenge({ ...newChallenge, studentIds: [] });
+                          } else {
+                            setNewChallenge({ ...newChallenge, studentIds: students.map(s => s.id) });
+                          }
+                        }}
+                        className="text-[10px] font-bold text-orange-500"
+                      >
+                        {newChallenge.studentIds.length === students.length ? '取消全选' : '一键全选'}
+                      </button>
+                    </div>
+                    <div className="max-h-[180px] overflow-y-auto">
+                      {students.map(s => {
+                        const isSelected = newChallenge.studentIds.includes(s.id);
+                        return (
+                          <div
+                            key={s.id}
+                            onClick={() => {
+                              const ids = isSelected
+                                ? newChallenge.studentIds.filter(id => id !== s.id)
+                                : [...newChallenge.studentIds, s.id];
+                              setNewChallenge({ ...newChallenge, studentIds: ids });
+                            }}
+                            className="flex items-center justify-between p-3 border-b border-slate-50 last:border-b-0 cursor-pointer hover:bg-slate-50 transition-colors"
+                          >
+                            <span className="text-sm font-bold text-slate-700">{s.name}</span>
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'border-orange-500 bg-orange-500' : 'border-slate-200'}`}>
+                              {isSelected && <CheckCircle2 size={12} className="text-white" strokeWidth={3} />}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* 奖励设置 - 紧凑横排 */}
             <div className="flex gap-2">
@@ -454,10 +466,10 @@ const ChallengePage: React.FC = () => {
 
             <button
               onClick={handleCreateChallenge}
-              disabled={createLoading || !newChallenge.title.trim() || newChallenge.studentIds.length === 0}
+              disabled={createLoading || !newChallenge.title.trim() || (publishMode === 'PERSONAL' && newChallenge.studentIds.length === 0)}
               className="w-full h-11 bg-gradient-to-r from-[#FF9A5E] to-[#FF502E] text-white rounded-[44px] text-sm font-bold shadow-lg shadow-orange-200 active:scale-[0.98] transition-all disabled:opacity-50"
             >
-              {createLoading ? '发布中...' : '发布挑战'}
+              {createLoading ? '发布中...' : publishMode === 'PUBLIC' ? '发布公开悬赏' : '发布挑战'}
             </button>
           </div>
         </section>

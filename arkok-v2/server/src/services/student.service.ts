@@ -1140,12 +1140,76 @@ export class StudentService {
   }
 
   /**
-   * 计算等级
+   * 获取指定等级升级所需的经验值（方案B：递增式升级）
+   * 
+   * 设计原则：
+   * - 1-5级：快速入门，建立信心
+   * - 6-15级：稳步成长，一学期可达
+   * - 16-30级：挑战区，需要持续努力
+   * - 31-50级：精英区，长期坚持
+   * - 51+级：传奇区，完整两年服务
+   * 
+   * 预测（日均80exp）：
+   * - 一学期(110天): 可达 20-25 级
+   * - 一学年(220天): 可达 35-45 级
+   * - 完整两年(440天): 可达 55-65 级
    */
-  private calculateLevel(exp: number): number {
-    // 简单的等级计算公式
-    // 每 100 经验值升一级
-    return Math.floor(exp / 100) + 1;
+  private getExpRequiredForLevel(level: number): number {
+    if (level <= 5) return 30;       // 1-5级：快速入门
+    if (level <= 10) return 50;      // 6-10级：建立信心
+    if (level <= 15) return 80;      // 11-15级：稳步成长
+    if (level <= 20) return 120;     // 16-20级：一学期目标
+    if (level <= 25) return 160;     // 21-25级：进阶挑战
+    if (level <= 30) return 200;     // 26-30级：挑战区
+    if (level <= 40) return 280;     // 31-40级：精英入门
+    if (level <= 50) return 400;     // 41-50级：精英区
+    return 500;                       // 51+级：传奇区
+  }
+
+  /**
+   * 根据总经验计算等级（递增式升级）
+   */
+  private calculateLevel(totalExp: number): number {
+    let level = 1;
+    let expUsed = 0;
+
+    while (expUsed + this.getExpRequiredForLevel(level) <= totalExp) {
+      expUsed += this.getExpRequiredForLevel(level);
+      level++;
+    }
+
+    return level;
+  }
+
+  /**
+   * 获取等级进度信息（用于前端展示进度条）
+   */
+  public getLevelProgress(totalExp: number): {
+    level: number;
+    currentLevelExp: number;
+    expForNextLevel: number;
+    totalExpForCurrentLevel: number;
+    progressPercent: number;
+  } {
+    let level = 1;
+    let expUsed = 0;
+
+    while (expUsed + this.getExpRequiredForLevel(level) <= totalExp) {
+      expUsed += this.getExpRequiredForLevel(level);
+      level++;
+    }
+
+    const currentLevelExp = totalExp - expUsed;
+    const expForNextLevel = this.getExpRequiredForLevel(level);
+    const progressPercent = Math.floor((currentLevelExp / expForNextLevel) * 100);
+
+    return {
+      level,
+      currentLevelExp,
+      expForNextLevel,
+      totalExpForCurrentLevel: expUsed,
+      progressPercent
+    };
   }
 
   /**
