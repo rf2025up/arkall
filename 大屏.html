@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArkOK 智慧教室指挥中心</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入图标库 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- 引入动画库 Framer Motion 的替代品: Anime.js 或纯 CSS -->
+    <style>
+        /* --- 核心动画与特效 --- */
+        body {
+            background-color: #0F172A;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+            font-family: 'SF Pro Display', system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            color: white;
+        }
+
+        /* 磨砂玻璃卡片 */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 霓虹光效文字 */
+        .text-glow {
+            text-shadow: 0 0 10px rgba(147, 197, 253, 0.5);
+        }
+        .text-glow-gold {
+            text-shadow: 0 0 10px rgba(253, 224, 71, 0.6);
+        }
+
+        /* 动态进度条纹理 */
+        .progress-bar-striped {
+            background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent);
+            background-size: 1rem 1rem;
+            animation: progress-bar-stripes 1s linear infinite;
+        }
+        @keyframes progress-bar-stripes {
+            0% { background-position: 1rem 0; }
+            100% { background-position: 0 0; }
+        }
+
+        /* 浮动动画 */
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* 闪烁呼吸灯 */
+        .animate-pulse-glow {
+            animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 1; box-shadow: 0 0 10px #22c55e; }
+            50% { opacity: .5; box-shadow: 0 0 20px #22c55e; }
+        }
+
+        /* 滚动列表隐藏滚动条 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* 勋章弹窗动画 */
+        .badge-popup {
+            animation: slide-up-fade 0.5s ease-out forwards;
+        }
+        @keyframes slide-up-fade {
+            0% { opacity: 0; transform: translateY(50px) scale(0.9); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col p-6 gap-6">
+
+    <!-- === 顶部导航栏 === -->
+    <header class="flex justify-between items-center h-16 shrink-0">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <i data-lucide="rocket" class="text-white w-7 h-7"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-black tracking-wider text-white">ArkOK <span class="text-blue-400 font-light">Classroom</span></h1>
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse-glow"></span>
+                    <span class="text-xs text-slate-400 font-mono">LIVE CONNECTED</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-8">
+            <div class="glass-card px-6 py-2 rounded-full flex items-center gap-4">
+                <div class="text-center border-r border-white/10 pr-4">
+                    <div class="text-[10px] text-slate-400 uppercase tracking-widest">今日总经验</div>
+                    <div class="text-xl font-mono font-bold text-blue-400" id="total-exp">12,450</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-[10px] text-slate-400 uppercase tracking-widest">任务完成率</div>
+                    <div class="text-xl font-mono font-bold text-green-400">94%</div>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-3xl font-black font-mono tracking-tighter" id="clock">10:42</div>
+                <div class="text-xs text-slate-400">2025年12月11日 星期四</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- === 主要内容区 (Grid 布局) === -->
+    <main class="flex-1 grid grid-cols-12 gap-6 min-h-0">
+        
+        <!-- 左侧：积分天梯 (占3列) -->
+        <div class="col-span-3 glass-card rounded-3xl p-5 flex flex-col min-h-0">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-bold flex items-center gap-2 text-glow-gold">
+                    <i data-lucide="trophy" class="text-yellow-400"></i> 积分天梯
+                </h2>
+                <span class="text-xs bg-white/10 px-2 py-1 rounded text-slate-300">Top 50</span>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto no-scrollbar space-y-3 pr-2" id="leaderboard-list">
+                <!-- 动态生成列表项 -->
+            </div>
+        </div>
+
+        <!-- 中间：核心展示区 (占6列) -->
+        <div class="col-span-6 flex flex-col gap-6 min-h-0">
+            
+            <!-- PK 竞技场 (视觉焦点) -->
+            <div class="h-2/5 glass-card rounded-3xl p-1 relative overflow-hidden group">
+                <!-- 背景特效 -->
+                <div class="absolute inset-0 bg-gradient-to-r from-red-600/20 to-blue-600/20 z-0"></div>
+                <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 z-0"></div>
+                
+                <div class="relative z-10 h-full flex flex-col p-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="text-xs font-bold text-red-400 tracking-widest uppercase flex items-center gap-2">
+                            <i data-lucide="swords"></i> PK Arena
+                        </div>
+                        <div class="text-xs font-mono text-slate-400">ROUND 3</div>
+                    </div>
+
+                    <div class="flex-1 flex items-center justify-between px-8">
+                        <!-- 选手 A -->
+                        <div class="flex flex-col items-center gap-3 animate-float" style="animation-delay: 0s;">
+                            <div class="w-24 h-24 rounded-full p-1 bg-gradient-to-b from-red-500 to-transparent">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="w-full h-full rounded-full bg-slate-800 object-cover">
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-black text-white">陈子豪</div>
+                                <div class="text-sm text-red-400 font-bold">红队</div>
+                            </div>
+                            <div class="text-4xl font-black font-mono text-red-500" id="score-a">85</div>
+                        </div>
+
+                        <!-- VS -->
+                        <div class="flex flex-col items-center">
+                            <div class="text-6xl font-black italic text-white/20 -mb-4">VS</div>
+                            <div class="text-sm bg-white/10 px-3 py-1 rounded-full text-slate-300 mt-4 backdrop-blur-md">
+                                口算速决
+                            </div>
+                        </div>
+
+                        <!-- 选手 B -->
+                        <div class="flex flex-col items-center gap-3 animate-float" style="animation-delay: 1s;">
+                            <div class="w-24 h-24 rounded-full p-1 bg-gradient-to-b from-blue-500 to-transparent">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Bella" class="w-full h-full rounded-full bg-slate-800 object-cover">
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-black text-white">李雨桐</div>
+                                <div class="text-sm text-blue-400 font-bold">蓝队</div>
+                            </div>
+                            <div class="text-4xl font-black font-mono text-blue-500" id="score-b">92</div>
+                        </div>
+                    </div>
+
+                    <!-- 进度条 -->
+                    <div class="h-4 bg-slate-800 rounded-full mt-4 flex overflow-hidden relative">
+                        <div class="h-full bg-red-600 transition-all duration-1000 progress-bar-striped" style="width: 48%" id="bar-a"></div>
+                        <div class="h-full bg-blue-600 transition-all duration-1000 progress-bar-striped flex-1" id="bar-b"></div>
+                        
+                        <!-- 闪电图标 -->
+                        <div class="absolute left-[48%] top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center border-2 border-slate-700 z-20 transition-all duration-1000" id="vs-icon">
+                            <i data-lucide="zap" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 挑战任务流 -->
+            <div class="h-3/5 glass-card rounded-3xl p-6 flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold flex items-center gap-2">
+                        <i data-lucide="target" class="text-purple-400"></i> 实时挑战动态
+                    </h2>
+                </div>
+                <div class="flex-1 space-y-3 overflow-hidden relative" id="challenge-container">
+                    <!-- 动态插入 JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：班级概览 (占3列) -->
+        <div class="col-span-3 flex flex-col gap-6 min-h-0">
+            <!-- 班级荣耀 -->
+            <div class="h-1/3 glass-card rounded-3xl p-5 relative overflow-hidden">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-purple-600/30 rounded-full blur-3xl"></div>
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <i data-lucide="crown" class="text-yellow-400"></i> 班级荣耀
+                </h2>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white/5 p-3 rounded-xl flex flex-col items-center">
+                        <div class="text-3xl mb-1">🏆</div>
+                        <div class="text-xs text-slate-400">卫生红旗</div>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-xl flex flex-col items-center">
+                        <div class="text-3xl mb-1">🚀</div>
+                        <div class="text-xs text-slate-400">进步之星</div>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-xl flex flex-col items-center">
+                        <div class="text-3xl mb-1">📚</div>
+                        <div class="text-xs text-slate-400">书香班级</div>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-xl flex flex-col items-center border border-dashed border-slate-600">
+                        <div class="text-2xl mb-1 text-slate-600">+</div>
+                        <div class="text-xs text-slate-500">待解锁</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据统计 (Chart模拟) -->
+            <div class="flex-1 glass-card rounded-3xl p-5 flex flex-col">
+                <h2 class="text-lg font-bold mb-4">学情分布</h2>
+                <div class="flex-1 flex items-end gap-2 px-2 pb-2">
+                    <div class="flex-1 bg-blue-500/20 rounded-t-lg relative group h-[60%]">
+                        <div class="absolute bottom-0 w-full bg-blue-500 rounded-t-lg transition-all duration-1000 h-full opacity-80 group-hover:opacity-100"></div>
+                        <span class="absolute -top-6 left-1/2 -translate-x-1/2 text-xs text-slate-400">优</span>
+                    </div>
+                    <div class="flex-1 bg-green-500/20 rounded-t-lg relative group h-[85%]">
+                        <div class="absolute bottom-0 w-full bg-green-500 rounded-t-lg transition-all duration-1000 h-full opacity-80 group-hover:opacity-100"></div>
+                        <span class="absolute -top-6 left-1/2 -translate-x-1/2 text-xs text-slate-400">良</span>
+                    </div>
+                    <div class="flex-1 bg-yellow-500/20 rounded-t-lg relative group h-[40%]">
+                        <div class="absolute bottom-0 w-full bg-yellow-500 rounded-t-lg transition-all duration-1000 h-full opacity-80 group-hover:opacity-100"></div>
+                        <span class="absolute -top-6 left-1/2 -translate-x-1/2 text-xs text-slate-400">中</span>
+                    </div>
+                    <div class="flex-1 bg-red-500/20 rounded-t-lg relative group h-[20%]">
+                        <div class="absolute bottom-0 w-full bg-red-500 rounded-t-lg transition-all duration-1000 h-full opacity-80 group-hover:opacity-100"></div>
+                        <span class="absolute -top-6 left-1/2 -translate-x-1/2 text-xs text-slate-400">待</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 实时通知容器 (Toast Container) -->
+    <div id="toast-container" class="fixed bottom-10 right-10 flex flex-col gap-4 z-50 pointer-events-none"></div>
+
+    <script>
+        // 初始化 Lucide 图标
+        lucide.createIcons();
+
+        // 模拟数据源
+        const students = [
+            { name: "张子涵", exp: 2450, avatar: "Z" },
+            { name: "李欣怡", exp: 2380, avatar: "L" },
+            { name: "王浩轩", exp: 2100, avatar: "W" },
+            { name: "陈思思", exp: 1950, avatar: "C" },
+            { name: "刘宇宁", exp: 1840, avatar: "L" },
+            { name: "赵梓萱", exp: 1720, avatar: "Z" },
+            { name: "孙嘉豪", exp: 1680, avatar: "S" },
+            { name: "周若曦", exp: 1550, avatar: "Z" },
+            { name: "吴天宇", exp: 1490, avatar: "W" },
+            { name: "郑雨涵", exp: 1320, avatar: "Z" },
+        ];
+
+        const challenges = [
+            { user: "王浩轩", task: "完成数学口算100题", exp: 20, time: "刚刚" },
+            { user: "李欣怡", task: "英语单词打卡", exp: 15, time: "1分钟前" },
+            { user: "张子涵", task: "获得「计算小能手」勋章", exp: 50, time: "3分钟前", highlight: true },
+            { user: "赵梓萱", task: "语文背诵通关", exp: 30, time: "5分钟前" },
+        ];
+
+        // 1. 渲染排行榜
+        const leaderboardList = document.getElementById('leaderboard-list');
+        students.forEach((s, i) => {
+            const isTop3 = i < 3;
+            const rankColor = i === 0 ? 'text-yellow-400' : i === 1 ? 'text-slate-300' : i === 2 ? 'text-amber-600' : 'text-slate-500';
+            const bgClass = isTop3 ? 'bg-white/10 border-white/20' : 'bg-white/5 border-transparent';
+            
+            const html = `
+                <div class="flex items-center gap-4 p-3 rounded-xl border ${bgClass} transition-all hover:bg-white/10">
+                    <div class="font-black font-mono w-6 text-center ${rankColor} text-lg">${i + 1}</div>
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center text-xs font-bold border border-white/10">
+                        ${s.avatar}
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-bold text-sm">${s.name}</div>
+                        <div class="text-[10px] text-slate-400">Lv.${Math.floor(s.exp/100)}</div>
+                    </div>
+                    <div class="font-mono font-bold text-blue-400">${s.exp}</div>
+                </div>
+            `;
+            leaderboardList.innerHTML += html;
+        });
+
+        // 2. 渲染挑战列表
+        const challengeList = document.getElementById('challenge-container');
+        function renderChallenge(c) {
+            const bg = c.highlight ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/30' : 'bg-white/5 border-white/5';
+            const icon = c.highlight ? 'award' : 'check-circle-2';
+            const iconColor = c.highlight ? 'text-yellow-400' : 'text-green-400';
+            
+            return `
+                <div class="flex items-center gap-3 p-3 rounded-xl border ${bg} animate-in fade-in slide-in-from-right duration-500">
+                    <div class="${iconColor}">
+                        <i data-lucide="${icon}" width="18"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="text-sm font-bold">
+                            ${c.user} <span class="font-normal text-slate-300 text-xs">完成了</span> ${c.task}
+                        </div>
+                    </div>
+                    <div class="text-xs font-bold text-blue-400">+${c.exp}</div>
+                </div>
+            `;
+        }
+        // 初始渲染
+        challenges.forEach(c => {
+            challengeList.innerHTML += renderChallenge(c);
+        });
+        lucide.createIcons();
+
+        // 3. 模拟实时动态 (Simulation Script)
+        
+        // 时钟
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('en-US', {hour12: false, hour: '2-digit', minute:'2-digit'});
+        }, 1000);
+
+        // 模拟PK分数跳动
+        let scoreA = 85, scoreB = 92;
+        setInterval(() => {
+            // 随机增加分数
+            if(Math.random() > 0.5) scoreA += Math.floor(Math.random() * 5);
+            if(Math.random() > 0.5) scoreB += Math.floor(Math.random() * 5);
+            
+            // 更新数字
+            document.getElementById('score-a').innerText = scoreA;
+            document.getElementById('score-b').innerText = scoreB;
+            
+            // 更新进度条
+            const total = scoreA + scoreB;
+            const pctA = (scoreA / total) * 100;
+            document.getElementById('bar-a').style.width = `${pctA}%`;
+            document.getElementById('vs-icon').style.left = `${pctA}%`;
+            
+        }, 3000);
+
+        // 模拟新消息弹窗 (Toast)
+        const toasts = [
+            { title: "全班奖励", msg: "老师发布了全班奖励：每人 +10 积分！", type: "gold" },
+            { title: "新纪录", msg: "张子涵 刚刚打破了口算记录！", type: "blue" },
+            { title: "任务发布", msg: "新作业已发布：语文第三单元复习", type: "purple" }
+        ];
+
+        function showToast(data) {
+            const container = document.getElementById('toast-container');
+            const el = document.createElement('div');
+            
+            const colors = {
+                gold: 'from-yellow-500 to-orange-600',
+                blue: 'from-blue-500 to-cyan-600',
+                purple: 'from-purple-500 to-pink-600'
+            };
+            
+            el.className = `badge-popup bg-gradient-to-r ${colors[data.type]} p-4 rounded-2xl shadow-2xl flex items-center gap-4 min-w-[300px] border border-white/20`;
+            el.innerHTML = `
+                <div class="bg-white/20 p-2 rounded-full backdrop-blur-sm">
+                    <i data-lucide="bell" class="text-white w-6 h-6"></i>
+                </div>
+                <div>
+                    <div class="font-black text-white text-lg">${data.title}</div>
+                    <div class="text-white/90 text-sm font-medium">${data.msg}</div>
+                </div>
+            `;
+            
+            container.appendChild(el);
+            lucide.createIcons();
+            
+            // 5秒后移除
+            setTimeout(() => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                el.style.transition = 'all 0.5s';
+                setTimeout(() => el.remove(), 500);
+            }, 5000);
+        }
+
+        // 每8秒弹一个消息
+        let toastIdx = 0;
+        setInterval(() => {
+            showToast(toasts[toastIdx % toasts.length]);
+            toastIdx++;
+        }, 8000);
+
+    </script>
+</body>
+</html>

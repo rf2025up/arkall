@@ -125,7 +125,7 @@ const DataDashboard: React.FC = () => {
         const timer = setInterval(() => {
             setScrollIndex(prev => {
                 const maxIndex = Math.max(0, data.students.length - LIMITS.VISIBLE_STUDENTS);
-                return prev >= maxIndex ? 0 : prev + 1;
+                return prev >= maxIndex ? 0 : prev + 5;
             });
         }, 4000);
         return () => clearInterval(timer);
@@ -169,13 +169,13 @@ const DataDashboard: React.FC = () => {
                 <div className="h-full flex flex-col gap-4">
 
                     {/* 顶部导航栏 */}
-                    <header className="flex justify-between items-center shrink-0 h-14">
+                    <header className="flex justify-between items-center shrink-0 h-10">
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
                                 <Layout className="w-5 h-5 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-xl font-black bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">星途成长方舟</h1>
+                                <h1 className="text-lg font-black bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">星途成长方舟</h1>
                                 <div className="flex items-center gap-1">
                                     <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                                     <span className="text-[9px] text-slate-400 uppercase tracking-widest font-bold">LIVE CONNECTED</span>
@@ -210,46 +210,44 @@ const DataDashboard: React.FC = () => {
                             </div>
 
                             <div className="flex-1 flex flex-col min-h-0">
-                                {/* 冠军常驻面板 */}
+                                {/* 冠军常驻面板 - 压缩版 */}
                                 {data?.students[0] && (
-                                    <div className="mb-4 text-center">
-                                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">Current Champion</div>
-                                        <div className="relative inline-block mt-4">
+                                    <div className="mb-2 text-center">
+                                        <div className="relative inline-block">
                                             {/* 皇冠图标 */}
-                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-20 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]">
-                                                <span className="text-3xl">👑</span>
+                                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
+                                                <span className="text-2xl">👑</span>
                                             </div>
                                             {/* 大头像 */}
-                                            <div className="w-28 h-28 rounded-full border-4 border-yellow-500/50 p-1 bg-slate-900 shadow-[0_0_20px_rgba(234,179,8,0.3)]">
+                                            <div className="w-20 h-20 rounded-full border-3 border-yellow-500/50 p-0.5 bg-slate-900 shadow-[0_0_15px_rgba(234,179,8,0.3)]">
                                                 <img
                                                     src={data.students[0].avatarUrl || "/avatar.jpg"}
                                                     className="w-full h-full rounded-full object-cover"
                                                 />
                                             </div>
                                             {/* 排名装饰 */}
-                                            <div className="absolute -bottom-2 right-0 bg-yellow-500 text-slate-900 text-xs font-black w-8 h-8 rounded-full flex items-center justify-center border-2 border-slate-900">
+                                            <div className="absolute -bottom-1 right-0 bg-yellow-500 text-slate-900 text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-slate-900">
                                                 01
                                             </div>
                                         </div>
-                                        <h3 className="text-xl font-bold mt-4 tracking-wide text-white">
+                                        <h3 className="text-base font-bold mt-2 tracking-wide text-white">
                                             {data.students[0].name}
-                                            <span className="ml-2 text-xs bg-slate-700/80 px-2 py-0.5 rounded text-blue-400 border border-blue-500/30">Lv.{data.students[0].level}</span>
+                                            <span className="ml-1.5 text-[10px] bg-slate-700/80 px-1.5 py-0.5 rounded text-blue-400 border border-blue-500/30">Lv.{data.students[0].level}</span>
                                         </h3>
 
                                         {/* 冠军等级经验进度 */}
-                                        <div className="mt-4 px-8">
-                                            <div className="flex justify-between text-[10px] mb-1">
-                                                <span className="text-slate-400 font-bold uppercase">等级经验值</span>
+                                        <div className="mt-2 px-6">
+                                            <div className="flex justify-between text-[9px] mb-0.5">
+                                                <span className="text-slate-400 font-bold">等级经验值</span>
                                                 <span className="text-blue-400 font-mono">{data.students[0].expProgress}%</span>
                                             </div>
-                                            <div className="h-2 bg-slate-800 rounded-full overflow-hidden border border-white/5 p-0.5">
+                                            <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden border border-white/5">
                                                 <div
-                                                    className="h-full bg-blue-500 rounded-full shadow-[0_0_12px_rgba(59,130,246,0.8)]"
+                                                    className="h-full bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.8)]"
                                                     style={{ width: `${data.students[0].expProgress}%` }}
                                                 />
                                             </div>
                                         </div>
-                                        <div className="text-[10px] text-yellow-500/80 font-bold mt-4 uppercase">本周霸榜 3 天</div>
                                     </div>
                                 )}
 
@@ -263,45 +261,55 @@ const DataDashboard: React.FC = () => {
                                             transition={{ duration: 0.5 }}
                                             className="space-y-2"
                                         >
-                                            {data?.students.slice(1, 4).map((student, i) => (
-                                                <div
-                                                    key={student.id}
-                                                    className="flex items-center gap-3 group"
-                                                >
-                                                    {/* 排名序号 */}
-                                                    <div className="font-mono text-sm font-bold text-slate-500 w-5">
-                                                        {String(student.rank).padStart(2, '0')}
-                                                    </div>
-
-                                                    {/* 小头像 */}
-                                                    <div className="w-10 h-10 rounded-full shrink-0 overflow-hidden border border-white/10">
-                                                        <img
-                                                            src={student.avatarUrl || "/avatar.jpg"}
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    </div>
-
-                                                    {/* 信息区 */}
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex justify-between items-end mb-1">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="font-bold text-sm text-slate-100 truncate">{student.name}</span>
-                                                                <span className="text-[9px] font-bold text-slate-400">Lv.{student.level}</span>
-                                                            </div>
-                                                            <span className="text-[11px] font-mono font-bold text-cyan-400">
-                                                                积分 {student.points.toLocaleString()}
-                                                            </span>
+                                            {(() => {
+                                                // 跳过第一名，从第2名开始循环展示
+                                                const restStudents = data?.students.slice(1) || [];
+                                                const displayCount = 5; // 每次显示5个学生，确保完整显示
+                                                const startIdx = scrollIndex % Math.max(1, restStudents.length);
+                                                const displayStudents = [];
+                                                for (let i = 0; i < Math.min(displayCount, restStudents.length); i++) {
+                                                    displayStudents.push(restStudents[(startIdx + i) % restStudents.length]);
+                                                }
+                                                return displayStudents.map((student, i) => (
+                                                    <div
+                                                        key={student.id}
+                                                        className="flex items-center gap-3 group"
+                                                    >
+                                                        {/* 排名序号 */}
+                                                        <div className="font-mono text-sm font-bold text-slate-500 w-5">
+                                                            {String(student.rank).padStart(2, '0')}
                                                         </div>
-                                                        {/* 亮蓝色经验条 */}
-                                                        <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden shadow-inner">
-                                                            <div
-                                                                className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.6)] rounded-full animate-pulse-subtle"
-                                                                style={{ width: `${student.expProgress}%` }}
+
+                                                        {/* 小头像 */}
+                                                        <div className="w-10 h-10 rounded-full shrink-0 overflow-hidden border border-white/10">
+                                                            <img
+                                                                src={student.avatarUrl || "/avatar.jpg"}
+                                                                className="w-full h-full object-cover"
                                                             />
                                                         </div>
+
+                                                        {/* 信息区 */}
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex justify-between items-end mb-1">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="font-bold text-sm text-slate-100 truncate">{student.name}</span>
+                                                                    <span className="text-[9px] font-bold text-slate-400">Lv.{student.level}</span>
+                                                                </div>
+                                                                <span className="text-[11px] font-mono font-bold text-cyan-400">
+                                                                    积分 {student.points.toLocaleString()}
+                                                                </span>
+                                                            </div>
+                                                            {/* 亮蓝色经验条 */}
+                                                            <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden shadow-inner">
+                                                                <div
+                                                                    className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.6)] rounded-full animate-pulse-subtle"
+                                                                    style={{ width: `${student.expProgress}%` }}
+                                                                />
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                ));
+                                            })()}
                                         </motion.div>
                                     </AnimatePresence>
                                 </div>
@@ -317,7 +325,7 @@ const DataDashboard: React.FC = () => {
                                 <div className="relative z-10 h-full flex flex-col p-4">
                                     <div className="flex justify-between items-center mb-2">
                                         <div className="text-sm font-bold text-red-400 uppercase flex items-center gap-2">
-                                            <Swords className="w-4 h-4" /> PK Arena
+                                            <Swords className="w-4 h-4" /> 巅峰对决
                                         </div>
                                         <div className="text-xs font-mono text-slate-400">今日 {data?.pkResults.length || 0} 场</div>
                                     </div>
@@ -380,38 +388,40 @@ const DataDashboard: React.FC = () => {
                                     </h2>
                                 </div>
                                 <div className="flex-1 space-y-2 overflow-hidden">
-                                    {(data?.activities || []).slice(0, LIMITS.ACTIVITIES).map(activity => {
-                                        // 根据类型配置显示样式
-                                        const typeConfig: Record<string, { icon: React.ReactNode; color: string; bg: string; label: string }> = {
-                                            habit: { icon: <CheckCircle2 className="w-4 h-4" />, color: 'text-green-400', bg: 'bg-green-500/20', label: '习惯打卡' },
-                                            badge: { icon: <Award className="w-4 h-4" />, color: 'text-yellow-400', bg: 'bg-yellow-500/20', label: '获得勋章' },
-                                            challenge: { icon: <Target className="w-4 h-4" />, color: 'text-purple-400', bg: 'bg-purple-500/20', label: '完成挑战' },
-                                            pk: { icon: <Swords className="w-4 h-4" />, color: 'text-red-400', bg: 'bg-red-500/20', label: 'PK' },
-                                            progress: { icon: <CheckCircle2 className="w-4 h-4" />, color: 'text-blue-400', bg: 'bg-blue-500/20', label: '基础过关' },
-                                            methodology: { icon: <Zap className="w-4 h-4" />, color: 'text-cyan-400', bg: 'bg-cyan-500/20', label: '核心教学法' },
-                                            growth: { icon: <TrendingUp className="w-4 h-4" />, color: 'text-emerald-400', bg: 'bg-emerald-500/20', label: '综合成长' },
-                                            personalized: { icon: <Star className="w-4 h-4" />, color: 'text-orange-400', bg: 'bg-orange-500/20', label: '个性加餐' },
-                                            special: { icon: <Award className="w-4 h-4" />, color: 'text-pink-400', bg: 'bg-pink-500/20', label: '特殊任务' },
-                                        };
-                                        const config = typeConfig[activity.type] || { icon: <CheckCircle2 className="w-4 h-4" />, color: 'text-slate-400', bg: 'bg-slate-500/20', label: '任务' };
-                                        const isHighlight = ['badge', 'special', 'growth'].includes(activity.type);
-                                        const borderBg = isHighlight ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/30' : 'bg-white/5 border-white/10';
-                                        return (
-                                            <div key={activity.id} className={`flex items-center gap-3 p-2.5 rounded-xl border ${borderBg}`}>
-                                                <div className={`w-7 h-7 rounded-full flex items-center justify-center ${config.bg} ${config.color}`}>
-                                                    {config.icon}
+                                    {(data?.activities || [])
+                                        .filter(a => ['habit', 'methodology', 'growth', 'progress'].includes(a.type))
+                                        .slice(0, LIMITS.ACTIVITIES)
+                                        .map(activity => {
+                                            // 根据类型配置显示样式
+                                            const typeConfig: Record<string, { icon: React.ReactNode; color: string; bg: string; label: string; textColor: string }> = {
+                                                habit: { icon: <CheckCircle2 className="w-4 h-4" />, color: 'text-yellow-400', bg: 'bg-yellow-500/20', label: '习惯打卡', textColor: 'text-yellow-400' },
+                                                methodology: { icon: <Zap className="w-4 h-4" />, color: 'text-red-400', bg: 'bg-red-500/20', label: '核心教学法', textColor: 'text-red-400' },
+                                                growth: { icon: <TrendingUp className="w-4 h-4" />, color: 'text-blue-400', bg: 'bg-blue-500/20', label: '综合成长', textColor: 'text-blue-400' },
+                                                progress: { icon: <CheckCircle2 className="w-4 h-4" />, color: 'text-green-400', bg: 'bg-green-500/20', label: '阅读记录', textColor: 'text-green-400' },
+                                            };
+                                            const config = typeConfig[activity.type] || { icon: <CheckCircle2 className="w-4 h-4" />, color: 'text-slate-400', bg: 'bg-slate-500/20', label: '任务', textColor: 'text-slate-400' };
+                                            const isHighlight = ['growth'].includes(activity.type);
+                                            const borderBg = isHighlight ? 'bg-gradient-to-r from-emerald-500/20 to-green-500/20 border-emerald-500/30' : 'bg-white/5 border-white/10';
+                                            const timeStr = activity.timestamp ? new Date(activity.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) : '';
+                                            return (
+                                                <div key={activity.id} className={`flex items-center gap-3 p-2 rounded-xl border ${borderBg}`}>
+                                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${config.bg} ${config.color}`}>
+                                                        {config.icon}
+                                                    </div>
+                                                    <div className="flex-1 text-sm min-w-0">
+                                                        <span className="font-bold">{activity.studentName}</span>
+                                                        <span className="text-slate-300 ml-1">完成</span>
+                                                        <span className={`font-semibold ${config.textColor} ml-1 truncate`}>{activity.content}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 shrink-0">
+                                                        {activity.expAwarded > 0 && (
+                                                            <span className="text-xs font-bold text-blue-400">+{activity.expAwarded}</span>
+                                                        )}
+                                                        <span className="text-[10px] text-slate-500">{timeStr}</span>
+                                                    </div>
                                                 </div>
-                                                <div className="flex-1 text-sm">
-                                                    <span className="font-bold">{activity.studentName}</span>
-                                                    <span className="text-slate-300 ml-2">完成了</span>
-                                                    <span className="font-semibold text-blue-400 ml-1">{activity.content}</span>
-                                                </div>
-                                                {activity.expAwarded > 0 && (
-                                                    <div className="text-sm font-bold text-blue-400">+{activity.expAwarded}</div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
+                                            );
+                                        })}
                                 </div>
                             </div>
                         </div>
@@ -478,65 +488,63 @@ const DataDashboard: React.FC = () => {
                         </div>
                     </main>
 
-                    {/* 底部勋章轮播 - 采用旧版大屏动态卡片样式 */}
-                    <footer className="h-32 shrink-0 overflow-hidden mt-1 relative border-t-2 border-yellow-500/30">
-                        {/* 左右渐变遮罩 */}
-                        <div className="absolute top-0 left-0 w-32 h-full bg-gradient-to-r from-[#0F172A] to-transparent z-10 pointer-events-none" />
-                        <div className="absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-[#0F172A] to-transparent z-10 pointer-events-none" />
+                    {/* 底部勋章轮播 - 优化版本 */}
+                    <footer className="h-44 shrink-0 overflow-hidden mt-1 relative border-t border-yellow-500/20">
+                        {/* 左右渐变遮罩 - 更宽更柔和的多层渐变 */}
+                        <div className="absolute top-0 left-0 w-48 h-full bg-gradient-to-r from-[#0F172A] via-[#0F172A]/60 to-transparent z-10 pointer-events-none" />
+                        <div className="absolute top-0 right-0 w-48 h-full bg-gradient-to-l from-[#0F172A] via-[#0F172A]/60 to-transparent z-10 pointer-events-none" />
 
-                        <div className="h-full flex items-center">
-                            <div className="flex items-center gap-3 px-6 shrink-0 z-20">
+                        <div className="h-full flex items-stretch">
+                            {/* 标题 - 垂直排列 */}
+                            <div className="flex flex-col items-center justify-center gap-1 px-3 shrink-0 z-20 border-r border-yellow-500/10">
                                 <Award className="w-5 h-5 text-yellow-400" />
-                                <span className="text-base font-bold text-glow-gold tracking-widest">勋章荣誉墙</span>
+                                <div className="flex flex-col items-center text-yellow-400/90 font-bold text-xs tracking-widest">
+                                    <span>勋</span>
+                                    <span>章</span>
+                                    <span>荣</span>
+                                    <span>誉</span>
+                                    <span>墙</span>
+                                </div>
                             </div>
 
                             <div className="flex-1 overflow-hidden h-full flex items-center">
                                 {data?.recentBadges && data.recentBadges.length > 0 ? (
                                     <motion.div
-                                        className="flex gap-6 px-10"
+                                        className="flex gap-6 px-8"
                                         animate={{ x: ['0%', '-50%'] }}
-                                        transition={{ duration: 200, repeat: Infinity, ease: 'linear' }}
+                                        transition={{ duration: 100, repeat: Infinity, ease: 'linear' }}
                                     >
                                         {[...(data.recentBadges), ...(data.recentBadges)].map((badge, i) => (
                                             <div
                                                 key={`${badge.id}-${i}`}
-                                                className="relative w-64 h-28 flex-shrink-0 bg-slate-800/60 backdrop-blur-md border border-yellow-500/30 rounded-2xl shadow-xl p-3 flex flex-col justify-between overflow-hidden"
+                                                className="relative w-80 h-40 flex-shrink-0 bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm border border-yellow-500/25 rounded-2xl shadow-xl p-4 flex gap-4 overflow-hidden hover:border-yellow-500/50 transition-all"
                                             >
-                                                {/* 背景水印 */}
-                                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0">
-                                                    <span className="text-5xl font-black text-slate-500 opacity-20 transform -rotate-12 blur-[1px] whitespace-nowrap">
-                                                        {badge.badgeName}
-                                                    </span>
+                                                {/* 左侧: 头像 + 姓名 */}
+                                                <div className="flex flex-col items-center shrink-0">
+                                                    <div className="w-16 h-16 rounded-full border-2 border-yellow-400/70 p-0.5 bg-slate-900 shadow-lg">
+                                                        <img
+                                                            src="/avatar.jpg"
+                                                            alt={badge.studentName}
+                                                            className="w-full h-full rounded-full object-cover"
+                                                            onError={(e) => (e.currentTarget.src = '/avatar.jpg')}
+                                                        />
+                                                    </div>
+                                                    <h3 className="text-xs font-bold text-slate-100 mt-2 text-center">{badge.studentName}</h3>
                                                 </div>
 
-                                                {/* 前景内容 */}
-                                                <div className="relative z-10 flex flex-col justify-between h-full">
-                                                    <div className="flex items-start gap-3">
-                                                        <div className="w-14 h-14 rounded-full border-2 border-yellow-400 p-0.5 bg-slate-900 shrink-0 shadow-lg">
-                                                            <img
-                                                                src="/avatar.jpg"
-                                                                alt={badge.studentName}
-                                                                className="w-full h-full rounded-full object-cover"
-                                                                onError={(e) => (e.currentTarget.src = '/avatar.jpg')}
-                                                            />
-                                                        </div>
-                                                        <div className="flex-1 text-right min-w-0">
-                                                            <h3 className="text-sm font-bold truncate">{badge.studentName}</h3>
-                                                            <p className="text-xs font-semibold text-yellow-400 mt-0.5 truncate">{badge.badgeName}</p>
-                                                        </div>
+                                                {/* 右侧: 勋章信息 */}
+                                                <div className="flex-1 flex flex-col justify-between min-w-0">
+                                                    <div>
+                                                        <p className="text-sm font-bold text-yellow-400 truncate">{badge.badgeName}</p>
+                                                        <p className="text-[11px] text-slate-300 mt-2 line-clamp-3 leading-relaxed">{badge.badgeDescription}</p>
                                                     </div>
-                                                    <div className="mt-1">
-                                                        <p className="text-[10px] text-slate-300 italic line-clamp-1 opacity-80">"{badge.badgeDescription}"</p>
-                                                        <div className="border-t border-slate-700/50 mt-1 pt-1 text-[8px] text-slate-400 text-right">
-                                                            加冕于: {new Date(badge.earnedAt).toLocaleDateString('zh-CN')}
-                                                        </div>
-                                                    </div>
+                                                    <p className="text-[9px] text-slate-500 text-right">加冕于 {new Date(badge.earnedAt).toLocaleDateString('zh-CN')}</p>
                                                 </div>
                                             </div>
                                         ))}
                                     </motion.div>
                                 ) : (
-                                    <div className="flex items-center justify-center text-slate-500 w-full h-full italic">暂无勋章加冕记录</div>
+                                    <div className="flex items-center justify-center text-slate-500 w-full h-full text-sm italic">暂无勋章加冕记录</div>
                                 )}
                             </div>
                         </div>

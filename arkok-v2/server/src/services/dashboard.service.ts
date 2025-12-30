@@ -429,6 +429,19 @@ export class DashboardService {
           schoolId,
           createdAt: { gte: today }
         }
+      }),
+      // 8. 今日习惯打卡记录
+      this.prisma.habit_logs.findMany({
+        where: {
+          schoolId,
+          checkedAt: { gte: today }
+        },
+        include: {
+          students: { select: { name: true } },
+          habits: { select: { name: true } }
+        },
+        orderBy: { checkedAt: 'desc' },
+        take: 20
       })
     ]);
 
@@ -503,28 +516,68 @@ export class DashboardService {
 
     // 处理实时动态
     const tasksData = recentTasksResult.status === 'fulfilled' ? recentTasksResult.value : [];
-    const activities: ActivityItem[] = tasksData.slice(0, 10).map(t => {
-      // 根据 task_category 映射类型
+
+    // 获取习惯打卡数据
+    const habitLogsPromise = await this.prisma.habit_logs.findMany({
+      where: { schoolId, checkedAt: { gte: today } },
+      include: { students: { select: { name: true } }, habits: { select: { name: true } } },
+      orderBy: { checkedAt: 'desc' },
+      take: 20
+    });
+
+    // 将 task_records 转换为 activities，带上类型标签
+    const taskActivities: ActivityItem[] = tasksData.slice(0, 15).map(t => {
       const categoryMap: Record<string, string> = {
-        'HABIT': 'habit',
-        'BADGE': 'badge',
-        'CHALLENGE': 'challenge',
-        'PK': 'pk',
-        'PROGRESS': 'progress',
-        'METHODOLOGY': 'methodology',
-        'GROWTH': 'growth',
-        'PERSONALIZED': 'personalized',
-        'SPECIAL': 'special'
+        'HABIT': 'habit', 'BADGE': 'badge', 'CHALLENGE': 'challenge', 'PK': 'pk',
+        'PROGRESS': 'progress', 'METHODOLOGY': 'methodology', 'GROWTH': 'growth',
+        'PERSONALIZED': 'personalized', 'SPECIAL': 'special'
       };
+      const labelMap: Record<string, string> = {
+        'METHODOLOGY': '【核心教学法】', 'GROWTH': '【综合成长】', 'PROGRESS': '【阅读记录】'
+      };
+      const label = labelMap[t.task_category] || '';
       return {
         id: t.id,
         type: (categoryMap[t.task_category] || 'task') as any,
         studentName: (t as any).students?.name || '未知',
-        content: t.title,
+        content: label + t.title,
         expAwarded: t.expAwarded || 0,
         timestamp: t.updatedAt.toISOString()
       };
     });
+
+    // 将习惯打卡记录转换为 activities
+    const habitActivities: ActivityItem[] = habitLogsPromise.map((h: any) => ({
+      id: h.id,
+      type: 'habit' as any,
+      studentName: h.students?.name || '未知',
+      content: `【习惯打卡】${h.habits?.name || '打卡'} (连续${h.streakDays}天)`,
+      expAwarded: 10,
+      timestamp: h.checkedAt.toISOString()
+    }));
+
+    // 获取阅读日志数据
+    const readingLogs = await this.prisma.reading_logs.findMany({
+      where: { schoolId, recordedAt: { gte: today } },
+      include: { students: { select: { name: true } }, books: { select: { bookName: true } } },
+      orderBy: { recordedAt: 'desc' },
+      take: 20
+    });
+
+    // 将阅读日志转换为 activities
+    const readingActivities: ActivityItem[] = readingLogs.map((r: any) => ({
+      id: r.id,
+      type: 'progress' as any,
+      studentName: r.students?.name || '未知',
+      content: `【阅读记录】《${r.books?.bookName || '书籍'}》 ${r.duration}分钟`,
+      expAwarded: Math.floor(r.duration / 5) * 5,
+      timestamp: r.recordedAt.toISOString()
+    }));
+
+    // 合并并按时间排序
+    const activities: ActivityItem[] = [...taskActivities, ...habitActivities, ...readingActivities]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 20);
 
     // 处理勋章数据
     const badgesData = recentBadgesResult.status === 'fulfilled' ? recentBadgesResult.value : [];
