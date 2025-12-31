@@ -175,6 +175,23 @@ interface StudentProfile {
   }>;
 }
 
+interface SkillStats {
+  reflection: number; // 红色：内省
+  logic: number;      // 蓝色：逻辑
+  autonomy: number;   // 黄色：自主
+  planning: number;   // 绿色：规划
+  grit: number;       // 橙色：毅力
+  streak: number;
+}
+
+interface Skill {
+  code: string;
+  name: string;
+  level: number;
+  exp: number;
+  unlockedAt: string;
+}
+
 const StudentDetail: React.FC = () => {
   const { studentId } = useParams<{ studentId: string }>();
   const navigate = useNavigate();
@@ -235,6 +252,11 @@ const StudentDetail: React.FC = () => {
 
   // 🆕 本月签到天数
   const [monthlyCheckinCount, setMonthlyCheckinCount] = useState<number>(0);
+
+  // 🆕 五维技能属性
+  const [skillStats, setSkillStats] = useState<SkillStats | null>(null);
+  // 🆕 已解锁技能列表
+  const [unlockedSkills, setUnlockedSkills] = useState<Skill[]>([]);
 
   // --- 3. 派生状态 (SSOT) ---
   const student = studentProfile?.student;
@@ -368,6 +390,29 @@ const StudentDetail: React.FC = () => {
       }
     };
     fetchCheckinCount();
+  }, [studentId]);
+
+  // 🆕 获取五维技能属性
+  useEffect(() => {
+    if (studentId) {
+      apiService.get(`/skill/student/${studentId}/stats`).then(res => {
+        if (res.success) setSkillStats(res.data as SkillStats);
+      }).catch(err => console.error('Failed to fetch skill stats', err));
+
+      apiService.get(`/skill/student/${studentId}/skills`).then(res => {
+        if (res.success) {
+          // 只展示有等级或经验的技能
+          const skills = (res.data as any[]).filter(s => s.level > 0 || s.currentExp > 0).map(s => ({
+            code: s.skill?.code || s.code,
+            name: s.skill?.name || s.name,
+            level: s.level,
+            exp: s.currentExp,
+            unlockedAt: s.unlockedAt
+          }));
+          setUnlockedSkills(skills);
+        }
+      }).catch(err => console.error('Failed to fetch skills', err));
+    }
   }, [studentId]);
 
   // --- 5. 交互处理 ---
@@ -889,7 +934,7 @@ const StudentDetail: React.FC = () => {
       // 🆕 核心优化：仅展示“已达成”(COMPLETED)记录，隐藏“进行中”(PENDING)
       // 同时过滤掉系统自动生成的“老师手动调整进度”冗余记录
       // 且排除勋章记录 (已由独立面板展示)
-      return (taskType === 'TASK' || taskType === 'METHODOLOGY' || taskType === 'SPECIAL') &&
+      return (taskType === 'TASK' || taskType === 'METHODOLOGY' || taskType === 'SPECIAL' || taskType === 'SKILL') &&
         taskStatus === 'COMPLETED' &&
         record.title !== '老师手动调整进度' &&
         (record as any).task_category !== 'BADGE';
@@ -899,6 +944,7 @@ const StudentDetail: React.FC = () => {
       let category = '综合成长';
       if (taskType === 'METHODOLOGY') category = '核心教法';
       else if (taskType === 'SPECIAL') category = '个性加餐';
+      else if (taskType === 'SKILL') category = '技能点亮';
 
       // 提取教师备注/理由
       let teacherNote = '';
@@ -1109,6 +1155,72 @@ const StudentDetail: React.FC = () => {
                 </div>
               )}
 
+              {/* 🆕 五维内功 (紧凑版) */}
+              {skillStats && (
+                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                  <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-3">
+                    <Sparkles className="w-4 h-4 text-purple-500" /> 五维内功
+                  </h3>
+                  <div className="grid grid-cols-5 gap-2">
+                    <div className="flex flex-col items-center p-2 bg-red-50 rounded-xl border border-red-100">
+                      <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-black mb-1">内</div>
+                      <div className="text-sm font-black text-red-600">{skillStats.reflection}</div>
+                    </div>
+                    <div className="flex flex-col items-center p-2 bg-blue-50 rounded-xl border border-blue-100">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-black mb-1">逻</div>
+                      <div className="text-sm font-black text-blue-600">{skillStats.logic}</div>
+                    </div>
+                    <div className="flex flex-col items-center p-2 bg-yellow-50 rounded-xl border border-yellow-100">
+                      <div className="w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center font-black mb-1">自</div>
+                      <div className="text-sm font-black text-yellow-600">{skillStats.autonomy}</div>
+                    </div>
+                    <div className="flex flex-col items-center p-2 bg-green-50 rounded-xl border border-green-100">
+                      <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-black mb-1">规</div>
+                      <div className="text-sm font-black text-green-600">{skillStats.planning}</div>
+                    </div>
+                    <div className="flex flex-col items-center p-2 bg-orange-50 rounded-xl border border-orange-100">
+                      <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-black mb-1">毅</div>
+                      <div className="text-sm font-black text-orange-600">{skillStats.grit}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 🆕 已点亮技能名牌 */}
+              {unlockedSkills.length > 0 && (
+                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                  <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-3">
+                    <Medal className="w-4 h-4 text-emerald-500" /> 已点亮技能
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {unlockedSkills.map(skill => (
+                      <div key={skill.code} className="flex items-center gap-3 p-3 bg-gradient-to-r from-slate-50 to-white rounded-xl border border-slate-100 shadow-sm relative overflow-hidden group">
+                        {/* 装饰背景字 */}
+                        <div className="absolute -right-2 -bottom-4 text-4xl text-slate-100 font-black opacity-50 z-0 pointer-events-none select-none italic">
+                          {skill.name.slice(0, 2)}
+                        </div>
+
+                        <div className="w-10 h-10 rounded-lg bg-white border border-slate-100 shadow-sm flex items-center justify-center text-xl z-10 shrink-0">
+                          {/* 根据名称简单映射Emoji，或默认 */}
+                          {skill.name.includes('禅') ? '🧘' :
+                            skill.name.includes('炼') ? '🔥' :
+                              skill.name.includes('薪') ? '🕯️' :
+                                skill.name.includes('水') ? '💧' :
+                                  skill.name.includes('内') ? '🧠' : '✨'}
+                        </div>
+                        <div className="z-10 min-w-0">
+                          <div className="text-sm font-black text-slate-700 truncate">{skill.name}</div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">Lv.{skill.level}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">{skill.exp} EXP</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* 所获勋章 */}
               <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
                 <div className="flex justify-between items-center mb-4">
@@ -1238,6 +1350,10 @@ const StudentDetail: React.FC = () => {
                           bgColor = 'bg-amber-50';
                           tagColor = 'bg-amber-100 text-amber-600';
                           iconColor = 'bg-amber-200 text-amber-700';
+                        } else if (task.rawType === 'SKILL') {
+                          bgColor = 'bg-amber-50';
+                          tagColor = 'bg-amber-100 text-amber-600';
+                          iconColor = 'bg-amber-200 text-amber-700';
                         } else if (task.rawType === 'DAILY') {
                           bgColor = 'bg-green-50';
                           tagColor = 'bg-green-100 text-green-600';
@@ -1250,9 +1366,9 @@ const StudentDetail: React.FC = () => {
 
                         return (
                           <div key={task.id} className={`flex items-center gap-3 p-3 ${bgColor} rounded-xl transition-all hover:scale-[1.02]`}>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${task.status === 'completed' ? (task.rawType === 'SPECIAL' ? 'bg-amber-400 text-white' : 'bg-green-400 text-white') : iconColor
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${task.status === 'completed' ? (task.rawType === 'SPECIAL' || task.rawType === 'SKILL' ? 'bg-amber-400 text-white' : 'bg-green-400 text-white') : iconColor
                               }`}>
-                              {task.status === 'completed' ? (task.rawType === 'SPECIAL' ? '⭐' : '✓') :
+                              {task.status === 'completed' ? (task.rawType === 'SPECIAL' ? '⭐' : task.rawType === 'SKILL' ? '✨' : '✓') :
                                 task.status === 'in_progress' ? '...' : '○'}
                             </div>
                             <div className="flex-1">
@@ -1905,7 +2021,7 @@ const StudentDetail: React.FC = () => {
           />
         )}
       </div>
-    </ProtectedRoute>
+    </ProtectedRoute >
   );
 };
 

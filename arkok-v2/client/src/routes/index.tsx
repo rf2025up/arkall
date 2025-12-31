@@ -21,7 +21,7 @@ import TutoringStudio from '../pages/TutoringStudio';
 import RewardManagement from '../pages/RewardManagement';
 import EmpowermentHub from '../pages/EmpowermentHub';
 import ExperienceAccounts from '../pages/ExperienceAccounts';
-import { ParentLogin, ParentLayout, TodayTimeline, GrowthProfile, SchoolConnect } from '../pages/parent';
+import { ParentLogin, ParentLayout, TodayTimeline, GrowthProfile, SchoolConnect, WeeklyPlan } from '../pages/parent';
 import { PlatformDashboard, CampusManagement, PlatformLogin } from '../pages/platform';
 import PlatformLayout from '../components/PlatformLayout';
 import PlatformProtectedRoute from '../components/PlatformProtectedRoute';
@@ -143,6 +143,10 @@ export const router = createBrowserRouter([
       {
         path: 'connect/:studentId',
         element: <SchoolConnect />,
+      },
+      {
+        path: 'plan/:studentId',
+        element: <WeeklyPlan />,
       },
     ],
   },

@@ -132,6 +132,14 @@ export interface BigscreenData {
   challengeResults: ChallengeResult[];
   activities: ActivityItem[];
   recentBadges: BadgeItem[];
+  recentSkillUps: {
+    studentName: string;
+    skillCode: string;
+    skillName: string;
+    level: number;
+    levelTitle: string;
+    timestamp: string;
+  }[];
   publicBounties?: { title: string, points: number, exp: number }[];
 }
 
@@ -366,7 +374,7 @@ export class DashboardService {
     today.setHours(0, 0, 0, 0);
     const todayStart = today; // Alias for consistency with the provided snippet
 
-    const [allStudentsResult, completedPKsResult, completedChallengesResult, activeBountiesResult, recentBadgesResult, recentTasksResult, todayTasksCountResult] = await Promise.allSettled([
+    const [allStudentsResult, completedPKsResult, completedChallengesResult, activeBountiesResult, recentBadgesResult, recentTasksResult, todayTasksCountResult, habitLogsResult, recentSkillUpsResult] = await Promise.allSettled([
       // 1. 获取所有学生
       this.prisma.students.findMany({ // Changed from student to students to match original schema
         where: { schoolId, isActive: true }, // Added isActive: true from original
@@ -450,6 +458,19 @@ export class DashboardService {
         },
         orderBy: { checkedAt: 'desc' },
         take: 20
+      }),
+      // 9. 最近技能升级
+      this.prisma.student_skills.findMany({
+        where: {
+          students: { schoolId },
+          level: { gt: 0 }
+        },
+        orderBy: { levelUpAt: 'desc' },
+        take: 10,
+        include: {
+          students: { select: { name: true } },
+          skill: { select: { code: true, name: true, levelData: true } }
+        }
       })
     ]);
 
@@ -526,12 +547,7 @@ export class DashboardService {
     const tasksData = recentTasksResult.status === 'fulfilled' ? recentTasksResult.value : [];
 
     // 获取习惯打卡数据
-    const habitLogsPromise = await this.prisma.habit_logs.findMany({
-      where: { schoolId, checkedAt: { gte: today } },
-      include: { students: { select: { name: true } }, habits: { select: { name: true } } },
-      orderBy: { checkedAt: 'desc' },
-      take: 20
-    });
+    const habitLogsData = habitLogsResult.status === 'fulfilled' ? habitLogsResult.value : [];
 
     // 将 task_records 转换为 activities，带上类型标签
     const taskActivities: ActivityItem[] = tasksData.slice(0, 15).map(t => {
@@ -555,7 +571,7 @@ export class DashboardService {
     });
 
     // 将习惯打卡记录转换为 activities
-    const habitActivities: ActivityItem[] = habitLogsPromise.map((h: any) => ({
+    const habitActivities: ActivityItem[] = habitLogsData.map((h: any) => ({
       id: h.id,
       type: 'habit' as any,
       studentName: h.students?.name || '未知',
@@ -603,6 +619,45 @@ export class DashboardService {
     const completedTasksToday = tasksData.length;
     const taskCompletionRate = totalTasksToday > 0 ? Math.round((completedTasksToday / totalTasksToday) * 100) : 0;
 
+    // 处理技能升级数据
+    const skillUpsData = recentSkillUpsResult.status === 'fulfilled' ? recentSkillUpsResult.value : [];
+
+    // 格式化技能升级数据
+    const recentSkillUps = skillUpsData.map((s: any) => {
+      const levelData = (s.skill?.levelData as any[]) || [];
+      const levelInfo = levelData.find((l: any) => l.lvl === s.level);
+      return {
+        studentName: s.students?.name || '未知',
+        skillCode: s.skill?.code || '',
+        skillName: s.skill?.name || '未知技能',
+        level: s.level,
+        levelTitle: levelInfo?.title || '未知境界',
+        timestamp: (s.levelUpAt || s.updatedAt || new Date()).toISOString()
+      };
+    });
+    // ^ Index issue using Promise.allSettled with array destructuring.
+    // I need to be careful with indexing.
+    // The previous Promise.allSettled destructuring (Line 369) has 7 items.
+    // I added 8th item (habitLogs) and 9th item (student_skills).
+    // But the destructuring at Line 369 only captures 7 items!
+    //   [allStudentsResult, completedPKsResult, completedChallengesResult, activeBountiesResult, recentBadgesResult, recentTasksResult, todayTasksCountResult]
+    // I need to update the destructuring line OR access by index from a variable.
+
+    // Wait, I cannot change the destructuring line easily with multi_replace if it's huge.
+    // I will replace the destructuring line AND the array content.
+    // But the array content is huge (Lines 370-454).
+
+    // Strategy:
+    // I will use `const results = await Promise.allSettled([...])` instead of destructuring.
+    // Then access `results[0]`, `results[1]`, etc.
+    // This is a big refactor.
+
+    // Alternative:
+    // Just add a SEPARATE query for skill ups.
+    // It's cleaner and safer than messing with the huge Promise.allSettled block.
+    // I will insert `const recentSkillUpsResult = await ...` AFTER the big block.
+
+
     // 4. 处理公开悬赏
     const bountiesData = activeBountiesResult.status === 'fulfilled' ? activeBountiesResult.value : [];
     const publicBounties = bountiesData.map(b => ({
@@ -620,6 +675,7 @@ export class DashboardService {
       challengeResults,
       activities: activities.slice(0, 10),
       recentBadges: recentBadgesList,
+      recentSkillUps,
       publicBounties
     };
     return result;

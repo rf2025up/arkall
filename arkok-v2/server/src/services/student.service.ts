@@ -1155,15 +1155,15 @@ export class StudentService {
    * - 完整两年(440天): 可达 55-65 级
    */
   private getExpRequiredForLevel(level: number): number {
-    if (level <= 5) return 30;       // 1-5级：快速入门
-    if (level <= 10) return 50;      // 6-10级：建立信心
-    if (level <= 15) return 80;      // 11-15级：稳步成长
-    if (level <= 20) return 120;     // 16-20级：一学期目标
-    if (level <= 25) return 160;     // 21-25级：进阶挑战
-    if (level <= 30) return 200;     // 26-30级：挑战区
-    if (level <= 40) return 280;     // 31-40级：精英入门
-    if (level <= 50) return 400;     // 41-50级：精英区
-    return 500;                       // 51+级：传奇区
+    if (level <= 5) return 300;       // 1-5级：300 exp (原30)
+    if (level <= 10) return 500;      // 6-10级：500 exp
+    if (level <= 15) return 800;      // 11-15级：800 exp
+    if (level <= 20) return 1200;     // 16-20级：1200 exp
+    if (level <= 25) return 1600;     // 21-25级：1600 exp
+    if (level <= 30) return 2000;     // 26-30级：2000 exp
+    if (level <= 40) return 2800;     // 31-40级：2800 exp
+    if (level <= 50) return 4000;     // 41-50级：4000 exp
+    return 5000;                       // 51+级：5000 exp
   }
 
   /**

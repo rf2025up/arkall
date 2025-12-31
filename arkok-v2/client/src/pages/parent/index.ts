@@ -4,3 +4,4 @@ export { default as ParentLayout } from './ParentLayout';
 export { default as TodayTimeline } from './TodayTimeline';
 export { default as GrowthProfile } from './GrowthProfile';
 export { default as SchoolConnect } from './SchoolConnect';
+export { default as WeeklyPlan } from './WeeklyPlan';

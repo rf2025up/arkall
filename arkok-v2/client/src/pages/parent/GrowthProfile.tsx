@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { Share2, Trophy, CheckCircle, Swords, Flame, Award } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Share2, Trophy, CheckCircle, Swords, Flame, Award, Compass, ChevronLeft } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const API_BASE = '/api/parent';
 
@@ -8,18 +9,19 @@ interface RadarDimension {
     name: string;
     value: number;
     icon: string;
+    key?: string; // e.g., 'autonomy', 'planning'
 }
 
-interface HeatmapDay {
-    date: string;
+interface Skill {
+    code: string;
+    name: string;
+    attribute: string;
+    category: string;
+    icon: string | null;
     level: number;
-    count: number;
-}
-
-interface TrendPoint {
-    date: string;
-    exp: number;
-    cumulative: number;
+    currentExp: number;
+    levelTitle: string;
+    unlockedAt: string;
 }
 
 interface GrowthData {
@@ -37,12 +39,12 @@ interface GrowthData {
     };
     heatmapData: {
         month: string;
-        days: HeatmapDay[];
+        days: { date: string; level: number; count: number }[];
         totalActiveDays: number;
     };
     trendData: {
         period: string;
-        data: TrendPoint[];
+        data: { date: string; exp: number; cumulative: number }[];
         totalExp: number;
     };
     summary: {
@@ -54,17 +56,35 @@ interface GrowthData {
         totalHabits: number;
         totalBadges: number;
     };
+    unlockedSkills?: Skill[];
 }
 
-/**
- * 成长档案页
- * UI 参考: /parent/家长端3tab源码参考.html
- */
+// 五维颜色映射
+const DIMENSION_COLORS: Record<string, { bg: string; text: string; gradient: string }> = {
+    'autonomy': { bg: 'bg-yellow-100', text: 'text-yellow-600', gradient: 'from-yellow-400 to-amber-500' }, // 自主力 (黄)
+    'planning': { bg: 'bg-green-100', text: 'text-green-600', gradient: 'from-emerald-400 to-green-500' },   // 规划力 (绿)
+    'reflection': { bg: 'bg-red-100', text: 'text-red-600', gradient: 'from-rose-400 to-red-500' },       // 内省力/复盘力 (红)
+    'logic': { bg: 'bg-blue-100', text: 'text-blue-600', gradient: 'from-sky-400 to-blue-500' },         // 逻辑力 (蓝)
+    'grit': { bg: 'bg-orange-100', text: 'text-orange-600', gradient: 'from-orange-400 to-orange-600' }  // 坚持力 (橙)
+};
+
+// 属性字段映射 (后端 attribute -> frontend key)
+const ATTRIBUTE_MAP: Record<string, string> = {
+    'autonomy': 'autonomy',
+    'planning': 'planning',
+    'reflection': 'reflection',
+    'logic': 'logic',
+    'grit': 'grit',
+    'review': 'reflection', // 兼容
+    'thinking': 'logic'     // 兼容
+};
+
 const GrowthProfile: React.FC = () => {
     const { studentId } = useParams<{ studentId: string }>();
+    const navigate = useNavigate();
     const [data, setData] = useState<GrowthData | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const [selectedDimension, setSelectedDimension] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -76,322 +96,368 @@ const GrowthProfile: React.FC = () => {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const result = await res.json();
-
                 if (!res.ok) throw new Error(result.error);
+
+                // 增强 dimensions，添加 key 以便映射颜色
+                if (result.radarData?.dimensions) {
+                    const dims = result.radarData.dimensions;
+                    // 按顺序手动映射 key (假设后端返回顺序固定，或者通过 name 匹配)
+                    // 顺序: 自主, 规划, 复盘, 思考, 坚持
+                    if (dims[0]) dims[0].key = 'autonomy';
+                    if (dims[1]) dims[1].key = 'planning';
+                    if (dims[2]) dims[2].key = 'reflection';
+                    if (dims[3]) dims[3].key = 'logic';
+                    if (dims[4]) dims[4].key = 'grit';
+                }
+
                 setData(result);
-            } catch (err: any) {
-                setError(err.message);
+            } catch (err) {
+                console.error(err);
             } finally {
                 setLoading(false);
             }
         };
-
         fetchData();
     }, [studentId]);
 
-    // 热力图颜色
-    const getHeatmapColor = (level: number) => {
-        switch (level) {
-            case 0: return 'bg-gray-100';
-            case 1: return 'bg-orange-200';
-            case 2: return 'bg-orange-400';
-            case 3: return 'bg-orange-600';
-            default: return 'bg-gray-100';
-        }
-    };
-
-    // 雷达图 SVG 渲染
     const renderRadarChart = () => {
         if (!data?.radarData?.dimensions) return null;
-
         const dims = data.radarData.dimensions;
-        const size = 160;
+        const size = 200;
         const center = size / 2;
-        const maxRadius = 60;
-        const angleStep = (2 * Math.PI) / dims.length;
+        const radius = 70;
+        const angleStep = (Math.PI * 2) / 5;
 
-        // 计算各点坐标
+        // 计算顶点
         const points = dims.map((d, i) => {
-            const angle = angleStep * i - Math.PI / 2; // 从顶部开始
-            const radius = (d.value / 100) * maxRadius;
+            const angle = i * angleStep - Math.PI / 2;
+            const r = (d.value / 100) * radius;
             return {
-                x: center + radius * Math.cos(angle),
-                y: center + radius * Math.sin(angle),
-                labelX: center + (maxRadius + 25) * Math.cos(angle),
-                labelY: center + (maxRadius + 25) * Math.sin(angle),
-                ...d
+                x: center + r * Math.cos(angle),
+                y: center + r * Math.sin(angle),
+                raw: d
             };
         });
 
-        const pathData = points.map((p, i) =>
-            (i === 0 ? 'M' : 'L') + `${p.x},${p.y}`
-        ).join(' ') + ' Z';
+        const pathData = points.map((p, i) => (i === 0 ? 'M' : 'L') + `${p.x},${p.y}`).join(' ') + ' Z';
 
         return (
-            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-                {/* 背景网格 */}
-                {[0.33, 0.66, 1].map((ratio, i) => (
-                    <polygon
-                        key={i}
-                        fill="none"
-                        stroke="#e2e8f0"
-                        strokeWidth="1"
-                        strokeDasharray={i < 2 ? "3,3" : "0"}
-                        points={dims.map((_, j) => {
-                            const angle = angleStep * j - Math.PI / 2;
-                            const r = maxRadius * ratio;
-                            return `${center + r * Math.cos(angle)},${center + r * Math.sin(angle)}`;
-                        }).join(' ')}
-                    />
-                ))}
+            <div className="relative w-[200px] h-[200px] mx-auto my-4">
+                {/* 维度图标定位 */}
+                {dims.map((d, i) => {
+                    const angle = i * angleStep - Math.PI / 2;
+                    const x = center + (radius + 25) * Math.cos(angle);
+                    const y = center + (radius + 25) * Math.sin(angle);
+                    const color = DIMENSION_COLORS[d.key || 'grit'];
 
-                {/* 轴线 */}
-                {dims.map((_, i) => {
-                    const angle = angleStep * i - Math.PI / 2;
                     return (
-                        <line
+                        <motion.button
                             key={i}
-                            x1={center}
-                            y1={center}
-                            x2={center + maxRadius * Math.cos(angle)}
-                            y2={center + maxRadius * Math.sin(angle)}
-                            stroke="#e2e8f0"
-                            strokeWidth="1"
-                        />
+                            initial={{ opacity: 0, scale: 0 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: i * 0.1 }}
+                            className={`absolute w-8 h-8 -ml-4 -mt-4 rounded-full flex items-center justify-center text-sm shadow-sm z-20 transition-transform active:scale-95 ${selectedDimension === d.key ? 'ring-2 ring-offset-2 ring-orange-400 scale-110' : ''
+                                } ${color.bg} ${color.text}`}
+                            style={{ left: x, top: y }}
+                            onClick={() => setSelectedDimension(selectedDimension === d.key ? null : d.key!)}
+                        >
+                            {d.icon}
+                        </motion.button>
                     );
                 })}
 
-                {/* 数据区域 */}
-                <path
-                    d={pathData}
-                    fill="rgba(249, 115, 22, 0.2)"
-                    stroke="#f97316"
-                    strokeWidth="2"
-                />
+                <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="overflow-visible">
+                    {/* 背景网格 */}
+                    {[0.2, 0.4, 0.6, 0.8, 1].map((scale, idx) => (
+                        <polygon
+                            key={idx}
+                            points={dims.map((_, i) => {
+                                const angle = i * angleStep - Math.PI / 2;
+                                const r = radius * scale;
+                                return `${center + r * Math.cos(angle)},${center + r * Math.sin(angle)}`;
+                            }).join(' ')}
+                            fill="none"
+                            stroke="#e2e8f0"
+                            strokeWidth="1"
+                            strokeDasharray={scale === 1 ? "0" : "2,2"}
+                        />
+                    ))}
 
-                {/* 数据点 */}
-                {points.map((p, i) => (
-                    <circle
-                        key={i}
-                        cx={p.x}
-                        cy={p.y}
-                        r="4"
-                        fill="#f97316"
+                    {/* 数据区域 */}
+                    <motion.path
+                        d={pathData}
+                        fill="url(#radarGradient)"
+                        stroke="#f97316"
+                        strokeWidth="2"
+                        strokeLinejoin="round"
+                        initial={{ opacity: 0, pathLength: 0 }}
+                        animate={{ opacity: 1, pathLength: 1 }}
+                        transition={{ duration: 1, ease: "easeOut" }}
                     />
-                ))}
-            </svg>
+
+                    <defs>
+                        <radialGradient id="radarGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                            <stop offset="0%" stopColor="rgba(249, 115, 22, 0.6)" />
+                            <stop offset="100%" stopColor="rgba(249, 115, 22, 0.1)" />
+                        </radialGradient>
+                    </defs>
+
+                    {/* 顶点圆点 */}
+                    {points.map((p, i) => (
+                        <circle key={i} cx={p.x} cy={p.y} r="3" fill="#f97316" stroke="white" strokeWidth="1.5" />
+                    ))}
+                </svg>
+            </div>
         );
     };
 
-    // 积分曲线渲染（简化版）
-    const renderTrendChart = () => {
-        if (!data?.trendData?.data) return null;
 
-        const points = data.trendData.data;
-        const maxExp = Math.max(...points.map(p => p.cumulative), 1);
-        const width = 300;
-        const height = 100;
-        const padding = 10;
+    if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-400">数据加载中...</div>;
 
-        const pathData = points.map((p, i) => {
-            const x = padding + (i / (points.length - 1)) * (width - 2 * padding);
-            const y = height - padding - (p.cumulative / maxExp) * (height - 2 * padding);
-            return (i === 0 ? 'M' : 'L') + `${x},${y}`;
-        }).join(' ');
-
-        return (
-            <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
-                {/* 渐变定义 */}
-                <defs>
-                    <linearGradient id="expGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="rgba(249, 115, 22, 0.3)" />
-                        <stop offset="100%" stopColor="rgba(249, 115, 22, 0)" />
-                    </linearGradient>
-                </defs>
-
-                {/* 填充区域 */}
-                <path
-                    d={`${pathData} L${width - padding},${height - padding} L${padding},${height - padding} Z`}
-                    fill="url(#expGradient)"
-                />
-
-                {/* 曲线 */}
-                <path
-                    d={pathData}
-                    fill="none"
-                    stroke="#f97316"
-                    strokeWidth="2"
-                />
-            </svg>
-        );
-    };
-
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center pb-20">
-                <div className="text-gray-400 animate-pulse">加载中...</div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center pb-20">
-                <div className="text-red-500">{error}</div>
-            </div>
-        );
-    }
+    // 过滤技能显示
+    const filteredSkills = selectedDimension
+        ? data?.unlockedSkills?.filter(s => ATTRIBUTE_MAP[s.attribute] === selectedDimension)
+        : data?.unlockedSkills;
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-24">
-            {/* 顶部头像区 */}
-            <div className="relative pt-12 pb-6 px-5 bg-gradient-to-br from-orange-400 to-red-500 text-white rounded-b-3xl">
-                <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full border-4 border-white/50 shadow-lg bg-white flex items-center justify-center text-2xl font-bold text-orange-500">
-                        {data?.student?.name?.charAt(0) || '?'}
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-bold">{data?.student?.name}</h1>
-                        <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full mt-1 inline-block">
-                            {data?.student?.className || '未知班级'}
-                        </span>
-                    </div>
-                </div>
-                <button className="absolute top-12 right-5 bg-white/20 text-white px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 backdrop-blur-sm active:bg-white/30 transition-colors">
-                    <Share2 size={14} />
-                    生成海报
-                </button>
+        <div className="min-h-screen bg-slate-50 pb-20">
+            {/* 顶部全屏背景 - 暖色调 */}
+            <div className="absolute top-0 left-0 w-full h-[280px] bg-gradient-to-br from-orange-400 via-red-500 to-pink-600 rounded-b-[40px] z-0 shadow-xl" />
 
-                {/* 数据概览 */}
-                <div className="flex justify-around mt-6 text-center">
-                    <div>
-                        <div className="text-2xl font-bold">{data?.summary?.daysSinceJoin || 0}</div>
-                        <div className="text-[10px] text-white/70">成长天数</div>
-                    </div>
-                    <div>
-                        <div className="text-2xl font-bold">{data?.student?.points || 0}</div>
-                        <div className="text-[10px] text-white/70">总积分</div>
-                    </div>
-                    <div>
-                        <div className="text-2xl font-bold">Lv.{data?.student?.level || 1}</div>
-                        <div className="text-[10px] text-white/70">当前等级</div>
+            {/* 导航栏 */}
+            <div className="relative z-10 pt-6 px-4 flex justify-between items-center text-white">
+                <button onClick={() => navigate(-1)} className="p-2 bg-white/10 rounded-full backdrop-blur-md active:scale-95 transition">
+                    <ChevronLeft size={20} />
+                </button>
+                <div className="text-base font-bold">成长档案</div>
+                <button className="p-2 bg-white/10 rounded-full backdrop-blur-md active:scale-95 transition">
+                    <Share2 size={18} />
+                </button>
+            </div>
+
+            {/* 学生信息卡 */}
+            <div className="relative z-10 px-6 mt-4 flex items-center gap-4 text-white">
+                <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="w-14 h-14 rounded-full border-2 border-white/40 shadow-lg bg-orange-100 flex items-center justify-center text-xl font-bold text-orange-600"
+                >
+                    {data?.student?.name?.charAt(0)}
+                </motion.div>
+                <div>
+                    <h1 className="text-xl font-bold tracking-tight">{data?.student?.name}</h1>
+                    <div className="flex items-center gap-2 mt-0.5 text-xs text-white/80">
+                        <span className="bg-black/10 px-2 py-0.5 rounded-full backdrop-blur-sm border border-white/10">Lv.{data?.student?.level} 初露锋芒</span>
+                        <span>加入第 {data?.summary?.daysSinceJoin} 天</span>
                     </div>
                 </div>
             </div>
 
-            {/* 内容区 */}
-            <div className="p-4 space-y-4 -mt-4">
-                {/* 五维雷达图 */}
-                <div className="bg-white p-4 rounded-2xl shadow-md border border-gray-100">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-bold text-gray-800 text-base">五维能力雷达</h3>
-                        <div className="text-orange-500 font-bold text-sm">
-                            综合 {data?.radarData?.overallScore || 0}分
+            {/* 五维能力雷达卡片 - 紧凑版 */}
+            <div className="relative z-10 px-4 mt-6">
+                <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className="bg-white/95 backdrop-blur-xl rounded-[24px] p-5 shadow-xl border border-white/50"
+                >
+                    <div className="flex justify-between items-center mb-1">
+                        <div>
+                            <h2 className="text-base font-black text-slate-800">五维能力画像</h2>
+                            <p className="text-[10px] text-slate-400">点击维度图标筛选技能</p>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-xl font-black text-orange-500">{data?.radarData?.overallScore}</div>
+                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">综合评分</div>
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-center">
-                        {renderRadarChart()}
-                    </div>
+                    {renderRadarChart()}
 
-                    {/* 维度标签 */}
-                    <div className="flex flex-wrap justify-center gap-3 mt-4">
+                    {/* 维度数值展示 */}
+                    <div className="grid grid-cols-5 divide-x divide-slate-100 mt-2 pt-3 border-t border-slate-50">
                         {data?.radarData?.dimensions.map((d, i) => (
-                            <div key={i} className="flex items-center gap-1 text-xs text-gray-600">
-                                <span>{d.icon}</span>
-                                <span>{d.name}</span>
-                                <span className="text-orange-500 font-bold">{d.value}</span>
+                            <div key={i} className="text-center group cursor-pointer" onClick={() => setSelectedDimension(d.key || null)}>
+                                <div className={`text-[10px] font-bold mb-0.5 group-hover:text-orange-500 transition-colors ${selectedDimension === d.key ? 'text-orange-500' : 'text-slate-400'}`}>
+                                    {d.name}
+                                </div>
+                                <div className="text-xs font-black text-slate-800">{d.value}</div>
                             </div>
                         ))}
                     </div>
+                </motion.div>
+            </div>
+
+            {/* 技能成就列表 - 卡片式网格布局 (3列) */}
+            <div className="px-4 mt-6">
+                <div className="flex items-center justify-between mb-4 px-1">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2 text-base">
+                        <Award className="w-5 h-5 text-amber-500" />
+                        {selectedDimension ? `${data?.radarData?.dimensions.find(d => d.key === selectedDimension)?.name}技能` : '已点亮技能'}
+                    </h3>
+                    <span className="text-xs font-bold text-slate-400 bg-white px-2.5 py-1 rounded-full border border-slate-100 shadow-sm">{filteredSkills?.length || 0} 个</span>
                 </div>
 
-                {/* 毅力热力图 */}
-                <div className="bg-white p-4 rounded-2xl shadow-md border border-gray-100">
-                    <div className="flex justify-between items-center mb-3">
-                        <h3 className="font-bold text-gray-800 text-base">毅力热力图</h3>
-                        <span className="text-xs text-gray-400">
-                            {data?.heatmapData?.month} · {data?.heatmapData?.totalActiveDays}天活跃
-                        </span>
-                    </div>
+                <div className="min-h-[100px]">
+                    <motion.div
+                        layout
+                        className="grid grid-cols-3 gap-3"
+                    >
+                        <AnimatePresence mode='popLayout'>
+                            {filteredSkills && filteredSkills.length > 0 ? (
+                                filteredSkills.map((skill) => {
+                                    const attrKey = ATTRIBUTE_MAP[skill.attribute] || 'grit';
 
-                    <div className="grid grid-cols-7 gap-1 mt-2">
-                        {['日', '一', '二', '三', '四', '五', '六'].map(d => (
-                            <div key={d} className="text-center text-[10px] text-gray-400 mb-1">{d}</div>
-                        ))}
-                        {data?.heatmapData?.days.map((day, i) => (
-                            <div
-                                key={i}
-                                className={`aspect-square rounded-sm ${getHeatmapColor(day.level)}`}
-                                title={`${day.date}: ${day.count}次活动`}
-                            />
-                        ))}
-                    </div>
+                                    // 动态样式映射
+                                    const theme = {
+                                        bg: '',
+                                        text: '',
+                                        glow: ''
+                                    };
 
-                    {/* 图例 */}
-                    <div className="flex items-center justify-end gap-1 mt-3 text-[10px] text-gray-400">
-                        <span>活跃度:</span>
-                        <div className="w-3 h-3 bg-gray-100 rounded-sm" />
-                        <div className="w-3 h-3 bg-orange-200 rounded-sm" />
-                        <div className="w-3 h-3 bg-orange-400 rounded-sm" />
-                        <div className="w-3 h-3 bg-orange-600 rounded-sm" />
-                    </div>
+                                    // 根据属性映射颜色
+                                    switch (attrKey) {
+                                        case 'reflection': // 复盘 - 红色
+                                            theme.bg = 'bg-red-50';
+                                            theme.text = 'text-red-500';
+                                            theme.glow = 'bg-red-500';
+                                            break;
+                                        case 'logic': // 思考 - 蓝色
+                                            theme.bg = 'bg-blue-50';
+                                            theme.text = 'text-blue-500';
+                                            theme.glow = 'bg-blue-500';
+                                            break;
+                                        case 'planning': // 规划 - 绿色
+                                            theme.bg = 'bg-emerald-50';
+                                            theme.text = 'text-emerald-500';
+                                            theme.glow = 'bg-emerald-500';
+                                            break;
+                                        case 'autonomy': // 自主 - 黄色
+                                            theme.bg = 'bg-yellow-50';
+                                            theme.text = 'text-yellow-600';
+                                            theme.glow = 'bg-amber-400';
+                                            break;
+                                        default: // 坚持/肌肉 - 橙色
+                                            theme.bg = 'bg-orange-50';
+                                            theme.text = 'text-orange-500';
+                                            theme.glow = 'bg-orange-500';
+                                    }
+
+                                    // 金色传说逻辑 (L3以上)
+                                    const isGold = skill.level >= 3;
+
+                                    return (
+                                        <motion.div
+                                            key={skill.code}
+                                            layout
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.9 }}
+                                            className={`
+                                                relative overflow-hidden
+                                                bg-white rounded-[20px] p-4
+                                                flex flex-col justify-between h-[150px]
+                                                border transition-all duration-300
+                                                active:scale-95
+                                                ${isGold ? 'border-orange-200/60 shadow-orange-100' : 'border-slate-50 shadow-sm'}
+                                            `}
+                                            style={isGold ? {
+                                                background: 'linear-gradient(180deg, #FFFFFF 40%, #FFFDF5 100%)',
+                                                boxShadow: '0 8px 16px -4px rgba(245, 158, 11, 0.1)'
+                                            } : {
+                                                boxShadow: '0 4px 6px rgba(0,0,0,0.02)'
+                                            }}
+                                        >
+                                            {/* 氛围光斑 */}
+                                            <div className={`absolute -top-10 -right-10 w-28 h-28 rounded-full blur-[40px] opacity-20 pointer-events-none ${theme.glow}`} />
+
+                                            {/* 顶部: L标 + 胶囊 */}
+                                            <div className="flex justify-between items-start z-10">
+                                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shadow-inner
+                                                    ${isGold
+                                                        ? 'bg-gradient-to-br from-amber-300 to-orange-400 text-white'
+                                                        : 'bg-slate-100 text-slate-400'
+                                                    }`}
+                                                >
+                                                    L{skill.level}
+                                                </div>
+                                                <span className={`text-[9px] px-2 py-1 rounded-full font-bold ${theme.bg} ${theme.text}`}>
+                                                    {data?.radarData?.dimensions.find(d => d.key === attrKey)?.name}
+                                                </span>
+                                            </div>
+
+                                            {/* 中部: 技能名 */}
+                                            <h4 className="font-bold text-slate-800 text-sm leading-tight mt-2 z-10 line-clamp-2">
+                                                {skill.name}
+                                            </h4>
+
+                                            {/* 底部: 日期 + 称号 */}
+                                            <div className="flex justify-between items-end mt-auto z-10">
+                                                <span className="text-[9px] text-slate-300 font-medium">
+                                                    {new Date(skill.unlockedAt).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}
+                                                </span>
+                                                <span className={`text-[10px] font-bold ${theme.text}`}>
+                                                    {skill.levelTitle}
+                                                </span>
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })
+                            ) : (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="col-span-3 flex flex-col items-center justify-center py-8 text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200"
+                                >
+                                    <span className="text-2xl mb-2 grayscale opacity-50">🌱</span>
+                                    <span className="text-xs">该维度暂无点亮技能</span>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </motion.div>
                 </div>
+            </div>
 
-                {/* 进击曲线 */}
-                <div className="bg-white p-4 rounded-2xl shadow-md border border-gray-100">
-                    <div className="flex justify-between items-center mb-3">
-                        <h3 className="font-bold text-gray-800 text-base">进击曲线</h3>
-                        <span className="text-xs text-orange-500 font-bold">
-                            +{data?.trendData?.totalExp || 0} 经验
-                        </span>
-                    </div>
-
-                    <div className="h-24">
-                        {renderTrendChart()}
-                    </div>
-
-                    <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                        <span>30天前</span>
-                        <span>今天</span>
-                    </div>
-                </div>
-
-                {/* 成长概要 */}
-                <div className="bg-white p-4 rounded-2xl shadow-md border border-gray-100">
-                    <h3 className="font-bold text-gray-800 text-base mb-3">成长概要</h3>
-
-                    <div className="grid grid-cols-3 gap-3">
-                        <div className="text-center p-3 bg-green-50 rounded-xl">
-                            <CheckCircle className="w-6 h-6 text-green-500 mx-auto mb-1" />
-                            <div className="text-lg font-bold text-gray-800">{data?.summary?.totalTasks || 0}</div>
-                            <div className="text-[10px] text-gray-500">任务完成</div>
+            {/* 成长数据网格 */}
+            <div className="px-4 mt-6 pb-8">
+                <h3 className="font-bold text-slate-800 mb-3 px-1 text-sm">数据概览</h3>
+                <div className="grid grid-cols-4 gap-2">
+                    <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-1">
+                        <div className="w-8 h-8 rounded-full bg-green-50 text-green-500 flex items-center justify-center">
+                            <CheckCircle size={16} />
                         </div>
-                        <div className="text-center p-3 bg-blue-50 rounded-xl">
-                            <Trophy className="w-6 h-6 text-blue-500 mx-auto mb-1" />
-                            <div className="text-lg font-bold text-gray-800">{data?.summary?.totalQC || 0}</div>
-                            <div className="text-[10px] text-gray-500">过关项目</div>
-                        </div>
-                        <div className="text-center p-3 bg-red-50 rounded-xl">
-                            <Swords className="w-6 h-6 text-red-500 mx-auto mb-1" />
-                            <div className="text-lg font-bold text-gray-800">{data?.summary?.totalPK || 0}</div>
-                            <div className="text-[10px] text-gray-500">PK对战</div>
-                        </div>
-                        <div className="text-center p-3 bg-orange-50 rounded-xl">
-                            <Flame className="w-6 h-6 text-orange-500 mx-auto mb-1" />
-                            <div className="text-lg font-bold text-gray-800">{data?.summary?.totalHabits || 0}</div>
-                            <div className="text-[10px] text-gray-500">习惯打卡</div>
-                        </div>
-                        <div className="text-center p-3 bg-yellow-50 rounded-xl col-span-2">
-                            <Award className="w-6 h-6 text-yellow-500 mx-auto mb-1" />
-                            <div className="text-lg font-bold text-gray-800">{data?.summary?.totalBadges || 0}</div>
-                            <div className="text-[10px] text-gray-500">荣誉勋章</div>
+                        <div className="text-center">
+                            <div className="text-sm font-black text-slate-800">{data?.summary?.totalTasks}</div>
+                            <div className="text-[9px] text-slate-400">任务</div>
                         </div>
                     </div>
-                </div>
-
-                <div className="text-center text-[10px] text-gray-300 mt-6 tracking-widest">
-                    — 用数据见证成长 —
+                    <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-1">
+                        <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center">
+                            <Trophy size={16} />
+                        </div>
+                        <div className="text-center">
+                            <div className="text-sm font-black text-slate-800">{data?.summary?.totalQC}</div>
+                            <div className="text-[9px] text-slate-400">过关</div>
+                        </div>
+                    </div>
+                    <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-1">
+                        <div className="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center">
+                            <Swords size={16} />
+                        </div>
+                        <div className="text-center">
+                            <div className="text-sm font-black text-slate-800">{data?.summary?.totalPK}</div>
+                            <div className="text-[9px] text-slate-400">PK</div>
+                        </div>
+                    </div>
+                    <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-1">
+                        <div className="w-8 h-8 rounded-full bg-yellow-50 text-yellow-500 flex items-center justify-center">
+                            <Award size={16} />
+                        </div>
+                        <div className="text-center">
+                            <div className="text-sm font-black text-slate-800">{data?.summary?.totalBadges}</div>
+                            <div className="text-[9px] text-slate-400">勋章</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

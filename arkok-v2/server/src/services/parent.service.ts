@@ -280,6 +280,19 @@ export class ParentService {
             orderBy: { recordedAt: 'asc' }
         });
 
+        // 🆕 获取今日完成的家校计划项目
+        const completedPlanItems = await prisma.weekly_plan_items.findMany({
+            where: {
+                isCompleted: true,
+                completedAt: { gte: today, lt: tomorrow },
+                plan: { studentId }
+            },
+            include: {
+                plan: { select: { parentNote: true } }
+            },
+            orderBy: { completedAt: 'asc' }
+        });
+
         // 获取今日PK记录
         const pkMatches = await prisma.pk_matches.findMany({
             where: {
@@ -312,7 +325,7 @@ export class ParentService {
         });
 
         // 🆕 移除跨天累计逻辑：只显示当天的记录，确保每次发布后数据干净
-        const timeline = this.buildTimeline(filteredCompleted, habitLogsWithTotal, pkMatches, badges, studentId, readingLogs);
+        const timeline = this.buildTimeline(filteredCompleted, habitLogsWithTotal, pkMatches, badges, studentId, readingLogs, completedPlanItems);
 
         // 🆕 注入“今日教学计划”置顶公告 (展示全天计划，包含已过关和待练习)
         // 🔧 过滤逻辑：只包含从备课页发布的任务，排除 PK/挑战赛等系统自动生成的记录
@@ -520,7 +533,7 @@ export class ParentService {
     /**
      * 验证家长是否有权限访问该学生
      */
-    private async verifyParentAccess(parentId: string, studentId: string) {
+    async verifyParentAccess(parentId: string, studentId: string) {
         const binding = await prisma.parent_student_bindings.findFirst({
             where: {
                 parentId,
@@ -545,7 +558,8 @@ export class ParentService {
         pkMatches: any[],
         badges: any[],
         studentId: string,
-        readingLogs: any[] = []  // 🆕 阅读记录参数
+        readingLogs: any[] = [],  // 🆕 阅读记录参数
+        familyPlanItems: any[] = []  // 🆕 家校计划完成项
     ) {
         const timeline: any[] = [];
 
@@ -866,6 +880,51 @@ export class ParentService {
             });
         });
 
+        // 🆕 添加家校计划完成项 - 合并为单一面板
+        if (familyPlanItems.length > 0) {
+            // 按类别分组
+            const itemsByCategory: Record<string, any[]> = {};
+            let parentNote = null;
+
+            familyPlanItems.forEach(item => {
+                const cat = item.category || 'OTHER';
+                if (!itemsByCategory[cat]) {
+                    itemsByCategory[cat] = [];
+                }
+                itemsByCategory[cat].push({
+                    id: item.id,
+                    title: item.title,
+                    category: cat,
+                    isCompleted: true
+                });
+                if (item.plan?.parentNote) {
+                    parentNote = item.plan.parentNote;
+                }
+            });
+
+            // 创建单一分组卡片
+            timeline.push({
+                id: `family-plan-group-${familyPlanItems[0].id}`,
+                type: 'FAMILY_PLAN_GROUP',
+                category: '家校计划',
+                title: '家校计划完成',
+                icon: '🎯',
+                content: {
+                    items: familyPlanItems.map(item => ({
+                        id: item.id,
+                        title: item.title,
+                        category: item.category
+                    })),
+                    itemsByCategory,
+                    parentNote,
+                    completedCount: familyPlanItems.length,
+                    totalCount: familyPlanItems.length
+                },
+                time: familyPlanItems[0].completedAt,
+                cardStyle: 'family-plan-group'
+            });
+        }
+
         // 按时间排序
         timeline.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
 
@@ -940,7 +999,23 @@ export class ParentService {
             case 'CHALLENGE':
                 cardStyle = 'challenge';
                 icon = '⚡';
-                category = '个人挑战';
+                category = '挑战任务';
+                break;
+            case 'PK':
+            case 'PK_RESULT':
+                cardStyle = 'pk';
+                icon = '🏆';
+                category = 'PK对决';
+                break;
+            case 'BADGE':
+                cardStyle = 'badge';
+                icon = '🏅';
+                category = '获得勋章';
+                break;
+            case 'SKILL': // 🆕 技能解锁
+                cardStyle = 'skill';
+                icon = '✨';
+                category = '技能点亮';
                 break;
             default:
                 cardStyle = 'default';
@@ -1161,86 +1236,151 @@ export class ParentService {
             this.getGrowthSummary(studentId)
         ]);
 
+        // 获取已解锁技能
+        const skills = await prisma.student_skills.findMany({
+            where: {
+                studentId,
+                level: { gt: 0 }
+            },
+            include: {
+                skill: {
+                    select: {
+                        name: true,
+                        code: true,
+                        attribute: true,
+                        category: true,
+                        icon: true,
+                        levelData: true
+                    }
+                }
+            },
+            orderBy: { levelUpAt: 'desc' }
+        });
+
+        const unlockedSkills = skills.map(s => ({
+            code: s.skill.code,
+            name: s.skill.name,
+            attribute: s.skill.attribute,
+            category: s.skill.category,
+            icon: s.skill.icon,
+            level: s.level,
+            currentExp: s.currentExp,
+            levelTitle: (s.skill.levelData as any[])?.find((l: any) => l.lvl === s.level)?.title || `${s.level}级`,
+            unlockedAt: s.unlockedAt
+        }));
+
         return {
             student,
             radarData,
             heatmapData,
             trendData,
-            summary
+            summary,
+            unlockedSkills // 🆕 返回技能数据
         };
     }
 
     /**
      * 计算五维雷达图数据
-     * 维度：学业攻克、任务达人、PK战力、习惯坚持、荣誉成就
+     * 维度：自主力、规划力、复盘力、思考力、坚持力
      */
     private async calculateRadarStats(studentId: string) {
         const now = new Date();
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        // 1. 学业攻克：QC 完成率
-        const qcStats = await prisma.task_records.groupBy({
-            by: ['status'],
+        // 1. 自主力 (Autonomy)：自选任务完成数、主动申报任务数
+        // 暂用 SPECIAL 类型任务 + 非强制任务完成率
+        const specialTasks = await prisma.task_records.count({
             where: {
                 studentId,
-                type: 'QC'
-            },
-            _count: true
-        });
-        const qcTotal = qcStats.reduce((sum, s) => sum + s._count, 0);
-        const qcCompleted = qcStats.find(s => s.status === 'COMPLETED')?._count || 0;
-        const academicScore = qcTotal > 0 ? Math.round((qcCompleted / qcTotal) * 100) : 0;
-
-        // 2. 任务达人：本月完成的 TASK 数量（归一化到 0-100）
-        const monthlyTasks = await prisma.task_records.count({
-            where: {
-                studentId,
-                type: 'TASK',
+                task_category: 'SPECIAL',
                 status: 'COMPLETED',
                 createdAt: { gte: monthStart }
             }
         });
-        const taskScore = Math.min(100, monthlyTasks * 5); // 20个任务得满分
+        const autonomyScore = Math.min(100, specialTasks * 10); // 10个自选任务得满分
 
-        // 3. PK战力：胜率
-        const pkMatches = await prisma.pk_matches.findMany({
+        // 2. 规划力 (Planning)：周计划制定率、每日任务完成率
+        // 暂用每日任务按时完成率
+        const monthlyTasks = await prisma.task_records.findMany({
             where: {
-                OR: [{ studentA: studentId }, { studentB: studentId }]
+                studentId,
+                type: 'TASK',
+                createdAt: { gte: monthStart }
             },
-            select: { winnerId: true }
+            select: { status: true }
         });
+        const taskTotal = monthlyTasks.length;
+        const taskCompleted = monthlyTasks.filter(t => t.status === 'COMPLETED').length;
+        const planningScore = taskTotal > 0 ? Math.round((taskCompleted / taskTotal) * 100) : 50;
+
+        // 3. 复盘力 (Review)：错题订正数、归因填写率
+        // 暂用 QC 完成率 + METHODOLOGY 类型任务完成数
+        const [qcStats, methodologyCount] = await Promise.all([
+            prisma.task_records.groupBy({
+                by: ['status'],
+                where: { studentId, type: 'QC' },
+                _count: true
+            }),
+            prisma.task_records.count({
+                where: {
+                    studentId,
+                    task_category: 'METHODOLOGY',
+                    status: 'COMPLETED',
+                    createdAt: { gte: monthStart }
+                }
+            })
+        ]);
+        const qcTotal = qcStats.reduce((sum, s) => sum + s._count, 0);
+        const qcCompleted = qcStats.find(s => s.status === 'COMPLETED')?._count || 0;
+        const qcRate = qcTotal > 0 ? (qcCompleted / qcTotal) * 50 : 25;
+        const reviewScore = Math.min(100, Math.round(qcRate + methodologyCount * 5));
+
+        // 4. 思考力 (Thinking)：母题整理数、讲题视频数
+        // 暂用挑战成功率 + PK胜率
+        const [challenges, pkMatches] = await Promise.all([
+            prisma.challenge_participants.findMany({
+                where: { studentId },
+                select: { status: true, result: true }
+            }),
+            prisma.pk_matches.findMany({
+                where: { OR: [{ studentA: studentId }, { studentB: studentId }] },
+                select: { winnerId: true }
+            })
+        ]);
+        const challengeTotal = challenges.length;
+        const challengeSuccess = challenges.filter(c => c.result === 'COMPLETED' || c.result === 'WINNER').length;
+        const challengeRate = challengeTotal > 0 ? (challengeSuccess / challengeTotal) * 50 : 25;
         const pkTotal = pkMatches.length;
         const pkWins = pkMatches.filter(pk => pk.winnerId === studentId).length;
-        const pkScore = pkTotal > 0 ? Math.round((pkWins / pkTotal) * 100) : 50; // 默认50
+        const pkRate = pkTotal > 0 ? (pkWins / pkTotal) * 50 : 25;
+        const thinkingScore = Math.round(challengeRate + pkRate);
 
-        // 4. 习惯坚持：平均连续打卡天数（归一化）
-        const habitLogs = await prisma.habit_logs.findMany({
-            where: { studentId },
-            select: { streakDays: true },
-            orderBy: { checkedAt: 'desc' },
-            take: 10
-        });
-        const avgStreak = habitLogs.length > 0
-            ? habitLogs.reduce((sum, h) => sum + h.streakDays, 0) / habitLogs.length
+        // 5. 坚持力 (Grit)：连胜天数、累计里程碑
+        // 使用习惯打卡连续天数 + 勋章数量
+        const [habitLogs, badgeCount] = await Promise.all([
+            prisma.habit_logs.findMany({
+                where: { studentId },
+                select: { streakDays: true },
+                orderBy: { checkedAt: 'desc' },
+                take: 10
+            }),
+            prisma.student_badges.count({ where: { studentId } })
+        ]);
+        const maxStreak = habitLogs.length > 0
+            ? Math.max(...habitLogs.map(h => h.streakDays))
             : 0;
-        const habitScore = Math.min(100, Math.round(avgStreak * 10)); // 10天连续得满分
-
-        // 5. 荣誉成就：勋章数量（归一化）
-        const badgeCount = await prisma.student_badges.count({
-            where: { studentId }
-        });
-        const badgeScore = Math.min(100, badgeCount * 10); // 10个勋章得满分
+        const gritScore = Math.min(100, maxStreak * 5 + badgeCount * 10);
 
         return {
             dimensions: [
-                { name: '学业攻克', value: academicScore, icon: '📚' },
-                { name: '任务达人', value: taskScore, icon: '✅' },
-                { name: 'PK战力', value: pkScore, icon: '⚔️' },
-                { name: '习惯坚持', value: habitScore, icon: '🔥' },
-                { name: '荣誉成就', value: badgeScore, icon: '🏆' }
+                { name: '自主力', value: autonomyScore, icon: '🎯' },
+                { name: '规划力', value: planningScore, icon: '📋' },
+                { name: '复盘力', value: reviewScore, icon: '🔍' },
+                { name: '思考力', value: thinkingScore, icon: '💡' },
+                { name: '坚持力', value: gritScore, icon: '🔥' }
             ],
             // 综合评分
-            overallScore: Math.round((academicScore + taskScore + pkScore + habitScore + badgeScore) / 5)
+            overallScore: Math.round((autonomyScore + planningScore + reviewScore + thinkingScore + gritScore) / 5)
         };
     }
 
@@ -1388,6 +1528,229 @@ export class ParentService {
             totalBadges
         };
     }
+
+    // ==================== 周计划相关 ====================
+
+    /**
+     * 保存周计划（持久化到数据库）
+     * 家长端确认后调用，保存后教师端可在过关页看到
+     */
+    async saveWeeklyPlan(studentId: string, planData: any) {
+        // 使用本周一作为计划起始日（发布后立即生效）
+        const weekStart = planData.weekStart || this.getThisWeekMonday();
+
+        // 获取学生的 schoolId
+        const student = await prisma.students.findUnique({
+            where: { id: studentId },
+            select: { schoolId: true }
+        });
+        if (!student) throw new Error('学生不存在');
+
+        // 删除该学生所有已有计划（最后一次发布覆盖前面所有）
+        await prisma.weekly_plans.deleteMany({
+            where: { studentId }
+        });
+
+        // 创建新的周计划
+        const plan = await prisma.weekly_plans.create({
+            data: {
+                studentId,
+                weekStart,
+                parentNote: planData.parentNote || null,
+                status: 'ACTIVE'
+            }
+        });
+
+        // 创建计划项目
+        const items: { category: string; title: string; metadata?: any }[] = [];
+
+        // 能力修炼项目
+        (planData.methodology || []).forEach((title: string) => {
+            items.push({ category: 'METHODOLOGY', title });
+        });
+
+        // 综合成长项目
+        (planData.growth || []).forEach((title: string) => {
+            items.push({ category: 'GROWTH', title });
+        });
+
+        // 习惯项目
+        (planData.habits || []).forEach((id: string) => {
+            items.push({ category: 'HABIT', title: id, metadata: { habitId: id } });
+        });
+
+        // 阅读项目
+        if (planData.reading) {
+            items.push({
+                category: 'READING',
+                title: `阅读目标: ${planData.reading.targetPage}页`,
+                metadata: planData.reading
+            });
+        }
+
+        // 错题攻克
+        if (planData.errorTarget > 0) {
+            items.push({
+                category: 'ERROR_REVIEW',
+                title: `错题攻克: ${planData.errorTarget}道`,
+                metadata: { target: planData.errorTarget }
+            });
+        }
+
+        // 批量创建项目
+        if (items.length > 0) {
+            await prisma.weekly_plan_items.createMany({
+                data: items.map(item => ({
+                    planId: plan.id,
+                    category: item.category,
+                    title: item.title,
+                    metadata: item.metadata || null
+                }))
+            });
+        }
+
+        console.log('[WeeklyPlan] Saved plan for student:', studentId, 'week:', weekStart, 'items:', items.length);
+
+        return {
+            success: true,
+            plan: {
+                id: plan.id,
+                weekStart,
+                parentNote: planData.parentNote,
+                itemCount: items.length
+            }
+        };
+    }
+
+    /**
+     * 获取周计划（从数据库查询）
+     */
+    async getWeeklyPlan(studentId: string, weekStart?: string) {
+        const targetWeek = weekStart || this.getNextWeekMonday();
+
+        const plan = await prisma.weekly_plans.findUnique({
+            where: {
+                studentId_weekStart: { studentId, weekStart: targetWeek }
+            },
+            include: {
+                items: {
+                    orderBy: { createdAt: 'asc' }
+                }
+            }
+        });
+
+        if (!plan) {
+            return {
+                weekStart: targetWeek,
+                items: [],
+                exists: false
+            };
+        }
+
+        return {
+            id: plan.id,
+            weekStart: plan.weekStart,
+            parentNote: plan.parentNote,
+            status: plan.status,
+            items: plan.items.map(item => ({
+                id: item.id,
+                category: item.category,
+                title: item.title,
+                metadata: item.metadata,
+                isCompleted: item.isCompleted,
+                completedAt: item.completedAt
+            })),
+            exists: true
+        };
+    }
+
+    /**
+     * 获取当前活跃的周计划（用于教师端过关页）
+     * 查询本周或最近的活跃计划
+     */
+    async getCurrentWeekPlan(studentId: string) {
+        // 查找最近的活跃计划（未完成的）
+        const plan = await prisma.weekly_plans.findFirst({
+            where: {
+                studentId,
+                status: 'ACTIVE'
+            },
+            orderBy: { createdAt: 'desc' },
+            include: {
+                items: {
+                    where: { isCompleted: false },
+                    orderBy: { createdAt: 'asc' }
+                }
+            }
+        });
+
+        if (!plan || plan.items.length === 0) return null;
+
+        return {
+            id: plan.id,
+            weekStart: plan.weekStart,
+            parentNote: plan.parentNote,
+            items: plan.items
+        };
+    }
+
+    /**
+     * 标记周计划项目为已完成（教师端调用）
+     * 返回完成详情，用于同步到家长端今日动态
+     */
+    async completeWeeklyPlanItem(itemId: string) {
+        const updatedItem = await prisma.weekly_plan_items.update({
+            where: { id: itemId },
+            data: {
+                isCompleted: true,
+                completedAt: new Date()
+            },
+            include: {
+                plan: {
+                    select: {
+                        studentId: true,
+                        weekStart: true
+                    }
+                }
+            }
+        });
+
+        return {
+            success: true,
+            completedItem: {
+                id: updatedItem.id,
+                title: updatedItem.title,
+                category: updatedItem.category,
+                completedAt: updatedItem.completedAt,
+                studentId: updatedItem.plan.studentId
+            }
+        };
+    }
+
+    /**
+     * 获取下周一日期
+     */
+    private getNextWeekMonday(): string {
+        const now = new Date();
+        const dayOfWeek = now.getDay();
+        const daysUntilNextMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+        const nextMonday = new Date(now);
+        nextMonday.setDate(now.getDate() + daysUntilNextMonday);
+        return nextMonday.toISOString().split('T')[0];
+    }
+
+    /**
+     * 获取本周一日期
+     */
+    private getThisWeekMonday(): string {
+        const now = new Date();
+        const dayOfWeek = now.getDay();
+        const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() + daysToMonday);
+        return monday.toISOString().split('T')[0];
+    }
 }
 
 export const parentService = new ParentService();
+

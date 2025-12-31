@@ -7,8 +7,10 @@ import { useClass } from '../context/ClassContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import apiService from '../services/api.service';
 import MessageCenter from '../components/MessageCenter';
+import { getSkillByTaskName } from '../config/taskSkillMapping'; // 🆕 引入技能映射
 import { FIXED_QC_ITEMS } from '../config/taskCategories';
 import ReadingSection from '../components/ReadingSection';  // 🆕 阅读记录组件
+import FamilyPlanPanel from '../components/FamilyPlanPanel';  // 🆕 家校计划面板
 
 // --- 类型定义 ---
 
@@ -1892,6 +1894,12 @@ const QCView: React.FC = () => {
                                 <span className={`text-sm font-medium transition-colors ${isDone ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
                                   {itemName}
                                   {isCustomItem && <span className="ml-1 text-[10px] text-purple-500 bg-purple-50 px-1 rounded">自定义</span>}
+                                  {/* 🆕 技能标记 */}
+                                  {getSkillByTaskName(itemName) && (
+                                    <span className="ml-1 text-[10px] text-amber-600 bg-amber-50 px-1 rounded border border-amber-100 inline-flex items-center gap-0.5" title="关联技能">
+                                      🎖️
+                                    </span>
+                                  )}
                                 </span>
                               </div>
                               {/* 🆕 "补"按钮常显：只记录辅导次数，不触发过关 */}
@@ -2007,7 +2015,15 @@ const QCView: React.FC = () => {
                                 onClick={() => { if (!isDone) deleteTask(selectedStudentId, task.id); }}
                                 className={`flex-1 ${!isDone ? 'cursor-pointer hover:text-red-400' : ''}`}
                               >
-                                <span className={`text-sm font-medium transition-colors ${isDone ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{task.name}</span>
+                                <span className={`text-sm font-medium transition-colors ${isDone ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
+                                  {task.name}
+                                  {/* 🆕 技能标记 */}
+                                  {getSkillByTaskName(task.name) && (
+                                    <span className="ml-1 text-[10px] text-amber-600 bg-amber-50 px-1 rounded border border-amber-100 inline-flex items-center gap-0.5" title="关联技能">
+                                      🎖️
+                                    </span>
+                                  )}
+                                </span>
                               </div>
                               <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${isDone ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>+{task.exp}</span>
                             </div>
@@ -2056,7 +2072,15 @@ const QCView: React.FC = () => {
                                 onClick={() => { if (!isDone) deleteTask(selectedStudentId, task.id); }}
                                 className={`flex-1 ${!isDone ? 'cursor-pointer hover:text-red-400' : ''}`}
                               >
-                                <span className={`text-sm font-medium transition-colors ${isDone ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{task.name}</span>
+                                <span className={`text-sm font-medium transition-colors ${isDone ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
+                                  {task.name}
+                                  {/* 🆕 技能标记 */}
+                                  {getSkillByTaskName(task.name) && (
+                                    <span className="ml-1 text-[10px] text-amber-600 bg-amber-50 px-1 rounded border border-amber-100 flex-inline items-center gap-0.5" title="关联技能">
+                                      🎖️
+                                    </span>
+                                  )}
+                                </span>
                               </div>
                               <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${isDone ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>+{task.exp}</span>
                             </div>
@@ -2093,6 +2117,16 @@ const QCView: React.FC = () => {
                       })()}
                     </div>
                   </section>
+
+                  {/* 🆕 家校计划面板 - 在阅读区域之前 */}
+                  {selectedStudentId && (
+                    <section className="mt-4">
+                      <FamilyPlanPanel
+                        studentId={selectedStudentId}
+                        studentName={getSelectedStudent()?.name || ''}
+                      />
+                    </section>
+                  )}
 
                   {/* 🆕 阅读培养区 - 在定制加餐之后 */}
                   {selectedStudentId && (
@@ -2444,7 +2478,14 @@ const QCView: React.FC = () => {
                                   : 'bg-white text-slate-600 border-slate-100 hover:border-slate-300'
                                   }`}
                               >
-                                <span className="text-sm font-bold">{item}</span>
+                                <span className="text-sm font-bold inline-flex items-center gap-1">
+                                  {item}
+                                  {getSkillByTaskName(item) && (
+                                    <span className="text-[10px] text-amber-600 bg-amber-50 px-1 rounded border border-amber-100 inline-flex items-center gap-0.5" title="关联技能">
+                                      🎖️
+                                    </span>
+                                  )}
+                                </span>
                                 {isAdded ? <CheckCircle2 size={16} /> : <Plus size={16} className="text-slate-300" />}
                               </div>
                               {user?.role === 'ADMIN' && taskItem && (
@@ -2564,7 +2605,14 @@ const QCView: React.FC = () => {
                                   : 'bg-white text-slate-600 border-slate-100 hover:border-slate-300'
                                   }`}
                               >
-                                <span className="text-sm font-bold">{item}</span>
+                                <span className="text-sm font-bold inline-flex items-center gap-1">
+                                  {item}
+                                  {getSkillByTaskName(item) && (
+                                    <span className="text-[10px] text-amber-600 bg-amber-50 px-1 rounded border border-amber-100 inline-flex items-center gap-0.5" title="关联技能">
+                                      🎖️
+                                    </span>
+                                  )}
+                                </span>
                                 {isAdded ? <CheckCircle2 size={16} /> : <Plus size={16} className="text-slate-300" />}
                               </div>
                               {user?.role === 'ADMIN' && taskItem && (

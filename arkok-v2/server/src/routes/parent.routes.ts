@@ -196,8 +196,81 @@ router.get('/growth/:studentId', authenticateParent, async (req: Request, res: R
     }
 });
 
+// ==================== 周计划相关 ====================
+
+/**
+ * 保存周计划
+ * POST /api/parent/weekly-plan/:studentId
+ */
+router.post('/weekly-plan/:studentId', authenticateParent, async (req: Request, res: Response) => {
+    try {
+        const { studentId } = req.params;
+        const parentId = (req as any).parent.id;
+        const planData = req.body;
+
+        // 验证访问权限
+        await parentService.verifyParentAccess(parentId, studentId);
+
+        // 保存周计划（暂存到服务层，后续可迁移到数据库）
+        const result = await parentService.saveWeeklyPlan(studentId, planData);
+        res.json(result);
+    } catch (error: any) {
+        console.error('[Save Weekly Plan Error]', error.message);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+/**
+ * 获取周计划
+ * GET /api/parent/weekly-plan/:studentId
+ */
+router.get('/weekly-plan/:studentId', authenticateParent, async (req: Request, res: Response) => {
+    try {
+        const { studentId } = req.params;
+        const parentId = (req as any).parent.id;
+
+        // 验证访问权限
+        await parentService.verifyParentAccess(parentId, studentId);
+
+        const result = await parentService.getWeeklyPlan(studentId);
+        res.json(result);
+    } catch (error: any) {
+        console.error('[Get Weekly Plan Error]', error.message);
+        res.status(400).json({ error: error.message });
+    }
+});
+
 // ==================== 教师端辅助接口 ====================
 
+/**
+ * 获取学生当前周计划（教师端调用）
+ * GET /api/parent/weekly-plan/:studentId/current
+ */
+router.get('/weekly-plan/:studentId/current', authenticateTeacher, async (req: Request, res: Response) => {
+    try {
+        const { studentId } = req.params;
+        const result = await parentService.getCurrentWeekPlan(studentId);
+        res.json({ success: true, data: result });
+    } catch (error: any) {
+        console.error('[Get Current Week Plan Error]', error.message);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+/**
+ * 完成周计划项目（教师端调用）
+ * PATCH /api/parent/weekly-plan-item/:itemId/complete
+ */
+router.patch('/weekly-plan-item/:itemId/complete', authenticateTeacher, async (req: Request, res: Response) => {
+    try {
+        const { itemId } = req.params;
+        const result = await parentService.completeWeeklyPlanItem(itemId);
+        res.json(result);
+    } catch (error: any) {
+        console.error('[Complete Weekly Plan Item Error]', error.message);
+        res.status(400).json({ error: error.message });
+    }
+});
 
 /**
  * 生成邀请码（教师端调用）

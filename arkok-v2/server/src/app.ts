@@ -22,6 +22,7 @@ import DashboardService from './services/dashboard.service';
 import { PersonalizedTutoringService } from './services/personalized-tutoring.service';
 import PlatformService from './services/platform.service';
 import { RewardService } from './services/reward.service';
+import { skillService } from './services/skill.service';
 
 // Routes
 import AuthRoutes from './routes/auth.routes';
@@ -44,6 +45,7 @@ import CheckinRoutes from './routes/checkin.routes';
 import PlatformRoutes from './routes/platform.routes';
 import rewardRoutes from './routes/reward.routes';
 import ReadingRoutes from './routes/reading.routes';  // 🆕 阅读计划路由
+import SkillRoutes from './routes/skill.routes';  // 🆕 五维内功技能路由
 
 // Middleware & Utils
 import { errorHandler } from './middleware/errorHandler';
@@ -85,6 +87,9 @@ export class App {
         credentials: true
       }
     });
+
+    // 注入 IO 到 SkillService
+    skillService.setSocket(this.io);
 
     // 1. 初始化所有单例服务
     this.authService = new AuthService(this.prisma);
@@ -161,6 +166,9 @@ export class App {
 
     // 🆕 阅读计划路由
     this.app.use('/api/reading', new ReadingRoutes(this.authService).getRoutes());
+
+    // 🆕 五维内功技能路由
+    this.app.use('/api/skill', new SkillRoutes(this.authService).getRoutes());
 
     // 静态文件与前端路由
     const clientPath = path.resolve(__dirname, '../../client/dist');

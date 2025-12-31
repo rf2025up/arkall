@@ -3,6 +3,8 @@ import { LMSService, PublishPlanRequest } from '../services/lms.service';
 import { TaskType, PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth.middleware';
 import AuthService from '../services/auth.service';
+import { skillService } from '../services/skill.service';
+import { getSkillCodeByTaskName } from '../utils/taskSkillMapping';
 
 /**
  * 学习管理系统 (LMS) 路由
@@ -310,6 +312,25 @@ export class LMSRoutes {
             submittedAt: (status === 'SUBMITTED' || status === 'COMPLETED') ? new Date() : null
           }
         });
+
+
+
+        // 🆕 技能联动 (Skill Integration)
+        if ((status === 'COMPLETED' || status === 'PASSED') && result) {
+          const skillCode = getSkillCodeByTaskName(result.title);
+          if (skillCode) {
+            console.log(`✨ [AUTO_CERTIFY] 任务 "${result.title}" 触发技能自动认证: ${skillCode}`);
+            // 异步执行，不阻塞响应
+            skillService.recordPractice({
+              studentId: result.studentId,
+              skillCode: skillCode,
+              expGained: 1,
+              certifiedBy: user.userId || user.id,
+              taskId: recordId,
+              note: '过关页任务自动认证'
+            }).catch(err => console.error('❌ [AUTO_CERTIFY_ERROR]', err));
+          }
+        }
 
         res.json({ success: true, data: result, message: 'Status updated successfully' });
       } catch (error: any) {

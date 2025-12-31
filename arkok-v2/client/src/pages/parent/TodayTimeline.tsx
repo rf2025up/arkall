@@ -302,6 +302,29 @@ const TodayTimeline: React.FC = () => {
                         decorIcon: '📚',
                         decorColor: 'text-emerald-500/5'
                     };
+                // 🆕 技能解锁卡片
+                case 'SKILL':
+                    return {
+                        nodeColor: 'border-amber-500 bg-amber-50',
+                        nodeShadow: 'rgba(245,158,11,0.15)',
+                        titleColor: 'text-amber-700',
+                        timeColor: 'text-amber-600 bg-amber-100',
+                        cardBg: 'bg-gradient-to-br from-white to-amber-50 border-amber-200',
+                        decorIcon: '✨',
+                        decorColor: 'text-amber-500/5'
+                    };
+                // 🆕 家校计划完成卡片
+                case 'FAMILY_PLAN':
+                case 'FAMILY_PLAN_GROUP':
+                    return {
+                        nodeColor: 'border-blue-500 bg-blue-50',
+                        nodeShadow: 'rgba(59,130,246,0.15)',
+                        titleColor: 'text-blue-700',
+                        timeColor: 'text-blue-600 bg-blue-100',
+                        cardBg: 'bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200',
+                        decorIcon: '🎯',
+                        decorColor: 'text-blue-500/5'
+                    };
                 default:
                     return {
                         nodeColor: 'border-gray-500 bg-gray-50',
@@ -576,6 +599,19 @@ const TodayTimeline: React.FC = () => {
                         </div>
                     )}
 
+                    {/* 🆕 技能解锁 */}
+                    {item.type === 'SKILL' && (
+                        <div className="flex items-center gap-3">
+                            <span className="text-3xl">✨</span>
+                            <div>
+                                <div className="font-bold text-gray-800">{item.title}</div>
+                                <div className="text-xs text-gray-500">
+                                    {item.content?.skillName} · {item.content?.levelTitle} (+{item.content?.expGained || 0} xp)
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* 置顶公告 (PLAN_ANNOUNCEMENT) */}
                     {item.type === 'PLAN_ANNOUNCEMENT' && (
                         <div className="space-y-4">
@@ -668,8 +704,46 @@ const TodayTimeline: React.FC = () => {
                         </div>
                     )}
 
+                    {/* 🆕 家校计划完成卡片内容 - 合并展示 */}
+                    {(item.type === 'FAMILY_PLAN' || item.type === 'FAMILY_PLAN_GROUP') && (
+                        <div className="space-y-3">
+                            {/* 项目列表 - 按类别分组 */}
+                            {item.content?.items?.map((planItem: any, idx: number) => {
+                                const getCategoryStyle = (cat: string) => {
+                                    switch (cat) {
+                                        case 'METHODOLOGY': return { bg: 'bg-red-100 text-red-600', label: '能力修炼' };
+                                        case 'GROWTH': return { bg: 'bg-green-100 text-green-600', label: '综合成长' };
+                                        case 'HABIT': return { bg: 'bg-yellow-100 text-yellow-600', label: '习惯坚持' };
+                                        case 'READING': return { bg: 'bg-emerald-100 text-emerald-600', label: '阅读培养' };
+                                        case 'ERROR_REVIEW': return { bg: 'bg-orange-100 text-orange-600', label: '错题攻克' };
+                                        default: return { bg: 'bg-gray-100 text-gray-600', label: '其他' };
+                                    }
+                                };
+                                const style = getCategoryStyle(planItem.category);
+                                return (
+                                    <div key={planItem.id || idx} className="flex items-center gap-2 p-2 bg-white/60 rounded-lg">
+                                        <span className="w-5 h-5 rounded-full bg-green-500 text-white flex items-center justify-center text-xs">✓</span>
+                                        <span className="flex-1 text-sm text-gray-700">{planItem.title}</span>
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${style.bg}`}>{style.label}</span>
+                                    </div>
+                                );
+                            })}
+                            {/* 家长寄语 */}
+                            {item.content?.parentNote && (
+                                <div className="flex items-start gap-2 p-2 bg-pink-50 rounded-lg mt-2">
+                                    <span className="text-pink-400">💬</span>
+                                    <p className="text-xs text-pink-600 italic">"{item.content.parentNote}"</p>
+                                </div>
+                            )}
+                            {/* 完成汇总 */}
+                            <div className="text-xs text-blue-500 text-right">
+                                已完成 {item.content?.completedCount || item.content?.items?.length || 1} 项
+                            </div>
+                        </div>
+                    )}
+
                     {/* 任务描述 + 完成状态（同行） - 只在有独立描述时显示 */}
-                    {item.type !== 'BADGE' && item.type !== 'QC' && item.type !== 'QC_GROUP' && item.type !== 'HABIT' && item.type !== 'PK' && item.type !== 'PLAN_ANNOUNCEMENT' && item.type !== 'READING' && (
+                    {item.type !== 'BADGE' && item.type !== 'SKILL' && item.type !== 'QC' && item.type !== 'QC_GROUP' && item.type !== 'HABIT' && item.type !== 'PK' && item.type !== 'PLAN_ANNOUNCEMENT' && item.type !== 'READING' && (
                         <div className="flex items-center justify-between gap-2 text-sm">
                             {/* 🆕 修复：只有当 description 存在且与 title 不同时才显示 */}
                             {item.content?.description && item.content.description !== item.title && (
@@ -742,8 +816,11 @@ const TodayTimeline: React.FC = () => {
                     </span>
                 </div>
 
-                {/* 卡片内容 */}
-                <div className={`p-4 rounded-2xl ${config.cardBg} border relative overflow-hidden shadow-sm`}>
+                {/* 卡片内容 - iOS Safari 兼容性修复：使用 clip-path 替代 overflow-hidden */}
+                <div
+                    className={`p-4 rounded-2xl ${config.cardBg} border relative shadow-sm`}
+                    style={{ clipPath: 'inset(0 round 1rem)' }}
+                >
                     {/* 背景装饰 */}
                     <div className={`absolute right-[-10px] bottom-[-15px] text-[80px] ${config.decorColor} transform -rotate-15 z-0`}>
                         {config.decorIcon}

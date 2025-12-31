@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Swords, Target, CheckCircle2, XCircle, Award, Rocket, Zap, TrendingUp, Star, Layout } from 'lucide-react';
 import { apiService } from '../../services/api.service';
 import { useSearchParams } from 'react-router-dom';
+import { io } from 'socket.io-client';
 
 // 类型定义
 interface Student {
@@ -63,6 +64,13 @@ interface BigscreenData {
     activities: ActivityItem[];
     publicBounties?: { title: string, points: number, exp: number }[];
     recentBadges: BadgeItem[];
+    recentSkillUps?: {
+        studentName: string;
+        skillCode: string;
+        skillName: string;
+        level: number;
+        levelTitle: string;
+    }[];
 }
 
 // CSS 样式
@@ -83,14 +91,24 @@ const styles = `
   @keyframes stripes { 0% { background-position: 1rem 0; } 100% { background-position: 0 0; } }
   .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
   @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 10px #22c55e; } 50% { box-shadow: 0 0 20px #22c55e; } }
+  .lv-tag-gold {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #0f172a;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 900;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+    margin-left: 6px;
+  }
 `;
 
 // 内容限制
-const LIMITS = {
-    VISIBLE_STUDENTS: 6,
-    ACTIVITIES: 4,
-    CHALLENGES: 4,
-};
+// 移除静态 LIMITS，改用组件内部动态 limits
 
 const DataDashboard: React.FC = () => {
     const [data, setData] = useState<BigscreenData | null>(null);
@@ -98,6 +116,34 @@ const DataDashboard: React.FC = () => {
     const [currentTime, setCurrentTime] = useState(new Date());
     const [scrollIndex, setScrollIndex] = useState(0);
     const [pkIndex, setPkIndex] = useState(0);
+    const [windowHeight, setWindowHeight] = useState(window.innerHeight);
+    const [recentAchievements, setRecentAchievements] = useState<any[]>([]);
+
+    useEffect(() => {
+        const socket = io();
+
+        socket.on('connect', () => console.log('✅ BigScreen Socket Connected'));
+
+        socket.on('skill_levelup', (data) => {
+            console.log('🎉 Achievement:', data);
+            setRecentAchievements(prev => [data, ...prev].slice(0, 3));
+        });
+
+        return () => { socket.disconnect(); };
+    }, []);
+
+    // 动态限额
+    const limits = {
+        VISIBLE_STUDENTS: windowHeight < 900 ? 6 : windowHeight < 1200 ? 8 : 12,
+        ACTIVITIES: windowHeight < 900 ? 8 : windowHeight < 1200 ? 12 : 20,
+        BOUNTIES: windowHeight < 900 ? 4 : windowHeight < 1200 ? 5 : 8,
+    };
+
+    useEffect(() => {
+        const handleResize = () => setWindowHeight(window.innerHeight);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const [searchParams] = useSearchParams();
     const schoolId = searchParams.get('schoolId');
@@ -120,6 +166,13 @@ const DataDashboard: React.FC = () => {
         return () => clearInterval(interval);
     }, [fetchData]);
 
+    // 同步历史数据
+    useEffect(() => {
+        if (data?.recentSkillUps) {
+            setRecentAchievements(data.recentSkillUps.slice(0, 4));
+        }
+    }, [data]);
+
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timer);
@@ -127,15 +180,15 @@ const DataDashboard: React.FC = () => {
 
     // 循环展示学生
     useEffect(() => {
-        if (!data || data.students.length <= LIMITS.VISIBLE_STUDENTS) return;
+        if (!data || data.students.length <= limits.VISIBLE_STUDENTS) return;
         const timer = setInterval(() => {
             setScrollIndex(prev => {
-                const maxIndex = Math.max(0, data.students.length - LIMITS.VISIBLE_STUDENTS);
+                const maxIndex = Math.max(0, data.students.length - limits.VISIBLE_STUDENTS);
                 return prev >= maxIndex ? 0 : prev + 5;
             });
         }, 4000);
         return () => clearInterval(timer);
-    }, [data]);
+    }, [data, limits.VISIBLE_STUDENTS]);
 
     // PK 结果循环展示
     useEffect(() => {
@@ -155,7 +208,7 @@ const DataDashboard: React.FC = () => {
         );
     }
 
-    const displayedStudents = data?.students.slice(scrollIndex, scrollIndex + LIMITS.VISIBLE_STUDENTS) || [];
+    const displayedStudents = data?.students.slice(scrollIndex, scrollIndex + limits.VISIBLE_STUDENTS) || [];
     const currentPK = data?.pkResults[pkIndex];
 
     return (
@@ -204,11 +257,11 @@ const DataDashboard: React.FC = () => {
                     {/* 主要内容区 */}
                     <main className="flex-1 grid grid-cols-12 gap-4 min-h-0">
 
-                        {/* 左侧：积分天梯 */}
+                        {/* 左侧：等级天梯 */}
                         <div className="col-span-3 glass-card rounded-3xl p-4 flex flex-col min-h-0">
                             <div className="flex justify-between items-center mb-3">
                                 <h2 className="text-base font-bold flex items-center gap-2 text-glow-gold">
-                                    <Trophy className="text-yellow-400 w-4 h-4" /> 积分天梯
+                                    <Trophy className="text-yellow-400 w-4 h-4" /> 等级天梯
                                 </h2>
                                 <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded text-slate-300">
                                     共 {data?.students.length || 0} 人
@@ -238,7 +291,7 @@ const DataDashboard: React.FC = () => {
                                         </div>
                                         <h3 className="text-base font-bold mt-2 tracking-wide text-white">
                                             {data.students[0].name}
-                                            <span className="ml-1.5 text-[10px] bg-slate-700/80 px-1.5 py-0.5 rounded text-blue-400 border border-blue-500/30">Lv.{data.students[0].level}</span>
+                                            <span className="lv-tag-gold">Lv.{data.students[0].level}</span>
                                         </h3>
 
                                         {/* 冠军等级经验进度 */}
@@ -297,9 +350,9 @@ const DataDashboard: React.FC = () => {
                                                         {/* 信息区 */}
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex justify-between items-end mb-1">
-                                                                <div className="flex items-center gap-2">
+                                                                <div className="flex items-center gap-1">
                                                                     <span className="font-bold text-sm text-slate-100 truncate">{student.name}</span>
-                                                                    <span className="text-[9px] font-bold text-slate-400">Lv.{student.level}</span>
+                                                                    <span className="lv-tag-gold scale-90 origin-left">Lv.{student.level}</span>
                                                                 </div>
                                                                 <span className="text-[11px] font-mono font-bold text-cyan-400">
                                                                     积分 {student.points.toLocaleString()}
@@ -324,23 +377,6 @@ const DataDashboard: React.FC = () => {
 
                         {/* 中间区域 */}
                         <div className="col-span-6 flex flex-col gap-4">
-                            {/*
-                            - [x] 优化大屏端挑战悬赏榜布局 (压缩占比、微调字号)
-                            - [x] 教师端 APP：挑战页增加公开悬赏发布区 (输入框 + 经验 + 积分)
-                            - [x] 大屏端：对接个人挑战区的真实结果 API (绑定判定动态)
-                            - [x] 重塑 PK 竞技场视觉 (头像放大、分居两侧、展示奖励)
-                            - [x] 修复后台等级排序与数据查询不一致问题
-                            - [x] 优化积分榜滚动：改为整页翻页 (5人/页)
-                            - [x] 实时动态增强：
-                                - [x] 接入习惯打卡（显示具体习惯与连续天数）
-                                - [x] 接入阅读记录（显示书名与时长）
-                                - [x] 接入核心教学法与综合成长
-                            - [x] 视觉颜色分类：阅读(绿)、教学法(红)、成长(蓝)、习惯(金)
-                            - [x] 生产环境适配：大屏接口改为公开访问模式
-                            - [x] 多学校支持：支持通过 URL 参数 `?schoolId` 区分校区
-                            - [x] 标题增强：动态显示所属校区名称
-                            - [x] 数据清理：软删除特定学生数据 ("小龙")
-                            */}
                             {/* PK 竞技场 - 大头像循环展示 */}
                             <div className="flex-[2] glass-card rounded-2xl relative overflow-hidden">
                                 <div className="absolute inset-0 bg-gradient-to-r from-red-600/30 to-blue-600/30 z-0" />
@@ -366,8 +402,16 @@ const DataDashboard: React.FC = () => {
                                                     className="flex items-center justify-between w-full px-8"
                                                 >
                                                     <div className="flex flex-col items-center flex-1">
-                                                        <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-slate-700/50 shadow-[0_0_20px_rgba(34,197,94,0.3)]">
-                                                            <img src={currentPK.winner.avatarUrl || '/avatar.jpg'} className="w-full h-full object-cover" />
+                                                        <div className="relative">
+                                                            {/* 胜利皇冠 */}
+                                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.6)]">
+                                                                <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+                                                                    <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
+                                                                </svg>
+                                                            </div>
+                                                            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-yellow-500/50 shadow-[0_0_20px_rgba(234,179,8,0.4)]">
+                                                                <img src={currentPK.winner.avatarUrl || '/avatar.jpg'} className="w-full h-full object-cover" />
+                                                            </div>
                                                         </div>
                                                         <div className="mt-2 font-bold text-base text-slate-100 text-center">{currentPK.winner.name}</div>
                                                     </div>
@@ -402,109 +446,145 @@ const DataDashboard: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* 实时挑战动态 */}
-                            <div className="flex-[3] glass-card rounded-2xl p-4 flex flex-col">
-                                <div className="flex justify-between items-center mb-2">
+                            {/* 挑战悬赏榜 - 核心信息公示区 */}
+                            <div className="flex-[3] glass-card rounded-2xl p-5 flex flex-col border border-yellow-500/20 bg-gradient-to-b from-yellow-500/5 to-transparent">
+                                <div className="flex justify-center items-center mb-4">
+                                    <h2 className="text-lg font-black flex items-center gap-3 text-yellow-400 tracking-wide">
+                                        <Target className="w-6 h-6" /> 本周悬赏令
+                                    </h2>
+                                </div>
+
+                                <div className="flex-1 flex flex-col items-center justify-center overflow-hidden">
+                                    {(data?.publicBounties || []).length === 0 ? (
+                                        <div className="text-center py-8">
+                                            <div className="text-3xl mb-3">🎯</div>
+                                            <div className="text-slate-400 text-sm">暂无全班悬赏任务</div>
+                                            <div className="text-slate-600 text-xs mt-1">教师可在挑战页发布公开悬赏</div>
+                                        </div>
+                                    ) : (
+                                        <div className="w-full space-y-4 overflow-y-auto px-4 custom-scrollbar">
+                                            {data?.publicBounties.slice(0, limits.BOUNTIES).map((bounty, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="group relative p-5 rounded-2xl bg-gradient-to-r from-yellow-500/10 via-orange-500/10 to-yellow-500/10 border border-yellow-500/30 hover:border-yellow-400/50 transition-all text-center shadow-lg hover:shadow-yellow-500/10"
+                                                >
+                                                    {/* 序号徽章 */}
+                                                    <div className="absolute -top-2 -left-2 w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-black font-black text-sm shadow-lg">
+                                                        {idx + 1}
+                                                    </div>
+
+                                                    {/* 悬赏标题 */}
+                                                    <div className="text-xl font-black text-white mb-3 tracking-wide">
+                                                        {bounty.title}
+                                                    </div>
+
+                                                    {/* 奖励信息 */}
+                                                    <div className="flex justify-center gap-6 text-sm font-bold">
+                                                        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-yellow-500/20 border border-yellow-500/30">
+                                                            <span className="text-yellow-400">⭐</span>
+                                                            <span className="text-yellow-300">积分 +{bounty.points}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 border border-blue-500/30">
+                                                            <span className="text-blue-400">⚡</span>
+                                                            <span className="text-blue-300">经验 +{bounty.exp}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 右侧区域：实时动态与成就达成 */}
+                        <div className="col-span-3 flex flex-col gap-4 min-h-0">
+                            {/* 实时动态 - 上半部分 (70%) */}
+                            <div className="flex-[7] glass-card rounded-2xl p-4 flex flex-col min-h-0">
+                                <div className="flex justify-between items-center mb-4">
                                     <h2 className="text-base font-bold flex items-center gap-2">
                                         <Zap className="text-purple-400 w-5 h-5" /> 实时动态
                                     </h2>
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-ping" />
+                                        <span className="text-[9px] text-slate-500 font-black tracking-widest uppercase">Live</span>
+                                    </div>
                                 </div>
-                                <div className="flex-1 space-y-2 overflow-hidden">
+
+                                <div className="flex-1 space-y-2 overflow-y-auto pr-1 custom-scrollbar">
                                     {(data?.activities || [])
-                                        .filter(a => ['habit', 'methodology', 'growth', 'progress'].includes(a.type))
-                                        .slice(0, LIMITS.ACTIVITIES)
+                                        .filter(a => ['habit', 'methodology', 'growth', 'progress', 'challenge'].includes(a.type))
+                                        .slice(0, limits.ACTIVITIES)
                                         .map(activity => {
-                                            // 根据类型配置显示样式
                                             const typeConfig: Record<string, { icon: React.ReactNode; color: string; bg: string; label: string; textColor: string }> = {
                                                 habit: { icon: <CheckCircle2 className="w-4 h-4" />, color: 'text-yellow-400', bg: 'bg-yellow-500/20', label: '习惯打卡', textColor: 'text-yellow-400' },
                                                 methodology: { icon: <Zap className="w-4 h-4" />, color: 'text-red-400', bg: 'bg-red-500/20', label: '核心教学法', textColor: 'text-red-400' },
                                                 growth: { icon: <TrendingUp className="w-4 h-4" />, color: 'text-blue-400', bg: 'bg-blue-500/20', label: '综合成长', textColor: 'text-blue-400' },
                                                 progress: { icon: <CheckCircle2 className="w-4 h-4" />, color: 'text-green-400', bg: 'bg-green-500/20', label: '阅读记录', textColor: 'text-green-400' },
+                                                challenge: { icon: <Target className="w-4 h-4" />, color: 'text-purple-400', bg: 'bg-purple-500/20', label: '挑战判定', textColor: 'text-purple-400' },
                                             };
                                             const config = typeConfig[activity.type] || { icon: <CheckCircle2 className="w-4 h-4" />, color: 'text-slate-400', bg: 'bg-slate-500/20', label: '任务', textColor: 'text-slate-400' };
-                                            const isHighlight = ['growth'].includes(activity.type);
-                                            const borderBg = isHighlight ? 'bg-gradient-to-r from-emerald-500/20 to-green-500/20 border-emerald-500/30' : 'bg-white/5 border-white/10';
                                             const timeStr = activity.timestamp ? new Date(activity.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) : '';
                                             return (
-                                                <div key={activity.id} className={`flex items-center gap-3 p-2 rounded-xl border ${borderBg}`}>
-                                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${config.bg} ${config.color}`}>
+                                                <div key={activity.id} className="flex items-start gap-2 p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+                                                    <div className={`w-5 h-5 rounded-full shrink-0 mt-0.5 flex items-center justify-center ${config.bg} ${config.color}`}>
                                                         {config.icon}
                                                     </div>
-                                                    <div className="flex-1 text-sm min-w-0">
-                                                        <span className="font-bold">{activity.studentName}</span>
-                                                        <span className="text-slate-300 ml-1">完成</span>
-                                                        <span className={`font-semibold ${config.textColor} ml-1 truncate`}>{activity.content}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2 shrink-0">
-                                                        {activity.expAwarded > 0 && (
-                                                            <span className="text-xs font-bold text-blue-400">+{activity.expAwarded}</span>
-                                                        )}
-                                                        <span className="text-[10px] text-slate-500">{timeStr}</span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex justify-between items-center mb-0.5">
+                                                            <span className="text-xs font-bold text-slate-100">{activity.studentName}</span>
+                                                            <span className="text-[9px] text-slate-500 font-mono">{timeStr}</span>
+                                                        </div>
+                                                        <div className={`text-[11px] leading-relaxed ${config.textColor} font-medium line-clamp-2`}>
+                                                            {activity.content}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );
                                         })}
                                 </div>
                             </div>
-                        </div>
 
-                        {/* 右侧区域：挑战悬赏榜 */}
-                        <div className="col-span-3 flex flex-col gap-4">
-                            <div className="flex-1 glass-card rounded-2xl p-4 flex flex-col">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-base font-bold flex items-center gap-2">
-                                        <Target className="text-yellow-400 w-5 h-5" /> 挑战悬赏榜
+                            {/* 成就达成 - 下半部分 (30%) - 样式预留 */}
+                            <div className="flex-[3] glass-card rounded-2xl p-4 flex flex-col min-h-0 border-t border-yellow-500/10">
+                                <div className="flex justify-between items-center mb-3">
+                                    <h2 className="text-sm font-bold flex items-center gap-2 text-yellow-500/80">
+                                        <Award className="w-4 h-4" /> 成就达成
                                     </h2>
+                                    <span className="text-[9px] text-slate-500 font-black tracking-widest uppercase italic">Upcoming</span>
                                 </div>
 
-                                <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-                                    {/* 公开悬赏区域 */}
-                                    <div className="flex flex-col flex-[1] min-h-0">
-                                        <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-2 flex items-center gap-2">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_cyan]" />
-                                            公开悬赏
+                                <div className="flex-1 w-full overflow-hidden flex flex-col gap-2">
+                                    {recentAchievements.length === 0 ? (
+                                        <div className="flex-1 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-white/5 rounded-xl bg-black/20">
+                                            <Star className="w-6 h-6 text-slate-700 animate-pulse" />
+                                            <span className="text-[10px] text-slate-600 font-bold tracking-widest">等待成就触发...</span>
                                         </div>
-                                        <div className="space-y-1.5 overflow-y-auto pr-1 custom-scrollbar">
-                                            {(data?.publicBounties || [
-                                                { title: '口算达人', points: 200, exp: 100 },
-                                                { title: '单词王', points: 150, exp: 80 }
-                                            ]).map((bounty, idx) => (
-                                                <div key={idx} className="p-2 rounded-xl bg-cyan-500/5 border border-cyan-500/20 hover:bg-cyan-500/10 transition-colors">
-                                                    <div className="text-[11px] font-bold text-slate-100 mb-0.5">{bounty.title}</div>
-                                                    <div className="flex gap-2 text-[10px] font-mono">
-                                                        <span className="text-cyan-400">积分 {bounty.points}</span>
-                                                        <span className="text-blue-400">经验 {bounty.exp}</span>
+                                    ) : (
+                                        <AnimatePresence>
+                                            {recentAchievements.map((ach) => (
+                                                <motion.div
+                                                    key={`${ach.studentId}-${ach.skillCode}-${ach.level}`}
+                                                    layout
+                                                    initial={{ opacity: 0, x: 20 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    exit={{ opacity: 0, x: -20 }}
+                                                    className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 p-2 rounded-xl flex items-center gap-3"
+                                                >
+                                                    <div className="w-8 h-8 rounded-full bg-slate-900 border border-yellow-500/50 flex items-center justify-center text-xs text-yellow-500 font-bold shrink-0">
+                                                        {ach.skillName?.[0]}
                                                     </div>
-                                                </div>
+                                                    <div className="min-w-0 flex-1 flex items-center gap-2">
+                                                        <span className="text-xs font-bold text-yellow-200 shrink-0">{ach.studentName}</span>
+                                                        <span className="text-[10px] text-yellow-500/80 truncate flex-1">
+                                                            点亮 {ach.skillName} · {ach.levelTitle}
+                                                        </span>
+                                                        <span className="text-[10px] bg-yellow-500 text-black px-1 rounded font-black shrink-0">Lv.{ach.level}</span>
+                                                    </div>
+                                                </motion.div>
                                             ))}
-                                        </div>
-                                    </div>
-
-                                    {/* 个人挑战区区域 */}
-                                    <div className="flex flex-col flex-[1.2] min-h-0 border-t border-white/5 pt-3">
-                                        <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-2 flex items-center gap-2">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_purple]" />
-                                            个人挑战区
-                                        </div>
-                                        <div className="space-y-1.5 overflow-y-auto pr-1 custom-scrollbar">
-                                            {(data?.challengeResults || []).slice(0, 4).length === 0 ? (
-                                                <div className="text-[10px] text-slate-500 text-center py-2">暂无实时判定</div>
-                                            ) : (
-                                                (data?.challengeResults || []).slice(0, 4).map(ch => (
-                                                    <div key={ch.id} className="p-2 rounded-xl bg-purple-500/5 border border-white/5 flex flex-col gap-0.5">
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-[11px] font-bold text-slate-100 truncate">{ch.studentName}</span>
-                                                            <span className="text-[9px] bg-white/5 px-1 py-0.2 rounded text-slate-400 truncate max-w-[80px]">{ch.title}</span>
-                                                        </div>
-                                                        <div className="flex gap-2 text-[9px] font-mono">
-                                                            <span className="text-yellow-500/80">奖励 积分 {ch.expAwarded * 2}</span>
-                                                            <span className="text-blue-400/80">经验 {ch.expAwarded}</span>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </div>
+                                        </AnimatePresence>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -571,8 +651,8 @@ const DataDashboard: React.FC = () => {
                             </div>
                         </div>
                     </footer>
-                </div>
-            </div>
+                </div >
+            </div >
         </>
     );
 };
