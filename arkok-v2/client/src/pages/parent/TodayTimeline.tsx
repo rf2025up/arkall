@@ -599,14 +599,19 @@ const TodayTimeline: React.FC = () => {
                         </div>
                     )}
 
-                    {/* 🆕 技能解锁 */}
+                    {/* 🆕 技能解锁/修炼 */}
                     {item.type === 'SKILL' && (
                         <div className="flex items-center gap-3">
                             <span className="text-3xl">✨</span>
                             <div>
-                                <div className="font-bold text-gray-800">{item.title}</div>
-                                <div className="text-xs text-gray-500">
-                                    {item.content?.skillName} · {item.content?.levelTitle} (+{item.content?.expGained || 0} xp)
+                                <div className="font-bold text-gray-800 flex items-center">
+                                    {item.content?.skillName}
+                                    <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-amber-100 text-amber-600 font-normal">
+                                        {item.content?.levelTitle}
+                                    </span>
+                                </div>
+                                <div className="text-xs text-gray-400 mt-0.5">
+                                    本次修炼 +{item.content?.expGained || 0}
                                 </div>
                             </div>
                         </div>
@@ -793,7 +798,7 @@ const TodayTimeline: React.FC = () => {
                 {/* 大标题行 */}
                 <div className="flex items-baseline justify-between mb-2">
                     <span className={`text-sm font-bold ${config.titleColor} flex items-center gap-1.5`}>
-                        {item.icon} {item.category}
+                        {item.icon} {item.category === 'SKILL' ? '技能修炼' : item.category}
                         {/* QC_GROUP 类型在大标题后显示科目标签 */}
                         {item.type === 'QC_GROUP' && item.content?.subject && (
                             <span className={`ml-1 text-xs px-2 py-0.5 rounded-full font-bold ${item.content.subject === '语文' ? 'bg-red-100 text-red-600' :
