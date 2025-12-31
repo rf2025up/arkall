@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>顶级技能卡片 UI</title>
+    <style>
+        :root {
+            /* 基础色彩系统 - 更加现代、年轻的配色 */
+            --bg-page: #F5F7FA;
+            --text-main: #1D1D1F;
+            --text-sub: #86868B;
+            
+            /* 技能系别色：红(复盘)、蓝(思考)、橙(坚持/肌肉) */
+            --red-primary: #FF5E57;
+            --red-bg: #FFF0F0;
+            --red-shadow: rgba(255, 94, 87, 0.2);
+
+            --blue-primary: #3B82F6;
+            --blue-bg: #F0F7FF;
+            --blue-shadow: rgba(59, 130, 246, 0.2);
+
+            --orange-primary: #FFA500;
+            --orange-bg: #FFF8EB;
+            --orange-shadow: rgba(255, 165, 0, 0.2);
+            
+            /* 金色传说 */
+            --gold-primary: #F59E0B;
+            --gold-gradient: linear-gradient(135deg, #FFD700 0%, #F59E0B 100%);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background-color: var(--bg-page);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* 容器布局 */
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header .badge-count {
+            background: #fff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: var(--text-sub);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        /* 网格系统 */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        /* --- 核心卡片样式 --- */
+        .skill-card {
+            background: #FFFFFF;
+            border-radius: 24px; /* 更大的圆角，更润 */
+            padding: 24px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: 1px solid rgba(0,0,0,0.03);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 160px; /* 固定高度确保整齐 */
+        }
+
+        /* 悬停微交互 */
+        .skill-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.08);
+        }
+
+        /* 顶部区域：等级 + 标签 */
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .level-badge {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 800;
+            font-size: 16px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .tag-pill {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 100px;
+            letter-spacing: 0.5px;
+        }
+
+        /* 中部区域：技能名称 */
+        .card-main {
+            margin-top: 12px;
+            z-index: 2;
+        }
+
+        .skill-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        /* 底部区域：时间 + 称号 */
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: auto;
+            z-index: 2;
+        }
+
+        .date {
+            font-size: 13px;
+            color: #B0B0B5;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .role-text {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        /* --- 风格变体 (Variant) --- */
+
+        /* 风格：红色 (复盘力) */
+        .variant-red { background: linear-gradient(180deg, #FFFFFF 0%, #FFFAFA 100%); }
+        .variant-red .level-badge { background: #F2F2F7; color: #8E8E93; } /* 默认灰标 */
+        .variant-red .tag-pill { background: var(--red-bg); color: var(--red-primary); }
+        .variant-red .role-text { color: var(--red-primary); }
+        .variant-red:hover { box-shadow: 0 20px 40px -10px var(--red-shadow); border-color: rgba(255,94,87,0.3); }
+
+        /* 风格：蓝色 (思考力) */
+        .variant-blue { background: linear-gradient(180deg, #FFFFFF 0%, #FAFCFF 100%); }
+        .variant-blue .level-badge { background: #F2F2F7; color: #8E8E93; }
+        .variant-blue .tag-pill { background: var(--blue-bg); color: var(--blue-primary); }
+        .variant-blue .role-text { color: var(--blue-primary); }
+        .variant-blue:hover { box-shadow: 0 20px 40px -10px var(--blue-shadow); border-color: rgba(59,130,246,0.3); }
+
+        /* 风格：金色 (Lv3 高亮) */
+        .variant-gold { 
+            background: linear-gradient(180deg, #FFFFFF 40%, #FFFDF5 100%); 
+            border: 1px solid rgba(245, 158, 11, 0.15);
+        }
+        .variant-gold .level-badge { 
+            background: var(--gold-gradient); 
+            color: #fff; 
+            box-shadow: 0 4px 10px rgba(245, 158, 11, 0.4);
+        }
+        .variant-gold .tag-pill { background: var(--orange-bg); color: var(--orange-primary); }
+        .variant-gold .role-text { color: var(--orange-primary); }
+        .variant-gold:hover { box-shadow: 0 20px 40px -10px var(--orange-shadow); transform: translateY(-8px) scale(1.02); }
+
+        /* 装饰性背景光斑 (可选，增加氛围感) */
+        .card-glow {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.4;
+            top: -50px;
+            right: -50px;
+            pointer-events: none;
+        }
+        .variant-red .card-glow { background: var(--red-primary); }
+        .variant-blue .card-glow { background: var(--blue-primary); }
+        .variant-gold .card-glow { background: var(--gold-primary); opacity: 0.2; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h2>
+                <!-- 一个简单的SVG Icon -->
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                已点亮技能
+            </h2>
+            <div class="badge-count">5 个</div>
+        </div>
+
+        <div class="grid">
+            
+            <!-- 卡片 1: 红色系 Lv1 -->
+            <div class="skill-card variant-red">
+                <div class="card-glow"></div>
+                <div class="card-top">
+                    <div class="level-badge">L1</div>
+                    <div class="tag-pill">复盘力</div>
+                </div>
+                <div class="card-main">
+                    <h3 class="skill-name">日悟心法</h3>
+                </div>
+                <div class="card-footer">
+                    <span class="date">12/31</span>
+                    <span class="role-text">记录者</span>
+                </div>
+            </div>
+
+            <!-- 卡片 2: 蓝色系 Lv2 -->
+            <div class="skill-card variant-blue">
+                <div class="card-glow"></div>
+                <div class="card-top">
+                    <div class="level-badge">L2</div>
+                    <div class="tag-pill">思考力</div>
+                </div>
+                <div class="card-main">
+                    <h3 class="skill-name">结构解牛刀</h3>
+                </div>
+                <div class="card-footer">
+                    <span class="date">12/31</span>
+                    <span class="role-text">架构师</span>
+                </div>
+            </div>
+
+            <!-- 卡片 3: 橙色系 Lv3 (高光时刻) -->
+            <div class="skill-card variant-gold">
+                <div class="card-glow"></div>
+                <div class="card-top">
+                    <div class="level-badge">L3</div>
+                    <div class="tag-pill">坚持力</div>
+                </div>
+                <div class="card-main">
+                    <h3 class="skill-name">千锤百炼</h3>
+                </div>
+                <div class="card-footer">
+                    <span class="date">12/31</span>
+                    <span class="role-text">肌肉记忆</span>
+                </div>
+            </div>
+
+            <!-- 卡片 4: 红色系 Lv2 -->
+            <div class="skill-card variant-red">
+                <div class="card-glow"></div>
+                <div class="card-top">
+                    <div class="level-badge">L2</div>
+                    <div class="tag-pill">复盘力</div>
+                </div>
+                <div class="card-main">
+                    <h3 class="skill-name">三色修补术</h3>
+                </div>
+                <div class="card-footer">
+                    <span class="date">12/31</span>
+                    <span class="role-text">订正能手</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>
